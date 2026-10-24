@@ -82,21 +82,16 @@ jobs:
           SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
         run: pnpm turbo run "$TASK" ${SCOPE:+"$SCOPE"}
 
-  ci-ok:
-    name: CI OK
+  # The single required check for main. It always reports, so a skipped job never blocks a merge,
+  # and a job added above only needs to join `needs` here.
+  success:
+    name: CI / Success
     if: always()
     needs: [lint, audit, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
     steps:
-      - name: Require every job to succeed or be skipped
-        env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
-        run: |
-          echo "Results: $RESULTS"
-          for result in $RESULTS; do
-            if [ "$result" != success ] && [ "$result" != skipped ]; then
-              exit 1
-            fi
-          done
+      - name: Fail if any job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
