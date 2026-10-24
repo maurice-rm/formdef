@@ -85,7 +85,7 @@ jobs:
   # The single required check for main. It always reports, so a skipped job never blocks a merge,
   # and a job added above only needs to join `needs` here.
   success:
-    name: CI / Success
+    name: Success
     if: always()
     needs: [lint, audit, verify]
     runs-on: ubuntu-latest
