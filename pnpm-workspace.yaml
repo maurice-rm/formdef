@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+
+minimumReleaseAge: 1440
+
+allowBuilds: {}
+
+catalog:
+  typescript: 7.0.2

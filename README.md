@@ -1,0 +1,43 @@
+# formdef
+
+Describe a form once as a typed object, render it as a React component — with the compiler
+checking that every widget fits the value it receives.
+
+formdef is built on [TanStack Form](https://tanstack.com/form). It is working towards its first
+release.
+
+## Repository
+
+```
+packages/core            @formdef/core — the library, published to npm
+packages/shadcn          the widgets, distributed as a shadcn registry (private)
+packages/consumer-check  compiles a consumer against the built declarations (private)
+packages/tsconfig        the shared TypeScript configuration (private)
+apps/docs                the documentation, built with Fumadocs (private)
+```
+
+Not every package exists yet; they are added milestone by milestone.
+
+## Prerequisites
+
+- Node 24 (`.nvmrc`; `nvm use` picks it up). The library itself supports Node 22 and up.
+- pnpm 12, through the `packageManager` field (`corepack enable`).
+
+## Commands
+
+```bash
+pnpm install          # install, and set up the pre-commit hook
+pnpm lint             # format and lint with Biome (read-only)
+pnpm lint:fix         # format and lint with Biome, writing fixes
+pnpm knip             # unused files, exports and dependencies
+pnpm boundaries       # package boundaries
+pnpm check-types      # TypeScript across all packages
+pnpm test             # runtime tests
+pnpm test:types       # type tests
+pnpm build            # build all packages
+pnpm changeset        # describe a change to a published package
+```
+
+## License
+
+[MIT](LICENSE)
