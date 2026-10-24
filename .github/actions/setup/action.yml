@@ -1,0 +1,16 @@
+name: Setup
+description: Install pnpm and Node from the repository's pins, and the workspace from its lockfile.
+
+inputs:
+  install:
+    description: Run `pnpm install --frozen-lockfile` after setup.
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
+      with:
+        cache: ${{ inputs.install }}
+        install: ${{ inputs.install }}
+        require-lockfile: ${{ inputs.install }}
