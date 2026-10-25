@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { FieldApiOf } from '../widget/field-of'
 import type { ConfigParts } from './config-parts'
 import type { FieldEntryOptions } from './field-entry-options'
+import type { LayoutEntry } from './layout-entry'
 import type { LeafEntry } from './leaf-entry'
 
 type OneShape = 'formdef: an entry has one shape: widget, fields, item or render'
@@ -71,8 +72,11 @@ type LeafShape<TParts extends ConfigParts, TValue, TValues, TDeclared> = LeafEnt
 > &
   Owns<'widget', TValue>
 
+// Until createForm reads the config written, a layout may name any key of its object, described
+// in `fields` or not.
 type ObjectShape<TParts extends ConfigParts, TValue, TValues> = {
   fields: Level<TParts, TValue, TValues>
+  layout?: LayoutEntry<TParts, keyof NonNullable<TValue> & string, TValues>[]
 } & Owns<'fields', TValue>
 
 type CustomShape<TValue> = {

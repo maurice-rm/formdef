@@ -48,6 +48,35 @@ describe('FieldEntry', () => {
       expectTypeOf(entry).not.toBeAny()
     })
 
+    it('arranges its fields with a layout', () => {
+      const entry: Entry<Values> = {
+        fields: {
+          email: { widget: 'text', props: { label: 'Email' } },
+          address: { fields: { zip: { widget: 'text', props: { label: 'Postal code' } } } },
+        },
+        layout: [{ section: 'Contact', layout: ['email', 'address'] }],
+      }
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('names only keys of its own object in the layout', () => {
+      const entry: Entry<Values> = {
+        fields: { address: { fields: {}, layout: ['zip', 'city'] } },
+        // @ts-expect-error `zip` belongs to the address, one level down
+        layout: ['email', 'zip'],
+      }
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('takes no layout on a leaf or a custom entry', () => {
+      // @ts-expect-error a layout arranges the fields of an object entry
+      const leaf: Entry<string> = { widget: 'text', props: { label: 'Email' }, layout: [] }
+      // @ts-expect-error a layout arranges the fields of an object entry
+      const custom: Entry<string> = { render: () => null, layout: [] }
+      expectTypeOf(leaf).not.toBeAny()
+      expectTypeOf(custom).not.toBeAny()
+    })
+
     it('leaves a key out of the form when fields does not list it', () => {
       expectTypeOf({ fields: {} }).toExtend<Entry<Values>>()
     })
