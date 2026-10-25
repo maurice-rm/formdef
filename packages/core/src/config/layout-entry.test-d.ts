@@ -20,6 +20,7 @@ type FormComponents = {
 type Handle = { values: Values; submit: () => void }
 
 type Parts<TStructure, TFormComponents = FormComponents> = {
+  widgets: Record<never, never>
   structure: TStructure
   formComponents: TFormComponents
   handle: Handle

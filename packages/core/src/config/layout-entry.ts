@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import type { ConfigParts } from './config-parts'
 import type { ExtraProps } from './extra-props'
 import type { PropsEntry } from './props-entry'
 import type { RowProps, SectionProps } from './structure'
@@ -27,10 +28,7 @@ type SlotProps<
   ? ExtraProps<NonNullable<TStructure[TSlot]>, TSupplied>
   : BareElementProps
 
-// The registry's parts a layout reads, until the registry itself is typed.
-type LayoutParts = { structure: object; formComponents: object; handle: unknown }
-
-type SectionEntry<TParts extends LayoutParts, TNames extends string, TValues> = {
+type SectionEntry<TParts extends ConfigParts, TNames extends string, TValues> = {
   /** The title of the group. */
   section: string
   layout: LayoutEntry<TParts, TNames, TValues>[]
@@ -38,7 +36,7 @@ type SectionEntry<TParts extends LayoutParts, TNames extends string, TValues> = 
   Visibility<TValues> &
   Owns<'section'>
 
-type RowEntry<TParts extends LayoutParts, TNames extends string, TValues> = {
+type RowEntry<TParts extends ConfigParts, TNames extends string, TValues> = {
   row: LayoutEntry<TParts, TNames, TValues>[]
 } & PropsEntry<SlotProps<TParts['structure'], 'row', keyof RowProps>, TValues> &
   Visibility<TValues> &
@@ -46,7 +44,7 @@ type RowEntry<TParts extends LayoutParts, TNames extends string, TValues> = {
 
 // A form component reads the form through `useFormContext()`; the renderer passes it nothing.
 type ComponentFor<
-  TParts extends LayoutParts,
+  TParts extends ConfigParts,
   TName extends keyof TParts['formComponents'],
   TValues,
 > = {
@@ -55,11 +53,11 @@ type ComponentFor<
   Visibility<TValues> &
   Owns<'component'>
 
-type ComponentEntry<TParts extends LayoutParts, TValues> = {
+type ComponentEntry<TParts extends ConfigParts, TValues> = {
   [Name in keyof TParts['formComponents']]-?: ComponentFor<TParts, Name, TValues>
 }[keyof TParts['formComponents']]
 
-type InlineEntry<TParts extends LayoutParts, TValues> = {
+type InlineEntry<TParts extends ConfigParts, TValues> = {
   render: (form: TParts['handle']) => ReactNode
   props?: never
 } & Visibility<TValues> &
@@ -71,7 +69,7 @@ type InlineEntry<TParts extends LayoutParts, TValues> = {
  * form handle. Sections and rows nest; their props follow the structure slot registered in
  * `TParts`, or the bare element without one; a form component's props follow that component.
  */
-export type LayoutEntry<TParts extends LayoutParts, TNames extends string, TValues> =
+export type LayoutEntry<TParts extends ConfigParts, TNames extends string, TValues> =
   | TNames
   | SectionEntry<TParts, TNames, TValues>
   | RowEntry<TParts, TNames, TValues>
