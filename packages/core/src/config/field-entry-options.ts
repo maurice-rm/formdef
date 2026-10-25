@@ -1,6 +1,7 @@
 import type { DeepKeys, StandardSchemaV1, UseFieldOptionsBound } from '@tanstack/react-form'
 
 import type { FieldApiOf } from '../widget/field-of'
+import type { Visibility } from './visibility'
 
 // biome-ignore lint/suspicious/noExplicitAny: the parent data and path axes, which a nested config does not know.
 type OpenAxis = any
@@ -83,11 +84,8 @@ type TanStackFieldOptions<TValue> = Omit<
  * The keys every field entry takes, whatever its shape: when it is visible, and TanStack's field
  * options typed by the field's value.
  */
-export type FieldEntryOptions<TValue, TValues> = TanStackFieldOptions<TValue> & {
-  /** Whether the entry renders, from the values of the whole form. */
-  visibleWhen?: (values: TValues) => boolean
-  /** The paths `visibleWhen` and derived props read; only these make them read again. */
-  dependsOn?: readonly DeepKeys<TValues>[]
-  validators?: Validators<TValue, TValues>
-  listeners?: Listeners<TValue>
-}
+export type FieldEntryOptions<TValue, TValues> = TanStackFieldOptions<TValue> &
+  Visibility<TValues> & {
+    validators?: Validators<TValue, TValues>
+    listeners?: Listeners<TValue>
+  }
