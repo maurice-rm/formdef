@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "check-types": "pnpm run --sequential \"/^check-types:/\"",
-    "check-types:current": "tsc -p tsconfig.bundler.json && tsc -p tsconfig.nodenext.json && tsc -p tsconfig.scripts.json",
-    "check-types:floor": "node node_modules/typescript54/bin/tsc -p tsconfig.bundler.json && node node_modules/typescript54/bin/tsc -p tsconfig.nodenext.json",
+    "check-types:current": "tsc -p tsconfig.bundler.json && tsc -p tsconfig.json && tsc -p scripts/tsconfig.json",
+    "check-types:floor": "node node_modules/typescript54/bin/tsc -p tsconfig.bundler.json && node node_modules/typescript54/bin/tsc -p tsconfig.json",
     "test": "node scripts/check-api.ts"
   },
   "devDependencies": {
