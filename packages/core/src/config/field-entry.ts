@@ -70,7 +70,11 @@ type PartOf<TValue, TKey extends keyof NonNullable<TValue>> = undefined extends 
     ? NonNullable<TValue>[TKey] | undefined
     : NonNullable<TValue>[TKey]
 
-type Level<TParts extends ConfigParts, TValue, TValues> = {
+/**
+ * The `fields` of one level whose value type is `TValue`, in a form whose values are `TValues`: an
+ * optional field entry for each key of the level's object.
+ */
+export type LevelFields<TParts extends ConfigParts, TValue, TValues> = {
   [Key in keyof NonNullable<TValue>]?: FieldEntry<
     TParts,
     PartOf<TValue, Key>,
@@ -90,7 +94,7 @@ type LeafShape<TParts extends ConfigParts, TValue, TValues, TDeclared> = LeafEnt
 // Until createForm reads the config written, a layout may name any key of its object, described
 // in `fields` or not.
 type ObjectShape<TParts extends ConfigParts, TValue, TValues> = {
-  fields: Level<TParts, TValue, TValues>
+  fields: LevelFields<TParts, TValue, TValues>
   layout?: LayoutEntry<TParts, keyof NonNullable<TValue> & string, TValues>[]
 } & Owns<'fields', TValue>
 

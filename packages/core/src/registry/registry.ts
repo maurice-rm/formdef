@@ -1,6 +1,7 @@
 import type { createFormHook } from '@tanstack/react-form'
 import type { ComponentProps, ComponentType } from 'react'
 
+import type { ConfigParts } from '../config/config-parts'
 import type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from '../config/structure'
 
 // biome-ignore lint/suspicious/noExplicitAny: createFormHook constrains its maps to ComponentType<any>.
@@ -113,3 +114,20 @@ export interface Registry<
     TStructure & TNewStructure
   >
 }
+
+/** Any registry, whatever it holds. */
+export type AnyRegistry = Registry<AnyProps, AnyProps, AnyProps>
+
+/**
+ * Takes `TRegistry` apart into the parts the config types read; `THandle` is what an inline entry
+ * receives.
+ */
+export type PartsOf<TRegistry extends AnyRegistry, THandle> =
+  TRegistry extends Registry<infer TWidgets, infer TFormComponents, infer TStructure>
+    ? ConfigParts & {
+        widgets: TWidgets
+        formComponents: TFormComponents
+        structure: TStructure
+        handle: THandle
+      }
+    : never

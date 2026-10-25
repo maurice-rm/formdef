@@ -15,8 +15,10 @@ const PUBLIC_EXPORTS = [
   'FieldApiOf',
   'FieldOf',
   'FieldParts',
+  'FieldsOf',
   'fieldParts',
   'InferData',
+  'LayoutOf',
   'Registry',
 ]
 

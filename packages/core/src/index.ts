@@ -1,6 +1,8 @@
 export type { InferData } from './config/infer-data'
 export type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from './config/structure'
 export { createRegistry } from './registry/create-registry'
+export type { FieldsOf } from './registry/fields-of'
+export type { LayoutOf } from './registry/layout-of'
 export type { Registry } from './registry/registry'
 export { errorsOf } from './widget/errors-of'
 export { fieldId } from './widget/field-id'
