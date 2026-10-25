@@ -1,4 +1,12 @@
 {
   "title": "Guides",
-  "pages": ["fields", "arrays", "layout", "visibility"]
+  "pages": [
+    "fields",
+    "arrays",
+    "layout",
+    "visibility",
+    "validation",
+    "errors-and-accessibility",
+    "field-groups"
+  ]
 }
