@@ -211,7 +211,9 @@ would write against TanStack directly, inside a config.
 
 Every entry, whatever its shape, takes TanStack's field options and passes them on unchanged:
 `validators`, `listeners`, `asyncDebounceMs`, `asyncAlways`, `defaultValue`, `defaultMeta`,
-`disableErrorFlat` and `mode`. An array entry takes all of them except `mode`.
+`disableErrorFlat` and `mode`. An array entry takes all of them except `mode`: formdef renders it
+in TanStack's array mode, so the list renders again when items are added, removed or moved, not
+when one of them changes.
 
 ```tsx
 import { createRegistry, type FieldOf } from '@formdef/core'
