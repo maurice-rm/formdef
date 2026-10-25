@@ -1,4 +1,4 @@
-import type { FieldOf } from '@formdef/core'
+import { type FieldOf, fieldParts } from '@formdef/core'
 import { createFormHook, createFormHookContexts } from '@tanstack/react-form'
 import type { ReactNode } from 'react'
 
@@ -11,7 +11,11 @@ const { useAppForm } = createFormHook({
 })
 
 const TextWidget = ({ field }: FieldOf<string>): ReactNode => (
-  <input value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} />
+  <input
+    {...fieldParts(field).control}
+    value={field.state.value}
+    onChange={(event) => field.handleChange(event.target.value)}
+  />
 )
 
 const NumberWidget = ({ field }: FieldOf<number>): ReactNode => field.state.value

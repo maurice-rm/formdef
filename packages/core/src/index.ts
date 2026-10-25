@@ -1,3 +1,5 @@
 export { errorsOf } from './widget/errors-of'
 export { fieldId } from './widget/field-id'
 export type { FieldApiOf, FieldOf } from './widget/field-of'
+export type { FieldParts } from './widget/field-parts'
+export { fieldParts } from './widget/field-parts'
