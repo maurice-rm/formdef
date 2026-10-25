@@ -1,4 +1,4 @@
-import { type FieldOf, fieldId } from '@formdef/core'
+import { errorsOf, type FieldOf, fieldId } from '@formdef/core'
 
 export const summaryLink: string = `#${fieldId('signup', 'address.zip')}`
 
@@ -9,3 +9,5 @@ export const readValue = ({ field }: FieldOf<string>): string => field.state.val
 
 // @ts-expect-error a string field holds no number
 export const readNumber = ({ field }: FieldOf<string>): number => field.state.value
+
+export const readErrors = ({ field }: FieldOf<string>): string[] => errorsOf(field)
