@@ -52,6 +52,23 @@ jobs:
       - name: Audit dependencies
         run: pnpm audit
 
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Fails the job on a finding instead of uploading to code scanning, whose merge protection
+      # waits on results for a test merge commit that GitHub recreates on its own.
+      - uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
+        with:
+          advanced-security: false
+          annotations: true
+
   dependency-review:
     name: Dependency review
     if: github.event_name == 'pull_request'
@@ -100,7 +117,7 @@ jobs:
   success:
     name: Success
     if: always()
-    needs: [lint, audit, dependency-review, verify]
+    needs: [lint, audit, zizmor, dependency-review, verify]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}

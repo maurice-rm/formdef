@@ -1,18 +1,16 @@
 name: Security
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  # Weekly, so a newly disclosed weakness in an already pinned action reaches the security tab
+  # without a push. Pull requests and main are audited by the zizmor job in ci.yml.
   schedule:
-    # Weekly, so a newly disclosed weakness in an already pinned action is reported without a push.
     - cron: "23 5 * * 1"
+  workflow_dispatch:
 
 permissions: {}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}
 
 jobs:
   zizmor:
