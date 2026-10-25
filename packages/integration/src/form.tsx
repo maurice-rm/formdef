@@ -1,4 +1,10 @@
-import { type FieldOf, fieldParts, type InferData } from '@formdef/core'
+import {
+  type ArrayFrameProps,
+  type FieldOf,
+  fieldParts,
+  type InferData,
+  type SectionProps,
+} from '@formdef/core'
 import { createFormHook, createFormHookContexts } from '@tanstack/react-form'
 import type { ReactNode } from 'react'
 import { z } from 'zod'
@@ -38,3 +44,33 @@ export const SignUp = (): ReactNode => {
     </>
   )
 }
+
+export const Section = ({ label, children }: SectionProps): ReactNode => (
+  <fieldset>
+    <legend>{label}</legend>
+    {children}
+  </fieldset>
+)
+
+export const ContactsFrame = ({
+  keys,
+  renderItem,
+  add,
+  remove,
+  addLabel,
+  removeLabels,
+}: ArrayFrameProps<{ name: string }>): ReactNode => (
+  <ul>
+    {keys.map((key, index) => (
+      <li key={key}>
+        {renderItem(index)}
+        <button type="button" onClick={() => remove(index)}>
+          {removeLabels[index]}
+        </button>
+      </li>
+    ))}
+    <button type="button" onClick={add}>
+      {addLabel}
+    </button>
+  </ul>
+)
