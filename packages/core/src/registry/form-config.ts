@@ -21,6 +21,9 @@ type FormParts<TRegistry extends AnyRegistry, TData, TSubmitMeta> = PartsOf<
  * Every key that is not formdef's own is one of TanStack's form options and keeps TanStack's
  * meaning. The validation errors its callbacks see are typed loosely.
  *
+ * Check a config with `satisfies` rather than a type annotation: an annotation hides which
+ * optional keys the config sets, such as `defaultValues`.
+ *
  * @typeParam TRegistry - The registry the form is built with, as `typeof registry`.
  * @typeParam TSchema - The Standard Schema of the form; its input type is the form's data type.
  * @typeParam TSubmitMeta - What `handleSubmit` takes besides the values, as in TanStack's
@@ -28,7 +31,7 @@ type FormParts<TRegistry extends AnyRegistry, TData, TSubmitMeta> = PartsOf<
  *
  * @example
  * ```ts
- * const signInConfig: FormConfig<typeof registry, typeof schema> = {
+ * const signInConfig = {
  *   schema,
  *   defaultValues: { email: '', password: '' },
  *   fields: {
@@ -37,7 +40,7 @@ type FormParts<TRegistry extends AnyRegistry, TData, TSubmitMeta> = PartsOf<
  *   },
  *   layout: ['email', 'password', { component: 'SubmitButton', props: { label: 'Sign in' } }],
  *   onSubmit: ({ value }) => signIn(value),
- * }
+ * } satisfies FormConfig<typeof registry, typeof schema>
  * ```
  */
 export type FormConfig<
