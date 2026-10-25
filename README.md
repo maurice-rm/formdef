@@ -13,7 +13,7 @@ release.
 ```
 packages/core            @formdef/core — the library, published to npm
 packages/shadcn          the widgets, distributed as a shadcn registry (private)
-packages/consumer-check  compiles a consumer against the built declarations (private)
+packages/integration     uses the built @formdef/core as a consumer would (private)
 packages/tsconfig        the shared TypeScript configuration (private)
 apps/docs                the documentation, built with Fumadocs (private)
 ```

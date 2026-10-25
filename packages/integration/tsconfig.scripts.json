@@ -1,0 +1,11 @@
+{
+  "extends": "@formdef/tsconfig/base.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    "erasableSyntaxOnly": true,
+    "customConditions": []
+  },
+  "include": ["scripts"]
+}

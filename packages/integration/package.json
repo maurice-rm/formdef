@@ -1,0 +1,20 @@
+{
+  "name": "@formdef/integration",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "check-types": "pnpm run --sequential \"/^check-types:/\"",
+    "check-types:current": "tsc -p tsconfig.bundler.json && tsc -p tsconfig.nodenext.json && tsc -p tsconfig.scripts.json",
+    "check-types:floor": "node node_modules/typescript54/bin/tsc -p tsconfig.bundler.json && node node_modules/typescript54/bin/tsc -p tsconfig.nodenext.json",
+    "test": "node scripts/check-api.ts"
+  },
+  "devDependencies": {
+    "@formdef/core": "workspace:*",
+    "@formdef/tsconfig": "workspace:*",
+    "@types/node": "24.19.2",
+    "typescript": "catalog:",
+    "typescript54": "npm:typescript@5.4.5"
+  }
+}
