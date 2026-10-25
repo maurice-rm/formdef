@@ -82,11 +82,13 @@ describe('SelectField', () => {
     expect(screen.getByRole('status').textContent).toBe('de')
   })
 
-  it('keeps a value the options do not carry', () => {
+  it('keeps a value the options do not carry, and shows it', () => {
     const Kept = formWith('ch')
     render(<Kept />)
 
     expect(screen.getByRole('status').textContent).toBe('ch')
+    expect(trigger().textContent).toContain('ch')
+    expect(trigger().textContent).not.toContain('Choose…')
   })
 
   it('puts the class name on the trigger', () => {
