@@ -11,14 +11,18 @@ type RequiredFollowsSchema<TProps, TValue> = undefined extends TValue
   ? { [Key in keyof TProps]: Key extends 'required' ? Extract<TProps[Key], false> : TProps[Key] }
   : TProps
 
-type LeafFor<TWidgets, TName extends keyof TWidgets, TValue, TValues> = {
+type LeafFor<TWidgets, TName extends keyof TWidgets, TDeclared, TValues> = {
   widget: TName
-} & PropsEntry<RequiredFollowsSchema<ExtraProps<TWidgets[TName], WidgetSupplied>, TValue>, TValues>
+} & PropsEntry<
+  RequiredFollowsSchema<ExtraProps<TWidgets[TName], WidgetSupplied>, TDeclared>,
+  TValues
+>
 
 /**
  * A field entry that renders its value with a registered widget: `widget` names one whose value
- * type serves `TValue`, and `props` follows that widget.
+ * type serves `TValue`, and `props` follows that widget. Whether `required` may be claimed follows
+ * `TDeclared`, the value type its own level declares, which a part of an optional or nullable object keeps.
  */
-export type LeafEntry<TWidgets, TValue, TValues> = {
-  [Name in Compatible<TWidgets, TValue>]: LeafFor<TWidgets, Name, TValue, TValues>
+export type LeafEntry<TWidgets, TValue, TValues, TDeclared = TValue> = {
+  [Name in Compatible<TWidgets, TValue>]: LeafFor<TWidgets, Name, TDeclared, TValues>
 }[Compatible<TWidgets, TValue>]
