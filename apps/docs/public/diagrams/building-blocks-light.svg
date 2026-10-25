@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 768 456" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="building-blocks-light-title building-blocks-light-desc" id="building-blocks-light-root">
+  <title id="building-blocks-light-title">The building blocks of a formdef form</title>
+  <desc id="building-blocks-light-desc">The schema, the config and the registry go into createForm, which checks the config and returns a component. That component creates a TanStack form with useAppForm and renders Fields, which hands each widget its field as a prop; the widget writes values back through handleChange.</desc>
+  <defs>
+      <style>#building-blocks-light-root .diagram-container { width: 100%; overflow-x: auto; }</style>
+    <marker id="building-blocks-light-building-blocks-light-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5c5c5c"/></marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+  <path d="M 168,168 H 184 Q 192,168 192,176 V 256 Q 192,264 200,264 H 216" stroke="#5c5c5c" stroke-width="1.2" fill="none" marker-end="url(#building-blocks-light-building-blocks-light-arrow)"/>
+  <line x1="168" y1="280" x2="216" y2="280" stroke="#5c5c5c" stroke-width="1.2" fill="none" marker-end="url(#building-blocks-light-building-blocks-light-arrow)"/>
+  <path d="M 168,392 H 184 Q 192,392 192,384 V 304 Q 192,296 200,296 H 216" stroke="#5c5c5c" stroke-width="1.2" fill="none" marker-end="url(#building-blocks-light-building-blocks-light-arrow)"/>
+  <line x1="360" y1="280" x2="408" y2="280" stroke="#5c5c5c" stroke-width="1.2" fill="none" marker-end="url(#building-blocks-light-building-blocks-light-arrow)"/>
+  <line x1="480" y1="248" x2="480" y2="88" stroke="#5c5c5c" stroke-width="1.2" fill="none" marker-end="url(#building-blocks-light-building-blocks-light-arrow)"/>
+  <line x1="480" y1="312" x2="480" y2="360" stroke="#5c5c5c" stroke-width="1.2" fill="none" marker-end="url(#building-blocks-light-building-blocks-light-arrow)"/>
+  <line x1="552" y1="392" x2="600" y2="392" stroke="#5c5c5c" stroke-width="1.2" fill="none" marker-end="url(#building-blocks-light-building-blocks-light-arrow)"/>
+  <line x1="672" y1="360" x2="672" y2="88" stroke="#5c5c5c" stroke-width="1.2" fill="none" marker-end="url(#building-blocks-light-building-blocks-light-arrow)"/>
+
+  <rect x="488" y="161" width="80" height="14" rx="2" fill="#f5f5f5"/>
+  <text x="528.0" y="171.5" fill="#5c5c5c" font-size="10" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">USEAPPFORM</text>
+  <rect x="488" y="329" width="56" height="14" rx="2" fill="#f5f5f5"/>
+  <text x="516.0" y="339.5" fill="#5c5c5c" font-size="10" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">RENDERS</text>
+  <rect x="572" y="217" width="92" height="14" rx="2" fill="#f5f5f5"/>
+  <text x="618.0" y="227.5" fill="#5c5c5c" font-size="10" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">HANDLECHANGE</text>
+
+  <g>
+    <rect x="24" y="136" width="144" height="64" rx="6" fill="#f5f5f5"/>
+    <rect x="24" y="136" width="144" height="64" rx="6" fill="#ffffff" stroke="#a3a3a3" stroke-width="1"/>
+    <rect x="32" y="144" width="40" height="14" rx="2" fill="none" stroke="#8a8a8a" stroke-width="0.8"/>
+    <text x="52.0" y="154" fill="#5c5c5c" font-size="9" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">YOURS</text>
+    <text x="96.0" y="176" fill="#0a0a0a" font-size="14" font-weight="600" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">Schema</text>
+    <text x="96.0" y="191" fill="#5c5c5c" font-size="11" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle">Standard Schema</text>
+  </g>
+
+  <g>
+    <rect x="24" y="248" width="144" height="64" rx="6" fill="#f5f5f5"/>
+    <rect x="24" y="248" width="144" height="64" rx="6" fill="#ffffff" stroke="#a3a3a3" stroke-width="1"/>
+    <rect x="32" y="256" width="40" height="14" rx="2" fill="none" stroke="#8a8a8a" stroke-width="0.8"/>
+    <text x="52.0" y="266" fill="#5c5c5c" font-size="9" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">YOURS</text>
+    <text x="96.0" y="288" fill="#0a0a0a" font-size="14" font-weight="600" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">Config</text>
+    <text x="96.0" y="303" fill="#5c5c5c" font-size="11" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle">fields · layout</text>
+  </g>
+
+  <g>
+    <rect x="24" y="360" width="144" height="64" rx="6" fill="#f5f5f5"/>
+    <rect x="24" y="360" width="144" height="64" rx="6" fill="#ffffff" stroke="#a3a3a3" stroke-width="1"/>
+    <rect x="32" y="368" width="40" height="14" rx="2" fill="none" stroke="#8a8a8a" stroke-width="0.8"/>
+    <text x="52.0" y="378" fill="#5c5c5c" font-size="9" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">YOURS</text>
+    <text x="96.0" y="400" fill="#0a0a0a" font-size="14" font-weight="600" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">Registry</text>
+    <text x="96.0" y="415" fill="#5c5c5c" font-size="11" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle">widgets · slots</text>
+  </g>
+
+  <g>
+    <rect x="216" y="248" width="144" height="64" rx="6" fill="#f5f5f5"/>
+    <rect x="216" y="248" width="144" height="64" rx="6" fill="#171717" stroke="#171717" stroke-width="1"/>
+    <rect x="224" y="256" width="52" height="14" rx="2" fill="none" stroke="#c7c7c7" stroke-width="0.8"/>
+    <text x="250.0" y="266" fill="#c7c7c7" font-size="9" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">FORMDEF</text>
+    <text x="288.0" y="288" fill="#fafafa" font-size="14" font-weight="600" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">createForm</text>
+    <text x="288.0" y="303" fill="#c7c7c7" font-size="11" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle">checks the config</text>
+  </g>
+
+  <g>
+    <rect x="408" y="248" width="144" height="64" rx="6" fill="#f5f5f5"/>
+    <rect x="408" y="248" width="144" height="64" rx="6" fill="#ffffff" stroke="#a3a3a3" stroke-width="1"/>
+    <rect x="416" y="256" width="52" height="14" rx="2" fill="none" stroke="#8a8a8a" stroke-width="0.8"/>
+    <text x="442.0" y="266" fill="#5c5c5c" font-size="9" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">FORMDEF</text>
+    <text x="480.0" y="288" fill="#0a0a0a" font-size="14" font-weight="600" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">Component</text>
+    <text x="480.0" y="303" fill="#5c5c5c" font-size="11" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle">&lt;SignInForm /&gt;</text>
+  </g>
+
+  <g>
+    <rect x="408" y="24" width="336" height="64" rx="6" fill="#f5f5f5"/>
+    <rect x="408" y="24" width="336" height="64" rx="6" fill="#ebebeb" stroke="#a3a3a3" stroke-width="1"/>
+    <rect x="416" y="32" width="60" height="14" rx="2" fill="none" stroke="#8a8a8a" stroke-width="0.8"/>
+    <text x="446.0" y="42" fill="#5c5c5c" font-size="9" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">TANSTACK</text>
+    <text x="576.0" y="64" fill="#0a0a0a" font-size="14" font-weight="600" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">TanStack Form</text>
+    <text x="576.0" y="79" fill="#5c5c5c" font-size="11" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle">values · validation · submit</text>
+  </g>
+
+  <g>
+    <rect x="408" y="360" width="144" height="64" rx="6" fill="#f5f5f5"/>
+    <rect x="408" y="360" width="144" height="64" rx="6" fill="#ffffff" stroke="#a3a3a3" stroke-width="1"/>
+    <rect x="416" y="368" width="52" height="14" rx="2" fill="none" stroke="#8a8a8a" stroke-width="0.8"/>
+    <text x="442.0" y="378" fill="#5c5c5c" font-size="9" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">FORMDEF</text>
+    <text x="480.0" y="400" fill="#0a0a0a" font-size="14" font-weight="600" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">Fields</text>
+    <text x="480.0" y="415" fill="#5c5c5c" font-size="11" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle">render loop</text>
+  </g>
+
+  <g>
+    <rect x="600" y="360" width="144" height="64" rx="6" fill="#f5f5f5"/>
+    <rect x="600" y="360" width="144" height="64" rx="6" fill="#ffffff" stroke="#a3a3a3" stroke-width="1"/>
+    <rect x="608" y="368" width="40" height="14" rx="2" fill="none" stroke="#8a8a8a" stroke-width="0.8"/>
+    <text x="628.0" y="378" fill="#5c5c5c" font-size="9" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle" letter-spacing="0.08em">YOURS</text>
+    <text x="672.0" y="400" fill="#0a0a0a" font-size="14" font-weight="600" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" text-anchor="middle">Widget</text>
+    <text x="672.0" y="415" fill="#5c5c5c" font-size="11" font-family="ui-monospace, 'SFMono-Regular', Menlo, monospace" text-anchor="middle">FieldOf&lt;V&gt;</text>
+  </g>
+</svg>

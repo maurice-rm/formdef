@@ -1,0 +1,46 @@
+---
+title: Building blocks
+description: What formdef does, and what it leaves to TanStack Form.
+---
+
+<Diagram
+  name="building-blocks"
+  width={768}
+  height={456}
+  alt="The schema, the config and the registry go into createForm, which checks the config and returns a component. That component creates a TanStack form with useAppForm and renders Fields, which hands each widget its field as a prop; the widget writes values back through handleChange."
+/>
+
+You write four things: a **schema**, a **config** per form, a **registry** per app, and the
+**widgets** the registry names. formdef turns them into a component that renders the form, and
+TanStack Form runs it.
+
+## What formdef does
+
+| Block | What it does |
+| --- | --- |
+| Type layer | Derives the allowed config from the schema's data type and the registry, and rejects every mismatch at compile time. |
+| Registry | Binds widgets, form components and structure slots under names, and builds TanStack's form hook with them. |
+| Render loop | Walks a config and renders one TanStack field per entry, at the path it builds while descending. |
+| Layout | Orders and groups the entries of one level: sections, rows, placed form components, inline entries. |
+| Widget helpers | The wiring every widget repeats: ids, aria attributes, whether an error is due, the error texts. |
+
+## What TanStack does
+
+Everything that happens to values at runtime belongs to TanStack Form: the store, when validation
+runs, the error maps, touched and dirty state, array operations and the submission. formdef never
+re-implements any of it.
+
+formdef hands TanStack exactly two things: the options for the form, and the options for each
+field. Every key formdef does not know of passes through untouched, so a TanStack option you set
+in a config reaches TanStack as you wrote it.
+
+## The path of a form
+
+1. `createForm` receives the config. The type layer checks it against the schema's data type and
+   the registry's widgets.
+2. The component it returns merges the config with the instance's `options` and creates the form
+   with TanStack's `useAppForm`.
+3. It renders a `<form>` element and, inside it, `Fields`.
+4. `Fields` walks the config's levels. For each leaf it renders a TanStack field and hands the
+   widget that field as its `field` prop.
+5. The widget renders its control and reports changes to TanStack through `handleChange`.

@@ -1,0 +1,89 @@
+---
+title: Widgets and the type check
+description: Why a widget takes its field as a prop, and what the compiler guarantees.
+---
+
+## The contract
+
+A widget is a React component that takes the field as a prop, typed `FieldOf<V>`:
+
+```tsx
+import type { FieldOf } from '@formdef/core'
+
+const TextField = ({ field, label }: FieldOf<string> & { label?: string }) => (
+  <label>
+    {label}
+    <input value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} />
+  </label>
+)
+```
+
+`V` is the value type the widget serves. Every other prop is the widget's own, and a config passes
+it through `props`. That is the whole contract: no base class, no wrapper, no decorator.
+
+## Why the value type sits in the props
+
+TanStack's own pattern reads the field from a React context: `useFieldContext<string>()`. The value
+type is then a declaration inside the component, and nothing outside can see it. Point such a
+widget at the wrong field, and nothing complains until someone uses the form.
+
+As a prop, the value type becomes part of the component's signature, so formdef reads it back.
+Which fields may use the widget, which props a config may pass, which names autocomplete offers:
+all of it follows from that one annotation.
+
+A widget that reads `useFieldContext()` still renders, since formdef registers widgets with TanStack
+as well. It declares no value type, though, so it serves every field and takes no part in the
+check.
+
+## What the check guarantees
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+
+const { fieldContext, formContext } = createFormHookContexts()
+
+const TextField = (_: FieldOf<string> & { label: string; placeholder?: string }) => null
+const NumberField = (_: FieldOf<number> & { label: string; min?: number }) => null
+const CheckboxField = (_: FieldOf<boolean> & { label: string }) => null
+
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField, number: NumberField, checkbox: CheckboxField },
+})
+
+export const Profile = createForm({
+  schema: z.object({ email: z.email(), age: z.number() }),
+  defaultValues: { email: '', age: 18 },
+  fields: {
+    email: { widget: 'text', props: { label: 'Email' } },
+    age: { widget: 'number', props: { label: 'Age', min: 18 } },
+  },
+})
+```
+
+On `email`, autocomplete offers `text` only: `number` and `checkbox` cannot serve a string. For
+each field the compiler checks that:
+
+| Check | Example it rejects |
+| --- | --- |
+| The widget serves the field's value type. An optional or nullable field finds the widget of its base type. | `email: { widget: 'checkbox' }` |
+| `props` matches the widget's own props: no unknown keys, no wrong types, and present when the widget has a prop it cannot render without. | `email: { widget: 'text', props: { label: 'Email', min: 3 } }` |
+| `props.required` is `false` only where the schema makes the key optional. | `required: false` on a key the schema demands |
+| Field validators and listeners are typed against the field's value; `dependsOn` and the listen-to options take paths of the whole form. | a validator reading `value.length` on a number |
+| A function `props: (values) => …` returns props of the right types. | `props: () => ({ min: '3' })` |
+| The names under `fields` and in a layout exist in the schema, and the default values match its data type. | `layout: ['emial']` |
+
+## Where the check ends
+
+| Limit | What follows |
+| --- | --- |
+| A widget that reads its field from context | It serves every field, unchecked. |
+| A generic widget, `<T extends string>(…: FieldOf<T>)` | Once registered it collapses to its constraint: it serves every string field, and its options are not narrowed to the field's union. |
+| A function `props` | TypeScript rejects unknown keys only on object literals, not on returned objects; wrong types are still caught. |
+| Classes of your own as values, such as `Dayjs` or `Decimal` | They look like plain objects, so the entry offers `fields` in autocomplete. Platform values (`Date`, `File`, `Blob`, `RegExp`, `Map`, `Set`) are leaves. |
+| Schemas whose input is `unknown`, such as `z.coerce.number()` | No widget serves `unknown`, so such a field cannot carry a widget. |
+| The schema's rules | A widget does not learn that a string has a maximum length; pass it as a prop. |
+| A config widened past its types, by a cast or plain JavaScript | A name that points nowhere, such as an unregistered widget, throws while the form renders, with the path in the message. |

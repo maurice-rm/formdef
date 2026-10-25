@@ -1,0 +1,36 @@
+---
+title: Glossary
+description: The words this documentation uses, each for exactly one thing.
+---
+
+formdef uses one word per concept, in the code, in error messages and here.
+
+| Term | Meaning |
+| --- | --- |
+| **form** | A TanStack form instance, with its store. |
+| **values** | What the form holds while it runs: `form.state.values`. |
+| **data type** | The type of the values: the input type of the schema. |
+| **schema** | The [Standard Schema](https://standardschema.dev) that validates a form. |
+| **config** | The object `createForm` takes, or the `fields` and `layout` that `Fields` takes. |
+| **level** | One object level of a config: its `fields` and its `layout`. |
+| **path** | The name of a field while the form runs: `address.zip`, `contacts[0].name`. A key is one segment of it. |
+| **field entry** | One entry under `fields`. It has one of four shapes. |
+| **leaf, object, array, custom** | The four shapes of a field entry, marked by `widget`, `fields`, `item` and `render`. |
+| **item** | One element of an array, and the key of an array entry that describes it. |
+| **widget** | A component that takes `FieldOf<V>`, registered under `widgets`. |
+| **control** | The element of a widget that a person operates: an input, a button, a list. |
+| **form component** | A component registered under `formComponents` and placed by `{ component }` in a layout. |
+| **structure slot** | One of `body`, `section`, `row` and `arrayFrame`: the four places where formdef renders markup of its own. |
+| **array frame** | What renders the items of an array, with their add and remove controls. |
+| **layout entry** | One entry of a `layout`: a name, a section, a row, a form component or an inline entry. |
+| **section, row** | The two layout entries that group others. |
+| **inline entry** | A `{ render }` entry in a layout. |
+| **registry** | What `createRegistry` returns. |
+| **shadcn registry** | The distribution of formdef's widgets for shadcn, always named with its qualifier. |
+| **base** | The primitive library that shadcn components are built on; for formdef's widgets, Base UI. |
+| **validator key** | A key of `validators`: `onChange`, `onBlurAsync` and the others. |
+| **error is due** | The moment a widget shows a field's error: the field is invalid, and it was edited and left, or the form was submitted. |
+| **one call, own shell, plain TanStack** | The three [ways in](/concepts/ways-in). |
+
+Two words keep a second meaning where TanStack owns it: `fields` as the prop of a field group and
+as half of a form validator's result, and `mode` as TanStack's field mode next to `validation.mode`.

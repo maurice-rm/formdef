@@ -1,1 +1,4 @@
-{ "title": "Concepts" }
+{
+  "title": "Concepts",
+  "pages": ["building-blocks", "widgets-and-the-type-check", "ways-in", "glossary"]
+}
