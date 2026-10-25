@@ -1,0 +1,12 @@
+{
+  "extends": "@formdef/tsconfig/base.json",
+  "compilerOptions": {
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "types": []
+  },
+  "include": ["components", "lib", "hooks"]
+}

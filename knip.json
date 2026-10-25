@@ -9,6 +9,13 @@
       "vitest": {
         "entry": ["src/**/*.test.{ts,tsx}", "src/**/*.test-d.{ts,tsx}"]
       }
+    },
+    "packages/shadcn": {
+      "entry": ["lib/formdef/*.{ts,tsx}"],
+      "ignore": ["components/ui/**"],
+      "vitest": {
+        "entry": ["tests/**/*.test.{ts,tsx}"]
+      }
     }
   }
 }

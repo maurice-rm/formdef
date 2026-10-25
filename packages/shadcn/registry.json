@@ -1,0 +1,29 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "formdef",
+  "homepage": "https://github.com/maurice-rm/formdef",
+  "items": [
+    {
+      "name": "formdef",
+      "type": "registry:lib",
+      "title": "formdef setup",
+      "description": "The wiring every formdef form needs: the TanStack contexts in one file, the registry that names your widgets in another.",
+      "dependencies": ["@formdef/core", "@tanstack/react-form@>=1.33.5 <1.34.0"],
+      "registryDependencies": ["field"],
+      "files": [
+        {
+          "path": "lib/formdef/context.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/context.ts"
+        },
+        {
+          "path": "lib/formdef/index.tsx",
+          "type": "registry:lib",
+          "target": "@lib/formdef/index.tsx"
+        }
+      ],
+      "docs": "Fetch this first. It lands in lib/formdef/: context.ts holds the TanStack contexts, index.tsx the registry, so you import @/lib/formdef. Add an entry under widgets for every widget you fetch, then build forms with the createForm it exports.",
+      "categories": ["form"]
+    }
+  ]
+}
