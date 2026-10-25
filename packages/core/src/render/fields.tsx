@@ -1,10 +1,12 @@
 import type { ComponentType, ReactNode } from 'react'
 
+import { ArrayEntry } from './array-entry'
 import { byName } from './by-name'
 import { childPath } from './child-path'
 import { Derived } from './derived'
 import type { AppFieldProps, RenderForm } from './render-form'
 import { splitEntry } from './split-entry'
+import { warnOnce } from './warn-once'
 
 // biome-ignore lint/suspicious/noExplicitAny: registered components take props of their own; the config types check them.
 type AnyProps = any
@@ -18,6 +20,7 @@ type RenderParts = {
   structure: {
     section?: ComponentType<AnyProps>
     row?: ComponentType<AnyProps>
+    arrayFrame?: ComponentType<AnyProps>
   }
 }
 
@@ -35,6 +38,8 @@ export type FieldsProps = {
 
 type Level = Omit<FieldsProps, 'layout'> & {
   path: string | undefined
+  /** Props an array frame passes the one widget of an item, through this level. */
+  extra?: object | undefined
 }
 
 type LevelProps = Level & {
@@ -47,8 +52,13 @@ type EntryProps = Omit<Level, 'fields'> & {
 }
 
 type FieldContentProps = Omit<EntryProps, 'entry'> & {
-  entry: ReturnType<typeof splitEntry>
+  entry: ReturnType<typeof splitEntry> & { source: object }
   props: object | undefined
+}
+
+type ItemProps = Omit<EntryProps, 'extra'> & {
+  index: number
+  extra: object | undefined
 }
 
 type LayoutNodeProps = {
@@ -62,12 +72,49 @@ type LayoutKindProps = {
   props: object | undefined
 }
 
+const DROPPED_EXTRA = 'passes extra props to an item that has no single widget to receive them'
+
 const renderNothing = (): ReactNode => null
 
 const layoutOwner = (path: string | undefined): string =>
   path === undefined ? 'the form' : `"${path}"`
 
-const FieldContent = ({ parts, form, entry, path, props }: FieldContentProps): ReactNode => {
+const isLeaf = (entry: unknown): boolean =>
+  typeof entry === 'object' && entry !== null && 'widget' in entry
+
+// A frame's extra props have a single target only in a leaf, or an object level whose one field
+// is a leaf and which has no layout.
+const takesExtra = (item: object): boolean => {
+  if (isLeaf(item)) {
+    return true
+  }
+  const { own } = splitEntry(item)
+  const fields =
+    typeof own.fields === 'object' && own.fields !== null ? Object.values(own.fields) : []
+
+  return own.layout === undefined && fields.length === 1 && isLeaf(fields[0])
+}
+
+const Item = ({ parts, form, entry, path, index, extra }: ItemProps): ReactNode => {
+  const { own } = splitEntry(entry)
+  const item = own.item as object
+  const reachesWidget = extra !== undefined && takesExtra(item)
+  if (extra !== undefined && !reachesWidget) {
+    warnOnce(entry, `formdef: the array frame of "${path}" ${DROPPED_EXTRA}; they are dropped.`)
+  }
+
+  return (
+    <Entry
+      parts={parts}
+      form={form}
+      entry={item}
+      path={childPath(path, index)}
+      extra={reachesWidget ? extra : undefined}
+    />
+  )
+}
+
+const FieldContent = ({ parts, form, entry, path, props, extra }: FieldContentProps): ReactNode => {
   const { own, fieldOptions } = entry
 
   if (typeof own.widget === 'string') {
@@ -78,7 +125,7 @@ const FieldContent = ({ parts, form, entry, path, props }: FieldContentProps): R
 
     return (
       <form.AppField {...fieldOptions} name={path}>
-        {(field) => <Widget {...props} field={field} />}
+        {(field) => <Widget {...props} {...extra} field={field} />}
       </form.AppField>
     )
   }
@@ -87,6 +134,31 @@ const FieldContent = ({ parts, form, entry, path, props }: FieldContentProps): R
     return (
       <form.AppField {...fieldOptions} name={path}>
         {own.render as AppFieldProps['children']}
+      </form.AppField>
+    )
+  }
+
+  if (typeof own.item === 'object' && own.item !== null) {
+    return (
+      <form.AppField {...fieldOptions} name={path}>
+        {(field) => (
+          <ArrayEntry
+            field={field}
+            options={own}
+            frame={parts.structure.arrayFrame}
+            props={props}
+            renderItem={(index, itemExtra) => (
+              <Item
+                parts={parts}
+                form={form}
+                entry={entry.source}
+                path={path}
+                index={index}
+                extra={itemExtra}
+              />
+            )}
+          />
+        )}
       </form.AppField>
     )
   }
@@ -108,18 +180,26 @@ const FieldContent = ({ parts, form, entry, path, props }: FieldContentProps): R
         fields={own.fields as LevelFields}
         layout={Array.isArray(own.layout) ? own.layout : undefined}
         path={path}
+        extra={extra}
       />
     </>
   )
 }
 
-const Entry = ({ parts, form, entry, path }: EntryProps): ReactNode => {
-  const split = splitEntry(entry)
+const Entry = ({ parts, form, entry, path, extra }: EntryProps): ReactNode => {
+  const split = { ...splitEntry(entry), source: entry }
 
   return (
     <Derived form={form} entry={split.own}>
       {(props) => (
-        <FieldContent parts={parts} form={form} entry={split} path={path} props={props} />
+        <FieldContent
+          parts={parts}
+          form={form}
+          entry={split}
+          path={path}
+          props={props}
+          extra={extra}
+        />
       )}
     </Derived>
   )
@@ -134,7 +214,13 @@ const FieldNode = ({ level, name }: { level: Level; name: string }): ReactNode =
   }
 
   return (
-    <Entry parts={level.parts} form={level.form} entry={entry} path={childPath(level.path, name)} />
+    <Entry
+      parts={level.parts}
+      form={level.form}
+      entry={entry}
+      path={childPath(level.path, name)}
+      extra={level.extra}
+    />
   )
 }
 
@@ -232,8 +318,9 @@ const LevelEntries = ({ layout, ...level }: LevelProps): ReactNode => {
  * Renders the field entries of a level with the widgets of `parts`. Without a `layout` the entries
  * appear in the order `fields` declares them; with one, the layout decides the order, groups them
  * into sections and rows and places form components and inline entries. A leaf renders as its
- * widget, an object as its own level, a custom entry through its `render`. An object entry with
- * TanStack options of its own also mounts a field at its path, so its validators run.
+ * widget, an object as its own level, a custom entry through its `render`, an array through the
+ * registered `structure.arrayFrame` or the bare default. An object entry with TanStack options of
+ * its own also mounts a field at its path, so its validators run.
  */
 export const Fields = ({ parts, form, fields, layout }: FieldsProps): ReactNode => (
   <LevelEntries parts={parts} form={form} fields={fields} layout={layout} path={undefined} />
