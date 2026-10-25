@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import type { FieldApiOf } from '../widget/field-of'
+import type { ConfigParts } from './config-parts'
 import type { FieldEntryOptions } from './field-entry-options'
 import type { LeafEntry } from './leaf-entry'
 
@@ -53,25 +54,25 @@ type PartOf<TValue, TKey extends keyof NonNullable<TValue>> = undefined extends 
     ? NonNullable<TValue>[TKey] | undefined
     : NonNullable<TValue>[TKey]
 
-type Level<TWidgets, TValue, TValues> = {
+type Level<TParts extends ConfigParts, TValue, TValues> = {
   [Key in keyof NonNullable<TValue>]?: FieldEntry<
-    TWidgets,
+    TParts,
     PartOf<TValue, Key>,
     TValues,
     NonNullable<TValue>[Key]
   >
 }
 
-type LeafShape<TWidgets, TValue, TValues, TDeclared> = LeafEntry<
-  TWidgets,
+type LeafShape<TParts extends ConfigParts, TValue, TValues, TDeclared> = LeafEntry<
+  TParts['widgets'],
   TValue,
   TValues,
   TDeclared
 > &
   Owns<'widget', TValue>
 
-type ObjectShape<TWidgets, TValue, TValues> = {
-  fields: Level<TWidgets, TValue, TValues>
+type ObjectShape<TParts extends ConfigParts, TValue, TValues> = {
+  fields: Level<TParts, TValue, TValues>
 } & Owns<'fields', TValue>
 
 type CustomShape<TValue> = {
@@ -79,17 +80,20 @@ type CustomShape<TValue> = {
 } & Owns<'render', TValue>
 
 /**
- * One entry under `fields`, for a value of type `TValue` in a form whose values are `TValues`: a
+ * One entry under `fields`, for a value of type `TValue` in a form whose values are `TValues`, with
+ * the widgets and slots of `TParts`: a
  * leaf (`widget`), an object (`fields`) or a custom entry (`render`), each with the options every
  * entry shares. An entry has exactly one of these shapes. `TDeclared` is the value type its own
  * level declares; it differs from `TValue` only below an optional or nullable object.
  */
-export type FieldEntry<TWidgets, TValue, TValues, TDeclared = TValue> = FieldEntryOptions<
+export type FieldEntry<
+  TParts extends ConfigParts,
   TValue,
-  TValues
-> &
+  TValues,
+  TDeclared = TValue,
+> = FieldEntryOptions<TValue, TValues> &
   (
-    | LeafShape<TWidgets, TValue, TValues, TDeclared>
-    | (IsLevel<TValue> extends true ? ObjectShape<TWidgets, TValue, TValues> : never)
+    | LeafShape<TParts, TValue, TValues, TDeclared>
+    | (IsLevel<TValue> extends true ? ObjectShape<TParts, TValue, TValues> : never)
     | CustomShape<TValue>
   )

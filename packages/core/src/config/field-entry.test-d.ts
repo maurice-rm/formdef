@@ -22,7 +22,14 @@ type Values = {
   tags: string[]
 }
 
-type Entry<TValue> = FieldEntry<Widgets, TValue, Values>
+type Parts = {
+  widgets: Widgets
+  structure: Record<never, never>
+  formComponents: Record<never, never>
+  handle: unknown
+}
+
+type Entry<TValue> = FieldEntry<Parts, TValue, Values>
 
 describe('FieldEntry', () => {
   describe('object', () => {
@@ -232,7 +239,7 @@ describe('FieldEntry', () => {
     })
     type Data = InferData<typeof schema>
 
-    const entry: FieldEntry<Widgets, Data, Data> = {
+    const entry: FieldEntry<Parts, Data, Data> = {
       fields: {
         email: { widget: 'text', props: { label: 'Email', required: true } },
         address: { fields: { zip: { widget: 'text', props: { label: 'Postal code' } } } },
