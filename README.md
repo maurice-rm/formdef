@@ -1,5 +1,7 @@
 # formdef
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/maurice-rm/formdef/badge)](https://scorecard.dev/viewer/?uri=github.com/maurice-rm/formdef)
+
 Describe a form once as a typed object, render it as a React component — with the compiler
 checking that every widget fits the value it receives.
 
