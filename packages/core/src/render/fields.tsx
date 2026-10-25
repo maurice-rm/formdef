@@ -1,22 +1,13 @@
-import type { AnyFieldApi } from '@tanstack/react-form'
 import type { ComponentType, ReactNode } from 'react'
 
 import { byName } from './by-name'
 import { childPath } from './child-path'
+import { Derived } from './derived'
+import type { AppFieldProps, RenderForm } from './render-form'
 import { splitEntry } from './split-entry'
 
 // biome-ignore lint/suspicious/noExplicitAny: registered components take props of their own; the config types check them.
 type AnyProps = any
-
-type AppFieldProps = Record<string, unknown> & {
-  name: string
-  children: (field: AnyFieldApi) => ReactNode
-}
-
-/** The part of a TanStack form that renders fields: `AppField` of `useAppForm`'s result. */
-type RenderForm = {
-  AppField: ComponentType<AppFieldProps>
-}
 
 type ComponentMap = Readonly<Record<string, ComponentType<AnyProps>>>
 
@@ -55,21 +46,29 @@ type EntryProps = Omit<Level, 'fields'> & {
   path: string
 }
 
+type FieldContentProps = Omit<EntryProps, 'entry'> & {
+  entry: ReturnType<typeof splitEntry>
+  props: object | undefined
+}
+
 type LayoutNodeProps = {
   level: Level
   entry: LayoutNodeEntry
 }
 
-const renderNothing = (): ReactNode => null
+type LayoutKindProps = {
+  level: Level
+  entry: Readonly<Record<string, unknown>>
+  props: object | undefined
+}
 
-const propsOf = (props: unknown): object | undefined =>
-  typeof props === 'object' && props !== null ? props : undefined
+const renderNothing = (): ReactNode => null
 
 const layoutOwner = (path: string | undefined): string =>
   path === undefined ? 'the form' : `"${path}"`
 
-const Entry = ({ parts, form, entry, path }: EntryProps): ReactNode => {
-  const { own, fieldOptions } = splitEntry(entry)
+const FieldContent = ({ parts, form, entry, path, props }: FieldContentProps): ReactNode => {
+  const { own, fieldOptions } = entry
 
   if (typeof own.widget === 'string') {
     const Widget = byName(parts.widgets, own.widget)
@@ -79,7 +78,7 @@ const Entry = ({ parts, form, entry, path }: EntryProps): ReactNode => {
 
     return (
       <form.AppField {...fieldOptions} name={path}>
-        {(field) => <Widget {...propsOf(own.props)} field={field} />}
+        {(field) => <Widget {...props} field={field} />}
       </form.AppField>
     )
   }
@@ -114,6 +113,18 @@ const Entry = ({ parts, form, entry, path }: EntryProps): ReactNode => {
   )
 }
 
+const Entry = ({ parts, form, entry, path }: EntryProps): ReactNode => {
+  const split = splitEntry(entry)
+
+  return (
+    <Derived form={form} entry={split.own}>
+      {(props) => (
+        <FieldContent parts={parts} form={form} entry={split} path={path} props={props} />
+      )}
+    </Derived>
+  )
+}
+
 const FieldNode = ({ level, name }: { level: Level; name: string }): ReactNode => {
   const entry = byName(level.fields, name)
   if (entry === undefined) {
@@ -133,52 +144,43 @@ const LayoutNodes = ({ level, entries }: { level: Level; entries: unknown }): Re
     <LayoutNode key={index} level={level} entry={entry} />
   ))
 
-const SectionNode = ({ level, entry }: LayoutNodeProps & { entry: object }): ReactNode => {
-  const { section, layout, props } = entry as Record<string, unknown>
-  const children = <LayoutNodes level={level} entries={layout} />
+const SectionNode = ({ level, entry, props }: LayoutKindProps): ReactNode => {
+  const children = <LayoutNodes level={level} entries={entry.layout} />
   const Section = level.parts.structure.section
 
   if (Section !== undefined) {
     return (
-      <Section {...propsOf(props)} label={section}>
+      <Section {...props} label={entry.section}>
         {children}
       </Section>
     )
   }
 
   return (
-    <fieldset {...propsOf(props)}>
-      <legend>{section as string}</legend>
+    <fieldset {...props}>
+      <legend>{entry.section as string}</legend>
       {children}
     </fieldset>
   )
 }
 
-const RowNode = ({ level, entry }: LayoutNodeProps & { entry: object }): ReactNode => {
-  const { row, props } = entry as Record<string, unknown>
-  const children = <LayoutNodes level={level} entries={row} />
+const RowNode = ({ level, entry, props }: LayoutKindProps): ReactNode => {
+  const children = <LayoutNodes level={level} entries={entry.row} />
   const Row = level.parts.structure.row
 
   if (Row !== undefined) {
-    return <Row {...propsOf(props)}>{children}</Row>
+    return <Row {...props}>{children}</Row>
   }
 
   return (
-    <div {...propsOf(props)} data-formdef-row="">
+    <div {...props} data-formdef-row="">
       {children}
     </div>
   )
 }
 
-const ComponentNode = ({
-  level,
-  name,
-  props,
-}: {
-  level: Level
-  name: string
-  props: unknown
-}): ReactNode => {
+const ComponentNode = ({ level, entry, props }: LayoutKindProps): ReactNode => {
+  const name = entry.component as string
   const Component = byName(level.parts.formComponents, name)
   if (Component === undefined) {
     throw new Error(
@@ -186,27 +188,36 @@ const ComponentNode = ({
     )
   }
 
-  return <Component {...propsOf(props)} />
+  return <Component {...props} />
 }
 
-const LayoutNode = ({ level, entry }: LayoutNodeProps): ReactNode => {
-  if (typeof entry === 'string') {
-    return <FieldNode level={level} name={entry} />
-  }
+const LayoutKind = ({ level, entry, props }: LayoutKindProps): ReactNode => {
   if ('section' in entry) {
-    return <SectionNode level={level} entry={entry} />
+    return <SectionNode level={level} entry={entry} props={props} />
   }
   if ('row' in entry) {
-    return <RowNode level={level} entry={entry} />
+    return <RowNode level={level} entry={entry} props={props} />
   }
   if (typeof entry.component === 'string') {
-    return <ComponentNode level={level} name={entry.component} props={entry.props} />
+    return <ComponentNode level={level} entry={entry} props={props} />
   }
   if (typeof entry.render === 'function') {
     return (entry.render as (form: RenderForm) => ReactNode)(level.form)
   }
 
   return null
+}
+
+const LayoutNode = ({ level, entry }: LayoutNodeProps): ReactNode => {
+  if (typeof entry === 'string') {
+    return <FieldNode level={level} name={entry} />
+  }
+
+  return (
+    <Derived form={level.form} entry={entry}>
+      {(props) => <LayoutKind level={level} entry={entry} props={props} />}
+    </Derived>
+  )
 }
 
 const LevelEntries = ({ layout, ...level }: LevelProps): ReactNode => {
