@@ -1,0 +1,46 @@
+---
+title: Installation
+description: The package, its peers, and the widgets for shadcn.
+---
+
+## Prerequisites
+
+- React 19
+- TypeScript 5.4 or later, with `strict` on
+- A schema library that implements [Standard Schema](https://standardschema.dev): Zod, Valibot,
+  ArkType and others
+
+## The package
+
+formdef runs on TanStack Form, which you install next to it:
+
+```npm
+npm install @formdef/core @tanstack/react-form zod
+```
+
+`@formdef/core` supports the TanStack Form versions from 1.33.5 below 1.34. Zod stands for the
+schema library of your choice.
+
+That is all a form needs. The widgets are yours: write them as [Getting started](/getting-started)
+shows, or fetch the ready ones below.
+
+## The widgets for shadcn
+
+formdef ships its widgets as a shadcn registry: the source lands in your project, and you change it
+as you change any shadcn component. They are built on Base UI, so the project needs a shadcn style
+of the Base UI family (`base-nova`, `base-vega` and the others). A project on Radix gets no files
+rather than the wrong ones.
+
+Add the registry to your `components.json`:
+
+<RegistryConfig />
+
+Then fetch the setup, and every widget you want:
+
+```npm
+npx shadcn@latest add @formdef/formdef @formdef/text-field
+```
+
+`@formdef/formdef` writes `lib/formdef/context.ts` and `lib/formdef/index.tsx`. Register each
+widget you fetch under `widgets` in `lib/formdef/index.tsx`; the [Widgets](/widgets) section lists
+them with their names.

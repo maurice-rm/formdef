@@ -3,8 +3,9 @@ title: Introduction
 description: Describe a form once as a typed object, render it as a React component.
 ---
 
-formdef turns a typed config into a form built on [TanStack Form](https://tanstack.com/form). The
-compiler checks that every widget fits the value it receives.
+formdef turns a typed config into a form built on [TanStack Form](https://tanstack.com/form). You
+write which field gets which widget, in which order; formdef renders it, and TanStack does the
+rest: values, validation, arrays, submission.
 
 ```tsx
 import { createRegistry, type FieldOf } from '@formdef/core'
@@ -28,3 +29,62 @@ export const SignIn = createForm({
   fields: { email: { widget: 'text', props: { label: 'Email' } } },
 })
 ```
+
+`<SignIn />` renders a `<form>` with the email field, validates it with the schema and submits
+through TanStack.
+
+## What the compiler checks
+
+**A widget is checked against the value it will receive.** Point a checkbox, which serves a
+`boolean`, at a `string` field, and the config does not compile:
+
+```tsx
+// @errors: 2322
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const CheckboxField = (_: FieldOf<boolean> & { label: string }) => null
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField, checkbox: CheckboxField },
+})
+// ---cut---
+export const SignIn = createForm({
+  schema: z.object({ email: z.email(), remember: z.boolean() }),
+  defaultValues: { email: '', remember: false },
+  fields: {
+    email: { widget: 'checkbox', props: { label: 'Email' } },
+    remember: { widget: 'checkbox', props: { label: 'Remember me' } },
+  },
+})
+```
+
+The same check covers the props a widget receives, the names a layout writes and the default
+values. All of it happens at compile time; nothing of it runs in the browser.
+
+## formdef adds, it never takes away
+
+Every option TanStack Form takes still reaches it, for the form and for each field. When a form
+outgrows one call, you take over the `<form>` element and keep the config you wrote; when formdef
+does not help, you write plain TanStack next to it. [Ways in](/concepts/ways-in) shows the three.
+
+## Next
+
+<Cards>
+  <Card title="Installation" href="/installation">
+    The package, its peers and the widgets for shadcn.
+  </Card>
+  <Card title="Getting started" href="/getting-started">
+    A first form, built one piece at a time.
+  </Card>
+  <Card title="Building blocks" href="/concepts/building-blocks">
+    What formdef does and what it leaves to TanStack.
+  </Card>
+  <Card title="Widgets and the type check" href="/concepts/widgets-and-the-type-check">
+    Why the field is a prop, and what the compiler guarantees.
+  </Card>
+</Cards>

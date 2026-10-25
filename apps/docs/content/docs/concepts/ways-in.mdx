@@ -1,0 +1,34 @@
+---
+title: Ways in
+description: One call, your own shell, or plain TanStack, and how to move between them.
+---
+
+formdef adds to TanStack Form and never takes anything away. There are three ways in, named by what
+you own. Moving from one to the next keeps the config you already wrote.
+
+| Way | You write | formdef renders | Use it when |
+| --- | --- | --- | --- |
+| **One call** | `createForm(config)` and `<Form options />` | the `<form>` element, the submission and the fields | a form is fields and a submit button; values may come from hooks through `options` |
+| **Own shell** | `formHook.useAppForm(…)`, `<form.AppForm>`, the `<form>` element and anything around it | `<Fields form fields layout />`, as often as you like, each with a part of the fields | the shell reacts to form state, a wizard shows one step at a time, your own markup sits between groups, the form posts to a server action |
+| **Plain TanStack** | everything | nothing | a form formdef does not help with |
+
+## Moving between them
+
+- `fields` and `layout` have the same types on the first two ways: moving a config to your own
+  shell is a copy.
+- `formHook` is the very hook `createForm` uses, so both ways share the contexts and the
+  registered form components.
+- `Fields` also renders into a field group from `withFieldGroup`, so one config renders at
+  `billing` and at `shipping`.
+- Inside any config, a single field can take a `render` function instead of a widget. It receives
+  TanStack's real field.
+
+## Where one call ends
+
+- The submit event is not reachable. Two submit buttons that mean different things pass
+  `onSubmitMeta` and call `form.handleSubmit(meta)` from an inline entry.
+- An inline entry sees the form's values, its state and the operations on them, but not the
+  members whose types depend on the validators, such as `validate` and the error-map setters. A
+  form that needs them takes its own shell.
+- The `ref` of a generated form is its `<form>` element. The form object itself is reachable
+  through `options.listeners.onMount`.

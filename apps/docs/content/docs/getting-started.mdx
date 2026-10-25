@@ -1,0 +1,311 @@
+---
+title: Getting started
+description: A first form with validation, built in the order you would build it yourself.
+---
+
+Every formdef app has the same setup: the **contexts**, a **registry** that names its widgets, and
+one **config** per form.
+This page builds them one at a time, ending with a form that validates and submits.
+
+<Steps>
+<Step>
+
+### The contexts
+
+TanStack Form needs two React contexts. Create them once per app, in a file of their own:
+
+```ts title="form/context.ts"
+'use client'
+
+import { createFormHookContexts } from '@tanstack/react-form'
+
+export const { fieldContext, formContext, useFieldContext, useFormContext } =
+  createFormHookContexts()
+```
+
+`'use client'` is required: the contexts are React contexts, which a server component cannot
+create. They live apart from the registry on purpose. A form component you register later reads
+the form through `useFormContext()`; taking it from the registry, which imports that component,
+would make the two files import each other.
+
+</Step>
+<Step>
+
+### A widget
+
+A widget is a React component that receives the field as a prop. `FieldOf<string>` says which
+value it serves:
+
+```tsx title="form/text-field.tsx"
+import { type FieldOf, fieldParts } from '@formdef/core'
+
+type TextFieldProps = FieldOf<string> & { label: string }
+
+export const TextField = ({ field, label }: TextFieldProps) => {
+  const { control, errorId, isErrorDue, errors } = fieldParts(field)
+
+  return (
+    <div>
+      <label htmlFor={control.id}>{label}</label>
+      <input
+        {...control}
+        value={field.state.value}
+        onChange={(event) => field.handleChange(event.target.value)}
+      />
+      {isErrorDue && errors.length > 0 && <p id={errorId}>{errors.join(' ')}</p>}
+    </div>
+  )
+}
+```
+
+- `field` is TanStack's own field: `state.value`, `handleChange`, `state.meta`, unchanged.
+- `label` is the widget's own prop. A config passes it through `props`, like any other.
+- `fieldParts` does the wiring: an id unique to the form, the name, the blur handler and the aria
+  attributes that tie the input to its error. `isErrorDue` turns true once the field was edited and
+  left, or the form was submitted.
+
+</Step>
+<Step>
+
+### The registry
+
+The registry binds the contexts and the widgets under names. Everything you build forms with comes
+from it:
+
+```tsx title="form/registry.tsx"
+// @filename: context.ts
+import { createFormHookContexts } from '@tanstack/react-form'
+export const { fieldContext, formContext, useFieldContext, useFormContext } =
+  createFormHookContexts()
+// @filename: text-field.tsx
+import type { FieldOf } from '@formdef/core'
+export const TextField = (_: FieldOf<string> & { label: string }) => null
+// @filename: registry.tsx
+// ---cut---
+'use client'
+
+import { createRegistry } from '@formdef/core'
+
+import { fieldContext, formContext } from './context'
+import { TextField } from './text-field'
+
+export const { createForm, Fields, formHook } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+})
+```
+
+The keys of `widgets` are the names a config uses; they are yours to choose.
+
+</Step>
+<Step>
+
+### A form
+
+The config names a schema, the default values and a widget per field. `createForm` turns it into a
+component:
+
+```tsx title="sign-in-form.tsx"
+// @filename: form/registry.tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+export const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// @filename: sign-in-form.tsx
+// ---cut---
+'use client'
+
+import { z } from 'zod'
+
+import { createForm } from './form/registry'
+
+const schema = z.object({
+  email: z.email('Enter an email address'),
+  password: z.string().min(8, 'Use at least 8 characters'),
+})
+
+export const SignInForm = createForm({
+  schema,
+  defaultValues: { email: '', password: '' },
+  fields: {
+    email: { widget: 'text', props: { label: 'Email' } },
+    password: { widget: 'text', props: { label: 'Password' } },
+  },
+  onSubmit: ({ value }) => {
+    console.log(value)
+  },
+})
+```
+
+`SignInForm` is a client component; a server component renders `<SignInForm />` like any other.
+`onSubmit` runs only once the schema accepts the values.
+
+</Step>
+<Step>
+
+### A submit button
+
+The form has no button yet: buttons are components, and components come from you. Register one
+under `formComponents`. It reads the form through `useFormContext()` from the contexts file:
+
+```tsx title="form/submit-button.tsx"
+// @filename: context.ts
+import { createFormHookContexts } from '@tanstack/react-form'
+export const { fieldContext, formContext, useFieldContext, useFormContext } =
+  createFormHookContexts()
+// @filename: submit-button.tsx
+// ---cut---
+import { useFormContext } from './context'
+
+export const SubmitButton = ({ label }: { label: string }) => {
+  const form = useFormContext()
+
+  return (
+    <form.Subscribe selector={(state) => state.isSubmitting}>
+      {(isSubmitting) => (
+        <button type="submit" aria-disabled={isSubmitting}>
+          {label}
+        </button>
+      )}
+    </form.Subscribe>
+  )
+}
+```
+
+Add `formComponents: { SubmitButton }` to the registry, then place the button with a `layout`. A
+layout decides the order and what appears at all:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const SubmitButton = (_: { label: string }) => null
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+  formComponents: { SubmitButton },
+})
+const schema = z.object({ email: z.email(), password: z.string() })
+// ---cut---
+export const SignInForm = createForm({
+  schema,
+  defaultValues: { email: '', password: '' },
+  fields: {
+    email: { widget: 'text', props: { label: 'Email' } },
+    password: { widget: 'text', props: { label: 'Password' } },
+  },
+  layout: ['email', 'password', { component: 'SubmitButton', props: { label: 'Sign in' } }],
+})
+```
+
+</Step>
+<Step>
+
+### Values from a hook
+
+`createForm` runs once, at module level, so the config cannot close over a hook's result: a
+mutation, a router, a toast. Those go into the instance through `options`:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const SignInForm = createForm({
+  schema: z.object({ email: z.email() }),
+  defaultValues: { email: '' },
+  fields: { email: { widget: 'text', props: { label: 'Email' } } },
+})
+declare function useSignIn(): { mutateAsync: (values: { email: string }) => Promise<void> }
+// ---cut---
+export const SignInPage = () => {
+  const signIn = useSignIn()
+
+  return (
+    <SignInForm
+      options={{
+        onSubmit: async ({ value }) => {
+          await signIn.mutateAsync(value)
+        },
+      }}
+    />
+  )
+}
+```
+
+`options` takes TanStack's form options and wins over the config key by key. `validators` and
+`listeners` merge per key, so the instance adds to them without dropping the config's.
+
+</Step>
+</Steps>
+
+## What the compiler checks
+
+Each of these mistakes stops the build, with the message at the line that makes it.
+
+A default value of the wrong type:
+
+```tsx
+// @errors: 2322
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const schema = z.object({ email: z.email(), password: z.string() })
+// ---cut---
+export const SignInForm = createForm({
+  schema,
+  defaultValues: { email: 0, password: '' },
+  fields: { email: { widget: 'text', props: { label: 'Email' } } },
+})
+```
+
+A prop the widget does not take:
+
+```tsx
+// @errors: 2322
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const schema = z.object({ email: z.email(), password: z.string() })
+// ---cut---
+export const SignInForm = createForm({
+  schema,
+  defaultValues: { email: '', password: '' },
+  fields: { email: { widget: 'text', props: { label: 'Email', rows: 3 } } },
+})
+```
+
+A field the schema does not have:
+
+```tsx
+// @errors: 2561
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const schema = z.object({ email: z.email(), password: z.string() })
+// ---cut---
+export const SignInForm = createForm({
+  schema,
+  defaultValues: { email: '', password: '' },
+  fields: { pasword: { widget: 'text', props: { label: 'Password' } } },
+})
+```
+
+[Widgets and the type check](/concepts/widgets-and-the-type-check) lists everything the check
+covers, and where it ends.
