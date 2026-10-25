@@ -5,6 +5,10 @@ import ts from 'typescript54'
 // The public API of `@formdef/core`, name by name. A name is added here in the change that
 // exports it, never as a side effect of exporting it.
 const PUBLIC_EXPORTS = [
+  'ArrayFrameProps',
+  'BodyProps',
+  'RowProps',
+  'SectionProps',
   'errorsOf',
   'fieldId',
   'FieldApiOf',
