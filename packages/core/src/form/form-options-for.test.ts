@@ -63,6 +63,26 @@ describe('formOptionsFor', () => {
     expect(options.onSubmit).toBe(onSubmit)
   })
 
+  it('treats a key or slot the instance sets to undefined as unset', () => {
+    const onSubmit = vi.fn()
+    const onBlur = vi.fn()
+    const onChange = vi.fn()
+    const options = formOptionsFor({
+      config: configWith({ onSubmit, validators: { onBlur }, listeners: { onChange } }),
+      options: {
+        defaultValues: undefined,
+        onSubmit: undefined,
+        validators: { onBlur: undefined },
+        listeners: { onChange: undefined },
+      },
+    })
+
+    expect(options.defaultValues).toBe(DEFAULT_VALUES)
+    expect(options.onSubmit).toBe(onSubmit)
+    expect(options.validators).toEqual({ onBlur, onDynamic: schema })
+    expect(options.listeners).toEqual({ onChange })
+  })
+
   it("merges validators slot by slot, so the instance keeps the schema and the config's", () => {
     const onBlur = vi.fn()
     const onSubmitAsync = vi.fn()

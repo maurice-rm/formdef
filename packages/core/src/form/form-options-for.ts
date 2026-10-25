@@ -33,9 +33,14 @@ const slotFor = (mode: Mode, isAsync: boolean): Slot | `${Slot}Async` => {
 const recordOf = (value: unknown): Options =>
   typeof value === 'object' && value !== null ? (value as Options) : {}
 
+// An instance passing `undefined`, such as data still loading, leaves the config's value in place.
+const setEntriesOf = (value: unknown): Options =>
+  Object.fromEntries(Object.entries(recordOf(value)).filter(([, entry]) => entry !== undefined))
+
 /**
  * The TanStack form options of a form: the config's options and the instance's merged key by key,
- * the instance winning, except `validators` and `listeners`, which merge slot by slot. The schema
+ * the instance winning, except `validators` and `listeners`, which merge slot by slot; a key or
+ * slot the instance sets to `undefined` counts as unset. The schema
  * goes into the slot `validation` picks unless a validator already fills it; a dynamic mode brings
  * its validation logic, an asynchronous schema its debounce unless the options set one.
  */
@@ -50,9 +55,10 @@ export function formOptionsFor({ config, options }: FormOptionsInput): Record<st
   const { mode = DEFAULT_MODE, ...timing } = recordOf(validation) as Validation
   const isAsync = timing.async === true
   const slot = slotFor(mode, isAsync)
+  const instanceOptions = setEntriesOf(options)
   const validators = {
     ...recordOf(configOptions.validators),
-    ...recordOf(options?.validators),
+    ...setEntriesOf(instanceOptions.validators),
   }
 
   return {
@@ -60,8 +66,8 @@ export function formOptionsFor({ config, options }: FormOptionsInput): Record<st
     ...(isAsync &&
       timing.asyncDebounceMs !== undefined && { asyncDebounceMs: timing.asyncDebounceMs }),
     ...configOptions,
-    ...options,
+    ...instanceOptions,
     validators: validators[slot] === undefined ? { ...validators, [slot]: schema } : validators,
-    listeners: { ...recordOf(configOptions.listeners), ...recordOf(options?.listeners) },
+    listeners: { ...recordOf(configOptions.listeners), ...setEntriesOf(instanceOptions.listeners) },
   }
 }
