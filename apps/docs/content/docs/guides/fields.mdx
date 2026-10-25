@@ -1,0 +1,243 @@
+---
+title: Fields
+description: The four shapes of a field entry, nested objects, and TanStack's options per field.
+---
+
+`fields` describes what a form contains, and its shape follows the data: an object in the data is
+an object in the config, an array is an array. Each entry under `fields` has one of four shapes,
+marked by one key:
+
+| Shape | Marker | For |
+| --- | --- | --- |
+| [Leaf](#leaf) | `widget` | one value, rendered by a widget |
+| [Object](#object) | `fields` | a value with parts |
+| [Array](/guides/arrays) | `item` | a list, one entry per item |
+| [Custom](#custom) | `render` | a field you render yourself |
+
+The shapes exclude each other. An entry with a `widget` and `fields` does not compile, so an entry
+never half-works.
+
+## How a level renders
+
+<RenderLoopDiagram />
+
+`Fields` walks a level and renders each entry at its **path**, the name TanStack knows the field
+by: `email`, `address.zip`, `contacts[0].name`. You never write a path in a config; formdef builds
+it while it descends.
+
+## Leaf
+
+A leaf names a widget and passes it its props:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string; placeholder?: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+export const Newsletter = createForm({
+  schema: z.object({ email: z.email() }),
+  defaultValues: { email: '' },
+  fields: {
+    email: { widget: 'text', props: { label: 'Email', placeholder: 'you@example.com' } },
+  },
+})
+```
+
+| Key | Meaning |
+| --- | --- |
+| `widget` | The registered widget that renders the field. It must serve the field's value type. |
+| `props` | The widget's own props, checked against that widget. Required when the widget has a prop it cannot render without. |
+
+`props` may also be a function of the form's values; [Visibility and derived
+props](/guides/visibility#derived-props) shows how.
+
+A widget that takes `required` can only receive `required: false` where the schema makes the key
+optional, so a config never claims a value the schema does not demand:
+
+```tsx
+// @errors: 2322
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string; required?: boolean }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+export const Profile = createForm({
+  schema: z.object({ name: z.string().min(1), nickname: z.string().optional() }),
+  defaultValues: { name: '' },
+  fields: {
+    name: { widget: 'text', props: { label: 'Name', required: true } },
+    nickname: { widget: 'text', props: { label: 'Nickname', required: true } },
+  },
+})
+```
+
+## Object
+
+An object entry describes the parts of a value with `fields` of its own:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+const schema = z.object({
+  name: z.string(),
+  address: z.object({ zip: z.string(), city: z.string() }),
+})
+
+export const Customer = createForm({
+  schema,
+  defaultValues: { name: '', address: { zip: '', city: '' } },
+  fields: {
+    name: { widget: 'text', props: { label: 'Name' } },
+    address: {
+      fields: {
+        zip: { widget: 'text', props: { label: 'ZIP code' } },
+        city: { widget: 'text', props: { label: 'City' } },
+      },
+    },
+  },
+})
+```
+
+The inputs land at `address.zip` and `address.city`. An object renders no markup of its own: its
+fields appear where the object sits. To draw a box around them, use a
+[section](/guides/layout#sections-and-rows) in the layout. Each object is a **level** and may carry
+its own `layout`, which names the keys of that level only.
+
+An object entry may carry TanStack's field options too, for a rule over the whole object. formdef
+then mounts a field at the object's path, so the rule runs; without options it mounts none.
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const schema = z.object({ address: z.object({ zip: z.string(), city: z.string() }) })
+// ---cut---
+export const Shipping = createForm({
+  schema,
+  defaultValues: { address: { zip: '', city: '' } },
+  fields: {
+    address: {
+      validators: {
+        onChange: ({ value }) =>
+          value.zip !== '' && value.city === '' ? 'A ZIP code needs a city' : undefined,
+        onChangeListenTo: ['address.zip', 'address.city'],
+      },
+      fields: {
+        zip: { widget: 'text', props: { label: 'ZIP code' } },
+        city: { widget: 'text', props: { label: 'City' } },
+      },
+    },
+  },
+})
+```
+
+`onChangeListenTo` makes the rule run when a part changes: TanStack validates the field whose value
+was set, and setting `address.zip` alone does not run a rule on `address`.
+
+## Leaving keys out
+
+A key of the data that `fields` does not describe is not rendered. It keeps its value, the schema
+still validates it, and it is submitted, which suits ids and values the server manages. A key the
+data does not have is a compile error.
+
+## One widget for a whole array
+
+A list that is one control, such as tags or a multi-select, is a leaf whose widget serves the
+array type, `FieldOf<string[]>`:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TagsField = (_: FieldOf<string[]> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { tags: TagsField } })
+// ---cut---
+export const Article = createForm({
+  schema: z.object({ tags: z.array(z.string()) }),
+  defaultValues: { tags: [] },
+  fields: { tags: { widget: 'tags', props: { label: 'Tags' } } },
+})
+```
+
+An array whose items each get their own fields is an array entry; [Arrays](/guides/arrays)
+covers it.
+
+## Custom
+
+A custom entry hands you TanStack's field, typed with the field's value, and renders what you
+return:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+declare const AvatarUpload: (props: { url: string; onUpload: (url: string) => void }) => null
+// ---cut---
+export const Account = createForm({
+  schema: z.object({ name: z.string(), avatar: z.string() }),
+  defaultValues: { name: '', avatar: '' },
+  fields: {
+    name: { widget: 'text', props: { label: 'Name' } },
+    avatar: {
+      render: (field) => (
+        <AvatarUpload url={field.state.value} onUpload={(url) => field.handleChange(url)} />
+      ),
+    },
+  },
+})
+```
+
+Use it for a control that does not fit the widget contract, or for one form only. It is what you
+would write against TanStack directly, inside a config.
+
+## TanStack's options per field
+
+Every entry, whatever its shape, takes TanStack's field options and passes them on unchanged:
+`validators`, `listeners`, `asyncDebounceMs`, `asyncAlways`, `defaultValue`, `defaultMeta`,
+`disableErrorFlat` and `mode`. An array entry takes all of them except `mode`.
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+declare function isTaken(username: string): Promise<boolean>
+// ---cut---
+export const SignUp = createForm({
+  schema: z.object({ username: z.string().min(3) }),
+  defaultValues: { username: '' },
+  fields: {
+    username: {
+      widget: 'text',
+      props: { label: 'Username' },
+      asyncDebounceMs: 300,
+      validators: {
+        onChangeAsync: async ({ value }) =>
+          (await isTaken(value)) ? 'This username is taken' : undefined,
+      },
+    },
+  },
+})
+```
+
+Validators and listeners on an entry are typed against that field's value, and they run next to
+the schema.

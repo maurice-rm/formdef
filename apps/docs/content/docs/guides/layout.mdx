@@ -1,0 +1,190 @@
+---
+title: Layout
+description: Order, sections and rows, placed components, and the markup formdef renders.
+---
+
+`fields` says what a level contains, `layout` says where it goes. Without a layout, a level
+renders its fields in the order `fields` declares them. With one, the layout decides the order and
+what appears at all.
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const SubmitButton = (_: { label: string }) => null
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+  formComponents: { SubmitButton },
+})
+// ---cut---
+const schema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.email(),
+  address: z.object({ zip: z.string(), city: z.string() }),
+})
+
+export const Customer = createForm({
+  schema,
+  defaultValues: { firstName: '', lastName: '', email: '', address: { zip: '', city: '' } },
+  fields: {
+    firstName: { widget: 'text', props: { label: 'First name' } },
+    lastName: { widget: 'text', props: { label: 'Last name' } },
+    email: { widget: 'text', props: { label: 'Email' } },
+    address: {
+      fields: {
+        zip: { widget: 'text', props: { label: 'ZIP code' } },
+        city: { widget: 'text', props: { label: 'City' } },
+      },
+      layout: [{ row: ['zip', 'city'] }],
+    },
+  },
+  layout: [
+    { section: 'Customer', layout: [{ row: ['firstName', 'lastName'] }, 'email'] },
+    { section: 'Address', layout: ['address'] },
+    { component: 'SubmitButton', props: { label: 'Save' } },
+  ],
+})
+```
+
+Names in a layout are keys of that level, never paths: the root layout places `address`, and the
+layout inside `address` places `zip` and `city`. A field a layout leaves out is not rendered, keeps
+its value and is still validated, exactly like a key `fields` leaves out.
+
+## The five layout entries
+
+| Entry | Renders | Without a registered slot |
+| --- | --- | --- |
+| `'name'` | the field entry of this level | — |
+| `{ section: 'Title', layout: [...] }` | a titled group | `<fieldset>` with a `<legend>` |
+| `{ row: [...] }` | entries side by side | `<div data-formdef-row>` |
+| `{ component: 'Name', props }` | a registered form component | — |
+| `{ render: (form) => ... }` | an inline entry | — |
+
+An entry is exactly one of these. A section with a `component` does not compile.
+
+## Sections and rows
+
+Sections and rows hold layout entries, not just names, so they nest: a row inside a section, a
+section inside a section. Both take `props`, which go to the registered slot component, or, without
+one, a `className` for the bare element:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+export const Name = createForm({
+  schema: z.object({ firstName: z.string(), lastName: z.string() }),
+  defaultValues: { firstName: '', lastName: '' },
+  fields: {
+    firstName: { widget: 'text', props: { label: 'First name' } },
+    lastName: { widget: 'text', props: { label: 'Last name' } },
+  },
+  layout: [{ row: ['firstName', 'lastName'], props: { className: 'grid grid-cols-2 gap-4' } }],
+})
+```
+
+## Form components and inline entries
+
+Two entries place something that is not a field. Which one fits depends on whether it reads values.
+
+**A form component** is registered once under `formComponents` and placed by name, its `props`
+checked against the component. It reads the form through `useFormContext()`, which does not know
+the form's data type. That suits pieces that read no values and are reused across forms, such as a
+submit button.
+
+**An inline entry** is a `render` function in the layout. It receives the form as a `FormHandle`,
+typed with the form's data, so it suits anything that reads or writes a value:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+export const Name = createForm({
+  schema: z.object({ firstName: z.string(), lastName: z.string() }),
+  defaultValues: { firstName: '', lastName: '' },
+  fields: {
+    firstName: { widget: 'text', props: { label: 'First name' } },
+    lastName: { widget: 'text', props: { label: 'Last name' } },
+  },
+  layout: [
+    'firstName',
+    'lastName',
+    {
+      render: (form) => (
+        <form.Subscribe selector={(state) => `${state.values.firstName} ${state.values.lastName}`}>
+          {(fullName) => <p>Saved as {fullName}</p>}
+        </form.Subscribe>
+      ),
+    },
+  ],
+})
+```
+
+The handle reads and writes values and field meta by path, subscribes to the form's state,
+submits, resets and changes arrays. The members whose types depend on the validators, such as
+`validate`, are not part of it; a form that needs them takes [its own
+shell](/concepts/ways-in).
+
+Inline entries also hold content that is not bound to the form at all, a heading or a divider:
+`{ render: () => <hr /> }`.
+
+## The markup formdef renders
+
+formdef renders markup of its own in four places. Each is a **structure slot** you can fill with a
+component when you create the registry:
+
+| Slot | Where | Without it | Receives |
+| --- | --- | --- | --- |
+| `body` | inside every `<form>` a registry builds | nothing; the fields sit in the `<form>` | `BodyProps`: `children` |
+| `section` | each `{ section }` entry | `<fieldset><legend>` | `SectionProps`: `label`, `children` |
+| `row` | each `{ row }` entry | `<div data-formdef-row>` | `RowProps`: `children` |
+| `arrayFrame` | each array entry | the items and their buttons | `ArrayFrameProps`, see [Arrays](/guides/arrays#a-frame-of-your-own) |
+
+```tsx
+import {
+  type BodyProps,
+  createRegistry,
+  type FieldOf,
+  type RowProps,
+  type SectionProps,
+} from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+// ---cut---
+const Body = ({ children }: BodyProps) => <div className="flex flex-col gap-6">{children}</div>
+
+const Section = ({ label, children }: SectionProps) => (
+  <fieldset className="flex flex-col gap-4">
+    <legend className="font-medium">{label}</legend>
+    {children}
+  </fieldset>
+)
+
+const Row = ({ children }: RowProps) => <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+
+export const { createForm, Fields } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+  structure: { body: Body, section: Section, row: Row },
+})
+```
+
+A slot component may take props of its own beyond these; a section or row entry then passes them
+through `props`, checked against the component. `body` takes none, since no entry describes it.
+When you build the `<form>` yourself with `Fields`, `body` is not applied: the shell is yours, and
+so is the wrapper.

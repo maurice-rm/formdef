@@ -8,6 +8,7 @@ import type { MDXComponents } from 'mdx/types'
 import type { ReactNode } from 'react'
 
 import { BuildingBlocksDiagram } from './diagrams/building-blocks'
+import { RenderLoopDiagram } from './diagrams/render-loop'
 import { RegistryConfig } from './registry-config'
 
 const generator = createGenerator({
@@ -26,6 +27,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     ...Twoslash,
     AutoTypeTable: GeneratedTypeTable,
     BuildingBlocksDiagram,
+    RenderLoopDiagram,
     RegistryConfig,
     ...components,
   }
