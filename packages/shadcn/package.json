@@ -1,0 +1,32 @@
+{
+  "name": "@formdef/shadcn",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "shadcn build registry.json --output .registry && node scripts/build.ts",
+    "check-types": "tsc -p tsconfig.json && tsc -p tsconfig.loose.json && tsc -p tsconfig.node.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@base-ui/react": "1.9.0",
+    "@formdef/core": "workspace:*",
+    "@formdef/tsconfig": "workspace:*",
+    "@tanstack/react-form": "catalog:",
+    "@testing-library/dom": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@types/node": "24.19.2",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "class-variance-authority": "0.7.1",
+    "cn": "0.5.0",
+    "jsdom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "shadcn": "4.22.1",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tags": ["internal"],
+  "tasks": {
+    "build": {
+      "outputs": [".registry/**", "$TURBO_ROOT$/apps/docs/public/r/**"]
+    }
+  }
+}
