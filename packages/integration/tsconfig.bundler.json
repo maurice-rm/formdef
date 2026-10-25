@@ -10,7 +10,8 @@
     "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": false,
-    "noEmit": true
+    "noEmit": true,
+    "jsx": "react-jsx"
   },
-  "include": ["src/consumer.ts"]
+  "include": ["src/consumer.ts", "src/form.tsx"]
 }

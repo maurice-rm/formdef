@@ -5,7 +5,7 @@ const config: ViteUserConfig = defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     environment: 'jsdom',
     typecheck: {
-      include: ['src/**/*.test-d.ts'],
+      include: ['src/**/*.test-d.{ts,tsx}'],
     },
   },
 })
