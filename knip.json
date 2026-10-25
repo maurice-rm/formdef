@@ -16,6 +16,9 @@
       "vitest": {
         "entry": ["tests/**/*.test.{ts,tsx}", "tests/**/*.test-d.{ts,tsx}"]
       }
+    },
+    "apps/docs": {
+      "ignoreDependencies": ["@formdef/core", "@tanstack/react-form"]
     }
   }
 }
