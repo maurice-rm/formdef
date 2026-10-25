@@ -109,6 +109,46 @@
           }
         }
       }
+    },
+    {
+      "includes": ["packages/core/src/widget/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/config", "**/config/**", "**/registry", "**/registry/**"],
+                    "message": "formdef: widget/ is the innermost module and imports no other"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/core/src/config/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/registry", "**/registry/**"],
+                    "message": "formdef: config/ imports only from widget/"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }
