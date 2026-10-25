@@ -45,6 +45,8 @@ says what formdef does; this file says how code is written here.
   imports in packages: TypeScript does not rewrite aliases in emitted declarations. Module
   boundaries inside a package are enforced with `noRestrictedImports` overrides per folder,
   added in `biome.json` together with the folders they guard.
+- In `@formdef/core` dependencies point one way: `registry` → `form` → `render` → `config` →
+  `widget`. An inner folder never imports an outer one.
 - Exports of `@formdef/core` declare their types (`isolatedDeclarations`).
 
 ## Tests
