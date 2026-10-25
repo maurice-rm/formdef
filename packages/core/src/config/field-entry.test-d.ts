@@ -5,6 +5,7 @@ import { z } from 'zod'
 import type { FieldApiOf, FieldOf } from '../widget/field-of'
 import type { FieldEntry } from './field-entry'
 import type { InferData } from './infer-data'
+import type { ArrayFrameProps } from './structure'
 
 type Widgets = {
   text: ComponentType<FieldOf<string> & { label: string; required?: boolean }>
@@ -20,7 +21,10 @@ type Values = {
   birthday: Date
   avatar: File
   tags: string[]
+  contacts: { name: string; phone?: string }[]
 }
+
+type Contact = Values['contacts'][number]
 
 type Parts = {
   widgets: Widgets
@@ -30,6 +34,20 @@ type Parts = {
 }
 
 type Entry<TValue> = FieldEntry<Parts, TValue, Values>
+
+type FramedParts = Omit<Parts, 'structure'> & {
+  structure: { arrayFrame: ComponentType<ArrayFrameProps<Contact> & { isCompact?: boolean }> }
+}
+
+type FramedEntry<TValue> = FieldEntry<FramedParts, TValue, Values>
+
+const contactsEntry = {
+  item: { fields: { name: { widget: 'text', props: { label: 'Name' } } }, layout: ['name'] },
+  newItem: () => ({ name: '' }),
+  addLabel: 'Add contact',
+  removeLabel: (contact: Contact, index: number) =>
+    `Remove ${contact.name || `contact ${index + 1}`}`,
+} satisfies Entry<Contact[]>
 
 describe('FieldEntry', () => {
   describe('object', () => {
@@ -178,6 +196,112 @@ describe('FieldEntry', () => {
     it('is not offered for an array', () => {
       // @ts-expect-error an array is a leaf or, later, an array entry
       const entry: Entry<string[]> = { fields: {} }
+      expectTypeOf(entry).not.toBeAny()
+    })
+  })
+
+  describe('array', () => {
+    it('describes one item, how to make a new one and the labels of its controls', () => {
+      const entry: Entry<Contact[]> = {
+        item: {
+          fields: { name: { widget: 'text', props: { label: 'Name' } } },
+          layout: ['name'],
+        },
+        newItem: () => ({ name: '' }),
+        addLabel: 'Add contact',
+        removeLabel: (contact, index) => {
+          expectTypeOf(contact).toEqualTypeOf<Contact>()
+          expectTypeOf(index).toEqualTypeOf<number>()
+
+          return `Remove ${contact.name || `contact ${index + 1}`}`
+        },
+        itemKey: (contact) => contact.name,
+      }
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('takes a fixed remove label', () => {
+      expectTypeOf({ ...contactsEntry, removeLabel: 'Remove' }).toExtend<Entry<Contact[]>>()
+    })
+
+    it('needs a new item that is a whole item', () => {
+      // @ts-expect-error a contact needs its name
+      const entry: Entry<Contact[]> = { ...contactsEntry, newItem: () => ({ phone: '' }) }
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('needs its labels', () => {
+      const { addLabel: _unused, ...withoutAddLabel } = contactsEntry
+      // @ts-expect-error the add control needs an accessible name
+      const entry: Entry<Contact[]> = withoutAddLabel
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('renders a list of single values with a leaf as its item', () => {
+      const entry: Entry<string[]> = {
+        item: { widget: 'text', props: { label: 'Tag' } },
+        newItem: () => '',
+        addLabel: 'Add tag',
+        removeLabel: (tag) => `Remove ${tag}`,
+      }
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('takes no props without a registered array frame', () => {
+      // @ts-expect-error without a frame the bare default renders the items
+      const entry: Entry<Contact[]> = { ...contactsEntry, props: { isCompact: true } }
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('takes the props of the registered array frame', () => {
+      const entry: FramedEntry<Contact[]> = { ...contactsEntry, props: { isCompact: true } }
+      const unknownProp: FramedEntry<Contact[]> = {
+        ...contactsEntry,
+        // @ts-expect-error the frame declares `isCompact` only
+        props: { isWide: true },
+      }
+      expectTypeOf(entry).not.toBeAny()
+      expectTypeOf(unknownProp).not.toBeAny()
+    })
+
+    it('leaves the mode to the renderer', () => {
+      // @ts-expect-error the renderer sets the array mode
+      const entry: Entry<Contact[]> = { ...contactsEntry, mode: 'array' }
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('is not offered for a value that is not an array', () => {
+      const entry: Entry<string> = {
+        // @ts-expect-error an item describes the items of an array
+        item: { widget: 'text', props: { label: 'Name' } },
+        newItem: () => '',
+        addLabel: 'Add',
+        removeLabel: 'Remove',
+      }
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('is not offered for a tuple, whose length is fixed', () => {
+      const entry: Entry<[string, string]> = {
+        // @ts-expect-error an item describes the items of an array
+        item: { widget: 'text', props: { label: 'Part' } },
+        newItem: () => '',
+        addLabel: 'Add',
+        removeLabel: 'Remove',
+      }
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('is exclusive with a leaf', () => {
+      const entry: Entry<string[]> = {
+        widget: 'tags',
+        props: { label: 'Tags' },
+        // @ts-expect-error an entry has one shape
+        item: { widget: 'text', props: { label: 'Tag' } },
+        newItem: () => '',
+        addLabel: 'Add tag',
+        removeLabel: 'Remove',
+      }
       expectTypeOf(entry).not.toBeAny()
     })
   })
