@@ -7,7 +7,7 @@ import defaultMdxComponents from 'fumadocs-ui/mdx'
 import type { MDXComponents } from 'mdx/types'
 import type { ReactNode } from 'react'
 
-import { Diagram } from './diagram'
+import { BuildingBlocksDiagram } from './diagrams/building-blocks'
 import { RegistryConfig } from './registry-config'
 
 const generator = createGenerator({
@@ -25,7 +25,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     ...TabsComponents,
     ...Twoslash,
     AutoTypeTable: GeneratedTypeTable,
-    Diagram,
+    BuildingBlocksDiagram,
     RegistryConfig,
     ...components,
   }

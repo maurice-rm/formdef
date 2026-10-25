@@ -6,3 +6,105 @@
 html {
   scrollbar-gutter: stable;
 }
+
+@layer components {
+  .diagram {
+    --diagram-paper: var(--color-fd-background);
+    --diagram-ink: var(--color-fd-foreground);
+    --diagram-muted: color-mix(
+      in oklab,
+      var(--color-fd-muted-foreground) 75%,
+      var(--color-fd-foreground)
+    );
+    --diagram-node: color-mix(in oklab, var(--color-fd-foreground) 3%, transparent);
+    --diagram-node-stroke: color-mix(in oklab, var(--color-fd-foreground) 28%, transparent);
+    --diagram-ext: color-mix(in oklab, var(--color-fd-muted-foreground) 10%, transparent);
+    --diagram-focal-muted: color-mix(
+      in oklab,
+      var(--color-fd-background) 75%,
+      var(--color-fd-foreground)
+    );
+  }
+
+  .diagram svg {
+    display: block;
+    width: 100%;
+    min-width: var(--diagram-width);
+    font-family: inherit;
+  }
+
+  .diagram .bg,
+  .diagram .mask {
+    fill: var(--diagram-paper);
+  }
+  .diagram .node {
+    fill: var(--diagram-node);
+    stroke: var(--diagram-node-stroke);
+    stroke-width: 1;
+  }
+  .diagram .node-ext {
+    fill: var(--diagram-ext);
+    stroke: var(--diagram-node-stroke);
+    stroke-width: 1;
+  }
+  .diagram .node-focal {
+    fill: var(--diagram-ink);
+    stroke: var(--diagram-ink);
+    stroke-width: 1;
+  }
+  .diagram .tag,
+  .diagram .tag-ext {
+    fill: none;
+    stroke: var(--diagram-node-stroke);
+    stroke-width: 0.8;
+  }
+  .diagram .tag-focal {
+    fill: none;
+    stroke: var(--diagram-focal-muted);
+    stroke-width: 0.8;
+  }
+  .diagram .tag-text,
+  .diagram .tag-text-ext {
+    fill: var(--diagram-muted);
+    font: 500 9px var(--font-mono);
+    letter-spacing: 0.08em;
+  }
+  .diagram .tag-text-focal {
+    fill: var(--diagram-focal-muted);
+    font: 500 9px var(--font-mono);
+    letter-spacing: 0.08em;
+  }
+  .diagram .name,
+  .diagram .name-ext {
+    fill: var(--diagram-ink);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .diagram .name-focal {
+    fill: var(--diagram-paper);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .diagram .sub,
+  .diagram .sub-ext {
+    fill: var(--diagram-muted);
+    font: 400 11px var(--font-mono);
+  }
+  .diagram .sub-focal {
+    fill: var(--diagram-focal-muted);
+    font: 400 11px var(--font-mono);
+  }
+  .diagram .wire {
+    fill: none;
+    stroke: var(--diagram-muted);
+    stroke-width: 1.2;
+  }
+  .diagram .head {
+    fill: var(--diagram-muted);
+  }
+  .diagram .label {
+    fill: var(--diagram-muted);
+    font: 400 10px var(--font-mono);
+    letter-spacing: 0.08em;
+  }
+}

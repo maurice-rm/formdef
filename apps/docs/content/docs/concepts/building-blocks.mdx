@@ -3,12 +3,7 @@ title: Building blocks
 description: What formdef does, and what it leaves to TanStack Form.
 ---
 
-<Diagram
-  name="building-blocks"
-  width={768}
-  height={456}
-  alt="The schema, the config and the registry go into createForm, which checks the config and returns a component. That component creates a TanStack form with useAppForm and renders Fields, which hands each widget its field as a prop; the widget writes values back through handleChange."
-/>
+<BuildingBlocksDiagram />
 
 You write four things: a **schema**, a **config** per form, a **registry** per app, and the
 **widgets** the registry names. formdef turns them into a component that renders the form, and
