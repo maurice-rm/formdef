@@ -14,6 +14,7 @@ import { PasswordField } from '@/components/formdef/password-field'
 import { RadioField } from '@/components/formdef/radio-field'
 import { SelectField } from '@/components/formdef/select-field'
 import { SwitchField } from '@/components/formdef/switch-field'
+import { TagsField } from '@/components/formdef/tags-field'
 import { TextField } from '@/components/formdef/text-field'
 import { TextareaField } from '@/components/formdef/textarea-field'
 
@@ -207,6 +208,34 @@ describe('the date widgets', () => {
       defaultValues: values,
       // @ts-expect-error a range widget does not serve a single date
       fields: { arrival: { widget: 'dateRange', props: { label: 'Arrival' } } },
+    })
+  })
+})
+
+describe('the tags widget', () => {
+  const tagging = createRegistry({ fieldContext, formContext, widgets: { tags: TagsField } })
+  const tagSchema = z.object({ skills: z.array(z.string()), name: z.string() })
+
+  it('registers and serves a list of strings', () => {
+    const Form = tagging.createForm({
+      schema: tagSchema,
+      defaultValues: { skills: [], name: '' },
+      fields: {
+        skills: {
+          widget: 'tags',
+          props: { label: 'Skills', suggestions: ['react'], removeLabel: (tag) => `Remove ${tag}` },
+        },
+      },
+    })
+    expectTypeOf(Form).not.toBeAny()
+  })
+
+  it('rejects a string value', () => {
+    tagging.createForm({
+      schema: tagSchema,
+      defaultValues: { skills: [], name: '' },
+      // @ts-expect-error a tags widget serves a list, not a string
+      fields: { name: { widget: 'tags', props: { label: 'Name' } } },
     })
   })
 })
