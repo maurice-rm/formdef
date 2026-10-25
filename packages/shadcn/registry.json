@@ -394,6 +394,147 @@
       ],
       "docs": "Register it in lib/formdef: widgets: { combobox: ComboboxField }. Rename the text shown without matches with empty, and the clear button's name with clearLabel.",
       "categories": ["form", "field"]
+    },
+    {
+      "name": "date-field",
+      "type": "registry:component",
+      "title": "Date field",
+      "description": "A formdef widget for an ISO date string, built on shadcn's Calendar in a Popover; the day stays the day in every time zone.",
+      "dependencies": ["@formdef/core", "cn", "lucide-react"],
+      "registryDependencies": ["button", "calendar", "field", "popover"],
+      "files": [
+        {
+          "path": "components/formdef/calendar-popover.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/calendar-popover.tsx"
+        },
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/date-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/date-field.tsx"
+        },
+        {
+          "path": "lib/formdef/date.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/date.ts"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { date: DateField }. Its value is an ISO date such as 2026-03-01, empty as ''. Show it in your locale with format, and bound it with min and max.",
+      "categories": ["form", "field", "date"]
+    },
+    {
+      "name": "date-range-field",
+      "type": "registry:component",
+      "title": "Date range field",
+      "description": "A formdef widget for a range of ISO date strings, built on shadcn's Calendar in a Popover.",
+      "dependencies": ["@formdef/core", "cn", "lucide-react"],
+      "registryDependencies": ["button", "calendar", "field", "popover"],
+      "files": [
+        {
+          "path": "components/formdef/calendar-popover.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/calendar-popover.tsx"
+        },
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/date-range-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/date-range-field.tsx"
+        },
+        {
+          "path": "lib/formdef/date.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/date.ts"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { dateRange: DateRangeField }. Its value is { from?: string; to?: string }.",
+      "categories": ["form", "field", "date"]
+    },
+    {
+      "name": "date-time-field",
+      "type": "registry:component",
+      "title": "Date and time field",
+      "description": "A formdef widget for a local ISO date-time string, built on shadcn's Calendar in a Popover and a time input.",
+      "dependencies": ["@formdef/core", "cn", "lucide-react"],
+      "registryDependencies": ["button", "calendar", "field", "input-group", "popover"],
+      "files": [
+        {
+          "path": "components/formdef/calendar-popover.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/calendar-popover.tsx"
+        },
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/date-time-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/date-time-field.tsx"
+        },
+        {
+          "path": "lib/formdef/date.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/date.ts"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { dateTime: DateTimeField }. Its value is a local date-time such as 2026-03-01T14:30; defaultTime fills the time when a day is chosen first.",
+      "categories": ["form", "field", "date"]
     }
   ]
 }

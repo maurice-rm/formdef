@@ -5,3 +5,7 @@ export type FieldLabels = {
   labelAside?: ReactNode
   description?: string | undefined
 }
+
+const LABEL_SUFFIX = '-label'
+
+export const labelIdFor = (controlId: string): string => `${controlId}${LABEL_SUFFIX}`

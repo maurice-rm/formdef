@@ -25,6 +25,7 @@
     "jsdom": "catalog:",
     "lucide-react": "1.61.0",
     "react": "catalog:",
+    "react-day-picker": "10.0.2",
     "react-dom": "catalog:",
     "shadcn": "4.22.1",
     "typescript": "catalog:",

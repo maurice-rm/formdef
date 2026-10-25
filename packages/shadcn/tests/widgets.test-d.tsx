@@ -6,6 +6,9 @@ import { z } from 'zod'
 import { CheckboxField } from '@/components/formdef/checkbox-field'
 import { CheckboxGroupField } from '@/components/formdef/checkbox-group-field'
 import { ComboboxField } from '@/components/formdef/combobox-field'
+import { DateField } from '@/components/formdef/date-field'
+import { DateRangeField } from '@/components/formdef/date-range-field'
+import { DateTimeField } from '@/components/formdef/date-time-field'
 import { NumberField } from '@/components/formdef/number-field'
 import { PasswordField } from '@/components/formdef/password-field'
 import { RadioField } from '@/components/formdef/radio-field'
@@ -165,6 +168,45 @@ describe('the checkbox group and the combobox', () => {
       defaultValues: values,
       // @ts-expect-error a combobox serves a string, not a list
       fields: { channels: { widget: 'combobox', props: { label: 'Channels', options } } },
+    })
+  })
+})
+
+describe('the date widgets', () => {
+  const dates = createRegistry({
+    fieldContext,
+    formContext,
+    widgets: { date: DateField, dateRange: DateRangeField, dateTime: DateTimeField },
+  })
+  const dateSchema = z.object({
+    arrival: z.string(),
+    stay: z.object({ from: z.string().optional(), to: z.string().optional() }),
+    startsAt: z.string(),
+  })
+  const values = { arrival: '', stay: {}, startsAt: '' }
+
+  it('register and serve the values they are written for', () => {
+    const Form = dates.createForm({
+      schema: dateSchema,
+      defaultValues: values,
+      fields: {
+        arrival: {
+          widget: 'date',
+          props: { label: 'Arrival', min: '2026-01-01', weekStartsOn: 1 },
+        },
+        stay: { widget: 'dateRange', props: { label: 'Stay', separator: ' bis ' } },
+        startsAt: { widget: 'dateTime', props: { label: 'Starts', timeLabel: 'Uhrzeit' } },
+      },
+    })
+    expectTypeOf(Form).not.toBeAny()
+  })
+
+  it('reject a value they are not written for', () => {
+    dates.createForm({
+      schema: dateSchema,
+      defaultValues: values,
+      // @ts-expect-error a range widget does not serve a single date
+      fields: { arrival: { widget: 'dateRange', props: { label: 'Arrival' } } },
     })
   })
 })

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { FieldNotes } from '@/components/formdef/field-notes'
 import { LabelLine } from '@/components/formdef/label-line'
 import { Field } from '@/components/ui/field'
-import type { FieldLabels } from '@/lib/formdef/field-labels'
+import { type FieldLabels, labelIdFor } from '@/lib/formdef/field-labels'
 
 type FieldFrameProps = FieldLabels & {
   parts: FieldParts
@@ -22,7 +22,7 @@ export const FieldFrame = ({
 }: FieldFrameProps) => (
   <Field data-invalid={parts.isErrorDue} data-disabled={disabled}>
     {label !== undefined && (
-      <LabelLine htmlFor={parts.control.id} aside={labelAside}>
+      <LabelLine id={labelIdFor(parts.control.id)} htmlFor={parts.control.id} aside={labelAside}>
         {label}
       </LabelLine>
     )}
