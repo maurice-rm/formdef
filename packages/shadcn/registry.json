@@ -572,6 +572,89 @@
       ],
       "docs": "Register it in lib/formdef: widgets: { tags: TagsField }. Its value is string[]. Enter turns the typed text into a tag; suggestions offers a list to pick from. Rename the remove buttons with removeLabel and the text shown without matches with empty.",
       "categories": ["form", "field"]
+    },
+    {
+      "name": "section",
+      "type": "registry:component",
+      "title": "Section",
+      "description": "A formdef structure slot that renders a titled group as a fieldset, with an optional description.",
+      "dependencies": ["@formdef/core"],
+      "registryDependencies": ["field"],
+      "files": [
+        {
+          "path": "components/formdef/section.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/section.tsx"
+        }
+      ],
+      "docs": "Register it in lib/formdef: structure: { section: Section }. A layout entry { section: 'Address', layout: [...] } renders through it, and its props take description and variant: 'label' for a section inside another.",
+      "categories": ["form", "layout"]
+    },
+    {
+      "name": "row",
+      "type": "registry:component",
+      "title": "Row",
+      "description": "A formdef structure slot that places its fields side by side once its own container has room.",
+      "dependencies": ["@formdef/core", "cn"],
+      "registryDependencies": [],
+      "files": [
+        {
+          "path": "components/formdef/row.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/row.tsx"
+        }
+      ],
+      "docs": "Register it in lib/formdef: structure: { row: Row }. A layout entry { row: ['first', 'last'] } renders through it; it stacks below its container's md width.",
+      "categories": ["form", "layout"]
+    },
+    {
+      "name": "array-frame",
+      "type": "registry:component",
+      "title": "Array frame",
+      "description": "A formdef structure slot that frames every array: its items, a remove button beside each, an add button and the errors about the whole list.",
+      "dependencies": ["@formdef/core", "lucide-react"],
+      "registryDependencies": ["button", "field"],
+      "files": [
+        {
+          "path": "components/formdef/array-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/array-frame.tsx"
+        },
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        }
+      ],
+      "docs": "Register it in lib/formdef: structure: { arrayFrame: ArrayFrame }. An array entry's props take label, description, min and max.",
+      "categories": ["form", "layout"]
+    },
+    {
+      "name": "submit-button",
+      "type": "registry:component",
+      "title": "Submit button",
+      "description": "A formdef form component that submits the form, is never disabled for an invalid form, and shows a spinner once a submit takes noticeably long.",
+      "dependencies": ["@tanstack/react-form@>=1.33.5 <1.34.0", "lucide-react"],
+      "registryDependencies": ["button"],
+      "files": [
+        {
+          "path": "components/formdef/submit-button.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/submit-button.tsx"
+        },
+        {
+          "path": "hooks/formdef/use-slow.ts",
+          "type": "registry:hook",
+          "target": "@hooks/formdef/use-slow.ts"
+        },
+        {
+          "path": "lib/formdef/context.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/context.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: formComponents: { SubmitButton }, and place it in a layout as { component: 'SubmitButton', props: { label: 'Save' } }.",
+      "categories": ["form"]
     }
   ]
 }

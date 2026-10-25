@@ -3,6 +3,7 @@ import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
 
+import { ArrayFrame } from '@/components/formdef/array-frame'
 import { CheckboxField } from '@/components/formdef/checkbox-field'
 import { CheckboxGroupField } from '@/components/formdef/checkbox-group-field'
 import { ComboboxField } from '@/components/formdef/combobox-field'
@@ -12,7 +13,10 @@ import { DateTimeField } from '@/components/formdef/date-time-field'
 import { NumberField } from '@/components/formdef/number-field'
 import { PasswordField } from '@/components/formdef/password-field'
 import { RadioField } from '@/components/formdef/radio-field'
+import { Row } from '@/components/formdef/row'
+import { Section } from '@/components/formdef/section'
 import { SelectField } from '@/components/formdef/select-field'
+import { SubmitButton } from '@/components/formdef/submit-button'
 import { SwitchField } from '@/components/formdef/switch-field'
 import { TagsField } from '@/components/formdef/tags-field'
 import { TextField } from '@/components/formdef/text-field'
@@ -236,6 +240,63 @@ describe('the tags widget', () => {
       defaultValues: { skills: [], name: '' },
       // @ts-expect-error a tags widget serves a list, not a string
       fields: { name: { widget: 'tags', props: { label: 'Name' } } },
+    })
+  })
+})
+
+describe('the structure slots and the submit button', () => {
+  const framed = createRegistry({
+    fieldContext,
+    formContext,
+    widgets: { text: TextField },
+    formComponents: { SubmitButton },
+    structure: { section: Section, row: Row, arrayFrame: ArrayFrame },
+  })
+  const teamSchema = z.object({ name: z.string(), members: z.array(z.string()) })
+  const values = { name: '', members: [] }
+
+  it('register, and type the props of sections, rows, arrays and the button', () => {
+    const Form = framed.createForm({
+      schema: teamSchema,
+      defaultValues: values,
+      fields: {
+        name: { widget: 'text', props: { label: 'Name' } },
+        members: {
+          item: { widget: 'text', props: { label: 'Member' } },
+          newItem: () => '',
+          addLabel: 'Add member',
+          removeLabel: 'Remove member',
+          props: { label: 'Members', min: 1, max: 5 },
+        },
+      },
+      layout: [
+        {
+          section: 'Team',
+          props: { description: 'Who is in it', variant: 'label' },
+          layout: ['name'],
+        },
+        { row: ['members'], props: { className: 'gap-6' } },
+        { component: 'SubmitButton', props: { label: 'Save', variant: 'default' } },
+      ],
+    })
+    expectTypeOf(Form).not.toBeAny()
+  })
+
+  it('reject props the slots do not take', () => {
+    const unknownProp = {
+      schema: teamSchema,
+      defaultValues: values,
+      fields: { name: { widget: 'text', props: { label: 'Name' } } },
+      // @ts-expect-error a section takes no columns
+      layout: [{ section: 'Team', props: { columns: 2 }, layout: ['name'] }],
+    } satisfies FormConfig<typeof framed, typeof teamSchema>
+    expectTypeOf(unknownProp).not.toBeAny()
+    framed.createForm({
+      schema: teamSchema,
+      defaultValues: values,
+      fields: { name: { widget: 'text', props: { label: 'Name' } } },
+      // @ts-expect-error the submit button needs its label
+      layout: ['name', { component: 'SubmitButton', props: {} }],
     })
   })
 })

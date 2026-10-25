@@ -11,7 +11,7 @@
       }
     },
     "packages/shadcn": {
-      "entry": ["lib/formdef/*.{ts,tsx}", "components/formdef/*.tsx"],
+      "entry": ["lib/formdef/*.{ts,tsx}", "components/formdef/*.tsx", "hooks/formdef/*.ts"],
       "ignore": ["components/ui/**"],
       "vitest": {
         "entry": ["tests/**/*.test.{ts,tsx}", "tests/**/*.test-d.{ts,tsx}"]
