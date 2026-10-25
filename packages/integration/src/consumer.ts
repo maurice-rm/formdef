@@ -1,4 +1,4 @@
-import { errorsOf, type FieldOf, fieldId } from '@formdef/core'
+import { errorsOf, type FieldOf, fieldId, type Validation } from '@formdef/core'
 
 export const summaryLink: string = `#${fieldId('signup', 'address.zip')}`
 
@@ -11,3 +11,8 @@ export const readValue = ({ field }: FieldOf<string>): string => field.state.val
 export const readNumber = ({ field }: FieldOf<string>): number => field.state.value
 
 export const readErrors = ({ field }: FieldOf<string>): string[] => errorsOf(field)
+
+export const validation: Validation = { mode: 'onChange', async: true, asyncDebounceMs: 300 }
+
+// @ts-expect-error a debounce applies to an asynchronous schema only
+export const debounceWithoutAsync: Validation = { asyncDebounceMs: 300 }
