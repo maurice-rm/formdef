@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 import type { ExtraProps } from './extra-props'
 import type { PropsEntry } from './props-entry'
+import type { RowProps, SectionProps } from './structure'
 import type { Visibility } from './visibility'
 
 type OneKind = 'formdef: a layout entry has one kind: section, row, component or render'
@@ -14,9 +15,6 @@ type KindMarkers = {
 }
 
 type Owns<TMarker extends keyof KindMarkers> = Omit<KindMarkers, TMarker>
-
-type SectionSupplied = 'label' | 'children'
-type RowSupplied = 'children'
 
 // Without a registered slot the renderer draws the bare element, which takes a class name only.
 type BareElementProps = { className?: string }
@@ -36,13 +34,13 @@ type SectionEntry<TParts extends LayoutParts, TNames extends string, TValues> = 
   /** The title of the group. */
   section: string
   layout: LayoutEntry<TParts, TNames, TValues>[]
-} & PropsEntry<SlotProps<TParts['structure'], 'section', SectionSupplied>, TValues> &
+} & PropsEntry<SlotProps<TParts['structure'], 'section', keyof SectionProps>, TValues> &
   Visibility<TValues> &
   Owns<'section'>
 
 type RowEntry<TParts extends LayoutParts, TNames extends string, TValues> = {
   row: LayoutEntry<TParts, TNames, TValues>[]
-} & PropsEntry<SlotProps<TParts['structure'], 'row', RowSupplied>, TValues> &
+} & PropsEntry<SlotProps<TParts['structure'], 'row', keyof RowProps>, TValues> &
   Visibility<TValues> &
   Owns<'row'>
 
