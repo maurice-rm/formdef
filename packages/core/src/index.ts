@@ -4,6 +4,7 @@ export type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from './confi
 export type { Validation } from './config/validation'
 export { createRegistry } from './registry/create-registry'
 export type { FieldsOf } from './registry/fields-of'
+export type { FormConfig } from './registry/form-config'
 export type { LayoutOf } from './registry/layout-of'
 export type { Registry } from './registry/registry'
 export { errorsOf } from './widget/errors-of'

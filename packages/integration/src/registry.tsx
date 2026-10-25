@@ -2,11 +2,13 @@ import {
   createRegistry,
   type FieldOf,
   type FieldsOf,
+  type FormConfig,
   type LayoutOf,
   type RowProps,
 } from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
 import type { ReactNode } from 'react'
+import { z } from 'zod'
 
 const { fieldContext, formContext } = createFormHookContexts()
 
@@ -82,4 +84,25 @@ export const customerLayout: LayoutOf<typeof registry, Customer> = [
 export const wrongWidget: FieldsOf<typeof registry, Address> = {
   // @ts-expect-error no widget named `date` is registered
   street: { widget: 'date' },
+}
+
+const customerSchema = z.object({
+  name: z.string().min(1),
+  billing: z.object({ street: z.string(), zip: z.string() }),
+  shipping: z.object({ street: z.string(), zip: z.string() }),
+})
+
+export const customerConfig: FormConfig<
+  typeof registry,
+  typeof customerSchema,
+  { intent: string }
+> = {
+  schema: customerSchema,
+  defaultValues: { name: '', billing: { street: '', zip: '' }, shipping: { street: '', zip: '' } },
+  fields: customerFields,
+  layout: customerLayout,
+  validation: { mode: 'blurThenChange' },
+  onSubmitMeta: { intent: 'save' },
+  onSubmit: ({ value, meta }) => console.info(meta.intent, value.name),
+  defaultState: { errorMap: { onSubmit: 'The link has expired.' } },
 }
