@@ -16,6 +16,7 @@ const PUBLIC_EXPORTS = [
   'FieldOf',
   'FieldParts',
   'FieldsOf',
+  'FormHandle',
   'fieldParts',
   'InferData',
   'LayoutOf',

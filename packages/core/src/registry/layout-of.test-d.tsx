@@ -2,6 +2,7 @@ import { createFormHookContexts } from '@tanstack/react-form'
 import type { ComponentType } from 'react'
 import { describe, expectTypeOf, it } from 'vitest'
 
+import type { FormHandle } from '../config/form-handle'
 import type { FieldOf } from '../widget/field-of'
 import { createRegistry } from './create-registry'
 import type { LayoutOf } from './layout-of'
@@ -39,6 +40,23 @@ describe('LayoutOf', () => {
   it('reads the values of the whole form in a condition', () => {
     const layout: LayoutOf<typeof registry, Address, Customer> = [
       { row: ['street', 'zip'], visibleWhen: (values) => values.name !== '' },
+    ]
+    expectTypeOf(layout).not.toBeAny()
+  })
+
+  it('hands an inline entry the form handle of its form', () => {
+    const layout: LayoutOf<typeof registry, Address, Customer> = [
+      {
+        render: (form) => {
+          expectTypeOf(form).toEqualTypeOf<FormHandle<Customer, never>>()
+          expectTypeOf(form.getFieldValue('billing.zip')).toEqualTypeOf<string>()
+          form.handleSubmit()
+          // @ts-expect-error a fragment does not know the submit meta of its form
+          form.handleSubmit({ intent: 'save' })
+
+          return null
+        },
+      },
     ]
     expectTypeOf(layout).not.toBeAny()
   })
