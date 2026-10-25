@@ -153,3 +153,38 @@ registry.createForm({
   // @ts-expect-error billing is not described in fields
   layout: ['name', 'billing'],
 })
+
+export const OwnShell = (): ReactNode => {
+  const form = registry.formHook.useAppForm({
+    defaultValues: {
+      name: '',
+      billing: { street: '', zip: '' },
+      shipping: { street: '', zip: '' },
+    },
+  })
+
+  return (
+    <form.AppForm>
+      <registry.Fields form={form} fields={customerFields} layout={['name', 'billing']} />
+      {/* @ts-expect-error shipping is not described in fields */}
+      <registry.Fields form={form} fields={{ name: customerFields.name }} layout={['shipping']} />
+    </form.AppForm>
+  )
+}
+
+export const AddressGroup = registry.formHook.withFieldGroup({
+  defaultValues: { street: '', zip: '' },
+  render: ({ group }) => (
+    <registry.Fields
+      form={group}
+      fields={{
+        street: { widget: 'text', props: { label: 'Street' } },
+        zip: {
+          widget: 'text',
+          props: { label: 'ZIP' },
+          visibleWhen: (values) => values.street !== '',
+        },
+      }}
+    />
+  ),
+})
