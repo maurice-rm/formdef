@@ -55,6 +55,7 @@
     "react": "catalog:",
     "tsdown": "0.23.2",
     "typescript": "catalog:",
+    "valibot": "catalog:",
     "vitest": "catalog:",
     "zod": "catalog:"
   },

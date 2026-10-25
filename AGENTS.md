@@ -57,9 +57,9 @@ says what formdef does; this file says how code is written here.
 - Vitest's type tests report only errors inside a test block; an error elsewhere in the file, a
   missing import for instance, turns the imported types into `any` and lets the tests pass.
   `check-types` runs `tsc` over the test files too and catches it, so the two always run together.
-- A type test that needs a component defines it inside its `it` block, where Vitest reports its
+- A type test that needs a component or a hook defines it inside its `it` block, where Vitest reports its
   errors. Type tests are never rendered, so `biome.json` turns `noComponentHookFactories` off for
-  `*.test-d.tsx`.
+  `*.test-d.ts` and `*.test-d.tsx`.
 
 ## Verify
 

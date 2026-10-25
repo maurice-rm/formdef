@@ -101,7 +101,7 @@
   },
   "overrides": [
     {
-      "includes": ["**/*.test-d.tsx"],
+      "includes": ["**/*.test-d.ts", "**/*.test-d.tsx"],
       "linter": {
         "rules": {
           "correctness": {

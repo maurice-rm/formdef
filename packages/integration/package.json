@@ -18,6 +18,7 @@
     "@types/react": "catalog:",
     "react": "catalog:",
     "typescript": "catalog:",
-    "typescript54": "npm:typescript@5.4.5"
+    "typescript54": "npm:typescript@5.4.5",
+    "zod": "catalog:"
   }
 }
