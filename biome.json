@@ -151,6 +151,26 @@
       }
     },
     {
+      "includes": ["packages/core/src/form/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/registry", "**/registry/**"],
+                    "message": "formdef: form/ imports from render/, config/ and widget/ only"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["packages/core/src/render/**"],
       "linter": {
         "rules": {
