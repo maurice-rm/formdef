@@ -18,6 +18,8 @@ next-env.d.ts
 apps/docs/public/r
 packages/shadcn/.registry
 
+.twoslash
+
 # Tooling caches
 .turbo
 coverage

@@ -4,7 +4,8 @@ packages:
 
 minimumReleaseAge: 1440
 
-allowBuilds: {}
+allowBuilds:
+  esbuild: false
 
 catalog:
   "@tanstack/react-form": 1.33.5

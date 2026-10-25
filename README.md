@@ -18,8 +18,6 @@ packages/tsconfig        the shared TypeScript configuration (private)
 apps/docs                the documentation, built with Fumadocs (private)
 ```
 
-Not every package exists yet; they are added milestone by milestone.
-
 ## Prerequisites
 
 - Node 24 (`.nvmrc`; `nvm use` picks it up). The library itself supports Node 22 and up.
@@ -37,6 +35,7 @@ pnpm check-types      # TypeScript across all packages
 pnpm test             # runtime tests
 pnpm test:types       # type tests
 pnpm build            # build all packages
+pnpm --filter @formdef/docs dev   # the documentation at http://localhost:3010
 pnpm changeset        # describe a change to a published package
 ```
 

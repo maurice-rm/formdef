@@ -1,0 +1,30 @@
+---
+title: Introduction
+description: Describe a form once as a typed object, render it as a React component.
+---
+
+formdef turns a typed config into a form built on [TanStack Form](https://tanstack.com/form). The
+compiler checks that every widget fits the value it receives.
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+
+const { fieldContext, formContext } = createFormHookContexts()
+
+const TextField = ({ field, label }: FieldOf<string> & { label: string }) => (
+  <label>
+    {label}
+    <input value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} />
+  </label>
+)
+
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+
+export const SignIn = createForm({
+  schema: z.object({ email: z.email() }),
+  defaultValues: { email: '' },
+  fields: { email: { widget: 'text', props: { label: 'Email' } } },
+})
+```

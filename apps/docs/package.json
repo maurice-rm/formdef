@@ -1,0 +1,38 @@
+{
+  "name": "@formdef/docs",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/validate-links.ts && next build",
+    "dev": "next dev --port 3010",
+    "check-types": "next typegen && tsc --noEmit",
+    "lint:links": "node scripts/validate-links.ts"
+  },
+  "dependencies": {
+    "@formdef/core": "workspace:*",
+    "@tanstack/react-form": "catalog:",
+    "fumadocs-core": "16.17.8",
+    "fumadocs-mdx": "15.4.10",
+    "fumadocs-ui": "npm:@fumadocs/base-ui@16.17.8",
+    "next": "16.4.3",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@formdef/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/mdx": "2.0.14",
+    "@types/node": "24.19.2",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "fumadocs-twoslash": "4.0.4",
+    "fumadocs-typescript": "5.6.0",
+    "next-validate-link": "1.6.7",
+    "postcss": "8.5.31",
+    "tailwindcss": "4.3.3",
+    "typescript": "catalog:"
+  }
+}
