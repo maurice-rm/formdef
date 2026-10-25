@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from 'react'
 
 import { FieldLabel } from '@/components/ui/field'
 
-type LabelLineProps = Pick<ComponentProps<typeof FieldLabel>, 'className' | 'htmlFor'> & {
+type LabelLineProps = Pick<ComponentProps<typeof FieldLabel>, 'className' | 'htmlFor' | 'id'> & {
   children: ReactNode
   aside?: ReactNode
 }
