@@ -1,10 +1,11 @@
 import type { createFormHook, StandardSchemaV1 } from '@tanstack/react-form'
-import type { ComponentProps, ComponentType, ReactNode } from 'react'
+import type { ComponentProps, ComponentType, Key, ReactNode } from 'react'
 
 import type { ConfigParts } from '../config/config-parts'
 import type { DescribedLayout } from '../config/described-layout'
 import type { FormConfigOf } from '../config/form-config-of'
 import type { FormPropsFor } from '../config/form-props'
+import type { KnownKeys } from '../config/known-keys'
 import type { LevelConfig } from '../config/level-config'
 import type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from '../config/structure'
 
@@ -150,7 +151,13 @@ export interface Registry<
     >,
     TSubmitMeta = never,
   >(
-    config: TConfig & { schema: TSchema; onSubmitMeta?: TSubmitMeta } & DescribedLayout<TConfig>,
+    config: TConfig & { schema: TSchema; onSubmitMeta?: TSubmitMeta } & DescribedLayout<TConfig> &
+      NoInfer<
+        KnownKeys<
+          TConfig,
+          FormConfigOf<OwnParts<TWidgets, TFormComponents, TStructure>, TSchema, TSubmitMeta>
+        >
+      >,
   ) => (props: FormPropsFor<TSchema, TSubmitMeta, TConfig>) => ReactNode
   /**
    * Renders `fields` and `layout` into a form the caller built with `formHook.useAppForm`, or into a
@@ -190,7 +197,19 @@ export interface Registry<
     props: TLevel & {
       /** The form from `formHook.useAppForm`, or the field group from `formHook.withFieldGroup`. */
       form: TForm
-    } & DescribedLayout<TLevel>,
+    } & DescribedLayout<TLevel> &
+      NoInfer<
+        KnownKeys<
+          TLevel,
+          LevelConfig<
+            FieldsParts<TWidgets, TFormComponents, TStructure, TForm>,
+            ValuesOf<TForm>
+          > & {
+            form: TForm
+            key?: Key | null | undefined
+          }
+        >
+      >,
   ) => ReactNode
   /**
    * Returns a new registry with the widgets, form components and structure slots of this one and

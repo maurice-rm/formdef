@@ -14,6 +14,8 @@ declare const TextField: ComponentType<FieldOf<string> & { label: string }>
 declare const NumberField: ComponentType<FieldOf<number> & { label: string }>
 declare const DateField: ComponentType<FieldOf<Date> & { label: string }>
 declare const SubmitButton: ComponentType<{ label: string }>
+declare const AreaField: ComponentType<FieldOf<string> & { label: string; rows?: number }>
+declare const ResetButton: ComponentType<{ label: string; confirm?: boolean }>
 
 describe('Registry', () => {
   it('carries the widgets, form components and structure slots it was created with', () => {
@@ -119,8 +121,8 @@ describe('Registry.createForm', () => {
   const registry = createRegistry({
     fieldContext,
     formContext,
-    widgets: { text: TextField, number: NumberField },
-    formComponents: { SubmitButton },
+    widgets: { text: TextField, area: AreaField, number: NumberField },
+    formComponents: { SubmitButton, ResetButton },
   })
   const schema = z.object({ email: z.email(), age: z.number() })
   type Signup = z.input<typeof schema>
@@ -209,6 +211,78 @@ describe('Registry.createForm', () => {
       fields: { email: { widget: 'text', props: { label: 'Email' } } },
       // @ts-expect-error age is not described in fields
       layout: [{ section: 'About you', layout: [{ row: ['email', 'age'] }] }],
+    })
+  })
+
+  it('rejects a prop the widget does not take and a key no config has', () => {
+    registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      // @ts-expect-error the text widget takes no colour
+      fields: { email: { widget: 'text', props: { label: 'Email', colour: 'red' } } },
+    })
+    registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: {},
+      // @ts-expect-error a config has no colour
+      colour: 'red',
+    })
+  })
+
+  it('checks props against the widget or form component an entry names, not its siblings', () => {
+    registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      // @ts-expect-error rows belongs to the area widget, not to text
+      fields: { email: { widget: 'text', props: { label: 'Email', rows: 3 } } },
+    })
+    registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: { email: { widget: 'area', props: { label: 'Email', rows: 3 } } },
+      layout: [
+        'email',
+        // @ts-expect-error confirm belongs to the reset button, not to submit
+        { component: 'SubmitButton', props: { label: 'Sign up', confirm: true } },
+      ],
+    })
+  })
+
+  it('rejects a key that belongs to another kind of layout entry', () => {
+    registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: { email: { widget: 'text', props: { label: 'Email' } } },
+      // @ts-expect-error a row has no layout of its own
+      layout: [{ row: ['email'], layout: ['email'] }],
+    })
+  })
+
+  it('types the form handle an inline entry of its layout receives', () => {
+    const Signup = registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: { email: { widget: 'text', props: { label: 'Email' } } },
+      layout: [
+        'email',
+        {
+          render: (form) => {
+            expectTypeOf(form.state.values).toEqualTypeOf<Signup>()
+            return null
+          },
+        },
+      ],
+    })
+    expectTypeOf(Signup).not.toBeAny()
+  })
+
+  it('rejects a field the schema does not have', () => {
+    registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      // @ts-expect-error a signup has no name
+      fields: { name: { widget: 'text', props: { label: 'Name' } } },
     })
   })
 
@@ -307,6 +381,40 @@ describe('Registry.Fields', () => {
           />
         </>
       )
+    }
+    expectTypeOf(Shell).not.toBeAny()
+  })
+
+  it('rejects a prop the widget does not take', () => {
+    const Shell = (): ReactNode => {
+      const form = registry.formHook.useAppForm({
+        defaultValues: { name: '', billing: { street: '', zip: '' } } as Customer,
+      })
+
+      return (
+        <registry.Fields
+          form={form}
+          // @ts-expect-error the text widget takes no colour
+          fields={{ name: { widget: 'text', props: { label: 'Name', colour: 'red' } } }}
+        />
+      )
+    }
+    expectTypeOf(Shell).not.toBeAny()
+  })
+
+  it("takes React's key, for a list of levels", () => {
+    const Shell = (): ReactNode => {
+      const form = registry.formHook.useAppForm({
+        defaultValues: { name: '', billing: { street: '', zip: '' } } as Customer,
+      })
+
+      return ['name'].map((name) => (
+        <registry.Fields
+          key={name}
+          form={form}
+          fields={{ name: { widget: 'text', props: { label: 'Name' } } }}
+        />
+      ))
     }
     expectTypeOf(Shell).not.toBeAny()
   })
