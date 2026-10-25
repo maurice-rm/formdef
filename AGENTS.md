@@ -54,6 +54,12 @@ says what formdef does; this file says how code is written here.
   **Exception:** `packages/shadcn` keeps its tests in `tests/`, because its source files are
   copied into users' projects and a test beside them would travel along.
 - A negative type test uses a fixture that is valid except for the one error under test.
+- Vitest's type tests report only errors inside a test block; an error elsewhere in the file, a
+  missing import for instance, turns the imported types into `any` and lets the tests pass.
+  `check-types` runs `tsc` over the test files too and catches it, so the two always run together.
+- A type test that needs a component defines it inside its `it` block, where Vitest reports its
+  errors. Type tests are never rendered, so `biome.json` turns `noComponentHookFactories` off for
+  `*.test-d.tsx`.
 
 ## Verify
 

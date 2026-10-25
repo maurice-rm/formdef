@@ -4,7 +4,7 @@ import ts from 'typescript54'
 
 // The public API of `@formdef/core`, name by name. A name is added here in the change that
 // exports it, never as a side effect of exporting it.
-const PUBLIC_EXPORTS = ['fieldId']
+const PUBLIC_EXPORTS = ['fieldId', 'FieldApiOf', 'FieldOf']
 
 // TypeScript 5.4 reads the declarations because TypeScript 7 offers no stable compiler API, and
 // because 5.4 is the oldest compiler the declarations have to work on.
@@ -70,13 +70,19 @@ function paramTagsWithTypes(symbol: ts.Symbol): string[] {
   )
 }
 
+function isDeclaredHere(declaration: ts.Declaration): boolean {
+  return declaration.getSourceFile() === sourceFile
+}
+
 function undocumentedMembers(symbol: ts.Symbol): string[] {
   if (!(symbol.flags & (ts.SymbolFlags.Interface | ts.SymbolFlags.TypeAlias))) {
     return []
   }
 
+  // Members a type takes over from TanStack or React are documented there, not here.
   return checker
     .getPropertiesOfType(checker.getDeclaredTypeOfSymbol(symbol))
+    .filter((member) => member.declarations?.some(isDeclaredHere))
     .filter((member) => !isDocumented(member))
     .map((member) => member.getName())
 }

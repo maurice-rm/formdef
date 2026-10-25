@@ -6,6 +6,10 @@ const config: UserConfig = defineConfig({
   platform: 'neutral',
   dts: true,
   sourcemap: true,
+  deps: {
+    neverBundle: true,
+    onlyImport: ['@tanstack/react-form', 'react'],
+  },
   exports: {
     devExports: '@formdef/source',
   },
