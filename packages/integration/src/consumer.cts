@@ -9,3 +9,5 @@ export const readValue = ({ field }: core.FieldOf<string>): string => field.stat
 
 // @ts-expect-error a string field holds no number
 export const readNumber = ({ field }: core.FieldOf<string>): number => field.state.value
+
+export const readErrors = ({ field }: core.FieldOf<string>): string[] => core.errorsOf(field)
