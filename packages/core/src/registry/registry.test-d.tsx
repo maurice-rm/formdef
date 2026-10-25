@@ -1,6 +1,7 @@
 import { createFormHookContexts } from '@tanstack/react-form'
 import type { ComponentType, ReactNode } from 'react'
 import { describe, expectTypeOf, it } from 'vitest'
+import { z } from 'zod'
 
 import type { RowProps, SectionProps } from '../config/structure'
 import type { FieldOf } from '../widget/field-of'
@@ -111,5 +112,119 @@ describe('Registry', () => {
       structure: { row: Row },
     })
     expectTypeOf(registry).not.toBeAny()
+  })
+})
+
+describe('Registry.createForm', () => {
+  const registry = createRegistry({
+    fieldContext,
+    formContext,
+    widgets: { text: TextField, number: NumberField },
+    formComponents: { SubmitButton },
+  })
+  const schema = z.object({ email: z.email(), age: z.number() })
+  type Signup = z.input<typeof schema>
+  type Intent = { readonly intent: 'signUp' }
+
+  it('types the callbacks of a config by its schema', () => {
+    const Signup = registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: {
+        email: {
+          widget: 'text',
+          props: { label: 'Email' },
+          visibleWhen: (values) => {
+            expectTypeOf(values).toEqualTypeOf<Signup>()
+            return true
+          },
+        },
+        age: { widget: 'number', props: { label: 'Age' } },
+      },
+      onSubmit: ({ value }) => {
+        expectTypeOf(value).toEqualTypeOf<Signup>()
+      },
+    })
+    expectTypeOf(Signup).not.toBeAny()
+  })
+
+  it('types the submit meta by onSubmitMeta', () => {
+    const Signup = registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: {},
+      onSubmitMeta: { intent: 'signUp' },
+      onSubmit: ({ meta }) => {
+        expectTypeOf(meta).toEqualTypeOf<Intent>()
+      },
+    })
+    expectTypeOf<{ options: { onSubmitMeta: Intent } }>().toExtend<Parameters<typeof Signup>[0]>()
+  })
+
+  it('takes a server error from onSubmitAsync', () => {
+    const Signup = registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: {},
+      validators: {
+        onSubmitAsync: async () => ({ form: 'Taken', fields: { email: 'Taken' } }),
+      },
+    })
+    expectTypeOf(Signup).not.toBeAny()
+  })
+
+  it('needs no props when the config holds the default values', () => {
+    const Signup = registry.createForm({ schema, defaultValues: { email: '', age: 0 }, fields: {} })
+
+    expectTypeOf<Record<never, never>>().toExtend<Parameters<typeof Signup>[0]>()
+  })
+
+  it('needs the default values in options when the config leaves them out', () => {
+    const Signup = registry.createForm({ schema, fields: {} })
+
+    expectTypeOf<Record<never, never>>().not.toExtend<Parameters<typeof Signup>[0]>()
+    expectTypeOf<{ options: { defaultValues: Signup } }>().toExtend<Parameters<typeof Signup>[0]>()
+  })
+
+  it('rejects a widget that does not fit its value', () => {
+    registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      // @ts-expect-error a number widget does not serve the email
+      fields: { email: { widget: 'number', props: { label: 'Email' } } },
+    })
+  })
+
+  it('rejects a layout naming a key fields does not describe, also in sections and rows', () => {
+    registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: { email: { widget: 'text', props: { label: 'Email' } } },
+      // @ts-expect-error age is not described in fields
+      layout: ['email', 'age'],
+    })
+    registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: { email: { widget: 'text', props: { label: 'Email' } } },
+      // @ts-expect-error age is not described in fields
+      layout: [{ section: 'About you', layout: [{ row: ['email', 'age'] }] }],
+    })
+  })
+
+  it('takes a layout of described keys and form components', () => {
+    const Signup = registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: {
+        email: { widget: 'text', props: { label: 'Email' } },
+        age: { widget: 'number', props: { label: 'Age' } },
+      },
+      layout: [
+        { section: 'About you', layout: [{ row: ['email', 'age'] }] },
+        { component: 'SubmitButton', props: { label: 'Sign up' } },
+      ],
+    })
+    expectTypeOf(Signup).not.toBeAny()
   })
 })

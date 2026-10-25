@@ -1,7 +1,8 @@
 import { createFormHookContexts } from '@tanstack/react-form'
-import { render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 
 import type { FieldOf } from '../widget/field-of'
 import { createRegistry } from './create-registry'
@@ -90,5 +91,32 @@ describe('createRegistry', () => {
     render(<BaseWidgets />)
 
     expect(screen.getByText('unchanged')).toBeDefined()
+  })
+})
+
+const profileSchema = z.object({ name: z.string().min(1, 'Enter a name'), age: z.number() })
+
+afterEach(cleanup)
+
+describe('registry.createForm', () => {
+  it('renders a config with the widgets of the registry and submits its values', async () => {
+    const onSubmit = vi.fn()
+    const ProfileForm = extended.createForm({
+      schema: profileSchema,
+      defaultValues: { name: 'Ada', age: 36 },
+      fields: {
+        name: { widget: 'text', props: { label: 'Name' } },
+        age: { widget: 'number', props: { label: 'Age' } },
+      },
+      onSubmit: ({ value }) => onSubmit(value),
+    })
+    render(<ProfileForm aria-label="Profile" />)
+
+    expect(screen.getByLabelText('Age')).toHaveProperty('value', '36')
+    await act(async () => {
+      fireEvent.submit(screen.getByRole('form'))
+    })
+
+    expect(onSubmit).toHaveBeenCalledWith({ name: 'Ada', age: 36 })
   })
 })

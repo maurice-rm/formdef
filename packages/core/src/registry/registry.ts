@@ -1,7 +1,10 @@
-import type { createFormHook } from '@tanstack/react-form'
-import type { ComponentProps, ComponentType } from 'react'
+import type { createFormHook, StandardSchemaV1 } from '@tanstack/react-form'
+import type { ComponentProps, ComponentType, ReactNode } from 'react'
 
 import type { ConfigParts } from '../config/config-parts'
+import type { DescribedLayout } from '../config/described-layout'
+import type { FormConfigOf } from '../config/form-config-of'
+import type { FormPropsFor } from '../config/form-props'
 import type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from '../config/structure'
 
 // biome-ignore lint/suspicious/noExplicitAny: createFormHook constrains its maps to ComponentType<any>.
@@ -60,9 +63,16 @@ type FormHook<TWidgets extends Components, TFormComponents extends Components> =
   'extendForm'
 >
 
+type OwnParts<TWidgets, TFormComponents, TStructure> = {
+  widgets: TWidgets
+  formComponents: TFormComponents
+  structure: TStructure
+}
+
 /**
  * What {@link createRegistry} returns: TanStack's form hook for the registered widgets and form
- * components, and a way to extend the registry. Projects refer to it as `typeof registry`.
+ * components, a way to turn a form config into a form component, and a way to extend the
+ * registry. Projects refer to it as `typeof registry`.
  *
  * @typeParam TWidgets - The registered widgets by name.
  * @typeParam TFormComponents - The registered form components by name.
@@ -85,6 +95,46 @@ export interface Registry<
    * `extendForm`: `useAppForm`, `withForm`, `withFieldGroup` and `useTypedAppFormContext`.
    */
   formHook: FormHook<TWidgets, TFormComponents>
+  /**
+   * Turns a form config into a form component: TanStack's form with the config's options, a
+   * `<form>` element that submits through it, and the config's fields rendered with this registry.
+   * The config is typed by its schema; its root `layout` may name only keys `fields` describes. The
+   * component takes `FormProps`, with `options.defaultValues` required when the config has none.
+   *
+   * @typeParam TSchema - The Standard Schema of the form, inferred from `schema`.
+   * @typeParam TConfig - The config as written, inferred.
+   * @typeParam TSubmitMeta - What `handleSubmit` takes besides the values, inferred from
+   *   `onSubmitMeta`; none without it.
+   * @param config - The form config.
+   * @returns The form component.
+   * @throws When rendered with default values in neither the config nor `options`, or with a
+   *   widget, layout name or form component the registry does not know.
+   *
+   * @example
+   * ```tsx
+   * export const SignInForm = registry.createForm({
+   *   schema,
+   *   defaultValues: { email: '', password: '' },
+   *   fields: {
+   *     email: { widget: 'text', props: { label: 'Email' } },
+   *     password: { widget: 'password', props: { label: 'Password' } },
+   *   },
+   *   layout: ['email', 'password', { component: 'SubmitButton', props: { label: 'Sign in' } }],
+   *   onSubmit: ({ value }) => signIn(value),
+   * })
+   * ```
+   */
+  createForm: <
+    TSchema extends StandardSchemaV1,
+    const TConfig extends FormConfigOf<
+      OwnParts<TWidgets, TFormComponents, TStructure>,
+      TSchema,
+      TSubmitMeta
+    >,
+    TSubmitMeta = never,
+  >(
+    config: TConfig & { schema: TSchema; onSubmitMeta?: TSubmitMeta } & DescribedLayout<TConfig>,
+  ) => (props: FormPropsFor<TSchema, TSubmitMeta, TConfig>) => ReactNode
   /**
    * Returns a new registry with the widgets, form components and structure slots of this one and
    * of `extension`. A name this registry already uses is a compile error; this registry stays as it
