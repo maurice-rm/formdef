@@ -4,7 +4,7 @@ import ts from 'typescript54'
 
 // The public API of `@formdef/core`, name by name. A name is added here in the change that
 // exports it, never as a side effect of exporting it.
-const PUBLIC_EXPORTS = ['errorsOf', 'fieldId', 'FieldApiOf', 'FieldOf']
+const PUBLIC_EXPORTS = ['errorsOf', 'fieldId', 'FieldApiOf', 'FieldOf', 'FieldParts', 'fieldParts']
 
 // TypeScript 5.4 reads the declarations because TypeScript 7 offers no stable compiler API, and
 // because 5.4 is the oldest compiler the declarations have to work on.
