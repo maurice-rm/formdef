@@ -535,6 +535,43 @@
       ],
       "docs": "Register it in lib/formdef: widgets: { dateTime: DateTimeField }. Its value is a local date-time such as 2026-03-01T14:30; defaultTime fills the time when a day is chosen first.",
       "categories": ["form", "field", "date"]
+    },
+    {
+      "name": "tags-field",
+      "type": "registry:component",
+      "title": "Tags field",
+      "description": "A formdef widget for a list of free-text tags with optional suggestions, built on shadcn's Field and Combobox chips.",
+      "dependencies": ["@base-ui/react", "@formdef/core", "lucide-react"],
+      "registryDependencies": ["button", "combobox", "field"],
+      "files": [
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/tags-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/tags-field.tsx"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { tags: TagsField }. Its value is string[]. Enter turns the typed text into a tag; suggestions offers a list to pick from. Rename the remove buttons with removeLabel and the text shown without matches with empty.",
+      "categories": ["form", "field"]
     }
   ]
 }
