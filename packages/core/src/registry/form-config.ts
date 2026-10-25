@@ -1,55 +1,12 @@
-import type {
-  FormAsyncValidateOrFn,
-  FormOptions,
-  FormValidateOrFn,
-  StandardSchemaV1,
-} from '@tanstack/react-form'
+import type { StandardSchemaV1 } from '@tanstack/react-form'
 
 import type { LevelFields } from '../config/field-entry'
 import type { FormHandle } from '../config/form-handle'
+import type { FormOptionsOf } from '../config/form-options'
 import type { InferData } from '../config/infer-data'
 import type { LayoutEntry } from '../config/layout-entry'
 import type { Validation } from '../config/validation'
 import type { AnyRegistry, PartsOf } from './registry'
-
-// biome-ignore lint/suspicious/noExplicitAny: the validator axes, which only the validators type.
-type OpenValidator = any
-
-type SyncValidator<TData> = FormValidateOrFn<TData> | undefined
-type AsyncValidator<TData> = FormAsyncValidateOrFn<TData> | undefined
-
-// TanStack reads its validator axes without distributing over a union, so axes typed for any
-// validator turn the errors in every callback into `never`. They type the validators alone; every
-// other option leaves them open, which types the errors loosely.
-type TypedValidators<TData> = FormOptions<
-  TData,
-  SyncValidator<TData>,
-  SyncValidator<TData>,
-  AsyncValidator<TData>,
-  SyncValidator<TData>,
-  AsyncValidator<TData>,
-  SyncValidator<TData>,
-  AsyncValidator<TData>,
-  SyncValidator<TData>,
-  AsyncValidator<TData>,
-  AsyncValidator<TData>,
-  never
->['validators']
-
-type TanStackFormOptions<TData, TSubmitMeta> = FormOptions<
-  TData,
-  OpenValidator,
-  OpenValidator,
-  OpenValidator,
-  OpenValidator,
-  OpenValidator,
-  OpenValidator,
-  OpenValidator,
-  OpenValidator,
-  OpenValidator,
-  OpenValidator,
-  TSubmitMeta
->
 
 type FormParts<TRegistry extends AnyRegistry, TData, TSubmitMeta> = PartsOf<
   TRegistry,
@@ -64,6 +21,9 @@ type FormParts<TRegistry extends AnyRegistry, TData, TSubmitMeta> = PartsOf<
  * Every key that is not formdef's own is one of TanStack's form options and keeps TanStack's
  * meaning. The validation errors its callbacks see are typed loosely.
  *
+ * Check a config with `satisfies` rather than a type annotation: an annotation hides which
+ * optional keys the config sets, such as `defaultValues`.
+ *
  * @typeParam TRegistry - The registry the form is built with, as `typeof registry`.
  * @typeParam TSchema - The Standard Schema of the form; its input type is the form's data type.
  * @typeParam TSubmitMeta - What `handleSubmit` takes besides the values, as in TanStack's
@@ -71,7 +31,7 @@ type FormParts<TRegistry extends AnyRegistry, TData, TSubmitMeta> = PartsOf<
  *
  * @example
  * ```ts
- * const signInConfig: FormConfig<typeof registry, typeof schema> = {
+ * const signInConfig = {
  *   schema,
  *   defaultValues: { email: '', password: '' },
  *   fields: {
@@ -80,17 +40,14 @@ type FormParts<TRegistry extends AnyRegistry, TData, TSubmitMeta> = PartsOf<
  *   },
  *   layout: ['email', 'password', { component: 'SubmitButton', props: { label: 'Sign in' } }],
  *   onSubmit: ({ value }) => signIn(value),
- * }
+ * } satisfies FormConfig<typeof registry, typeof schema>
  * ```
  */
 export type FormConfig<
   TRegistry extends AnyRegistry,
   TSchema extends StandardSchemaV1,
   TSubmitMeta = never,
-> = Omit<
-  TanStackFormOptions<InferData<TSchema>, TSubmitMeta>,
-  'defaultValues' | 'defaultState' | 'validators'
-> & {
+> = FormOptionsOf<InferData<TSchema>, TSubmitMeta> & {
   /** The schema that validates the form; its input type is the form's data type. */
   schema: TSchema
   /**
@@ -121,19 +78,4 @@ export type FormConfig<
    * @defaultValue `{ mode: 'revalidate' }`
    */
   validation?: Validation
-  /**
-   * TanStack's initial form state, without `values`: the start values come from `defaultValues`.
-   *
-   * @defaultValue none; TanStack's initial state
-   */
-  defaultState?: Omit<
-    NonNullable<TanStackFormOptions<InferData<TSchema>, TSubmitMeta>['defaultState']>,
-    'values'
-  >
-  /**
-   * TanStack's form validators, typed by the data type, next to the schema.
-   *
-   * @defaultValue none; the schema validates alone
-   */
-  validators?: TypedValidators<InferData<TSchema>>
 }

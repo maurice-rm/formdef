@@ -3,11 +3,12 @@ import {
   type FieldOf,
   type FieldsOf,
   type FormConfig,
+  type FormProps,
   type LayoutOf,
   type RowProps,
 } from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
-import type { ReactNode } from 'react'
+import { type ComponentType, createRef, type ReactNode } from 'react'
 import { z } from 'zod'
 
 const { fieldContext, formContext } = createFormHookContexts()
@@ -106,3 +107,19 @@ export const customerConfig: FormConfig<
   onSubmit: ({ value, meta }) => console.info(meta.intent, value.name),
   defaultState: { errorMap: { onSubmit: 'The link has expired.' } },
 }
+
+declare const CustomerForm: ComponentType<FormProps<typeof customerSchema, { intent: string }>>
+
+export const EditCustomer = ({ name }: { name: string }): ReactNode => (
+  <CustomerForm
+    className="max-w-prose"
+    ref={createRef<HTMLFormElement>()}
+    options={{
+      defaultValues: { name, billing: { street: '', zip: '' }, shipping: { street: '', zip: '' } },
+      onSubmit: ({ value, meta }) => console.info(meta.intent, value.name),
+    }}
+  />
+)
+
+// @ts-expect-error the form submits through its options
+export const SubmitsItself = (): ReactNode => <CustomerForm onSubmit={() => undefined} />

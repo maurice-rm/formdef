@@ -1,4 +1,5 @@
 export type { FormHandle } from './config/form-handle'
+export type { FormProps } from './config/form-props'
 export type { InferData } from './config/infer-data'
 export type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from './config/structure'
 export type { Validation } from './config/validation'
