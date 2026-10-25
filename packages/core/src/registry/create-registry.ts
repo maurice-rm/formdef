@@ -1,7 +1,8 @@
 import { type AnyFieldApi, type AnyFormApi, createFormHook } from '@tanstack/react-form'
-import type { Context } from 'react'
+import { type Context, createElement, type ReactNode } from 'react'
 
 import { createForm, type FormBinding } from '../form/create-form'
+import { Fields, type FieldsProps } from '../render/fields'
 
 import type {
   CheckedStructure,
@@ -75,9 +76,15 @@ function buildRegistry<
     },
   }
 
+  // biome-ignore lint/correctness/noComponentHookFactories: created once per registry, like TanStack's createFormHook.
+  const BoundFields = (props: Omit<FieldsProps, 'parts'>): ReactNode =>
+    createElement(Fields, { ...props, parts: binding.parts })
+
   return {
     formHook,
     createForm: (config) => createForm(binding, config),
+    // The member's signature types the level by the form it is given; the renderer reads it untyped.
+    Fields: BoundFields as unknown as Registry<TWidgets, TFormComponents, TStructure>['Fields'],
     extendRegistry,
   }
 }

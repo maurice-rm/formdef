@@ -228,3 +228,111 @@ describe('Registry.createForm', () => {
     expectTypeOf(Signup).not.toBeAny()
   })
 })
+
+describe('Registry.Fields', () => {
+  const registry = createRegistry({
+    fieldContext,
+    formContext,
+    widgets: { text: TextField, number: NumberField },
+  })
+  type Address = { street: string; zip: string }
+  type Customer = { name: string; billing: Address }
+
+  it('types its entries by the values of the form it is given', () => {
+    const Shell = (): ReactNode => {
+      const form = registry.formHook.useAppForm({
+        defaultValues: { name: '', billing: { street: '', zip: '' } } as Customer,
+      })
+
+      return (
+        <registry.Fields
+          form={form}
+          fields={{
+            name: {
+              widget: 'text',
+              props: { label: 'Name' },
+              visibleWhen: (values) => {
+                expectTypeOf(values).toEqualTypeOf<Customer>()
+                return true
+              },
+            },
+          }}
+        />
+      )
+    }
+    expectTypeOf(Shell).not.toBeAny()
+  })
+
+  it('types its entries by the values of a field group', () => {
+    const AddressGroup = registry.formHook.withFieldGroup({
+      defaultValues: { street: '', zip: '' } as Address,
+      render: ({ group }) => (
+        <registry.Fields
+          form={group}
+          fields={{
+            street: { widget: 'text', props: { label: 'Street' } },
+            zip: {
+              widget: 'text',
+              props: { label: 'ZIP' },
+              visibleWhen: (values) => {
+                expectTypeOf(values).toEqualTypeOf<Address>()
+                return true
+              },
+            },
+          }}
+        />
+      ),
+    })
+    expectTypeOf(AddressGroup).not.toBeAny()
+  })
+
+  it('rejects a widget that does not fit and a layout naming an undescribed key', () => {
+    const Shell = (): ReactNode => {
+      const form = registry.formHook.useAppForm({
+        defaultValues: { name: '', billing: { street: '', zip: '' } } as Customer,
+      })
+
+      return (
+        <>
+          <registry.Fields
+            form={form}
+            // @ts-expect-error a number widget does not serve the name
+            fields={{ name: { widget: 'number', props: { label: 'Name' } } }}
+          />
+          <registry.Fields
+            form={form}
+            fields={{ name: { widget: 'text', props: { label: 'Name' } } }}
+            // @ts-expect-error billing is not described in fields
+            layout={['name', 'billing']}
+          />
+        </>
+      )
+    }
+    expectTypeOf(Shell).not.toBeAny()
+  })
+
+  it('hands an inline entry the form it is given', () => {
+    const Shell = (): ReactNode => {
+      const form = registry.formHook.useAppForm({
+        defaultValues: { name: '', billing: { street: '', zip: '' } } as Customer,
+      })
+
+      return (
+        <registry.Fields
+          form={form}
+          fields={{ name: { widget: 'text', props: { label: 'Name' } } }}
+          layout={[
+            'name',
+            {
+              render: (handle) => {
+                expectTypeOf(handle).toEqualTypeOf<typeof form>()
+                return null
+              },
+            },
+          ]}
+        />
+      )
+    }
+    expectTypeOf(Shell).not.toBeAny()
+  })
+})

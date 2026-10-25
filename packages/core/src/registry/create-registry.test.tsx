@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 
+import type { BodyProps } from '../config/structure'
 import type { FieldOf } from '../widget/field-of'
 import { createRegistry } from './create-registry'
 
@@ -12,7 +13,11 @@ const { fieldContext, formContext } = createFormHookContexts()
 const TextField = ({ field, label }: FieldOf<string> & { label: string }): ReactNode => (
   <label>
     {label}
-    <input value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} />
+    <input
+      name={field.name}
+      value={field.state.value}
+      onChange={(event) => field.handleChange(event.target.value)}
+    />
   </label>
 )
 
@@ -118,5 +123,129 @@ describe('registry.createForm', () => {
     })
 
     expect(onSubmit).toHaveBeenCalledWith({ name: 'Ada', age: 36 })
+  })
+})
+
+type Address = { street: string; zip: string }
+type Customer = { name: string; billing: Address; shipping: Address }
+
+const CUSTOMER: Customer = {
+  name: 'Ada',
+  billing: { street: 'Main Street 1', zip: '12345' },
+  shipping: { street: '', zip: '' },
+}
+
+const addressFields = {
+  street: { widget: 'text', props: { label: 'Street' } },
+  zip: {
+    widget: 'text',
+    props: { label: 'ZIP' },
+    visibleWhen: (values: Address) => values.street !== '',
+  },
+} as const
+
+const AddressGroup = base.formHook.withFieldGroup({
+  defaultValues: { street: '', zip: '' } as Address,
+  render: ({ group }) => <base.Fields form={group} fields={addressFields} />,
+})
+
+const inputNames = (): (string | null)[] =>
+  screen.getAllByRole('textbox').map((input) => input.getAttribute('name'))
+
+const Checkout = ({ onSubmit }: { onSubmit: (value: Customer) => void }): ReactNode => {
+  const form = base.formHook.useAppForm({
+    defaultValues: CUSTOMER,
+    onSubmit: ({ value }) => onSubmit(value),
+  })
+
+  return (
+    <form.AppForm>
+      <form
+        aria-label="Checkout"
+        onSubmit={(event) => {
+          event.preventDefault()
+          void form.handleSubmit()
+        }}
+      >
+        <base.Fields form={form} fields={{ name: { widget: 'text', props: { label: 'Name' } } }} />
+        <hr />
+        <base.Fields
+          form={form}
+          fields={{
+            billing: {
+              fields: {
+                street: { widget: 'text', props: { label: 'Street' } },
+                zip: { widget: 'text', props: { label: 'ZIP' } },
+              },
+            },
+          }}
+        />
+      </form>
+    </form.AppForm>
+  )
+}
+
+const Addresses = (): ReactNode => {
+  const form = base.formHook.useAppForm({ defaultValues: CUSTOMER })
+
+  return (
+    <form.AppForm>
+      <AddressGroup form={form} fields="billing" />
+      <AddressGroup form={form} fields="shipping" />
+    </form.AppForm>
+  )
+}
+
+const Body = ({ children }: BodyProps): ReactNode => <div data-testid="body">{children}</div>
+
+describe('registry.Fields', () => {
+  it('renders parts of a config into a shell the caller owns', async () => {
+    const onSubmit = vi.fn()
+    render(<Checkout onSubmit={onSubmit} />)
+
+    expect(inputNames()).toEqual(['name', 'billing.street', 'billing.zip'])
+    await act(async () => {
+      fireEvent.submit(screen.getByRole('form'))
+    })
+    expect(onSubmit).toHaveBeenCalledWith(CUSTOMER)
+  })
+
+  it('renders one field group at billing and at shipping', () => {
+    render(<Addresses />)
+
+    expect(inputNames()).toEqual(['billing.street', 'billing.zip', 'shipping.street'])
+
+    fireEvent.change(screen.getAllByLabelText('Street')[1] as HTMLElement, {
+      target: { value: 'Side Street 2' },
+    })
+
+    expect(inputNames()).toEqual([
+      'billing.street',
+      'billing.zip',
+      'shipping.street',
+      'shipping.zip',
+    ])
+    expect(
+      screen.getAllByLabelText('Street').map((input) => (input as HTMLInputElement).value),
+    ).toEqual(['Main Street 1', 'Side Street 2'])
+  })
+})
+
+describe('extendRegistry', () => {
+  it('keeps the structure slots of the registry it extends', () => {
+    const framed = createRegistry({
+      fieldContext,
+      formContext,
+      widgets: { text: TextField },
+      structure: { body: Body },
+    }).extendRegistry({ widgets: { number: NumberField } })
+    const AgeForm = framed.createForm({
+      schema: z.object({ age: z.number() }),
+      defaultValues: { age: 36 },
+      fields: { age: { widget: 'number', props: { label: 'Age' } } },
+    })
+    render(<AgeForm />)
+
+    expect(screen.getByTestId('body').contains(screen.getByLabelText('Age'))).toBe(true)
   })
 })

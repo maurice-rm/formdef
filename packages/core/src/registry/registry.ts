@@ -5,6 +5,7 @@ import type { ConfigParts } from '../config/config-parts'
 import type { DescribedLayout } from '../config/described-layout'
 import type { FormConfigOf } from '../config/form-config-of'
 import type { FormPropsFor } from '../config/form-props'
+import type { LevelConfig } from '../config/level-config'
 import type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from '../config/structure'
 
 // biome-ignore lint/suspicious/noExplicitAny: createFormHook constrains its maps to ComponentType<any>.
@@ -69,10 +70,26 @@ type OwnParts<TWidgets, TFormComponents, TStructure> = {
   structure: TStructure
 }
 
+/** What `Fields` renders into: a form from `useAppForm` or a field group from `withFieldGroup`. */
+type FieldsForm = {
+  AppField: unknown
+  Subscribe: unknown
+  state: { values: unknown }
+}
+
+type ValuesOf<TForm extends FieldsForm> = TForm['state']['values']
+
+// An inline entry under `Fields` receives the form `Fields` was given.
+type FieldsParts<TWidgets, TFormComponents, TStructure, TForm> = OwnParts<
+  TWidgets,
+  TFormComponents,
+  TStructure
+> & { handle: TForm }
+
 /**
  * What {@link createRegistry} returns: TanStack's form hook for the registered widgets and form
- * components, a way to turn a form config into a form component, and a way to extend the
- * registry. Projects refer to it as `typeof registry`.
+ * components, a way to turn a form config into a form component, a way to render a config's
+ * fields into a form or field group of one's own, and a way to extend the registry. Projects refer to it as `typeof registry`.
  *
  * @typeParam TWidgets - The registered widgets by name.
  * @typeParam TFormComponents - The registered form components by name.
@@ -135,6 +152,46 @@ export interface Registry<
   >(
     config: TConfig & { schema: TSchema; onSubmitMeta?: TSubmitMeta } & DescribedLayout<TConfig>,
   ) => (props: FormPropsFor<TSchema, TSubmitMeta, TConfig>) => ReactNode
+  /**
+   * Renders `fields` and `layout` into a form the caller built with `formHook.useAppForm`, or into a
+   * field group from `formHook.withFieldGroup`, with this registry's widgets. The entries are typed
+   * by the values of `form`; the `layout` may name only keys `fields` describes, and an inline
+   * entry receives `form` itself. `fields` and `layout` are those of a form config.
+   *
+   * @typeParam TForm - The form or field group, inferred from `form`.
+   * @typeParam TLevel - The `fields` and `layout` as written, inferred.
+   * @param props - The form to render into, and the `fields` and `layout` to render.
+   * @returns The rendered entries.
+   * @throws When rendered with a widget, layout name or form component the registry does not know.
+   *
+   * @example
+   * ```tsx
+   * const Checkout = () => {
+   *   const form = registry.formHook.useAppForm({ defaultValues, onSubmit: ({ value }) => pay(value) })
+   *
+   *   return (
+   *     <form.AppForm>
+   *       <form onSubmit={(event) => { event.preventDefault(); void form.handleSubmit() }}>
+   *         <registry.Fields form={form} fields={contactFields} />
+   *         <PaymentStep form={form} />
+   *       </form>
+   *     </form.AppForm>
+   *   )
+   * }
+   * ```
+   */
+  Fields: <
+    TForm extends FieldsForm,
+    const TLevel extends LevelConfig<
+      FieldsParts<TWidgets, TFormComponents, TStructure, TForm>,
+      ValuesOf<TForm>
+    >,
+  >(
+    props: TLevel & {
+      /** The form from `formHook.useAppForm`, or the field group from `formHook.withFieldGroup`. */
+      form: TForm
+    } & DescribedLayout<TLevel>,
+  ) => ReactNode
   /**
    * Returns a new registry with the widgets, form components and structure slots of this one and
    * of `extension`. A name this registry already uses is a compile error; this registry stays as it
