@@ -11,8 +11,8 @@ type Structure = {
   row: ComponentType<{ children: ReactNode; gap: 'small' | 'large' }>
 }
 
-type Layout = LayoutEntry<Structure, Names, Values>
-type BareLayout = LayoutEntry<Record<never, never>, Names, Values>
+type Layout = LayoutEntry<{ structure: Structure }, Names, Values>
+type BareLayout = LayoutEntry<{ structure: Record<never, never> }, Names, Values>
 
 describe('LayoutEntry', () => {
   describe('name', () => {
@@ -77,7 +77,7 @@ describe('LayoutEntry', () => {
     it('takes the props of a slot registered under an optional key', () => {
       type OptionalStructure = { section?: Structure['section'] }
 
-      const entry: LayoutEntry<OptionalStructure, Names, Values> = {
+      const entry: LayoutEntry<{ structure: OptionalStructure }, Names, Values> = {
         section: 'Account',
         layout: ['email'],
         props: { description: 'Used to sign in' },

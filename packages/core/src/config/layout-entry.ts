@@ -27,26 +27,29 @@ type SlotProps<
   ? ExtraProps<NonNullable<TStructure[TSlot]>, TSupplied>
   : BareElementProps
 
-type SectionEntry<TStructure, TNames extends string, TValues> = {
+// The registry's parts a layout reads, until the registry itself is typed.
+type LayoutParts = { structure: object }
+
+type SectionEntry<TParts extends LayoutParts, TNames extends string, TValues> = {
   /** The title of the group. */
   section: string
-  layout: LayoutEntry<TStructure, TNames, TValues>[]
-} & PropsEntry<SlotProps<TStructure, 'section', SectionSupplied>, TValues> &
+  layout: LayoutEntry<TParts, TNames, TValues>[]
+} & PropsEntry<SlotProps<TParts['structure'], 'section', SectionSupplied>, TValues> &
   Visibility<TValues> &
   Owns<'section'>
 
-type RowEntry<TStructure, TNames extends string, TValues> = {
-  row: LayoutEntry<TStructure, TNames, TValues>[]
-} & PropsEntry<SlotProps<TStructure, 'row', RowSupplied>, TValues> &
+type RowEntry<TParts extends LayoutParts, TNames extends string, TValues> = {
+  row: LayoutEntry<TParts, TNames, TValues>[]
+} & PropsEntry<SlotProps<TParts['structure'], 'row', RowSupplied>, TValues> &
   Visibility<TValues> &
   Owns<'row'>
 
 /**
  * One entry of a level's `layout`: the name of a field the level describes (`TNames`), a titled
- * section or a row of entries. Sections and rows nest; their props follow the registered structure
- * slot, or the bare element without one.
+ * section or a row of entries. Sections and rows nest; their props follow the structure slot
+ * registered in `TParts`, or the bare element without one.
  */
-export type LayoutEntry<TStructure, TNames extends string, TValues> =
+export type LayoutEntry<TParts extends LayoutParts, TNames extends string, TValues> =
   | TNames
-  | SectionEntry<TStructure, TNames, TValues>
-  | RowEntry<TStructure, TNames, TValues>
+  | SectionEntry<TParts, TNames, TValues>
+  | RowEntry<TParts, TNames, TValues>
