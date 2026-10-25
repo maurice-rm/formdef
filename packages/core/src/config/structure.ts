@@ -76,7 +76,12 @@ export interface BodyProps {
  * ```
  */
 export interface ArrayFrameProps<TItem, TExtra = never> {
-  /** The array field itself, where an error about the whole list, such as its length, is reported. */
+  /**
+   * The array field itself, where an error about the whole list, such as its length, is reported.
+   * It renders in TanStack's array mode: the frame renders again when items are added, removed or
+   * moved, when its keys or remove labels change, and when the list's meta changes, not when a value
+   * inside an item does. A frame that shows values of its items subscribes to them itself.
+   */
   field: FieldApiOf<TItem[]>
   /** One key per item, by the entry's `itemKey` or by position. */
   keys: readonly (string | number)[]

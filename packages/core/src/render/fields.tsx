@@ -72,6 +72,8 @@ type LayoutKindProps = {
   props: object | undefined
 }
 
+const ARRAY_MODE = 'array'
+
 const DROPPED_EXTRA = 'passes extra props to an item that has no single widget to receive them'
 
 const renderNothing = (): ReactNode => null
@@ -140,7 +142,7 @@ const FieldContent = ({ parts, form, entry, path, props, extra }: FieldContentPr
 
   if (typeof own.item === 'object' && own.item !== null) {
     return (
-      <form.AppField {...fieldOptions} name={path}>
+      <form.AppField {...fieldOptions} name={path} mode={ARRAY_MODE}>
         {(field) => (
           <ArrayEntry
             field={field}
