@@ -4,7 +4,8 @@ import type { ComponentPropsWithRef } from 'react'
 import type { FormOptionsOf } from './form-options'
 import type { InferData } from './infer-data'
 
-type FormElementProps = Omit<
+/** What the `<form>` element of a form component takes from its props. */
+export type FormElementProps = Omit<
   ComponentPropsWithRef<'form'>,
   'onSubmit' | 'action' | 'children' | 'dangerouslySetInnerHTML'
 >
