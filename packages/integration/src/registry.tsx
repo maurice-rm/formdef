@@ -123,3 +123,33 @@ export const EditCustomer = ({ name }: { name: string }): ReactNode => (
 
 // @ts-expect-error the form submits through its options
 export const SubmitsItself = (): ReactNode => <CustomerForm onSubmit={() => undefined} />
+
+export const SignUpForm = registry.createForm({
+  schema: customerSchema,
+  fields: customerFields,
+  layout: [{ row: ['name'] }, { section: 'Addresses', layout: ['billing', 'shipping'] }],
+  onSubmitMeta: { intent: 'signUp' },
+  onSubmit: ({ value, meta }) => console.info(meta.intent, value.billing.zip),
+})
+
+export const SignUp = (): ReactNode => (
+  <SignUpForm
+    options={{
+      defaultValues: {
+        name: '',
+        billing: { street: '', zip: '' },
+        shipping: { street: '', zip: '' },
+      },
+    }}
+  />
+)
+
+// @ts-expect-error the config leaves the default values to the instance
+export const SignUpWithoutValues = (): ReactNode => <SignUpForm />
+
+registry.createForm({
+  schema: customerSchema,
+  fields: { name: { widget: 'text', props: { label: 'Name' } } },
+  // @ts-expect-error billing is not described in fields
+  layout: ['name', 'billing'],
+})

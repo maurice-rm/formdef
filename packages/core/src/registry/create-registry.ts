@@ -1,6 +1,8 @@
 import { type AnyFieldApi, type AnyFormApi, createFormHook } from '@tanstack/react-form'
 import type { Context } from 'react'
 
+import { createForm, type FormBinding } from '../form/create-form'
+
 import type {
   CheckedStructure,
   Components,
@@ -62,7 +64,22 @@ function buildRegistry<
     })
   }
 
-  return { formHook, extendRegistry }
+  // TanStack's hook is generic over the form's types; the config's types are checked at the
+  // registry's `createForm`, so the binding passes the merged options on untyped.
+  const binding: FormBinding = {
+    useAppForm: formHook.useAppForm as unknown as FormBinding['useAppForm'],
+    parts: {
+      widgets: parts.widgets,
+      formComponents: parts.formComponents,
+      structure: parts.structure,
+    },
+  }
+
+  return {
+    formHook,
+    createForm: (config) => createForm(binding, config),
+    extendRegistry,
+  }
 }
 
 /**
