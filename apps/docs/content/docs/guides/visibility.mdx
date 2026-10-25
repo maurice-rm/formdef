@@ -1,0 +1,109 @@
+---
+title: Visibility and derived props
+description: Show entries under a condition, and compute props from the form's values.
+---
+
+## Showing an entry under a condition
+
+`visibleWhen` takes the whole form's values and returns whether the entry shows. It works on every
+field entry and on every layout entry:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const SelectField = (_: FieldOf<string> & { label: string; options: readonly string[] }) => null
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField, select: SelectField },
+})
+// ---cut---
+const schema = z.object({
+  kind: z.enum(['private', 'business']),
+  company: z.string(),
+  vatId: z.string(),
+})
+
+export const Billing = createForm({
+  schema,
+  defaultValues: { kind: 'private', company: '', vatId: '' },
+  fields: {
+    kind: { widget: 'select', props: { label: 'Customer', options: ['private', 'business'] } },
+    company: { widget: 'text', props: { label: 'Company' } },
+    vatId: { widget: 'text', props: { label: 'VAT ID' } },
+  },
+  layout: [
+    'kind',
+    {
+      section: 'Business',
+      visibleWhen: (values) => values.kind === 'business',
+      layout: ['company', 'vatId'],
+    },
+  ],
+})
+```
+
+A condition on a nested entry still sees the whole form, so a field inside `address` can depend on
+a key at the root.
+
+**Hidden means not rendered, not removed from the data.** The value stays, the schema keeps
+validating it and it is submitted. The entry's own `validators` stop running while it is hidden,
+because its field is not mounted. To leave a hidden value out of the result, let the schema drop
+it.
+
+The content of a hidden entry is not built at all, so a condition can guard code that only works
+while the entry shows.
+
+## Derived props
+
+`props` may be a function of the form's values, on a leaf, a section, a row, a form component and
+an array entry. The widget re-renders with what it returns:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const SelectField = (_: FieldOf<string> & { label: string; options: readonly string[] }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { select: SelectField } })
+// ---cut---
+const CITIES: Record<string, readonly string[]> = {
+  de: ['Berlin', 'Hamburg'],
+  at: ['Vienna', 'Graz'],
+}
+
+export const Location = createForm({
+  schema: z.object({ country: z.string(), city: z.string() }),
+  defaultValues: { country: 'de', city: '' },
+  fields: {
+    country: { widget: 'select', props: { label: 'Country', options: ['de', 'at'] } },
+    city: {
+      widget: 'select',
+      dependsOn: ['country'],
+      props: (values) => ({
+        label: `City in ${values.country}`,
+        options: CITIES[values.country] ?? [],
+      }),
+    },
+  },
+})
+```
+
+The function's result is checked for the types of the widget's props. Unknown keys slip through,
+though: TypeScript rejects them on an object you write directly, not on one a function returns.
+
+## dependsOn
+
+`dependsOn` lists the paths a condition or a props function reads, from anywhere in the form:
+`country`, `address.zip`, `contacts[0].name`. The function then runs again only when one of them
+changes.
+
+- **Derived props need it.** Their result is the values themselves, so without `dependsOn` the
+  widget re-renders on every change anywhere in the form.
+- **A condition rarely does.** An entry re-renders only when its condition's answer flips, not
+  each time the condition runs, and running it is one function call.
+
+On an entry without a condition or derived props, `dependsOn` does nothing.

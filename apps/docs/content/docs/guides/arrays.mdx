@@ -1,0 +1,208 @@
+---
+title: Arrays
+description: Lists with one entry per item, their controls, and the frame around them.
+---
+
+An array entry expands a list: each item gets the entry you describe under `item`, at its own
+path.
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+const schema = z.object({
+  contacts: z.array(z.object({ name: z.string(), email: z.email() })),
+})
+
+export const Contacts = createForm({
+  schema,
+  defaultValues: { contacts: [] },
+  fields: {
+    contacts: {
+      newItem: () => ({ name: '', email: '' }),
+      addLabel: 'Add contact',
+      removeLabel: (contact, index) => `Remove ${contact.name || `contact ${index + 1}`}`,
+      item: {
+        fields: {
+          name: { widget: 'text', props: { label: 'Name' } },
+          email: { widget: 'text', props: { label: 'Email' } },
+        },
+      },
+    },
+  },
+})
+```
+
+The inputs land at `contacts[0].name`, `contacts[0].email`, `contacts[1].name` and so on.
+
+| Key | Required | Meaning |
+| --- | --- | --- |
+| `item` | yes | The entry for one item, in any of the four shapes. |
+| `newItem` | yes | Builds a new, empty item. The schema does not say what empty means, so you do. |
+| `addLabel` | yes | The accessible name of the add control. |
+| `removeLabel` | yes | The accessible name of each remove control. A function of the item and its index names what it removes. |
+| `itemKey` | no | The identity of an item, so its widgets keep their state when the list is reordered. |
+| `props` | when the frame requires them | Props for the registered [array frame](#a-frame-of-your-own). |
+
+Name each remove control after what it removes. Three buttons all called "Remove" tell a screen
+reader nothing about which contact goes.
+
+## Keys and reordering
+
+Without `itemKey`, items are keyed by their position. Values always follow their item, but
+what a widget holds itself, such as an open popover, focus or an uncontrolled input, stays at the
+old position when items move. Give items an identity as soon as they can be reordered:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+const schema = z.object({ steps: z.array(z.object({ id: z.string(), title: z.string() })) })
+
+export const Recipe = createForm({
+  schema,
+  defaultValues: { steps: [] },
+  fields: {
+    steps: {
+      itemKey: (step) => step.id,
+      newItem: () => ({ id: crypto.randomUUID(), title: '' }),
+      addLabel: 'Add step',
+      removeLabel: (step, index) => `Remove step ${index + 1}`,
+      item: { fields: { title: { widget: 'text', props: { label: 'Step' } } } },
+    },
+  },
+})
+```
+
+## The default controls
+
+Without a registered frame, formdef renders the items, a remove button after each, and one add
+button at the end. There is no wrapper element; the buttons carry `data-formdef-remove` and
+`data-formdef-add`, so your CSS can reach them:
+
+```html
+<!-- the fields of contacts[0] -->
+<button type="button" data-formdef-remove>Remove Ada</button>
+<!-- the fields of contacts[1] -->
+<button type="button" data-formdef-remove>Remove Grace</button>
+<button type="button" data-formdef-add>Add contact</button>
+```
+
+## A frame of your own
+
+A registry takes one array frame under `structure.arrayFrame`, and it frames every array entry of
+every form built on that registry. It receives `ArrayFrameProps`: the array field, one key per
+item, a function that renders an item, the resolved labels and TanStack's array operations.
+
+```tsx title="form/array-frame.tsx"
+import type { ArrayFrameProps } from '@formdef/core'
+
+type ArrayFrameOwnProps = { title: string }
+
+export const ArrayFrame = <TItem,>({
+  keys,
+  renderItem,
+  addLabel,
+  removeLabels,
+  add,
+  remove,
+  title,
+}: ArrayFrameProps<TItem> & ArrayFrameOwnProps) => (
+  <section aria-label={title}>
+    <ul>
+      {keys.map((key, index) => (
+        <li key={key}>
+          {renderItem(index)}
+          <button type="button" onClick={() => remove(index)}>
+            {removeLabels[index]}
+          </button>
+        </li>
+      ))}
+    </ul>
+    <button type="button" onClick={add}>
+      {addLabel}
+    </button>
+  </section>
+)
+```
+
+Register it, and every array entry passes the frame's own props through `props`, checked against
+the frame:
+
+```tsx
+import { type ArrayFrameProps, createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const ArrayFrame = <TItem,>(_: ArrayFrameProps<TItem> & { title: string }) => null
+// ---cut---
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+  structure: { arrayFrame: ArrayFrame },
+})
+
+export const Team = createForm({
+  schema: z.object({ members: z.array(z.string()) }),
+  defaultValues: { members: [] },
+  fields: {
+    members: {
+      newItem: () => '',
+      addLabel: 'Add member',
+      removeLabel: (member) => `Remove ${member || 'member'}`,
+      props: { title: 'Team members' },
+      item: { widget: 'text', props: { label: 'Name' } },
+    },
+  },
+})
+```
+
+Besides `add` and `remove`, a frame receives `insert`, `move`, `swap`, `replace` and `clear`, so it
+can offer reordering. `insert` builds the item with `newItem` when it gets none.
+
+- **Errors about the whole list.** A rule on the list itself, such as a minimum length, reports on
+  the array field. The frame receives it as `field` and is the only place that can show it.
+- **Props for an item's widget.** `renderItem(index, extra)` passes `extra` to the widget of the
+  item, for instance to label each one "Contact 2". This reaches a widget only when the item
+  is a leaf, or an object whose only field is a leaf and which has no layout. Anywhere else there is no single
+  widget to receive it; formdef drops it and warns once in development.
+
+A registry has exactly one frame. An array that needs something else renders itself, with a custom
+entry on TanStack's array field:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+export const Links = createForm({
+  schema: z.object({ links: z.array(z.url()) }),
+  defaultValues: { links: [] },
+  fields: {
+    links: {
+      mode: 'array',
+      render: (field) => (
+        <div>
+          <p>{field.state.value.length} links</p>
+          <button type="button" onClick={() => field.pushValue('https://')}>
+            Add link
+          </button>
+        </div>
+      ),
+    },
+  },
+})
+```
