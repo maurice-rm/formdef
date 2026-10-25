@@ -7,6 +7,7 @@ import ts from 'typescript54'
 const PUBLIC_EXPORTS = [
   'ArrayFrameProps',
   'BodyProps',
+  'createRegistry',
   'RowProps',
   'SectionProps',
   'errorsOf',
@@ -16,6 +17,7 @@ const PUBLIC_EXPORTS = [
   'FieldParts',
   'fieldParts',
   'InferData',
+  'Registry',
 ]
 
 // TypeScript 5.4 reads the declarations because TypeScript 7 offers no stable compiler API, and
