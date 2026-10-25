@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript54'
 
@@ -93,6 +94,22 @@ function problemsOf(exported: ts.Symbol): string[] {
   ]
 }
 
+// An import the package does not declare resolves in this workspace but not in a consumer's.
+const manifest = JSON.parse(
+  readFileSync(fileURLToPath(import.meta.resolve('@formdef/core/package.json')), 'utf8'),
+) as { dependencies?: Record<string, string>; peerDependencies?: Record<string, string> }
+const declaredPackages = Object.keys({ ...manifest.dependencies, ...manifest.peerDependencies })
+
+function packageOf(specifier: string): string {
+  const [scopeOrName = '', name = ''] = specifier.split('/')
+
+  return scopeOrName.startsWith('@') ? `${scopeOrName}/${name}` : scopeOrName
+}
+
+const importedPackages = sourceFile.statements
+  .filter(ts.isImportDeclaration)
+  .map((statement) => packageOf((statement.moduleSpecifier as ts.StringLiteral).text))
+
 const exported = checker.getExportsOfModule(moduleSymbol)
 const exportedNames = exported.map((symbol) => symbol.getName())
 
@@ -104,6 +121,9 @@ const problems = [
     (name) => `${name} is part of the public API but not exported`,
   ),
   ...exported.flatMap(problemsOf),
+  ...importedPackages
+    .filter((name) => !declaredPackages.includes(name))
+    .map((name) => `the declarations import ${name}, which @formdef/core does not declare`),
 ]
 
 if (problems.length > 0) {
