@@ -1,5 +1,5 @@
 import { type AnyFormApi, createFormHook, createFormHookContexts } from '@tanstack/react-form'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RowProps, SectionProps } from '../config/structure'
@@ -70,10 +70,20 @@ type OrderFormProps = {
   layout?: readonly unknown[] | undefined
   parts?: typeof PARTS | typeof PARTS_WITH_SLOTS
   onForm?: (form: AnyFormApi) => void
+  onSubmit?: (values: Order) => void
 }
 
-const OrderForm = ({ fields, layout, parts = PARTS, onForm }: OrderFormProps): ReactNode => {
-  const form = useAppForm({ defaultValues: DEFAULT_VALUES })
+const OrderForm = ({
+  fields,
+  layout,
+  parts = PARTS,
+  onForm,
+  onSubmit,
+}: OrderFormProps): ReactNode => {
+  const form = useAppForm({
+    defaultValues: DEFAULT_VALUES,
+    onSubmit: ({ value }) => onSubmit?.(value),
+  })
   onForm?.(form)
 
   return (
@@ -410,5 +420,103 @@ describe('Fields with a layout', () => {
     }
 
     expect(consoleError).not.toHaveBeenCalled()
+  })
+})
+
+const hasNote = (values: Order): boolean => values.note !== ''
+
+describe('Fields with visibility and derived props', () => {
+  it('hides a field entry while its condition fails', () => {
+    render(
+      <OrderForm
+        fields={{
+          note: ORDER_FIELDS.note,
+          email: { ...ORDER_FIELDS.email, visibleWhen: hasNote },
+        }}
+      />,
+    )
+    expect(inputNames()).toEqual(['note', 'email'])
+
+    fireEvent.change(screen.getByLabelText('Note'), { target: { value: '' } })
+
+    expect(inputNames()).toEqual(['note'])
+  })
+
+  it('hides every kind of layout entry while its condition fails', () => {
+    render(
+      <OrderForm
+        parts={PARTS_WITH_SLOTS}
+        fields={ORDER_FIELDS}
+        layout={[
+          'note',
+          { section: 'Contact', props: { tone: 'quiet' }, layout: ['email'], visibleWhen: hasNote },
+          { row: ['address'], props: { columns: 2 }, visibleWhen: hasNote },
+          { component: 'SubmitButton', props: { label: 'Order' }, visibleWhen: hasNote },
+          { render: () => <output>Fine print</output>, visibleWhen: hasNote },
+        ]}
+      />,
+    )
+    expect(inputNames()).toEqual(['note', 'email', 'address.street', 'address.zip'])
+
+    fireEvent.change(screen.getByLabelText('Note'), { target: { value: '' } })
+
+    expect(inputNames()).toEqual(['note'])
+    expect(screen.queryByRole('region')).toBeNull()
+    expect(screen.queryByRole('button')).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('derives the props of a widget, a slot and a form component from the values', () => {
+    render(
+      <OrderForm
+        parts={PARTS_WITH_SLOTS}
+        fields={{
+          ...ORDER_FIELDS,
+          email: {
+            widget: 'text',
+            props: (values: Order) => ({ label: `Email for ${values.note}` }),
+          },
+        }}
+        layout={[
+          'note',
+          {
+            section: 'Contact',
+            props: (values: Order) => ({ tone: values.note }),
+            layout: ['email'],
+          },
+          { component: 'SubmitButton', props: (values: Order) => ({ label: values.note }) },
+        ]}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Note'), { target: { value: 'Leave at door' } })
+
+    expect(screen.getByLabelText('Email for Leave at door')).toBeDefined()
+    expect(screen.getByRole('region', { name: 'Contact' }).dataset.tone).toBe('Leave at door')
+    expect(screen.getByRole('button').textContent).toBe('Leave at door (0)')
+  })
+
+  it('keeps the value of a hidden field and submits it', async () => {
+    const onSubmit = vi.fn()
+    let form: AnyFormApi | undefined
+    render(
+      <OrderForm
+        fields={{
+          note: ORDER_FIELDS.note,
+          email: { ...ORDER_FIELDS.email, visibleWhen: hasNote },
+        }}
+        onForm={(instance) => {
+          form = instance
+        }}
+        onSubmit={onSubmit}
+      />,
+    )
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'grace@example.com' } })
+    fireEvent.change(screen.getByLabelText('Note'), { target: { value: '' } })
+    await act(() => form?.handleSubmit())
+
+    expect(screen.queryByLabelText('Email')).toBeNull()
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ email: 'grace@example.com' }))
   })
 })
