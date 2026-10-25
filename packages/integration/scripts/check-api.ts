@@ -10,6 +10,7 @@ const PUBLIC_EXPORTS = [
   'createRegistry',
   'RowProps',
   'SectionProps',
+  'Validation',
   'errorsOf',
   'fieldId',
   'FieldApiOf',
@@ -96,9 +97,13 @@ function undocumentedMembers(symbol: ts.Symbol): string[] {
     return []
   }
 
+  // A union lists only the members all its variants share, so each variant is read on its own.
+  const declared = checker.getDeclaredTypeOfSymbol(symbol)
+  const variants = declared.isUnion() ? declared.types : [declared]
+  const members = [...new Set(variants.flatMap((variant) => checker.getPropertiesOfType(variant)))]
+
   // Members a type takes over from TanStack or React are documented there, not here.
-  return checker
-    .getPropertiesOfType(checker.getDeclaredTypeOfSymbol(symbol))
+  return members
     .filter((member) => member.declarations?.some(isDeclaredHere))
     .filter((member) => !isDocumented(member))
     .map((member) => member.getName())
