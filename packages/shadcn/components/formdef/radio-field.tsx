@@ -1,5 +1,5 @@
 import { type FieldOf, fieldParts } from '@formdef/core'
-import type { ComponentProps, FocusEvent } from 'react'
+import type { ComponentProps } from 'react'
 
 import { FieldNotes } from '@/components/formdef/field-notes'
 import {
@@ -12,6 +12,7 @@ import {
   FieldTitle,
 } from '@/components/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { blurLeaving } from '@/lib/formdef/blur-leaving'
 import type { FieldLabels } from '@/lib/formdef/field-labels'
 import { type Option, optionId } from '@/lib/formdef/options'
 
@@ -43,11 +44,6 @@ export const RadioField = ({
   const { name: _carriedByTheForm, onBlur, ...group } = parts.control
   const legendId = `${group.id}${LEGEND_SUFFIX}`
   const value = field.state.value ?? ''
-  const handleBlur = (event: FocusEvent<HTMLElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) {
-      onBlur()
-    }
-  }
 
   const item = (option: Option) => {
     const id = optionId(group.id, option.value)
@@ -105,7 +101,7 @@ export const RadioField = ({
         {...attrs}
         {...group}
         aria-labelledby={label === undefined ? undefined : legendId}
-        onBlur={handleBlur}
+        onBlur={blurLeaving(onBlur)}
         value={value}
         onValueChange={(chosen) => field.handleChange(String(chosen ?? ''))}
       >

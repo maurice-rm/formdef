@@ -4,6 +4,8 @@ import { describe, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
 
 import { CheckboxField } from '@/components/formdef/checkbox-field'
+import { CheckboxGroupField } from '@/components/formdef/checkbox-group-field'
+import { ComboboxField } from '@/components/formdef/combobox-field'
 import { NumberField } from '@/components/formdef/number-field'
 import { PasswordField } from '@/components/formdef/password-field'
 import { RadioField } from '@/components/formdef/radio-field'
@@ -125,6 +127,44 @@ describe('the choice widgets', () => {
       defaultValues: values,
       // @ts-expect-error a select needs its options
       fields: { plan: { widget: 'select', props: { label: 'Plan' } } },
+    })
+  })
+})
+
+describe('the checkbox group and the combobox', () => {
+  const lists = createRegistry({
+    fieldContext,
+    formContext,
+    widgets: { checkboxes: CheckboxGroupField, combobox: ComboboxField },
+  })
+  const listSchema = z.object({ channels: z.array(z.string()), framework: z.string() })
+  const values = { channels: [], framework: '' }
+  const options = [{ value: 'next', label: 'Next.js' }]
+
+  it('register and serve the values they are written for', () => {
+    const Form = lists.createForm({
+      schema: listSchema,
+      defaultValues: values,
+      fields: {
+        channels: { widget: 'checkboxes', props: { label: 'Channels', options } },
+        framework: { widget: 'combobox', props: { label: 'Framework', options, empty: 'None' } },
+      },
+    })
+    expectTypeOf(Form).not.toBeAny()
+  })
+
+  it('reject a value they are not written for', () => {
+    lists.createForm({
+      schema: listSchema,
+      defaultValues: values,
+      // @ts-expect-error a checkbox group serves a list, not a string
+      fields: { framework: { widget: 'checkboxes', props: { label: 'Framework', options } } },
+    })
+    lists.createForm({
+      schema: listSchema,
+      defaultValues: values,
+      // @ts-expect-error a combobox serves a string, not a list
+      fields: { channels: { widget: 'combobox', props: { label: 'Channels', options } } },
     })
   })
 })

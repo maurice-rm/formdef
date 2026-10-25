@@ -264,6 +264,11 @@
           "path": "lib/formdef/field-labels.ts",
           "type": "registry:lib",
           "target": "@lib/formdef/field-labels.ts"
+        },
+        {
+          "path": "lib/formdef/blur-leaving.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/blur-leaving.ts"
         }
       ],
       "docs": "Register it in lib/formdef: widgets: { radio: RadioField }. Options take a value, a label and optionally a description and disabled.",
@@ -309,6 +314,85 @@
         }
       ],
       "docs": "Register it in lib/formdef: widgets: { select: SelectField }.",
+      "categories": ["form", "field"]
+    },
+    {
+      "name": "checkbox-group-field",
+      "type": "registry:component",
+      "title": "Checkbox group field",
+      "description": "A formdef widget for several choices among options, built on shadcn's FieldSet and Checkbox; values the options do not carry stay in the form.",
+      "dependencies": ["@formdef/core"],
+      "registryDependencies": ["checkbox", "field"],
+      "files": [
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/checkbox-group-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/checkbox-group-field.tsx"
+        },
+        {
+          "path": "lib/formdef/blur-leaving.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/blur-leaving.ts"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        },
+        {
+          "path": "lib/formdef/options.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/options.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { checkboxes: CheckboxGroupField }. Its value is string[].",
+      "categories": ["form", "field"]
+    },
+    {
+      "name": "combobox-field",
+      "type": "registry:component",
+      "title": "Combobox field",
+      "description": "A formdef widget for one choice among many options, built on shadcn's Field and Combobox, filtered by what is typed.",
+      "dependencies": ["@base-ui/react", "@formdef/core", "lucide-react"],
+      "registryDependencies": ["combobox", "field", "input-group"],
+      "files": [
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/combobox-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/combobox-field.tsx"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        },
+        {
+          "path": "lib/formdef/options.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/options.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { combobox: ComboboxField }. Rename the text shown without matches with empty, and the clear button's name with clearLabel.",
       "categories": ["form", "field"]
     }
   ]
