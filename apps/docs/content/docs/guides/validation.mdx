@@ -1,0 +1,250 @@
+---
+title: Validation
+description: When the schema runs, rules that span fields, rules per field, and errors from the server.
+---
+
+The schema is the validator. formdef hands it to TanStack Form unchanged: no adapter, no second
+language for rules. Any [Standard Schema](https://standardschema.dev) works, and the form's data
+type is the schema's input type.
+
+## When the schema runs
+
+`validation.mode` decides when TanStack runs the schema:
+
+| `mode` | The schema runs |
+| --- | --- |
+| `revalidate` (default) | on submit, then on every change |
+| `blurThenChange` | when a field is left, then on every change while the form is invalid |
+| `onChange` | on every change |
+| `onBlur` | when a field is left |
+| `onSubmit` | on submit only |
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const schema = z.object({ email: z.email('Enter an email address') })
+// ---cut---
+export const Newsletter = createForm({
+  schema,
+  defaultValues: { email: '' },
+  fields: { email: { widget: 'text', props: { label: 'Email' } } },
+  validation: { mode: 'blurThenChange' },
+})
+```
+
+A widget shows a field's error only once it is [due](/guides/errors-and-accessibility#when-an-error-is-due):
+after the field was edited and left, or after a submit. The mode decides how current the message is
+from then on.
+
+- **`revalidate` keeps messages current.** After the first submit, every change runs the schema
+  again, so a message disappears in the keystroke that fixes the value.
+- **`blurThenChange` reports earlier.** A field is checked when it is left, and while the form is
+  invalid, every change runs the schema again. The schema checks the whole form, so once any field is invalid, a
+  change anywhere runs it; the extra runs only keep the visible messages current.
+- **`onBlur` and `onSubmit` can show a message the value no longer earns.** The message stays until
+  the next blur or submit runs the schema again. Prefer one of the first two unless a form has a
+  reason not to.
+
+### Asynchronous schemas
+
+A schema with asynchronous checks says so with `async: true`. TanStack throws when an asynchronous
+schema runs as a synchronous validator, so the flag is required, not a hint:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+declare function isFree(username: string): Promise<boolean>
+// ---cut---
+const schema = z.object({
+  username: z.string().refine(async (name) => await isFree(name), 'This username is taken'),
+})
+
+export const SignUp = createForm({
+  schema,
+  defaultValues: { username: '' },
+  fields: { username: { widget: 'text', props: { label: 'Username' } } },
+  validation: { mode: 'onBlur', async: true, asyncDebounceMs: 300 },
+})
+```
+
+`asyncDebounceMs` waits that long after the event that runs the schema, so a burst of events
+starts one check, and exists only together with `async: true`. TanStack's own `asyncDebounceMs` at the top of the config wins over it.
+
+## Rules that span fields
+
+A rule that compares fields belongs in the schema, where it sees every value. `path` decides which
+field shows the message:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+const schema = z
+  .object({ password: z.string().min(8), confirm: z.string() })
+  .refine((values) => values.password === values.confirm, {
+    path: ['confirm'],
+    message: 'The passwords do not match',
+  })
+
+export const NewPassword = createForm({
+  schema,
+  defaultValues: { password: '', confirm: '' },
+  fields: {
+    password: { widget: 'text', props: { label: 'Password' } },
+    confirm: { widget: 'text', props: { label: 'Repeat the password' } },
+  },
+})
+```
+
+## Rules per field
+
+The schema is the place for rules, but every field entry also takes TanStack's `validators`,
+typed against the field's value. The common reason is timing: the form checks on submit, but one
+field should report as soon as it is left. Reusing the schema's rule keeps it in one place:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+const schema = z.object({ email: z.email('Enter an email address'), name: z.string() })
+
+export const Contact = createForm({
+  schema,
+  defaultValues: { email: '', name: '' },
+  fields: {
+    email: {
+      widget: 'text',
+      props: { label: 'Email' },
+      validators: { onBlur: schema.shape.email },
+    },
+    name: { widget: 'text', props: { label: 'Name' } },
+  },
+  validation: { mode: 'onSubmit' },
+})
+```
+
+The form takes `validators` as well. `validation.mode` places the schema under one validator key
+(`onDynamic` for the first two modes, the mode's own key for the others, with `Async` appended
+for an asynchronous schema). A validator you set under that same key wins, and the schema is not
+placed; every other key stays yours. Adding `onSubmitAsync` therefore keeps the schema, with one exception:
+`{ mode: 'onSubmit', async: true }` places the schema under `onSubmitAsync` itself, so a validator
+of your own there replaces it.
+
+## Errors from the server
+
+`onSubmitAsync` runs when the form is submitted, before `onSubmit`. It is where a server's answer
+comes back: return `{ form, fields }`, a message for the whole form and messages per path, and the
+submit stops without calling `onSubmit`.
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const SignIn = createForm({
+  schema: z.object({ email: z.email() }),
+  defaultValues: { email: '' },
+  fields: { email: { widget: 'text', props: { label: 'Email' } } },
+})
+declare function signIn(values: { email: string }): Promise<{ ok: boolean }>
+// ---cut---
+export const SignInPage = () => (
+  <SignIn
+    options={{
+      validators: {
+        onSubmitAsync: async ({ value }) => {
+          const result = await signIn(value)
+
+          return result.ok
+            ? undefined
+            : { form: 'The sign-in failed', fields: { email: 'No account uses this email' } }
+        },
+      },
+    }}
+  />
+)
+```
+
+The `fields` half reaches the fields and shows like any other error. The `form` half lands in
+`state.errorMap.onSubmit`, where an inline entry or a form component renders it:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+export const SignIn = createForm({
+  schema: z.object({ email: z.email() }),
+  defaultValues: { email: '' },
+  fields: { email: { widget: 'text', props: { label: 'Email' } } },
+  layout: [
+    {
+      render: (form) => (
+        <form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+          {(error) => (typeof error === 'string' ? <p role="alert">{error}</p> : null)}
+        </form.Subscribe>
+      ),
+    },
+    'email',
+  ],
+})
+```
+
+The `typeof` check matters: with `validation.mode: 'onSubmit'`, the same key holds the schema's
+issues by path, which belong to the fields and reach them on their own.
+
+<Callout type="warn" title="Do not move the focus to a form error">
+
+TanStack clears `errorMap.onSubmit` on the next validation that is not a submit and finds no error.
+If the element that shows the message takes the focus, the field it leaves runs that validation
+while the submit is still in progress; TanStack then reads the form as valid and calls `onSubmit`
+for values the server just rejected. `role="alert"` makes a screen reader announce the message
+without moving the focus.
+
+</Callout>
+
+The message also goes away on the next blur or change anywhere in the form whose validation finds
+no error. A message that must stay longer belongs in state of your own.
+
+A form can start with a message, for instance from an expired link. Seed it through `defaultState`.
+Like a message from a submit, it clears on the first blur or change that finds no error, and until
+then the form counts as invalid, so a submit before any edit does not reach `onSubmit`:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const SignIn = createForm({
+  schema: z.object({ email: z.email() }),
+  defaultValues: { email: '' },
+  fields: { email: { widget: 'text', props: { label: 'Email' } } },
+})
+// ---cut---
+export const ExpiredLink = () => (
+  <SignIn options={{ defaultState: { errorMap: { onSubmit: 'This link has expired.' } } }} />
+)
+```

@@ -1,0 +1,131 @@
+---
+title: Errors and accessibility
+description: When a widget shows an error, and the helpers that wire a control to its label, description and errors.
+---
+
+formdef leaves the markup of a field to its widget. Three helpers do the wiring every widget
+repeats: `fieldParts`, `errorsOf` and `fieldId`.
+
+## When an error is due
+
+A field can be invalid long before it should say so: an empty required field is invalid from the
+start. A widget shows the error once it is **due**: the field is invalid, and it was edited and left,
+or the form was submitted.
+
+Edited **and** left means a person who tabs through an empty form sees no errors, and a person who
+is still typing is not interrupted. After a submit, every invalid field reports at once.
+
+## fieldParts
+
+`fieldParts(field)` returns what a widget spreads onto its control and the ids of the elements
+around it:
+
+```tsx title="form/text-field.tsx"
+import { type FieldOf, fieldParts } from '@formdef/core'
+
+type TextFieldProps = FieldOf<string> & { label: string; description?: string }
+
+export const TextField = ({ field, label, description }: TextFieldProps) => {
+  const { control, descriptionId, errorId, isErrorDue, errors } = fieldParts(field, { description })
+
+  return (
+    <div>
+      <label htmlFor={control.id}>{label}</label>
+      {description && <p id={descriptionId}>{description}</p>}
+      <input
+        {...control}
+        value={field.state.value}
+        onChange={(event) => field.handleChange(event.target.value)}
+      />
+      {isErrorDue && errors.length > 0 && <p id={errorId}>{errors.join(' ')}</p>}
+    </div>
+  )
+}
+```
+
+| Key | Holds |
+| --- | --- |
+| `control` | `id`, `name`, `onBlur`, `aria-invalid`, `aria-describedby` and `aria-errormessage`, to spread onto the control. Its value and change handler differ per control and stay with the widget. |
+| `descriptionId`, `errorId` | The ids for the description and the error element. |
+| `isErrorDue` | Whether the error is due. |
+| `errors` | The error texts, as `errorsOf` returns them. |
+
+The wiring follows a few rules, so a screen reader never meets a broken reference:
+
+- `aria-invalid` is `true` while an error is due and absent otherwise, never `false`.
+- `aria-describedby` names the description only when the widget passes one, and the error only
+  while an error with text is due. `aria-errormessage` names the error under the same condition.
+  An id never points at an element that is not rendered.
+- The id starts with the form's own id, so two forms on one page never share one. A widget that
+  writes `id={field.name}` would collide in exactly that case.
+
+## errorsOf
+
+`errorsOf(field)` turns a field's errors into the texts to show. Validators return strings, schema
+issues or objects; `errorsOf` reads the message of each, leaves out an error without text, and
+keeps a text that two validators report only once.
+
+## fieldId and an error summary
+
+`fieldId(formId, path)` builds the id `fieldParts` gives the control at `path`, for code that
+has a path but no field. An error summary is the usual case. formdef ships none, because every
+field already reports its own error after a submit; a long form where an invalid field can be out
+of view may want one. An inline entry can build it:
+
+```tsx
+import { createRegistry, type FieldOf, fieldId } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+const LABELS: Record<string, string> = { name: 'Name', email: 'Email' }
+
+export const Contact = createForm({
+  schema: z.object({ name: z.string().min(1, 'Enter your name'), email: z.email('Enter an email') }),
+  defaultValues: { name: '', email: '' },
+  fields: {
+    name: { widget: 'text', props: { label: 'Name' } },
+    email: { widget: 'text', props: { label: 'Email' } },
+  },
+  layout: [
+    {
+      render: (form) => (
+        <form.Subscribe selector={(state) => (state.submissionAttempts > 0 ? state.fieldMeta : {})}>
+          {(fieldMeta) => {
+            const invalidPaths = Object.entries(fieldMeta)
+              .filter(([, meta]) => (meta?.errors.length ?? 0) > 0)
+              .map(([path]) => path)
+            if (invalidPaths.length === 0) {
+              return null
+            }
+
+            return (
+              <nav aria-label="Errors in this form">
+                <ul>
+                  {invalidPaths.map((path) => (
+                    <li key={path}>
+                      <a href={`#${fieldId(form.formId, path)}`}>{LABELS[path] ?? path}</a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )
+          }}
+        </form.Subscribe>
+      ),
+    },
+    'name',
+    'email',
+  ],
+})
+```
+
+Each link jumps to its control. The summary does not take the focus by itself: an element that
+does while a submit is running can make TanStack drop an error from the server
+([Validation](/guides/validation#errors-from-the-server) explains why).
+
+`fieldId` folds `.`, `[` and `]` in the path to `__`, so `address.zip` becomes
+`<formId>-address__zip`. The fold cannot be undone: a key literally named `a__b` would collide with
+the path `a.b`.

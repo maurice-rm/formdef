@@ -1,0 +1,106 @@
+---
+title: Field groups and your own shell
+description: Render a config into a form you build yourself, and reuse one config at several paths.
+---
+
+`createForm` renders the `<form>` element, its submission and the fields. When a form needs more
+around its fields, you build that shell yourself with the registry's `formHook` and keep the config
+for the fields: `fields` and `layout` take the same types in both places. [Ways in](/concepts/ways-in)
+compares the two.
+
+## Your own shell
+
+`formHook` is TanStack's `createFormHook` result for the registry's widgets and form components:
+`useAppForm`, `withForm`, `withFieldGroup` and `useTypedAppFormContext`. `createForm` builds its
+forms with the very same hook. `Fields` renders a config into any form from it, as often as you
+like:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const { Fields, formHook } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+declare function save(values: { name: string; note: string }): Promise<void>
+// ---cut---
+export const Note = () => {
+  const form = formHook.useAppForm({
+    defaultValues: { name: '', note: '' },
+    onSubmit: ({ value }) => save(value),
+  })
+
+  return (
+    <form.AppForm>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          void form.handleSubmit()
+        }}
+      >
+        <Fields form={form} fields={{ name: { widget: 'text', props: { label: 'Name' } } }} />
+        <hr />
+        <Fields form={form} fields={{ note: { widget: 'text', props: { label: 'Note' } } }} />
+        <form.Subscribe selector={(state) => state.isSubmitting}>
+          {(isSubmitting) => (
+            <button type="submit" aria-disabled={isSubmitting}>
+              Save
+            </button>
+          )}
+        </form.Subscribe>
+      </form>
+    </form.AppForm>
+  )
+}
+```
+
+This is TanStack's own API around `Fields`: every option of `useAppForm` is yours, including hooks in
+the component, and the form object has its whole API, validators included. The registered `body`
+slot does not wrap it; the shell is yours, and so is the wrapper.
+
+## Field groups
+
+TanStack's `withFieldGroup` builds a component for a part of a form that can sit at more than one
+path. `Fields` renders into a group as it renders into a form, so a group can take its fields from
+a config. `FieldsOf` types such a config for the group's own value:
+
+```tsx
+import { createRegistry, type FieldOf, type FieldsOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const registry = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const { Fields, formHook } = registry
+// ---cut---
+type Address = { street: string; city: string }
+
+const addressFields: FieldsOf<typeof registry, Address> = {
+  street: { widget: 'text', props: { label: 'Street' } },
+  city: { widget: 'text', props: { label: 'City' } },
+}
+
+const DEFAULT_ADDRESS: Address = { street: '', city: '' }
+
+const AddressFields = formHook.withFieldGroup({
+  defaultValues: DEFAULT_ADDRESS,
+  render: ({ group }) => <Fields form={group} fields={addressFields} />,
+})
+
+export const Checkout = () => {
+  const form = formHook.useAppForm({
+    defaultValues: { billing: DEFAULT_ADDRESS, shipping: DEFAULT_ADDRESS },
+  })
+
+  return (
+    <form.AppForm>
+      <AddressFields form={form} fields="billing" />
+      <AddressFields form={form} fields="shipping" />
+    </form.AppForm>
+  )
+}
+```
+
+TanStack maps the paths, so the same config renders at `billing.street` and at `shipping.street`.
+Inside a group, conditions and derived props see the group's values, not the whole form's.
+
+`LayoutOf` types a layout for such a config the same way, and both types also share a part of a
+config between forms built with `createForm`.
