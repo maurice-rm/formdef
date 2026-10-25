@@ -4,13 +4,14 @@ import { type FieldOf, fieldParts } from '@formdef/core'
 import { EyeIcon, EyeOffIcon } from 'lucide-react'
 import { type ComponentProps, useState } from 'react'
 
-import { FieldFrame, type FieldLabels } from '@/components/formdef/field-frame'
+import { FieldFrame } from '@/components/formdef/field-frame'
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
 } from '@/components/ui/input-group'
+import type { FieldLabels } from '@/lib/formdef/field-labels'
 
 type Attrs = Pick<
   ComponentProps<'input'>,

@@ -3,8 +3,12 @@ import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
 
+import { CheckboxField } from '@/components/formdef/checkbox-field'
 import { NumberField } from '@/components/formdef/number-field'
 import { PasswordField } from '@/components/formdef/password-field'
+import { RadioField } from '@/components/formdef/radio-field'
+import { SelectField } from '@/components/formdef/select-field'
+import { SwitchField } from '@/components/formdef/switch-field'
 import { TextField } from '@/components/formdef/text-field'
 import { TextareaField } from '@/components/formdef/textarea-field'
 
@@ -70,5 +74,57 @@ describe('the text widgets', () => {
       },
     } satisfies FormConfig<typeof registry, typeof schema>
     expectTypeOf(config).not.toBeAny()
+  })
+})
+
+describe('the choice widgets', () => {
+  const choices = createRegistry({
+    fieldContext,
+    formContext,
+    widgets: {
+      checkbox: CheckboxField,
+      switch: SwitchField,
+      radio: RadioField,
+      select: SelectField,
+    },
+  })
+  const choiceSchema = z.object({ terms: z.boolean(), plan: z.string() })
+  const values = { terms: false, plan: '' }
+  const options = [{ value: 'basic', label: 'Basic' }]
+
+  it('register and serve the values they are written for', () => {
+    const Form = choices.createForm({
+      schema: choiceSchema,
+      defaultValues: values,
+      fields: {
+        terms: { widget: 'checkbox', props: { label: 'Terms' } },
+        plan: { widget: 'select', props: { label: 'Plan', options, placeholder: 'Choose…' } },
+      },
+    })
+    const Alternative = choices.createForm({
+      schema: choiceSchema,
+      defaultValues: values,
+      fields: {
+        terms: { widget: 'switch', props: { label: 'Terms', variant: 'card' } },
+        plan: { widget: 'radio', props: { label: 'Plan', options, variant: 'card' } },
+      },
+    })
+    expectTypeOf(Form).not.toBeAny()
+    expectTypeOf(Alternative).not.toBeAny()
+  })
+
+  it('reject a value they are not written for, and options left out', () => {
+    choices.createForm({
+      schema: choiceSchema,
+      defaultValues: values,
+      // @ts-expect-error a checkbox does not serve a string
+      fields: { plan: { widget: 'checkbox', props: { label: 'Plan' } } },
+    })
+    choices.createForm({
+      schema: choiceSchema,
+      defaultValues: values,
+      // @ts-expect-error a select needs its options
+      fields: { plan: { widget: 'select', props: { label: 'Plan' } } },
+    })
   })
 })

@@ -39,6 +39,11 @@
           "target": "@components/formdef/field-frame.tsx"
         },
         {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
           "path": "components/formdef/label-line.tsx",
           "type": "registry:component",
           "target": "@components/formdef/label-line.tsx"
@@ -52,6 +57,11 @@
           "path": "lib/formdef/addons.ts",
           "type": "registry:lib",
           "target": "@lib/formdef/addons.ts"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
         }
       ],
       "docs": "Register it in lib/formdef: widgets: { text: TextField }.",
@@ -71,6 +81,11 @@
           "target": "@components/formdef/field-frame.tsx"
         },
         {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
           "path": "components/formdef/label-line.tsx",
           "type": "registry:component",
           "target": "@components/formdef/label-line.tsx"
@@ -84,6 +99,11 @@
           "path": "lib/formdef/addons.ts",
           "type": "registry:lib",
           "target": "@lib/formdef/addons.ts"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
         }
       ],
       "docs": "Register it in lib/formdef: widgets: { textarea: TextareaField }.",
@@ -103,6 +123,11 @@
           "target": "@components/formdef/field-frame.tsx"
         },
         {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
           "path": "components/formdef/label-line.tsx",
           "type": "registry:component",
           "target": "@components/formdef/label-line.tsx"
@@ -111,6 +136,11 @@
           "path": "components/formdef/password-field.tsx",
           "type": "registry:component",
           "target": "@components/formdef/password-field.tsx"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
         }
       ],
       "docs": "Register it in lib/formdef: widgets: { password: PasswordField }. Rename the button's labels with reveal: { show, hide }.",
@@ -130,6 +160,11 @@
           "target": "@components/formdef/field-frame.tsx"
         },
         {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
           "path": "components/formdef/label-line.tsx",
           "type": "registry:component",
           "target": "@components/formdef/label-line.tsx"
@@ -138,9 +173,142 @@
           "path": "components/formdef/number-field.tsx",
           "type": "registry:component",
           "target": "@components/formdef/number-field.tsx"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
         }
       ],
       "docs": "Register it in lib/formdef: widgets: { number: NumberField }. Its value is number | undefined, so the schema allows undefined. It is meant for counts and whole numbers; take a text field with inputMode: 'decimal' for amounts and decimals, which users type with a comma.",
+      "categories": ["form", "field"]
+    },
+    {
+      "name": "checkbox-field",
+      "type": "registry:component",
+      "title": "Checkbox field",
+      "description": "A formdef widget for a boolean, built on shadcn's Field and Checkbox, with its label beside the box.",
+      "dependencies": ["@formdef/core"],
+      "registryDependencies": ["checkbox", "field"],
+      "files": [
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/checkbox-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/checkbox-field.tsx"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { checkbox: CheckboxField }.",
+      "categories": ["form", "field"]
+    },
+    {
+      "name": "switch-field",
+      "type": "registry:component",
+      "title": "Switch field",
+      "description": "A formdef widget for a boolean, built on shadcn's Field and Switch, as a split row, a list row or a card.",
+      "dependencies": ["@formdef/core"],
+      "registryDependencies": ["field", "switch"],
+      "files": [
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/switch-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/switch-field.tsx"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { switch: SwitchField }. Choose the look with variant: 'split', 'list' or 'card'.",
+      "categories": ["form", "field"]
+    },
+    {
+      "name": "radio-field",
+      "type": "registry:component",
+      "title": "Radio field",
+      "description": "A formdef widget for one choice among options, built on shadcn's FieldSet and RadioGroup, as a list or as cards.",
+      "dependencies": ["@formdef/core"],
+      "registryDependencies": ["field", "radio-group"],
+      "files": [
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/radio-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/radio-field.tsx"
+        },
+        {
+          "path": "lib/formdef/options.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/options.ts"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { radio: RadioField }. Options take a value, a label and optionally a description and disabled.",
+      "categories": ["form", "field"]
+    },
+    {
+      "name": "select-field",
+      "type": "registry:component",
+      "title": "Select field",
+      "description": "A formdef widget for one choice among options, built on shadcn's Field and Select; a value the options do not carry stays in the form.",
+      "dependencies": ["@formdef/core"],
+      "registryDependencies": ["field", "select"],
+      "files": [
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/select-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/select-field.tsx"
+        },
+        {
+          "path": "lib/formdef/options.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/options.ts"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { select: SelectField }.",
       "categories": ["form", "field"]
     }
   ]

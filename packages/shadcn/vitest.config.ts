@@ -9,6 +9,7 @@ const config: ViteUserConfig = defineConfig({
   test: {
     include: ['tests/**/*.test.{ts,tsx}'],
     environment: 'jsdom',
+    setupFiles: ['tests/setup.ts'],
     typecheck: {
       include: ['tests/**/*.test-d.{ts,tsx}'],
       tsconfig: 'tsconfig.node.json',

@@ -1,8 +1,9 @@
 import { type FieldOf, fieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
-import { FieldFrame, type FieldLabels } from '@/components/formdef/field-frame'
+import { FieldFrame } from '@/components/formdef/field-frame'
 import { Input } from '@/components/ui/input'
+import type { FieldLabels } from '@/lib/formdef/field-labels'
 
 type Attrs = Pick<
   ComponentProps<'input'>,
