@@ -167,6 +167,11 @@ export const Team = createForm({
 })
 ```
 
+The frame renders again when items are added, removed or moved, when a key or a remove label
+changes, and when the list itself gets an error; typing inside an item does not render it again. A
+frame that shows values of its items, such as a total, subscribes to them itself, for instance with
+TanStack's `useStore(field.store, selector)`.
+
 Besides `add` and `remove`, a frame receives `insert`, `move`, `swap`, `replace` and `clear`, so it
 can offer reordering. `insert` builds the item with `newItem` when it gets none.
 

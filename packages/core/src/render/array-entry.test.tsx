@@ -37,6 +37,8 @@ type Address = { book: Contact[]; tags: string[] }
 
 type FrameProps = ArrayFrameProps<Contact, { hint: string }> & { title: string }
 
+let frameRenders = 0
+
 const Frame = ({
   field,
   keys,
@@ -51,37 +53,41 @@ const Frame = ({
   replace,
   clear,
   title,
-}: FrameProps): ReactNode => (
-  <section aria-label={title}>
-    {keys.map((key, index) => (
-      <div key={key}>
-        {renderItem(index, { hint: `Item ${index + 1}` })}
-        <button type="button" onClick={() => remove(index)}>
-          {removeLabels[index]}
-        </button>
-      </div>
-    ))}
-    <button type="button" onClick={add}>
-      {addLabel}
-    </button>
-    <button type="button" onClick={() => insert(0)}>
-      Insert first
-    </button>
-    <button type="button" onClick={() => move(0, 1)}>
-      Move first down
-    </button>
-    <button type="button" onClick={() => swap(0, 1)}>
-      Swap
-    </button>
-    <button type="button" onClick={() => replace(0, { name: 'Replaced', email: '' })}>
-      Replace first
-    </button>
-    <button type="button" onClick={clear}>
-      Clear
-    </button>
-    <output>{field.state.value.length}</output>
-  </section>
-)
+}: FrameProps): ReactNode => {
+  frameRenders += 1
+
+  return (
+    <section aria-label={title}>
+      {keys.map((key, index) => (
+        <div key={key}>
+          {renderItem(index, { hint: `Item ${index + 1}` })}
+          <button type="button" onClick={() => remove(index)}>
+            {removeLabels[index]}
+          </button>
+        </div>
+      ))}
+      <button type="button" onClick={add}>
+        {addLabel}
+      </button>
+      <button type="button" onClick={() => insert(0)}>
+        Insert first
+      </button>
+      <button type="button" onClick={() => move(0, 1)}>
+        Move first down
+      </button>
+      <button type="button" onClick={() => swap(0, 1)}>
+        Swap
+      </button>
+      <button type="button" onClick={() => replace(0, { name: 'Replaced', email: '' })}>
+        Replace first
+      </button>
+      <button type="button" onClick={clear}>
+        Clear
+      </button>
+      <output>{field.state.value.length}</output>
+    </section>
+  )
+}
 
 const widgets = { text: TextField }
 
@@ -296,6 +302,27 @@ describe('an array entry with a registered frame', () => {
 
     expect(screen.getByRole('button', { name: 'Mark Ada (1)' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'Mark Grace (0)' })).toBeDefined()
+  })
+
+  it('renders the frame again when the list changes, not when an item does', () => {
+    renderFramed({ removeLabel: 'Remove contact' })
+    frameRenders = 0
+
+    const [firstName] = screen.getAllByLabelText('Name')
+    fireEvent.change(firstName as HTMLElement, { target: { value: 'Ada Lovelace' } })
+    expect(frameRenders).toBe(0)
+
+    click('Add contact')
+    expect(frameRenders).toBe(1)
+  })
+
+  it('keeps a remove label that names the item current while the item changes', () => {
+    renderFramed()
+
+    const [firstName] = screen.getAllByLabelText('Name')
+    fireEvent.change(firstName as HTMLElement, { target: { value: 'Ada Lovelace' } })
+
+    expect(screen.getByRole('button', { name: 'Remove Ada Lovelace' })).toBeDefined()
   })
 
   it('keeps widget state at its position when the entry does not key its items', () => {
