@@ -1,4 +1,10 @@
-import { createRegistry, type FieldOf, type RowProps } from '@formdef/core'
+import {
+  createRegistry,
+  type FieldOf,
+  type FieldsOf,
+  type LayoutOf,
+  type RowProps,
+} from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
 import type { ReactNode } from 'react'
 
@@ -40,4 +46,33 @@ export const Profile = (): ReactNode => {
       <form.SubmitButton label="Save" />
     </form.AppForm>
   )
+}
+
+type Address = { street: string; zip: string }
+type Customer = { name: string; billing: Address; shipping: Address }
+
+const addressFields: FieldsOf<typeof registry, Address, Customer> = {
+  street: { widget: 'text', props: { label: 'Street' } },
+  zip: {
+    widget: 'text',
+    props: { label: 'Postal code' },
+    visibleWhen: (values) => values.name !== '',
+  },
+}
+
+export const customerFields: FieldsOf<typeof registry, Customer> = {
+  name: { widget: 'text', props: { label: 'Name' } },
+  billing: { fields: addressFields },
+  shipping: { fields: addressFields },
+}
+
+export const customerLayout: LayoutOf<typeof registry, Customer> = [
+  { row: ['name'] },
+  { section: 'Addresses', layout: ['billing', 'shipping'] },
+  { component: 'SubmitButton', props: { label: 'Save' } },
+]
+
+export const wrongWidget: FieldsOf<typeof registry, Address> = {
+  // @ts-expect-error no widget named `date` is registered
+  street: { widget: 'date' },
 }
