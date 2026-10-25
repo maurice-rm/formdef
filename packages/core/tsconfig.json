@@ -1,0 +1,4 @@
+{
+  "extends": "@formdef/tsconfig/react-library.json",
+  "include": ["src", "*.config.ts"]
+}
