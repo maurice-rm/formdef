@@ -24,6 +24,124 @@
       ],
       "docs": "Fetch this first. It lands in lib/formdef/: context.ts holds the TanStack contexts, index.tsx the registry, so you import @/lib/formdef. Add an entry under widgets for every widget you fetch, then build forms with the createForm it exports.",
       "categories": ["form"]
+    },
+    {
+      "name": "text-field",
+      "type": "registry:component",
+      "title": "Text field",
+      "description": "A formdef widget for string values, built on shadcn's Field and Input, with optional addons in an input group.",
+      "dependencies": ["@formdef/core"],
+      "registryDependencies": ["field", "input", "input-group"],
+      "files": [
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/text-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/text-field.tsx"
+        },
+        {
+          "path": "lib/formdef/addons.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/addons.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { text: TextField }.",
+      "categories": ["form", "field"]
+    },
+    {
+      "name": "textarea-field",
+      "type": "registry:component",
+      "title": "Textarea field",
+      "description": "A formdef widget for longer string values, built on shadcn's Field and Textarea, with optional addons in an input group.",
+      "dependencies": ["@formdef/core"],
+      "registryDependencies": ["field", "input-group", "textarea"],
+      "files": [
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/textarea-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/textarea-field.tsx"
+        },
+        {
+          "path": "lib/formdef/addons.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/addons.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { textarea: TextareaField }.",
+      "categories": ["form", "field"]
+    },
+    {
+      "name": "password-field",
+      "type": "registry:component",
+      "title": "Password field",
+      "description": "A formdef widget for passwords, built on shadcn's Field and InputGroup, with a button that shows and hides the value.",
+      "dependencies": ["@formdef/core", "lucide-react"],
+      "registryDependencies": ["field", "input-group"],
+      "files": [
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/password-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/password-field.tsx"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { password: PasswordField }. Rename the button's labels with reveal: { show, hide }.",
+      "categories": ["form", "field"]
+    },
+    {
+      "name": "number-field",
+      "type": "registry:component",
+      "title": "Number field",
+      "description": "A formdef widget for optional number values, built on shadcn's Field and Input; an empty input is undefined.",
+      "dependencies": ["@formdef/core"],
+      "registryDependencies": ["field", "input"],
+      "files": [
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/number-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/number-field.tsx"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { number: NumberField }. Its value is number | undefined, so the schema allows undefined. It is meant for counts and whole numbers; take a text field with inputMode: 'decimal' for amounts and decimals, which users type with a comma.",
+      "categories": ["form", "field"]
     }
   ]
 }

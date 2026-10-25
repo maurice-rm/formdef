@@ -11,10 +11,10 @@
       }
     },
     "packages/shadcn": {
-      "entry": ["lib/formdef/*.{ts,tsx}"],
+      "entry": ["lib/formdef/*.{ts,tsx}", "components/formdef/*.tsx"],
       "ignore": ["components/ui/**"],
       "vitest": {
-        "entry": ["tests/**/*.test.{ts,tsx}"]
+        "entry": ["tests/**/*.test.{ts,tsx}", "tests/**/*.test-d.{ts,tsx}"]
       }
     }
   }
