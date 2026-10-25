@@ -36,7 +36,8 @@ export type FormElementProps = Omit<
 export type FormProps<TSchema extends StandardSchemaV1, TSubmitMeta = never> = FormElementProps & {
   /**
    * The form's TanStack options for this instance, such as default values from a hook or a submit
-   * handler that calls a mutation. They take precedence over the config's.
+   * handler that calls a mutation. They take precedence over the config's; a key set to
+   * `undefined`, such as data still loading, keeps the config's value.
    *
    * @defaultValue none; the config's options apply
    */
