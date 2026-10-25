@@ -1,14 +1,10 @@
 import type { FieldParts } from '@formdef/core'
 import type { ReactNode } from 'react'
 
+import { FieldNotes } from '@/components/formdef/field-notes'
 import { LabelLine } from '@/components/formdef/label-line'
-import { Field, FieldDescription, FieldError } from '@/components/ui/field'
-
-export type FieldLabels = {
-  label?: string | undefined
-  labelAside?: ReactNode
-  description?: string | undefined
-}
+import { Field } from '@/components/ui/field'
+import type { FieldLabels } from '@/lib/formdef/field-labels'
 
 type FieldFrameProps = FieldLabels & {
   parts: FieldParts
@@ -31,11 +27,6 @@ export const FieldFrame = ({
       </LabelLine>
     )}
     {children}
-    {description !== undefined && description !== '' && (
-      <FieldDescription id={parts.descriptionId}>{description}</FieldDescription>
-    )}
-    {parts.isErrorDue && (
-      <FieldError id={parts.errorId} errors={parts.errors.map((message) => ({ message }))} />
-    )}
+    <FieldNotes parts={parts} description={description} />
   </Field>
 )

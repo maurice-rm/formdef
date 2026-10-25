@@ -10,7 +10,7 @@ type Wiring = {
   /** The id `fieldParts` gives the control: the form id and the field's path. */
   id: string
   description: string
-  /** Leaves the field invalid after an edit, which makes its error due. */
+  /** Makes the field's error due: an invalid edit and a blur, or a submit for a widget without text. */
   invalidate: (control: HTMLElement) => void
   error: string
 }
@@ -32,9 +32,11 @@ export const describeWiring = ({
 
     it('points its label at the control', () => {
       const { container } = render(<Form />)
+      const label = container.querySelector(`label[for="${id}"]`)
+      const labelledBy = control().getAttribute('aria-labelledby')?.split(' ') ?? []
 
-      expect(control().id).toBe(id)
-      expect(container.querySelector(`label[for="${id}"]`)).not.toBeNull()
+      expect(label).not.toBeNull()
+      expect(control().id === id || labelledBy.includes(label?.id ?? '')).toBe(true)
     })
 
     it('renders its description and ties it to the control', () => {

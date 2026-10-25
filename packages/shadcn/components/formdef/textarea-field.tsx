@@ -1,10 +1,11 @@
 import { type FieldOf, fieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
-import { FieldFrame, type FieldLabels } from '@/components/formdef/field-frame'
+import { FieldFrame } from '@/components/formdef/field-frame'
 import { InputGroup, InputGroupAddon, InputGroupTextarea } from '@/components/ui/input-group'
 import { Textarea } from '@/components/ui/textarea'
 import type { Addon } from '@/lib/formdef/addons'
+import type { FieldLabels } from '@/lib/formdef/field-labels'
 
 type Attrs = Pick<
   ComponentProps<'textarea'>,
