@@ -1,4 +1,5 @@
 import type { LevelFields } from '../config/field-entry'
+import type { FormHandle } from '../config/form-handle'
 import type { AnyRegistry, PartsOf } from './registry'
 
 /**
@@ -29,7 +30,7 @@ import type { AnyRegistry, PartsOf } from './registry'
  * ```
  */
 export type FieldsOf<TRegistry extends AnyRegistry, TValue, TRoot = TValue> = LevelFields<
-  PartsOf<TRegistry, unknown>,
+  PartsOf<TRegistry, FormHandle<TRoot, never>>,
   TValue,
   TRoot
 >

@@ -70,6 +70,13 @@ export const customerLayout: LayoutOf<typeof registry, Customer> = [
   { row: ['name'] },
   { section: 'Addresses', layout: ['billing', 'shipping'] },
   { component: 'SubmitButton', props: { label: 'Save' } },
+  {
+    render: (form) => (
+      <form.Subscribe selector={(state) => state.values.name}>
+        {(name) => <p>{name === '' ? 'Who is ordering?' : `Order for ${name}`}</p>}
+      </form.Subscribe>
+    ),
+  },
 ]
 
 export const wrongWidget: FieldsOf<typeof registry, Address> = {
