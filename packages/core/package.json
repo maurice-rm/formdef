@@ -1,0 +1,75 @@
+{
+  "name": "@formdef/core",
+  "version": "0.0.0",
+  "description": "Describe a form once as a typed object, render it as a React component, with the compiler checking that every widget fits its value. Built on TanStack Form.",
+  "keywords": [
+    "react",
+    "form",
+    "forms",
+    "tanstack-form",
+    "standard-schema",
+    "typescript",
+    "type-safe",
+    "declarative"
+  ],
+  "license": "MIT",
+  "author": "Maurice Reim",
+  "homepage": "https://github.com/maurice-rm/formdef#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maurice-rm/formdef.git",
+    "directory": "packages/core"
+  },
+  "bugs": "https://github.com/maurice-rm/formdef/issues",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "test:types": "vitest run --typecheck.only --passWithNoTests"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.4"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@arethetypeswrong/core": "0.18.5",
+    "@formdef/tsconfig": "workspace:*",
+    "jsdom": "catalog:",
+    "publint": "0.3.25",
+    "tsdown": "0.23.2",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "@formdef/source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}
