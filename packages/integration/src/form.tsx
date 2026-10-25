@@ -1,6 +1,7 @@
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, fieldParts, type InferData } from '@formdef/core'
 import { createFormHook, createFormHookContexts } from '@tanstack/react-form'
 import type { ReactNode } from 'react'
+import { z } from 'zod'
 
 const { fieldContext, formContext } = createFormHookContexts()
 const { useAppForm } = createFormHook({
@@ -20,8 +21,11 @@ const TextWidget = ({ field }: FieldOf<string>): ReactNode => (
 
 const NumberWidget = ({ field }: FieldOf<number>): ReactNode => field.state.value
 
+const schema = z.object({ email: z.email(), age: z.number() })
+const defaultValues: InferData<typeof schema> = { email: '', age: 0 }
+
 export const SignUp = (): ReactNode => {
-  const form = useAppForm({ defaultValues: { email: '', age: 0 } })
+  const form = useAppForm({ defaultValues, validators: { onChange: schema } })
 
   return (
     <>
