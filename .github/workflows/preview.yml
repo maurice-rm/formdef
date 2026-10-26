@@ -17,8 +17,11 @@ env:
 jobs:
   publish:
     name: Publish a preview of @formdef/core
-    # A pull request from a fork runs code nobody has reviewed yet; it gets no preview.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # A pull request from a fork runs code nobody has reviewed yet; it gets no preview. Neither does
+    # the version pull request, which changes only the version and the changelog.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref != 'changeset-release/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
