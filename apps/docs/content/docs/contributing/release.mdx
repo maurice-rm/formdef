@@ -17,6 +17,12 @@ pnpm changeset
 It names the bump, patch, minor or major, and one line for the changelog, written for the people
 who use the package. A change to the documentation, the tests or the private packages needs none.
 
+## Previews
+
+Every pull request from a branch of this repository publishes a preview of `@formdef/core` through
+[pkg.pr.new](https://pkg.pr.new). A comment on the pull request shows the command that installs it,
+so a change can be tried in a project before it is released. Pull requests from forks get none.
+
 ## Versions
 
 The release workflow that turns the changesets into a version pull request and publishes it to npm
