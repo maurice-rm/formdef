@@ -69,6 +69,8 @@ type FormHook<TWidgets extends Components, TFormComponents extends Components> =
 // A misspelled field name fails this constraint, so TypeScript reports it with a suggestion.
 type NamedFields<TValues> = { fields: { [Key in keyof TValues]?: object } }
 
+type LevelFieldsShape = { fields: object }
+
 type OwnParts<TWidgets, TFormComponents, TStructure> = {
   widgets: TWidgets
   formComponents: TFormComponents
@@ -196,10 +198,11 @@ export interface Registry<
    */
   Fields: <
     TForm extends FieldsForm,
-    // Unconstrained, with the level type in the parameter, for the cost `TConfig` of `createForm`
-    // avoids. Constrained by its field names as `TConfig` is, TypeScript 5.4 loses the parameter
-    // type of a callback such as `visibleWhen`, since the names come from `form` in the same props.
-    const TLevel,
+    // Constrained only to hold `fields`, with the level type in the parameter, for the cost
+    // `TConfig` of `createForm` avoids. Constrained by its field names as `TConfig` is, TypeScript
+    // 5.4 loses the parameter type of a callback such as `visibleWhen`, since the names come from
+    // `form` in the same props.
+    const TLevel extends LevelFieldsShape,
   >(
     props: TLevel &
       LevelConfig<FieldsParts<TWidgets, TFormComponents, TStructure, TForm>, ValuesOf<TForm>> & {
