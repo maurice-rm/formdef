@@ -7,6 +7,7 @@ import defaultMdxComponents from 'fumadocs-ui/mdx'
 import type { MDXComponents } from 'mdx/types'
 import type { ReactNode } from 'react'
 
+import { ApiDoc } from './api-doc'
 import { BuildingBlocksDiagram } from './diagrams/building-blocks'
 import { RenderLoopDiagram } from './diagrams/render-loop'
 import { RegistryConfig } from './registry-config'
@@ -27,6 +28,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     ...StepsComponents,
     ...TabsComponents,
     ...Twoslash,
+    ApiDoc,
     AutoTypeTable: GeneratedTypeTable,
     BuildingBlocksDiagram,
     RenderLoopDiagram,
