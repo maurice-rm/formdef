@@ -12,7 +12,8 @@
     "build": "shadcn build registry.json --output .registry && node scripts/build.ts",
     "check-types": "tsc -p tsconfig.json && tsc -p tsconfig.loose.json && tsc -p tsconfig.node.json",
     "test": "vitest run",
-    "test:types": "vitest run --typecheck.only"
+    "test:types": "vitest run --typecheck.only",
+    "probe:install": "node scripts/probe-install.ts"
   },
   "devDependencies": {
     "@base-ui/react": "1.9.0",
