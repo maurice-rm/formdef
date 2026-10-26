@@ -10,7 +10,7 @@ This page builds them one at a time, ending with a form that validates and submi
 <Steps>
 <Step>
 
-### The contexts
+## The contexts
 
 TanStack Form needs two React contexts. Create them once per app, in a file of their own:
 
@@ -31,7 +31,7 @@ would make the two files import each other.
 </Step>
 <Step>
 
-### A widget
+## A widget
 
 A widget is a React component that receives the field as a prop. `FieldOf<string>` says which
 value it serves:
@@ -67,7 +67,7 @@ export const TextField = ({ field, label }: TextFieldProps) => {
 </Step>
 <Step>
 
-### The registry
+## The registry
 
 The registry binds the contexts and the widgets under names. Everything you build forms with comes
 from it:
@@ -101,7 +101,7 @@ The keys of `widgets` are the names a config uses; they are yours to choose.
 </Step>
 <Step>
 
-### A form
+## A form
 
 The config names a schema, the default values and a widget per field. `createForm` turns it into a
 component:
@@ -145,7 +145,7 @@ export const SignInForm = createForm({
 </Step>
 <Step>
 
-### A submit button
+## A submit button
 
 The form has no button yet: buttons are components, and components come from you. Register one
 under `formComponents`. It reads the form through `useFormContext()` from the contexts file:
@@ -206,7 +206,7 @@ export const SignInForm = createForm({
 </Step>
 <Step>
 
-### Values from a hook
+## Values from a hook
 
 `createForm` runs once, at module level, so the config cannot close over a hook's result: a
 mutation, a router, a toast. Those go into the instance through `options`:

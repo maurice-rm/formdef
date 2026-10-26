@@ -4,6 +4,8 @@ import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins'
 import { defineConfig } from 'fumadocs-mdx/config'
 import { transformerTwoslash } from 'fumadocs-twoslash'
 
+import { CODE_THEMES } from './lib/code-themes'
+
 const SHADCN_PACKAGE = join(process.cwd(), '../../packages/shadcn')
 
 // Twoslash checks every ts and tsx block with its own compiler, so the library's strictness is
@@ -25,10 +27,7 @@ const LIBRARY_COMPILER_OPTIONS = {
 export default defineConfig({
   mdxOptions: {
     rehypeCodeOptions: {
-      themes: {
-        light: 'github-light',
-        dark: 'github-dark',
-      },
+      themes: CODE_THEMES,
       transformers: [
         ...(rehypeCodeDefaultOptions.transformers ?? []),
         transformerTwoslash({

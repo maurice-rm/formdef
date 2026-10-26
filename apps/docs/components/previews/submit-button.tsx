@@ -13,7 +13,7 @@ export const SubmitButtonPreview = createForm({
   schema: z.object({ email: z.email('Enter an email address') }),
   defaultValues: { email: '' },
   fields: {
-    email: { widget: 'text', props: { label: 'Email', type: 'email' } },
+    email: { widget: 'text', props: { label: 'Email', type: 'email', autoComplete: 'email' } },
   },
   layout: ['email', { component: 'SubmitButton', props: { label: 'Subscribe' } }],
   onSubmit: waitForServer,

@@ -10,6 +10,20 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* fumadocs-twoslash colours its error lines #d45656, under 4.5:1 against both page backgrounds;
+   Fumadocs' light muted text, hsl(0 0% 45.1%), stays under 4.5:1 on its cards and tab bars. */
+:root {
+  --color-twoslash-error-foreground: #b91c1c;
+}
+
+:root:not(.dark) {
+  --color-fd-muted-foreground: hsl(0, 0%, 40%);
+}
+
+.dark {
+  --color-twoslash-error-foreground: #f28b82;
+}
+
 /* The shadcn neutral theme the widgets are styled with. Popovers render outside the preview, so
    the tokens are global; Fumadocs names its own colours --color-fd-*. */
 :root {
