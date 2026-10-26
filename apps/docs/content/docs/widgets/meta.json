@@ -1,1 +1,4 @@
-{ "title": "Widgets" }
+{
+  "title": "Widgets",
+  "pages": ["---Fields---", "text-field", "date-field"]
+}

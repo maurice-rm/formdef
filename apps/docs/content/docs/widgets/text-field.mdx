@@ -1,0 +1,114 @@
+---
+title: Text field
+description: One line of text, with optional addons beside it.
+---
+
+<WidgetPreview name="text-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/text-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { text: TextField }`. The
+widget serves `string` values, so the schema's input at its path is a string.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+export const ContactForm = createForm({
+  schema: z.object({ name: z.string().min(1, 'Enter your name'), email: z.email() }),
+  defaultValues: { name: '', email: '' },
+  fields: {
+    name: { widget: 'text', props: { label: 'Name', autoComplete: 'name' } },
+    email: { widget: 'text', props: { label: 'Email', type: 'email', autoComplete: 'email' } },
+  },
+})
+```
+
+`type` takes the text-like input types: `text`, `email`, `search`, `tel` and `url`. A password has
+a widget of its own, and so does a whole number.
+
+### Addons
+
+`addons` places content inside the input's border, such as a currency or a unit. Each addon needs an
+`id`, which React uses as its key, and takes an `align`:
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+export const SiteForm = createForm({
+  schema: z.object({ domain: z.string() }),
+  defaultValues: { domain: '' },
+  fields: {
+    domain: {
+      widget: 'text',
+      props: {
+        label: 'Domain',
+        addons: [
+          { id: 'scheme', content: 'https://', align: 'inline-start' },
+          { id: 'suffix', content: '.com', align: 'inline-end' },
+        ],
+      },
+    },
+  },
+})
+```
+
+### Amounts
+
+An amount or a decimal is a text field with `inputMode: 'decimal'`. A phone shows a keypad with a
+decimal separator, and the comma a German user types stays a comma. An `<input type="number">`
+would turn it into a dot or drop it.
+
+The value stays a string. TanStack Form hands `onSubmit` the values as they were typed, not the
+schema's output, so convert the amount where you read it:
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+declare const pay: (cents: number) => Promise<void>
+// ---cut---
+const AMOUNT = /^\d+(,\d{1,2})?$/
+const CENTS_PER_UNIT = 100
+
+const centsOf = (amount: string): number =>
+  Math.round(Number(amount.replace(',', '.')) * CENTS_PER_UNIT)
+
+export const PaymentForm = createForm({
+  schema: z.object({ amount: z.string().regex(AMOUNT, 'Enter an amount such as 12,50') }),
+  defaultValues: { amount: '' },
+  fields: {
+    amount: { widget: 'text', props: { label: 'Amount', inputMode: 'decimal' } },
+  },
+  onSubmit: ({ value }) => pay(centsOf(value.amount)),
+})
+```
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/text-field.tsx"
+  type="Omit<React.ComponentProps<typeof TextField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="text-field" />

@@ -12,6 +12,10 @@
       }
     ],
     "paths": {
+      "@/components/ui/*": ["../../packages/shadcn/components/ui/*"],
+      "@/components/formdef/*": ["../../packages/shadcn/components/formdef/*"],
+      "@/hooks/formdef/*": ["../../packages/shadcn/hooks/formdef/*"],
+      "@/lib/formdef/*": ["../../packages/shadcn/lib/formdef/*"],
       "@/*": ["./*"]
     },
     "allowImportingTsExtensions": true
