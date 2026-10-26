@@ -197,6 +197,15 @@ describe('Registry.createForm', () => {
     })
   })
 
+  it('rejects fields that are no object', () => {
+    registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      // @ts-expect-error fields describes the keys of the schema
+      fields: 42,
+    })
+  })
+
   it('rejects a layout naming a key fields does not describe, also in sections and rows', () => {
     registry.createForm({
       schema,
@@ -380,6 +389,20 @@ describe('Registry.Fields', () => {
             layout={['name', 'billing']}
           />
         </>
+      )
+    }
+    expectTypeOf(Shell).not.toBeAny()
+  })
+
+  it('rejects fields that are no object', () => {
+    const Shell = (): ReactNode => {
+      const form = registry.formHook.useAppForm({
+        defaultValues: { name: '', billing: { street: '', zip: '' } } as Customer,
+      })
+
+      return (
+        // @ts-expect-error fields describes the keys of the form's values
+        <registry.Fields form={form} fields={42} />
       )
     }
     expectTypeOf(Shell).not.toBeAny()
