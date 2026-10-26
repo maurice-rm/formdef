@@ -1,0 +1,54 @@
+---
+title: Performance
+description: What a change may cost the compiler and the renderer, and how both are measured.
+---
+
+formdef has two budgets: the time TypeScript needs to check a form, and the work React does while
+someone types. A change that touches either is measured before and after.
+
+## Type cost
+
+The type layer checks every config against the whole registry. A careless type multiplies with
+the number of widgets and with the number of forms in an app. On a registry of fourteen widgets, one
+form once cost one and a half million type instantiations and six seconds of checking; an app with
+eighteen forms stopped compiling with TS2859, "Excessive complexity". Pull request
+[#52](https://github.com/maurice-rm/formdef/pull/52) has the measurements and the fix.
+
+`packages/integration/scripts/check-type-cost.ts` guards against that. It compiles a registry of
+fourteen widgets twice, with and without one form, and fails when the form costs more than 100,000
+instantiations. It runs with `pnpm test`.
+
+To measure a change of your own, build `@formdef/core`, compile the fixture with the extended
+diagnostics and compare the instantiation count before and after:
+
+```bash
+pnpm turbo build --filter @formdef/core
+pnpm --filter @formdef/integration exec tsc -p scripts/type-cost/tsconfig.form.json --extendedDiagnostics
+```
+
+When the count grows, a trace shows where:
+
+```bash
+pnpm --filter @formdef/integration exec tsc -p scripts/type-cost/tsconfig.form.json --generateTrace trace
+```
+
+`packages/integration/trace/trace.json` lists every check with its duration. The longest `checkExpression` points at the
+source position, and the `structuredTypeRelatedTo` events beneath it name the types compared. A
+type that is compared while a type parameter is still being inferred is a frequent cause:
+TypeScript then evaluates it generically, against every member of a union.
+
+## Render cost
+
+A field renders when its own value or meta changes, not when another field changes. Two places
+need care:
+
+- **Arrays** render in TanStack's array mode. The frame renders again when items are added, removed
+  or moved, not when a value inside an item changes. Labels that depend on item values, such as a
+  remove label with a name in it, are read through a selector that compares by value.
+- **Conditions and derived props** subscribe to the values of the whole form. An entry with
+  `visibleWhen` renders again only when it is shown or hidden. An entry whose `props` are a function
+  of the values renders again on every change of the form, unless `dependsOn` names the paths it
+  reads; then it reads again only when one of them changes.
+
+Measure with the React Profiler, or with a render counter in a test, as the tests of the array
+renderer in `packages/core/src/render` do.

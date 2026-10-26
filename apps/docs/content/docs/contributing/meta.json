@@ -1,1 +1,4 @@
-{ "title": "Contributing" }
+{
+  "title": "Contributing",
+  "pages": ["setup", "architecture", "conventions", "performance", "release"]
+}

@@ -1,0 +1,64 @@
+---
+title: Conventions
+description: How code, tests, documentation and commits are written in this repository.
+---
+
+## Code
+
+- **One word per concept.** The [glossary](/concepts/glossary) names the concepts; code, error
+  messages and documentation use the same words.
+- **A rule exists once.** Before writing code that resembles existing code, find the existing code.
+  Similar code is compared the second time and merged the third; a rule of the domain never gets a
+  second copy.
+- **Errors** are `Error`s whose message starts with `formdef:` and names the path concerned.
+- **Files** are kebab-case and named after the one concept they export; constants and types sit at
+  the top.
+- **Functions** take at most three parameters, then an options object; they return early instead of
+  nesting, name their constants, and either do something or answer something. Biome enforces what it
+  can check.
+
+## Comments and TSDoc
+
+Every public export carries complete TSDoc: a summary, `@typeParam` for each type parameter,
+`@param` and `@returns` where they add to the type, `@throws` for each error raised on purpose, at
+least one `@example` per entry point, a comment on every member of a props or options type, and
+`@defaultValue` on optional options. The TSDoc ships in the package and is what the
+[API reference](/api) shows.
+
+Internal code gets a comment only where its name and signature cannot say enough: a workaround for
+a bug elsewhere, with a link; a constraint the obvious change would break; a dense algorithm. The
+history of a decision belongs in the pull request, not in the code.
+
+## Tests
+
+- **A new test fails first.** The pull request says how it was seen failing before the code that
+  makes it pass.
+- **Tests sit beside the file they test:** `x.test.ts` for behaviour, `x.test-d.ts` for types. The
+  widgets of `packages/shadcn` are the exception; their tests live in `tests/`.
+- **A negative type test uses a fixture that is valid except for the one error under test,** marked
+  with `@ts-expect-error` and a reason.
+- **A type test defines the components and hooks it needs inside its `it` block,** where Vitest
+  reports their errors.
+
+## Documentation
+
+A change that makes a text wrong updates it in the same pull request:
+
+| Text | Goes stale when |
+| --- | --- |
+| `README.md` | the packages, prerequisites or commands change |
+| `AGENTS.md` | a convention or the verify command changes |
+| the TSDoc of an export | the behaviour it describes changes |
+| a page in `apps/docs` | anything a reader sees there changes |
+| an error message | the condition it reports changes |
+
+Examples in the documentation are TypeScript, checked when the site builds. An example meant to
+fail announces its error code with `// @errors:`, and the build fails if it compiles.
+
+## Commits
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org): `type(scope): description`,
+imperative, lower case, without a trailing period and under about 72 characters. A commit is its
+subject line; a body appears only for a reason the diff cannot show. One concern goes into one pull
+request, and refactoring travels apart from a change in behaviour. Pull requests are merged by
+squash, so the subject of the pull request becomes the commit on `main`.

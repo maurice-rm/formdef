@@ -1,0 +1,27 @@
+---
+title: Release
+description: Changesets, the version pull request, and what a release publishes.
+---
+
+`main` is the only long-lived branch. Work happens in short-lived branches that are merged by
+squash; `main` is always releasable.
+
+## Changesets
+
+A pull request that changes what `@formdef/core` ships adds a changeset:
+
+```bash
+pnpm changeset
+```
+
+It names the bump, patch, minor or major, and one line for the changelog, written for the people
+who use the package. A change to the documentation, the tests or the private packages needs none.
+
+## Versions
+
+The release workflow that turns the changesets into a version pull request and publishes it to npm
+is being set up for the first release. Until then, changesets collect on `main`; this page describes
+the workflow once it lands.
+
+The widgets of the shadcn registry are not versioned on npm: the documentation site serves them,
+and `shadcn add` fetches the version that site was built from.
