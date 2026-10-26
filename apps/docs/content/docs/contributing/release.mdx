@@ -23,6 +23,20 @@ Every pull request from a branch of this repository publishes a preview of `@for
 [pkg.pr.new](https://pkg.pr.new). A comment on the pull request shows the command that installs it,
 so a change can be tried in a project before it is released. Pull requests from forks get none.
 
+## Installing the registry
+
+Before a release, a probe installs every item of the shadcn registry into a new shadcn project, the
+way a user would, and compiles and builds that project:
+
+```bash
+pnpm --filter @formdef/shadcn probe:install
+```
+
+It builds the registry and `@formdef/core`, serves both from local servers, and fails when a file
+does not land where `components.json` says, when the CLI changes the project’s own `lib/date.ts`, or
+when the project does not compile. It needs the network for the shadcn CLI and its primitives, so
+it runs by hand and not in CI.
+
 ## Versions
 
 The release workflow that turns the changesets into a version pull request and publishes it to npm
