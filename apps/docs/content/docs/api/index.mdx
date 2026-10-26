@@ -1,6 +1,37 @@
 ---
 title: API
-description: This section is being written.
+description: Every export of @formdef/core, with its TSDoc.
 ---
 
-This section is being written.
+`@formdef/core` exports the functions and types below and nothing else. Each page shows the
+export's documentation as it ships with the package, so your editor shows the same text on hover.
+
+## Registry
+
+What a form is built from and with.
+
+- [`createRegistry`](/api/create-registry) binds the widgets to the TanStack contexts.
+- [`Registry`](/api/registry) is what it returns: `createForm`, `Fields`, `formHook` and
+  `extendRegistry`.
+- [`FormConfig`](/api/form-config), [`FieldsOf`](/api/fields-of) and [`LayoutOf`](/api/layout-of)
+  type a config, or a part of one, written outside `createForm`.
+- [`FormProps`](/api/form-props) types the props of a form component, and
+  [`FormHandle`](/api/form-handle) the form an inline layout entry receives.
+- [`InferData`](/api/infer-data) is the data type of a schema, and
+  [`Validation`](/api/validation) says when the schema runs.
+
+## Widgets
+
+What a widget is written with.
+
+- [`FieldOf`](/api/field-of) states the value type a widget serves, and
+  [`FieldApiOf`](/api/field-api-of) is the field it receives.
+- [`fieldParts`](/api/field-parts) wires a control to its field and returns
+  [`FieldParts`](/api/field-parts), with [`errorsOf`](/api/errors-of) and
+  [`fieldId`](/api/field-id) for the parts on their own.
+
+## Structure
+
+The props of the components that fill the structure slots:
+[`BodyProps`](/api/body-props), [`SectionProps`](/api/section-props),
+[`RowProps`](/api/row-props) and [`ArrayFrameProps`](/api/array-frame-props).

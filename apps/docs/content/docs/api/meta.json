@@ -1,1 +1,26 @@
-{ "title": "API" }
+{
+  "title": "API",
+  "pages": [
+    "---Registry---",
+    "create-registry",
+    "registry",
+    "form-config",
+    "form-props",
+    "form-handle",
+    "fields-of",
+    "layout-of",
+    "infer-data",
+    "validation",
+    "---Widgets---",
+    "field-of",
+    "field-api-of",
+    "field-parts",
+    "errors-of",
+    "field-id",
+    "---Structure---",
+    "body-props",
+    "section-props",
+    "row-props",
+    "array-frame-props"
+  ]
+}
