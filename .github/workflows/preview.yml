@@ -31,6 +31,7 @@ jobs:
       - name: Build @formdef/core
         run: pnpm turbo run build --filter=@formdef/core
       # pkg.pr.new's GitHub App comments the install command on the pull request. `--pnpm` packs
-      # with pnpm, which resolves the `catalog:` specifiers in the manifest.
+      # with pnpm, which resolves the `catalog:` specifiers in the manifest. pkg.pr.new takes no
+      # token: its app verifies the run, so zizmor's trusted-publishing advice does not apply.
       - name: Publish the preview
-        run: pnpm exec pkg-pr-new publish --pnpm ./packages/core
+        run: pnpm exec pkg-pr-new publish --pnpm ./packages/core # zizmor: ignore[use-trusted-publishing]
