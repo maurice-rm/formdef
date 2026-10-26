@@ -1,0 +1,52 @@
+---
+title: Checkbox field
+description: One yes or no, with its label beside the box.
+---
+
+<WidgetPreview name="checkbox-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/checkbox-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { checkbox: CheckboxField }`.
+The widget serves `boolean` values.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { CheckboxField } from '@/components/formdef/checkbox-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { checkbox: CheckboxField } })
+// ---cut---
+export const SignUpForm = createForm({
+  schema: z.object({
+    terms: z.boolean().refine((isAccepted) => isAccepted, 'Accept the terms to continue'),
+  }),
+  defaultValues: { terms: false },
+  fields: {
+    terms: { widget: 'checkbox', props: { label: 'I accept the terms' } },
+  },
+})
+```
+
+The label sits beside the box, so the widget takes no `labelAside`. A checkbox that has to be
+ticked is a `refine` in the schema: `z.boolean()` alone accepts `false`.
+
+For several choices out of a list, take the [checkbox group field](/widgets/checkbox-group-field).
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/checkbox-field.tsx"
+  type="Omit<React.ComponentProps<typeof CheckboxField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="checkbox-field" />

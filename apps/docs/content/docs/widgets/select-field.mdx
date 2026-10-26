@@ -1,0 +1,64 @@
+---
+title: Select field
+description: One choice from a list that opens on click.
+---
+
+<WidgetPreview name="select-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/select-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { select: SelectField }`. The
+widget serves `string` values.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { SelectField } from '@/components/formdef/select-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { select: SelectField } })
+// ---cut---
+export const AddressForm = createForm({
+  schema: z.object({ country: z.string().min(1, 'Choose a country') }),
+  defaultValues: { country: '' },
+  fields: {
+    country: {
+      widget: 'select',
+      props: {
+        label: 'Country',
+        placeholder: 'Choose a country',
+        options: [
+          { value: 'at', label: 'Austria' },
+          { value: 'de', label: 'Germany' },
+        ],
+      },
+    },
+  },
+})
+```
+
+`''` stands for no choice, and the trigger shows the `placeholder` then. The schema decides whether
+no choice is allowed; here `min(1)` rejects it.
+
+A value the options do not carry stays in the form: the widget never clears what it cannot show.
+This keeps a stored value intact while its option is loading or has been removed.
+
+To let people type to find an option in a long list, take the
+[combobox field](/widgets/combobox-field).
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/select-field.tsx"
+  type="Omit<React.ComponentProps<typeof SelectField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="select-field" />

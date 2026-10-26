@@ -1,4 +1,26 @@
 {
   "title": "Widgets",
-  "pages": ["---Fields---", "text-field", "date-field"]
+  "pages": [
+    "---Fields---",
+    "text-field",
+    "textarea-field",
+    "password-field",
+    "number-field",
+    "checkbox-field",
+    "switch-field",
+    "radio-field",
+    "select-field",
+    "checkbox-group-field",
+    "combobox-field",
+    "date-field",
+    "date-range-field",
+    "date-time-field",
+    "tags-field",
+    "---Layout---",
+    "section",
+    "row",
+    "array-frame",
+    "---Form---",
+    "submit-button"
+  ]
 }

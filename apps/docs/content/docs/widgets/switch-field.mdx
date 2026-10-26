@@ -1,0 +1,59 @@
+---
+title: Switch field
+description: One on or off, for a setting that applies at once.
+---
+
+<WidgetPreview name="switch-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/switch-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { switch: SwitchField }`. The
+widget serves `boolean` values.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { SwitchField } from '@/components/formdef/switch-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { switch: SwitchField } })
+// ---cut---
+export const SettingsForm = createForm({
+  schema: z.object({ newsletter: z.boolean() }),
+  defaultValues: { newsletter: false },
+  fields: {
+    newsletter: {
+      widget: 'switch',
+      props: { label: 'Newsletter', description: 'One email a month.', variant: 'list' },
+    },
+  },
+})
+```
+
+`variant` decides the look:
+
+| `variant` | Look |
+| --- | --- |
+| `split` (default) | label and description on the left, the switch on the right |
+| `list` | the switch first, then label and description |
+| `card` | the whole row is a bordered card, and a click anywhere on it toggles the switch |
+
+A switch suggests that the change takes effect at once. A choice that only counts once the form is
+submitted, such as accepting terms, reads better as a [checkbox](/widgets/checkbox-field).
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/switch-field.tsx"
+  type="Omit<React.ComponentProps<typeof SwitchField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="switch-field" />

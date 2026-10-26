@@ -1,0 +1,56 @@
+---
+title: Number field
+description: A whole number, such as a count; empty while nothing is typed.
+---
+
+<WidgetPreview name="number-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/number-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { number: NumberField }`.
+
+## Usage
+
+The widget serves `number | undefined`: an empty input is `undefined`, not `0`. It finds a field
+whose schema input is `number`, optional or not.
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { NumberField } from '@/components/formdef/number-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { number: NumberField } })
+// ---cut---
+export const BookingForm = createForm({
+  schema: z.object({ guests: z.number().int().min(1).max(8).optional() }),
+  defaultValues: { guests: undefined },
+  fields: {
+    guests: { widget: 'number', props: { label: 'Guests', min: 1, max: 8, step: 1 } },
+  },
+})
+```
+
+`min`, `max` and `step` go to the `<input type="number">`, where the arrow keys and the spin
+buttons respect them. The schema still decides what is valid.
+
+## Not for amounts
+
+The number field is for counts and whole numbers. An amount or any other decimal belongs in a
+[text field](/widgets/text-field#amounts) with `inputMode: 'decimal'`: an `<input type="number">`
+turns a typed comma into a dot or drops it, so a German amount cannot be entered.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/number-field.tsx"
+  type="Omit<React.ComponentProps<typeof NumberField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="number-field" />

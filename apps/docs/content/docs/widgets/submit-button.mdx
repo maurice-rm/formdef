@@ -1,0 +1,58 @@
+---
+title: Submit button
+description: Submits the form, and shows a spinner when that takes a while.
+---
+
+<WidgetPreview name="submit-button" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/submit-button
+```
+
+Register it as a form component in `lib/formdef/index.tsx`, as `formComponents: { SubmitButton }`,
+and place it with a layout entry.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+import { SubmitButton } from '@/components/formdef/submit-button'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField }, formComponents: { SubmitButton } })
+// ---cut---
+declare const subscribe: (email: string) => Promise<void>
+
+export const NewsletterForm = createForm({
+  schema: z.object({ email: z.email('Enter an email address') }),
+  defaultValues: { email: '' },
+  fields: { email: { widget: 'text', props: { label: 'Email' } } },
+  layout: ['email', { component: 'SubmitButton', props: { label: 'Subscribe' } }],
+  onSubmit: ({ value }) => subscribe(value.email),
+})
+```
+
+The button reads the form from the contexts in `lib/formdef/context.ts`, so it takes no form or
+field prop.
+
+- It is never disabled because the form is invalid. A click on an invalid form submits, and the
+  errors appear at their fields.
+- While a submit runs it is `aria-disabled` and `aria-busy`, and a second click does nothing.
+- Once a submit has run for 300 ms, a spinner replaces its `icon`. A fast submit shows none.
+
+`variant`, `size` and `className` go to shadcn's `Button`.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/submit-button.tsx"
+  type="React.ComponentProps<typeof SubmitButton>"
+/>
+
+## Source
+
+<WidgetSource name="submit-button" />

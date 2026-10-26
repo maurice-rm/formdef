@@ -1,0 +1,60 @@
+---
+title: Checkbox group field
+description: Several choices among a few options.
+---
+
+<WidgetPreview name="checkbox-group-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/checkbox-group-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { checkboxes:
+CheckboxGroupField }`. The widget serves `string[]` values.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { CheckboxGroupField } from '@/components/formdef/checkbox-group-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { checkboxes: CheckboxGroupField } })
+// ---cut---
+export const PreferencesForm = createForm({
+  schema: z.object({ topics: z.array(z.string()).min(1, 'Choose at least one topic') }),
+  defaultValues: { topics: [] },
+  fields: {
+    topics: {
+      widget: 'checkboxes',
+      props: {
+        label: 'Topics',
+        options: [
+          { value: 'releases', label: 'Releases' },
+          { value: 'events', label: 'Events' },
+        ],
+      },
+    },
+  },
+})
+```
+
+The options render as a `<fieldset>` whose `<legend>` is the label, each with a `value`, a `label`
+and optionally a `description` and `disabled`. The value holds the values of the ticked options.
+
+Values the options do not carry stay in the form, as with the
+[select field](/widgets/select-field#usage).
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/checkbox-group-field.tsx"
+  type="Omit<React.ComponentProps<typeof CheckboxGroupField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="checkbox-group-field" />

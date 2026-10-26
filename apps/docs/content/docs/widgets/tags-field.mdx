@@ -1,0 +1,63 @@
+---
+title: Tags field
+description: A list of short texts, typed freely or picked from suggestions.
+---
+
+<WidgetPreview name="tags-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/tags-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { tags: TagsField }`. The
+widget serves `string[]` values.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TagsField } from '@/components/formdef/tags-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { tags: TagsField } })
+// ---cut---
+export const ArticleForm = createForm({
+  schema: z.object({ tags: z.array(z.string()).max(5, 'Use at most five tags') }),
+  defaultValues: { tags: [] },
+  fields: {
+    tags: {
+      widget: 'tags',
+      props: {
+        label: 'Tags',
+        placeholder: 'Add a tag',
+        suggestions: ['react', 'forms', 'typescript'],
+        removeLabel: (tag) => `Remove ${tag}`,
+      },
+    },
+  },
+})
+```
+
+Enter turns the typed text into a tag, trimmed; a tag that is already there is not added twice.
+`suggestions` offers a list to pick from while typing, without the tags already chosen. Each tag
+has a button that removes it.
+
+| Prop | Meaning |
+| --- | --- |
+| `suggestions` | Tags offered while typing. |
+| `removeLabel` | The accessible name of a tag's remove button. Defaults to `Remove <tag>`. |
+| `empty` | The text shown when no suggestion matches. Defaults to `No results.` |
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/tags-field.tsx"
+  type="Omit<React.ComponentProps<typeof TagsField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="tags-field" />
