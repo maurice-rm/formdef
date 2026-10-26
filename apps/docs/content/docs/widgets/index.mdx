@@ -1,6 +1,95 @@
 ---
 title: Widgets
-description: This section is being written.
+description: The widgets formdef ships for shadcn, and what every one of them has in common.
 ---
 
-This section is being written.
+formdef's widgets are a shadcn registry. `shadcn add` copies their source into your project, where
+it is yours to change. [Installation](/installation) adds the shadcn registry to `components.json` and
+fetches the setup; each page in this section shows one widget live, the command that fetches it,
+and the files it brings.
+
+## Where the files land
+
+Every file lands in a `formdef/` folder of its own, under the aliases of your `components.json`:
+
+```txt
+components/formdef/text-field.tsx   the widget
+components/formdef/field-frame.tsx  shared by the widgets with a label above the control
+lib/formdef/index.tsx               your registry, imported as @/lib/formdef
+lib/formdef/context.ts              the TanStack contexts
+```
+
+A file several widgets share, such as `field-frame.tsx`, comes with each of them. shadcn's own
+primitives, such as `input` or `popover`, come as dependencies and stay where your `ui` alias
+points.
+
+## Registering a widget
+
+A widget renders nothing until the registry names it. Add it under `widgets` in
+`lib/formdef/index.tsx`; the key is the name a field entry writes as `widget`:
+
+```tsx title="lib/formdef/index.tsx"
+// @filename: context.ts
+export { fieldContext, formContext } from '@/lib/formdef/context'
+// @filename: index.tsx
+// ---cut---
+'use client'
+
+import { createRegistry } from '@formdef/core'
+
+import { TextField } from '@/components/formdef/text-field'
+import { FieldGroup } from '@/components/ui/field'
+import { fieldContext, formContext } from './context'
+
+export const registry = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+  formComponents: {},
+  structure: { body: FieldGroup },
+})
+
+export const { createForm, Fields, formHook } = registry
+```
+
+## What every field widget takes
+
+Next to the `field` formdef passes, each widget takes its own props, listed on its page. A few work
+the same everywhere:
+
+| Prop | Meaning |
+| --- | --- |
+| `label` | The text of the `<label>`. |
+| `description` | A hint below the control, tied to it with `aria-describedby`. |
+| `labelAside` | Content on the other side of the label, such as a link. |
+| `className` | Classes for the control, not for the wrapper around it. |
+
+`className` lands on the control, so a narrow field stays narrow while its label and message keep
+the full width:
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+export const AddressForm = createForm({
+  schema: z.object({ zip: z.string().length(5, 'Enter five digits') }),
+  defaultValues: { zip: '' },
+  fields: {
+    zip: { widget: 'text', props: { label: 'ZIP code', className: 'w-[7ch]' } },
+  },
+})
+```
+
+`labelAside` renders beside the `<label>`, never inside it. A link inside a label is also a click on
+the label, so it would focus the field instead of following the link. Checkbox, radio and switch do
+not take it: their label already sits beside the control.
+
+## Server and client
+
+The files that hold state or call hooks carry `'use client'`. The others reach the client through
+`lib/formdef/index.tsx`, which carries it as well, so a server component renders a form from
+`createForm` like any other component.

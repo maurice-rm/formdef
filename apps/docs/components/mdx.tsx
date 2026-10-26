@@ -10,6 +10,8 @@ import type { ReactNode } from 'react'
 import { BuildingBlocksDiagram } from './diagrams/building-blocks'
 import { RenderLoopDiagram } from './diagrams/render-loop'
 import { RegistryConfig } from './registry-config'
+import { WidgetPreview } from './widget-preview'
+import { WidgetSource } from './widget-source'
 
 const generator = createGenerator({
   cache: createFileSystemGeneratorCache('.next/fumadocs-typescript'),
@@ -29,6 +31,8 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     BuildingBlocksDiagram,
     RenderLoopDiagram,
     RegistryConfig,
+    WidgetPreview,
+    WidgetSource,
     ...components,
   }
 }

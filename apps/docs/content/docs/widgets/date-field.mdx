@@ -1,0 +1,115 @@
+---
+title: Date field
+description: A date picked from a calendar, stored as an ISO date.
+---
+
+<WidgetPreview name="date-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/date-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { date: DateField }`.
+
+## Usage
+
+The value is an ISO date such as `2027-03-01`, and `''` while none is picked. The day stays the day
+in every time zone: the widget never turns the value into a point in time.
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { DateField } from '@/components/formdef/date-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { date: DateField } })
+// ---cut---
+const formatDay = (iso: string): string =>
+  new Date(`${iso}T00:00`).toLocaleDateString('en-GB', { dateStyle: 'long' })
+
+export const BookingForm = createForm({
+  schema: z.object({ arrival: z.iso.date('Pick a day') }),
+  defaultValues: { arrival: '' },
+  fields: {
+    arrival: {
+      widget: 'date',
+      props: { label: 'Arrival', format: formatDay, min: '2027-01-01', max: '2027-12-31' },
+    },
+  },
+})
+```
+
+| Prop | Meaning |
+| --- | --- |
+| `format` | Turns the ISO date into the text on the button. Without it, the button shows the ISO date. |
+| `min`, `max` | The first and last day that can be picked, as ISO dates. Any other string throws. |
+| `placeholder` | The text on the button while no day is picked. |
+
+The calendar is shadcn's `Calendar`, and the widget passes on a few of its props, such as
+`captionLayout`, `weekStartsOn` and `locale`.
+
+`min` and `max` only stop a day from being picked. A bound the data has to keep belongs in the
+schema as well.
+
+## A date someone knows
+
+A calendar suits a day someone picks: an appointment, a delivery slot. A date someone already knows,
+such as a birth date, is faster to type. Three text fields in a row do it, each with
+`inputMode: 'numeric'` so a phone shows the number pad:
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+type DateParts = { day: string; month: string; year: string }
+
+const part = z.string().regex(/^\d+$/, 'Use digits')
+
+const isRealDate = ({ day, month, year }: DateParts): boolean => {
+  const date = new Date(Number(year), Number(month) - 1, Number(day))
+
+  return date.getMonth() === Number(month) - 1 && date.getDate() === Number(day)
+}
+
+export const ProfileForm = createForm({
+  schema: z.object({
+    born: z
+      .object({ day: part, month: part, year: part })
+      .refine(isRealDate, { message: 'Enter a date that exists', path: ['year'] }),
+  }),
+  defaultValues: { born: { day: '', month: '', year: '' } },
+  fields: {
+    born: {
+      fields: {
+        day: { widget: 'text', props: { label: 'Day', inputMode: 'numeric', className: 'w-[5ch]' } },
+        month: {
+          widget: 'text',
+          props: { label: 'Month', inputMode: 'numeric', className: 'w-[5ch]' },
+        },
+        year: { widget: 'text', props: { label: 'Year', inputMode: 'numeric', className: 'w-[6ch]' } },
+      },
+      layout: [{ row: ['day', 'month', 'year'] }],
+    },
+  },
+})
+```
+
+The `refine` on `born` checks the date the three parts make. An object entry shows no message of its
+own, so `path` places it on a part: here the year, the last one typed.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/date-field.tsx"
+  type="Omit<React.ComponentProps<typeof DateField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="date-field" />

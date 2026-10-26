@@ -1,9 +1,14 @@
+import { join } from 'node:path'
+
 import { rehypeCodeDefaultOptions } from 'fumadocs-core/mdx-plugins'
 import { defineConfig } from 'fumadocs-mdx/config'
 import { transformerTwoslash } from 'fumadocs-twoslash'
 
+const SHADCN_PACKAGE = join(process.cwd(), '../../packages/shadcn')
+
 // Twoslash checks every ts and tsx block with its own compiler, so the library's strictness is
-// repeated here; `@formdef/source` resolves the workspace packages to their sources.
+// repeated here; `@formdef/source` resolves the workspace packages to their sources, and `@/`
+// resolves to the widgets as `shadcn add` installs them.
 const LIBRARY_COMPILER_OPTIONS = {
   target: 'es2022',
   module: 'esnext',
@@ -14,6 +19,7 @@ const LIBRARY_COMPILER_OPTIONS = {
   exactOptionalPropertyTypes: true,
   noUncheckedIndexedAccess: true,
   skipLibCheck: true,
+  paths: { '@/*': [`${SHADCN_PACKAGE}/*`] },
 }
 
 export default defineConfig({
