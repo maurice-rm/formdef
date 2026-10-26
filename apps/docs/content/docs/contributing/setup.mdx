@@ -1,0 +1,60 @@
+---
+title: Setup
+description: The tools, the commands, and the checks a pull request has to pass.
+---
+
+## Prerequisites
+
+- **Node 24.** The repository pins it in `.nvmrc`, so `nvm use` picks it up. The library itself
+  runs on Node 22 and later; the build tools need 24.
+- **pnpm 12**, through the `packageManager` field of `package.json`. `corepack enable` provides it.
+
+```bash
+git clone https://github.com/maurice-rm/formdef.git
+cd formdef
+nvm use
+corepack enable
+pnpm install
+```
+
+`pnpm install` also sets up a pre-commit hook that runs Biome on the staged files.
+
+A dependency installs only once its version is at least a day old (`minimumReleaseAge` in
+`pnpm-workspace.yaml`). A new dependency needs the maintainer's approval; propose it in the issue
+or pull request, with what it does and why the platform or an installed package does not cover it.
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `pnpm lint` | formats and lints with Biome, read-only |
+| `pnpm lint:fix` | the same, writing the fixes |
+| `pnpm knip` | reports unused files, exports and dependencies |
+| `pnpm boundaries` | checks which package may import which |
+| `pnpm check-types` | runs TypeScript over every package, tests included |
+| `pnpm test` | runs the runtime tests |
+| `pnpm test:types` | runs the type tests |
+| `pnpm build` | builds every package and the documentation |
+| `pnpm --filter @formdef/docs dev` | serves the documentation at `http://localhost:3010` |
+| `pnpm changeset` | describes a change to `@formdef/core` for the changelog |
+
+Turborepo runs the package tasks and caches their results; a task whose inputs did not change
+replays its last output.
+
+## Before a pull request
+
+A change counts as done when this passes:
+
+```bash
+pnpm lint && pnpm knip && pnpm boundaries && pnpm turbo check-types test test:types build
+```
+
+CI runs the same checks on every pull request, plus `pnpm audit`, a review of new dependencies and
+a scan of the workflows. `check-types` and `test:types` always run together: a type test reports
+only errors inside its test blocks, and `check-types` catches the rest of the file.
+
+The documentation build checks more than it builds:
+
+- every internal link and anchor exists;
+- every widget of the shadcn registry and every export of `@formdef/core` has a page;
+- every TypeScript example compiles, and an example announced to fail does fail.

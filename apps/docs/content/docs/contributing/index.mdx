@@ -1,6 +1,33 @@
 ---
 title: Contributing
-description: This section is being written.
+description: How the repository is set up, how code is written in it, and how a change reaches a release.
 ---
 
-This section is being written.
+formdef is developed in the open at [github.com/maurice-rm/formdef](https://github.com/maurice-rm/formdef).
+A change starts as an issue or a pull request against `main`. The pages here say what a pull
+request needs to be merged.
+
+<Cards>
+  <Card title="Setup" href="/contributing/setup">
+    The tools, the commands, and the checks a pull request has to pass.
+  </Card>
+  <Card title="Architecture" href="/contributing/architecture">
+    The packages, the folders of `@formdef/core`, and the direction their imports point.
+  </Card>
+  <Card title="Conventions" href="/contributing/conventions">
+    How code, tests, documentation and commits are written here.
+  </Card>
+  <Card title="Performance" href="/contributing/performance">
+    What a change may cost the compiler and the renderer, and how both are measured.
+  </Card>
+  <Card title="Release" href="/contributing/release">
+    Changesets, the version pull request, and what a release publishes.
+  </Card>
+</Cards>
+
+## Scope of a change
+
+A pull request does one thing. An improvement noticed on the way goes into an issue rather than
+into the same pull request. The public API, the shape of a form config and the words the
+documentation uses are decided by the maintainer: a change that would alter one of them starts as
+an issue, before any code.

@@ -1,0 +1,70 @@
+---
+title: Architecture
+description: The packages, the folders of @formdef/core, and the direction their imports point.
+---
+
+## Packages
+
+| Path | Package | Published |
+| --- | --- | --- |
+| `packages/core` | `@formdef/core`, the library | to npm |
+| `packages/shadcn` | the widgets, built as a shadcn registry | as the shadcn registry on the documentation site |
+| `packages/integration` | uses the built `@formdef/core` as an app would | no |
+| `packages/tsconfig` | the shared TypeScript configuration | no |
+| `apps/docs` | this documentation, built with Fumadocs | as a static site |
+
+`turbo boundaries` checks which package may depend on which. The published package depends on no
+other package of the repository except the shared TypeScript configuration, and nothing depends on
+the documentation app.
+
+## `@formdef/core`
+
+The library has two layers. The **type layer** checks a config against the registry while you
+write it; it never runs. The **runtime** turns a config into a TanStack form and renders its
+entries. Both live in one package, in five folders whose imports point one way:
+
+```txt
+registry  →  form  →  render  →  config  →  widget
+```
+
+| Folder | Holds |
+| --- | --- |
+| `registry/` | `createRegistry` and the types a registry hands out |
+| `form/` | `createForm` at runtime: TanStack's options from a config, and the `<form>` |
+| `render/` | the renderer of field and layout entries |
+| `config/` | the types of a config: entries, layout, props, validation, structure slots |
+| `widget/` | what a widget is written with: `FieldOf`, `fieldParts`, `errorsOf`, `fieldId` |
+
+An inner folder never imports an outer one: `widget/` imports none of the others, `config/` only
+`widget/`. `noRestrictedImports` rules per folder in `biome.json` guard part of this; a new rule is
+added together with the folder it guards.
+
+Imports inside a package are relative. TypeScript does not rewrite path aliases in the declarations
+it emits, so an alias would ship broken types. Every export declares its types
+(`isolatedDeclarations`), so the declarations build without the type checker.
+
+`packages/core/src/index.ts` is the public API. `packages/integration` checks the built package
+the way an app meets it:
+
+- the exported names match a list kept by hand, so no export appears or disappears by accident;
+- every export and every member it declares carries a TSDoc summary;
+- its example consumers compile with the current TypeScript and with 5.4, the oldest supported;
+- one form on a registry of fourteen widgets stays cheap to check (see
+  [Performance](/contributing/performance)).
+
+## The shadcn registry
+
+`packages/shadcn` holds the widgets as source files. Its build writes the shadcn registry the shadcn
+CLI reads, one copy per Base UI style, into `apps/docs/public/r`; the documentation site serves it.
+
+The files are copied into users' projects, which shapes the package:
+
+- they import through the `@/` alias of a shadcn project, which the shadcn CLI rewrites;
+- their tests sit in `tests/`, not beside them, so a test never travels into a project;
+- `registry.json` lists every file an item installs, including the files it shares with others.
+
+## The documentation
+
+`apps/docs` is a Next.js app with Fumadocs, exported as a static site. It renders the widgets from
+`packages/shadcn` for the previews and reads the API pages from the TSDoc in `packages/core`, so
+neither is copied.
