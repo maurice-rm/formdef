@@ -4,6 +4,10 @@
   "private": true,
   "license": "MIT",
   "type": "module",
+  "exports": {
+    "./components/*": "./components/*.tsx",
+    "./lib/formdef/context": "./lib/formdef/context.ts"
+  },
   "scripts": {
     "build": "shadcn build registry.json --output .registry && node scripts/build.ts",
     "check-types": "tsc -p tsconfig.json && tsc -p tsconfig.loose.json && tsc -p tsconfig.node.json",
