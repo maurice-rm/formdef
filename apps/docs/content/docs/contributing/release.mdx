@@ -21,7 +21,8 @@ who use the package. A change to the documentation, the tests or the private pac
 
 Every pull request from a branch of this repository publishes a preview of `@formdef/core` through
 [pkg.pr.new](https://pkg.pr.new). A comment on the pull request shows the command that installs it,
-so a change can be tried in a project before it is released. Pull requests from forks get none.
+so a change can be tried in a project before it is released. Pull requests from forks get none,
+and neither does the version pull request.
 
 ## Installing the registry
 
@@ -42,8 +43,8 @@ it runs by hand and not in CI.
 Every push to `main` runs the release workflow. What it does depends on what `main` holds:
 
 - **Changesets:** it opens or updates the "Version Packages" pull request. That pull request raises
-  the version, writes the changelog and deletes the changesets. The workflow starts CI on it, since
-  GitHub runs no workflow for a pull request the workflow's own token opened.
+  the version, writes the changelog and deletes the changesets. Since the workflow's own token
+  opened it, its checks wait until a maintainer selects "Approve workflows to run" on it.
 - **A version not yet on npm,** after the version pull request is merged: it builds and packs
   `@formdef/core` and publishes it once a maintainer approves the run in the `npm` environment. The
   package is published through npm's trusted publishing, with provenance and without a stored token;
