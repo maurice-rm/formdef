@@ -8,7 +8,7 @@
     "check-types": "pnpm run --sequential \"/^check-types:/\"",
     "check-types:current": "tsc -p tsconfig.bundler.json && tsc -p tsconfig.json && tsc -p scripts/tsconfig.json",
     "check-types:floor": "node node_modules/typescript54/bin/tsc -p tsconfig.bundler.json && node node_modules/typescript54/bin/tsc -p tsconfig.json",
-    "test": "node scripts/check-api.ts"
+    "test": "node scripts/check-api.ts && node scripts/check-type-cost.ts"
   },
   "devDependencies": {
     "@formdef/core": "workspace:*",

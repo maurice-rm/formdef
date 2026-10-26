@@ -5,6 +5,7 @@ import type { ConfigParts } from '../config/config-parts'
 import type { DescribedLayout } from '../config/described-layout'
 import type { FormConfigOf } from '../config/form-config-of'
 import type { FormPropsFor } from '../config/form-props'
+import type { InferData } from '../config/infer-data'
 import type { KnownKeys } from '../config/known-keys'
 import type { LevelConfig } from '../config/level-config'
 import type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from '../config/structure'
@@ -64,6 +65,9 @@ type FormHook<TWidgets extends Components, TFormComponents extends Components> =
   ReturnType<typeof createFormHook<TWidgets, TFormComponents>>,
   'extendForm'
 >
+
+// A misspelled field name fails this constraint, so TypeScript reports it with a suggestion.
+type NamedFields<TValues> = { fields: { [Key in keyof TValues]?: object } }
 
 type OwnParts<TWidgets, TFormComponents, TStructure> = {
   widgets: TWidgets
@@ -144,14 +148,17 @@ export interface Registry<
    */
   createForm: <
     TSchema extends StandardSchemaV1,
-    const TConfig extends FormConfigOf<
-      OwnParts<TWidgets, TFormComponents, TStructure>,
-      TSchema,
-      TSubmitMeta
-    >,
+    // Constrained by the field names only, with the config type in the parameter: while TypeScript
+    // infers it, the full config type as constraint makes `KnownKeys` walk every widget's props for
+    // each `props` of the config.
+    const TConfig extends NamedFields<InferData<TSchema>>,
     TSubmitMeta = never,
   >(
-    config: TConfig & { schema: TSchema; onSubmitMeta?: TSubmitMeta } & DescribedLayout<TConfig> &
+    config: TConfig &
+      FormConfigOf<OwnParts<TWidgets, TFormComponents, TStructure>, TSchema, TSubmitMeta> & {
+        schema: TSchema
+        onSubmitMeta?: TSubmitMeta
+      } & DescribedLayout<TConfig> &
       NoInfer<
         KnownKeys<
           TConfig,
@@ -189,15 +196,16 @@ export interface Registry<
    */
   Fields: <
     TForm extends FieldsForm,
-    const TLevel extends LevelConfig<
-      FieldsParts<TWidgets, TFormComponents, TStructure, TForm>,
-      ValuesOf<TForm>
-    >,
+    // Unconstrained, with the level type in the parameter, for the cost `TConfig` of `createForm`
+    // avoids. Constrained by its field names as `TConfig` is, TypeScript 5.4 loses the parameter
+    // type of a callback such as `visibleWhen`, since the names come from `form` in the same props.
+    const TLevel,
   >(
-    props: TLevel & {
-      /** The form from `formHook.useAppForm`, or the field group from `formHook.withFieldGroup`. */
-      form: TForm
-    } & DescribedLayout<TLevel> &
+    props: TLevel &
+      LevelConfig<FieldsParts<TWidgets, TFormComponents, TStructure, TForm>, ValuesOf<TForm>> & {
+        /** The form from `formHook.useAppForm`, or the field group from `formHook.withFieldGroup`. */
+        form: TForm
+      } & DescribedLayout<TLevel> &
       NoInfer<
         KnownKeys<
           TLevel,
