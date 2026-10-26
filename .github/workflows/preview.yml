@@ -1,0 +1,36 @@
+name: Preview
+
+on:
+  pull_request:
+
+permissions: {}
+
+# A new push to a pull request replaces the preview of the push before it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  TURBO_UI: false
+
+jobs:
+  publish:
+    name: Publish a preview of @formdef/core
+    # A pull request from a fork runs code nobody has reviewed yet; it gets no preview.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: $/.github/actions/setup
+      - name: Build @formdef/core
+        run: pnpm turbo run build --filter=@formdef/core
+      # pkg.pr.new's GitHub App comments the install command on the pull request. `--pnpm` packs
+      # with pnpm, which resolves the `catalog:` specifiers in the manifest.
+      - name: Publish the preview
+        run: pnpm exec pkg-pr-new publish --pnpm ./packages/core
