@@ -13,5 +13,5 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/consumer.ts", "src/form.tsx", "src/registry.tsx"]
+  "include": ["src/consumer.ts", "src/form.tsx", "src/registry.tsx", "src/type-cost/form.ts"]
 }

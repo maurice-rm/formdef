@@ -154,6 +154,14 @@ registry.createForm({
   layout: ['name', 'billing'],
 })
 
+registry.createForm({
+  schema: customerSchema,
+  fields: {
+    // @ts-expect-error the text widget takes no colour
+    name: { widget: 'text', props: { label: 'Name', colour: 'red' } },
+  },
+})
+
 export const OwnShell = (): ReactNode => {
   const form = registry.formHook.useAppForm({
     defaultValues: {

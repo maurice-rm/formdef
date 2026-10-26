@@ -3,7 +3,14 @@
   "workspaces": {
     ".": {},
     "packages/integration": {
-      "entry": ["src/consumer.ts", "src/consumer.cts", "src/form.tsx", "src/registry.tsx"]
+      "entry": [
+        "src/consumer.ts",
+        "src/consumer.cts",
+        "src/form.tsx",
+        "src/registry.tsx",
+        "src/type-cost/form.ts",
+        "src/type-cost/no-form.ts"
+      ]
     },
     "packages/core": {
       "vitest": {
