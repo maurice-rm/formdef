@@ -125,7 +125,16 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["**/config", "**/config/**", "**/registry", "**/registry/**"],
+                    "group": [
+                      "**/config",
+                      "**/config/**",
+                      "**/render",
+                      "**/render/**",
+                      "**/form",
+                      "**/form/**",
+                      "**/registry",
+                      "**/registry/**"
+                    ],
                     "message": "formdef: widget/ is the innermost module and imports no other"
                   }
                 ]
@@ -145,7 +154,14 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["**/registry", "**/registry/**"],
+                    "group": [
+                      "**/render",
+                      "**/render/**",
+                      "**/form",
+                      "**/form/**",
+                      "**/registry",
+                      "**/registry/**"
+                    ],
                     "message": "formdef: config/ imports only from widget/"
                   }
                 ]

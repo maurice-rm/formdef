@@ -36,8 +36,8 @@ registry  →  form  →  render  →  config  →  widget
 | `widget/` | what a widget is written with: `FieldOf`, `fieldParts`, `errorsOf`, `fieldId` |
 
 An inner folder never imports an outer one: `widget/` imports none of the others, `config/` only
-`widget/`. `noRestrictedImports` rules per folder in `biome.json` guard part of this; a new rule is
-added together with the folder it guards.
+`widget/`. A `noRestrictedImports` rule per folder in `biome.json` enforces this; a new rule is added
+together with the folder it guards.
 
 Imports inside a package are relative. TypeScript does not rewrite path aliases in the declarations
 it emits, so an alias would ship broken types. Every export declares its types
