@@ -39,9 +39,16 @@ it runs by hand and not in CI.
 
 ## Versions
 
-The release workflow that turns the changesets into a version pull request and publishes it to npm
-is being set up for the first release. Until then, changesets collect on `main`; this page describes
-the workflow once it lands.
+Every push to `main` runs the release workflow. What it does depends on what `main` holds:
+
+- **Changesets:** it opens or updates the "Version Packages" pull request. That pull request raises
+  the version, writes the changelog and deletes the changesets. The workflow starts CI on it, since
+  GitHub runs no workflow for a pull request the workflow's own token opened.
+- **A version not yet on npm,** after the version pull request is merged: it builds and packs
+  `@formdef/core` and publishes it once a maintainer approves the run in the `npm` environment. The
+  package is published through npm's trusted publishing, with provenance and without a stored token;
+  the workflow then tags the release and creates the GitHub release.
+- **Neither:** nothing.
 
 The widgets of the shadcn registry are not versioned on npm: the documentation site serves them,
 and `shadcn add` fetches the version that site was built from.
