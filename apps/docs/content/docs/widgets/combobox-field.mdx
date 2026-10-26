@@ -1,0 +1,66 @@
+---
+title: Combobox field
+description: One choice among many options, filtered by what is typed.
+---
+
+<WidgetPreview name="combobox-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/combobox-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { combobox: ComboboxField }`.
+The widget serves `string` values.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { ComboboxField } from '@/components/formdef/combobox-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { combobox: ComboboxField } })
+// ---cut---
+export const ProfileForm = createForm({
+  schema: z.object({ timeZone: z.string().min(1, 'Choose a time zone') }),
+  defaultValues: { timeZone: '' },
+  fields: {
+    timeZone: {
+      widget: 'combobox',
+      props: {
+        label: 'Time zone',
+        placeholder: 'Search time zones',
+        showClear: true,
+        empty: 'No time zone matches.',
+        options: [
+          { value: 'Europe/Berlin', label: 'Berlin' },
+          { value: 'Asia/Tokyo', label: 'Tokyo' },
+        ],
+      },
+    },
+  },
+})
+```
+
+Typing filters the options by their label; the value is the chosen option's `value`, and `''` stands
+for no choice. A value the options do not carry stays in the form and shows as it is.
+
+| Prop | Meaning |
+| --- | --- |
+| `empty` | The text shown when nothing matches. Defaults to `No results.` |
+| `showClear` | Shows a button that clears the choice. |
+| `clearLabel` | The accessible name of that button. Defaults to `Clear`. |
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/combobox-field.tsx"
+  type="Omit<React.ComponentProps<typeof ComboboxField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="combobox-field" />

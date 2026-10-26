@@ -1,0 +1,65 @@
+---
+title: Radio field
+description: One choice among a few options, all visible at once.
+---
+
+<WidgetPreview name="radio-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/radio-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { radio: RadioField }`. The
+widget serves `string` values.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { RadioField } from '@/components/formdef/radio-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { radio: RadioField } })
+// ---cut---
+export const ShippingForm = createForm({
+  schema: z.object({ shipping: z.enum(['standard', 'express']) }),
+  defaultValues: { shipping: 'standard' },
+  fields: {
+    shipping: {
+      widget: 'radio',
+      props: {
+        label: 'Shipping',
+        options: [
+          { value: 'standard', label: 'Standard', description: '3 to 5 days' },
+          { value: 'express', label: 'Express', description: 'Next day' },
+        ],
+      },
+    },
+  },
+})
+```
+
+The options render as a `<fieldset>` whose `<legend>` is the label. Each option takes a `value`, a
+`label`, and optionally a `description` and `disabled`. `variant: 'card'` turns each option into a
+bordered card with the radio at its end; `list` is the default.
+
+A union of strings, such as the `z.enum` above, is served by the radio field like any string.
+Its `options` are not checked against the union: an option whose value the schema rejects fails on
+validation, not at compile time.
+
+With more than about five options, a [select field](/widgets/select-field) or a
+[combobox field](/widgets/combobox-field) takes less room.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/radio-field.tsx"
+  type="Omit<React.ComponentProps<typeof RadioField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="radio-field" />

@@ -1,0 +1,52 @@
+---
+title: Textarea field
+description: Several lines of text, with optional addons.
+---
+
+<WidgetPreview name="textarea-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/textarea-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { textarea: TextareaField }`.
+The widget serves `string` values.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextareaField } from '@/components/formdef/textarea-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { textarea: TextareaField } })
+// ---cut---
+export const FeedbackForm = createForm({
+  schema: z.object({ feedback: z.string().max(500, 'Keep it under 500 characters') }),
+  defaultValues: { feedback: '' },
+  fields: {
+    feedback: { widget: 'textarea', props: { label: 'Feedback', rows: 6, maxLength: 500 } },
+  },
+})
+```
+
+`rows` sets the starting height. `maxLength` stops typing at the limit; the schema's `max` is what
+rejects a longer value, so a limit that matters belongs in both.
+
+Like the [text field](/widgets/text-field#addons), it takes `addons` inside its border. Above or
+below
+the text, `align: 'block-start'` or `align: 'block-end'` places them.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/textarea-field.tsx"
+  type="Omit<React.ComponentProps<typeof TextareaField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="textarea-field" />

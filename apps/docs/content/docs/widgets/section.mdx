@@ -1,0 +1,62 @@
+---
+title: Section
+description: A titled group of fields, rendered as a fieldset.
+---
+
+<WidgetPreview name="section" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/section
+```
+
+Register it in the `section` structure slot in `lib/formdef/index.tsx`, as `structure: { section:
+Section }`. From then on every `{ section }` entry of a layout renders through it.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+import { Section } from '@/components/formdef/section'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField }, structure: { section: Section } })
+// ---cut---
+export const CheckoutForm = createForm({
+  schema: z.object({ name: z.string(), street: z.string(), city: z.string() }),
+  defaultValues: { name: '', street: '', city: '' },
+  fields: {
+    name: { widget: 'text', props: { label: 'Name' } },
+    street: { widget: 'text', props: { label: 'Street' } },
+    city: { widget: 'text', props: { label: 'City' } },
+  },
+  layout: [
+    'name',
+    {
+      section: 'Delivery address',
+      layout: ['street', 'city'],
+      props: { description: 'Where the parcel goes.' },
+    },
+  ],
+})
+```
+
+The section renders a `<fieldset>`. Its `<legend>` is the entry's title, and a `description` sits
+below it, tied to the fieldset with `aria-describedby`. For a section inside another one,
+`variant: 'label'` sets the legend in the size of a field label.
+
+[Layout](/guides/layout) describes sections, rows and the other layout entries.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/section.tsx"
+  type="Omit<React.ComponentProps<typeof Section>, 'label' | 'children'>"
+/>
+
+## Source
+
+<WidgetSource name="section" />

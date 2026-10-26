@@ -1,0 +1,72 @@
+---
+title: Array frame
+description: The frame around every array, with its items, their buttons and the errors about the list.
+---
+
+<WidgetPreview name="array-frame" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/array-frame
+```
+
+Register it in the `arrayFrame` structure slot in `lib/formdef/index.tsx`, as `structure: {
+arrayFrame: ArrayFrame }`. It then frames every array entry of every form built on that registry.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+import { ArrayFrame } from '@/components/formdef/array-frame'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField }, structure: { arrayFrame: ArrayFrame } })
+// ---cut---
+export const TeamForm = createForm({
+  schema: z.object({ members: z.array(z.string()).min(1, 'Add at least one member') }),
+  defaultValues: { members: [''] },
+  fields: {
+    members: {
+      newItem: () => '',
+      addLabel: 'Add member',
+      removeLabel: (member) => `Remove ${member || 'member'}`,
+      props: { label: 'Team', min: 1, max: 10 },
+      item: { widget: 'text', props: { label: 'Name' } },
+    },
+  },
+})
+```
+
+The frame renders a `<fieldset>` with the `label` as its `<legend>`, each item with a remove button
+beside it, and an add button below. Its own props arrive through the array entry's `props`:
+
+| Prop | Meaning |
+| --- | --- |
+| `label` | The legend of the fieldset. |
+| `description` | A hint below the legend. |
+| `min` | Disables the remove buttons while the list has this many items or fewer. |
+| `max` | Disables the add button once the list has this many items. |
+| `variant` | `'label'` sets the legend in the size of a field label. |
+
+`min` and `max` only steer the buttons. The rule itself belongs in the schema, and its message,
+such as the `min(1)` above, shows below the list.
+
+After a remove, focus moves to the remove button that took the removed item's place, or to the add
+button when the last item went.
+
+[Arrays](/guides/arrays) describes the array entry, and how to write a frame of your own.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/array-frame.tsx"
+  type="Omit<React.ComponentProps<typeof ArrayFrame>, 'field' | 'keys' | 'renderItem' | 'addLabel' |
+'removeLabels' | 'add' | 'remove' | 'insert' | 'move' | 'swap' | 'replace' | 'clear'>"
+/>
+
+## Source
+
+<WidgetSource name="array-frame" />

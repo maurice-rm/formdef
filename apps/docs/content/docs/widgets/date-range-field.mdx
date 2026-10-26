@@ -1,0 +1,67 @@
+---
+title: Date range field
+description: A first and a last day, picked from one calendar.
+---
+
+<WidgetPreview name="date-range-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/date-range-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { dateRange: DateRangeField }`.
+
+## Usage
+
+The value is `{ from?: string; to?: string }`, each an ISO date such as `2027-03-01`. The first
+click
+selects a range of one day, `from` and `to` alike; the second click moves one end.
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { DateRangeField } from '@/components/formdef/date-range-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { dateRange: DateRangeField } })
+// ---cut---
+export const StayForm = createForm({
+  schema: z.object({
+    stay: z
+      .object({ from: z.iso.date().optional(), to: z.iso.date().optional() })
+      .refine(({ from, to }) => from !== undefined && to !== undefined && from < to, {
+        message: 'Pick a departure after your arrival',
+      }),
+  }),
+  defaultValues: { stay: {} },
+  fields: {
+    stay: { widget: 'dateRange', props: { label: 'Stay', min: '2027-01-01' } },
+  },
+})
+```
+
+The range is one field. A `refine` on it, here demanding a departure after the arrival, reports on
+the field itself, so the widget shows its message. Leave out `path`: a message on `stay.to` would
+belong to no widget.
+
+| Prop | Meaning |
+| --- | --- |
+| `format` | Turns each ISO date into the text on the button. |
+| `separator` | Stands between the two dates on the button. Defaults to ` – `. |
+| `numberOfMonths` | How many months the calendar shows side by side. Defaults to `2`. |
+| `min`, `max` | The first and last day that can be picked, as ISO dates. |
+
+The calendar props and the time-zone behaviour are those of the [date field](/widgets/date-field).
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/date-range-field.tsx"
+  type="Omit<React.ComponentProps<typeof DateRangeField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="date-range-field" />

@@ -1,0 +1,60 @@
+---
+title: Date and time field
+description: A day from a calendar and a time beside it, as a local date-time.
+---
+
+<WidgetPreview name="date-time-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/date-time-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as `widgets: { dateTime: DateTimeField }`.
+The widget serves `string` values.
+
+## Usage
+
+The value is a local date-time such as `2027-03-01T14:30`, without a time zone, and `''` while no
+day is picked. The time input stays disabled until a day is picked.
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { DateTimeField } from '@/components/formdef/date-time-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { dateTime: DateTimeField } })
+// ---cut---
+export const MeetingForm = createForm({
+  schema: z.object({ startsAt: z.iso.datetime({ local: true }) }),
+  defaultValues: { startsAt: '' },
+  fields: {
+    startsAt: {
+      widget: 'dateTime',
+      props: { label: 'Starts at', defaultTime: '09:00', timeLabel: 'Start time' },
+    },
+  },
+})
+```
+
+| Prop | Meaning |
+| --- | --- |
+| `defaultTime` | The time filled in when a day is picked first. Defaults to `12:00`. |
+| `timeLabel` | The accessible name of the time input. Defaults to `Time`. |
+| `format` | Turns the date-time into the text on the button. |
+
+Which time zone the value means is up to you: convert it where you send it, with the zone of the
+person or of the place the meeting is in.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/date-time-field.tsx"
+  type="Omit<React.ComponentProps<typeof DateTimeField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="date-time-field" />
