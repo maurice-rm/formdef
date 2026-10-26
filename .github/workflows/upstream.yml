@@ -1,0 +1,41 @@
+name: Upstream
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  TURBO_UI: false
+
+jobs:
+  tanstack-form:
+    name: Newest TanStack Form in the peer range
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: $/.github/actions/setup
+      # The catalog pins one version of TanStack Form; this moves every package to the newest version
+      # that @formdef/core's peer range and `minimumReleaseAge` allow.
+      - name: Read the peer range of @formdef/core
+        id: peer
+        run: echo "range=$(node -p "require('./packages/core/package.json').peerDependencies['@tanstack/react-form']")" >> "$GITHUB_OUTPUT"
+      - name: Move to the newest TanStack Form in that range
+        env:
+          RANGE: ${{ steps.peer.outputs.range }}
+        run: pnpm update --recursive "@tanstack/react-form@$RANGE"
+      - name: Show the version under test
+        run: pnpm --filter @formdef/core list @tanstack/react-form
+      - name: Check types and tests against it
+        run: pnpm turbo run check-types test test:types
