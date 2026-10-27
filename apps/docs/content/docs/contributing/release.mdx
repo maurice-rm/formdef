@@ -53,3 +53,18 @@ Every push to `main` runs the release workflow. What it does depends on what `ma
 
 The widgets of the shadcn registry are not versioned on npm: the documentation site serves them,
 and `shadcn add` fetches the version that site was built from.
+
+## The documentation site
+
+The documentation and the registry are exported as static files and served by nginx from a Docker
+image. After each release of `@formdef/core`, the release workflow builds that image from the same
+commit, tags it with the version and deploys it, so the site and the registry always match the
+package on npm.
+
+A fix to the documentation between two releases goes out by starting the "Docs" workflow by hand:
+without a tag it builds and deploys `main`; with the tag of an image built before, such as `0.1.0`,
+it deploys that image again. The image builds locally the same way:
+
+```bash
+docker build -f apps/docs/Dockerfile --build-arg DOCS_URL=http://localhost:3010 -t formdef-docs .
+```
