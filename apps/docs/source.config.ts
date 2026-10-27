@@ -5,6 +5,7 @@ import { defineConfig } from 'fumadocs-mdx/config'
 import { transformerTwoslash } from 'fumadocs-twoslash'
 
 import { CODE_THEMES } from './lib/code-themes'
+import { isHelpfulTwoslashNode } from './lib/twoslash-hovers'
 
 const SHADCN_PACKAGE = join(process.cwd(), '../../packages/shadcn')
 
@@ -32,7 +33,10 @@ export default defineConfig({
         ...(rehypeCodeDefaultOptions.transformers ?? []),
         transformerTwoslash({
           explicitTrigger: false,
-          twoslashOptions: { compilerOptions: LIBRARY_COMPILER_OPTIONS },
+          twoslashOptions: {
+            compilerOptions: LIBRARY_COMPILER_OPTIONS,
+            filterNode: isHelpfulTwoslashNode,
+          },
         }),
       ],
       langs: ['js', 'jsx', 'ts', 'tsx', 'bash', 'json'],
