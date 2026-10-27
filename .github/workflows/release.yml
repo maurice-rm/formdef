@@ -89,6 +89,8 @@ jobs:
     permissions:
       contents: write # create the release tag and the GitHub release
       id-token: write # trusted publishing to npm, with provenance
+    outputs:
+      core-version: ${{ steps.core.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -96,6 +98,25 @@ jobs:
       - uses: $/.github/actions/setup
         with:
           cache: "false"
-      - uses: changesets/action/publish@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+      - id: publish
+        uses: changesets/action/publish@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           pack-dir-artifact-id: ${{ needs.pack.outputs.pack-dir-artifact-id }}
+      - id: core
+        env:
+          PUBLISHED: ${{ steps.publish.outputs.published-packages }}
+        run: |
+          version=$(jq -r '.[] | select(.name == "@formdef/core") | .version' <<< "${PUBLISHED:-[]}")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  docs:
+    name: Deploy the docs
+    needs: publish
+    if: needs.publish.outputs.core-version != ''
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: $/.github/workflows/docs.yml
+    with:
+      version: ${{ needs.publish.outputs.core-version }}
