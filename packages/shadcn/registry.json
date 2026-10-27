@@ -4,7 +4,7 @@
   "homepage": "https://github.com/maurice-rm/formdef",
   "items": [
     {
-      "name": "formdef",
+      "name": "setup",
       "type": "registry:lib",
       "title": "formdef setup",
       "description": "The wiring every formdef form needs: the TanStack contexts in one file, the registry that names your widgets in another.",
