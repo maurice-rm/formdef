@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
+@import "fumadocs-ui/css/generated/spacious.css";
 @import "fumadocs-twoslash/twoslash.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -11,18 +12,21 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* fumadocs-twoslash colours its error lines #d45656, under 4.5:1 against both page backgrounds;
-   Fumadocs' light muted text, hsl(0 0% 45.1%), stays under 4.5:1 on its cards and tab bars. */
 :root {
   --color-twoslash-error-foreground: #b91c1c;
-}
-
-:root:not(.dark) {
-  --color-fd-muted-foreground: hsl(0, 0%, 40%);
+  --color-fd-primary: oklch(0.5 0.18 38);
+  --color-fd-primary-foreground: oklch(0.985 0 0);
+  --brand: oklch(0.705 0.213 47.604);
 }
 
 .dark {
   --color-twoslash-error-foreground: #f28b82;
+  --color-fd-primary: oklch(0.75 0.183 55.934);
+  --color-fd-primary-foreground: oklch(0.205 0 0);
+}
+
+:root:not(.dark) {
+  --color-fd-muted-foreground: hsl(0, 0%, 40%);
 }
 
 /* The shadcn neutral theme the widgets are styled with. Popovers render outside the preview, so
@@ -88,6 +92,8 @@ html {
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --font-brand: var(--font-geist);
 }
 
 @layer base {
@@ -111,19 +117,21 @@ html {
       var(--color-fd-foreground)
     );
     --diagram-node: color-mix(in oklab, var(--color-fd-foreground) 3%, transparent);
-    --diagram-node-stroke: color-mix(in oklab, var(--color-fd-foreground) 28%, transparent);
+    --diagram-node-stroke: color-mix(in oklab, var(--color-fd-foreground) 50%, transparent);
     --diagram-ext: color-mix(in oklab, var(--color-fd-muted-foreground) 10%, transparent);
-    --diagram-focal-muted: color-mix(
-      in oklab,
-      var(--color-fd-background) 75%,
-      var(--color-fd-foreground)
-    );
+    --diagram-focal: var(--brand);
+    --diagram-focal-ink: oklch(0.205 0 0);
+    --diagram-focal-muted: color-mix(in oklab, var(--diagram-focal-ink) 85%, var(--diagram-focal));
   }
 
+  /* A diagram shrinks with the column and scrolls in its frame only below the width at which its
+     text would turn too small to read. */
   .diagram svg {
     display: block;
     width: 100%;
-    min-width: var(--diagram-width);
+    max-width: var(--diagram-width);
+    min-width: min(var(--diagram-width), 36rem);
+    margin-inline: auto;
     font-family: inherit;
   }
 
@@ -142,8 +150,8 @@ html {
     stroke-width: 1;
   }
   .diagram .node-focal {
-    fill: var(--diagram-ink);
-    stroke: var(--diagram-ink);
+    fill: var(--diagram-focal);
+    stroke: var(--color-fd-primary);
     stroke-width: 1;
   }
   .diagram .tag,
@@ -175,7 +183,7 @@ html {
     font-weight: 600;
   }
   .diagram .name-focal {
-    fill: var(--diagram-paper);
+    fill: var(--diagram-focal-ink);
     font-size: 14px;
     font-weight: 600;
   }
