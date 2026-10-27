@@ -131,9 +131,7 @@ jobs:
           install -m 600 /dev/stdin ~/.ssh/known_hosts <<< "$KNOWN_HOSTS"
           printf 'StrictHostKeyChecking yes\n' > ~/.ssh/config
       - name: Ship the compose file
-        run: |
-          ssh "$TARGET" 'mkdir -p ~/docs && touch ~/docs/.env'
-          rsync -rlpt apps/docs/docker-compose.yml "$TARGET:docs/"
+        run: rsync -rlpt --mkpath apps/docs/docker-compose.yml "$TARGET:docs/"
       - name: Let the server pull from the registry
         env:
           TOKEN: ${{ github.token }}

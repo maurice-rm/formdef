@@ -4,6 +4,8 @@ set -euo pipefail
 image=$1
 cd "$HOME/$2"
 
+[[ -f .env ]] || { echo "No .env in ~/$2; an admin creates it before the first deploy." >&2; exit 1; }
+
 previous=$(grep '^DOCKER_IMAGE=' .env || true)
 
 set_image() {
