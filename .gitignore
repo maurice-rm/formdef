@@ -16,6 +16,7 @@ next-env.d.ts
 # Generated documentation sources and registry output
 .source
 apps/docs/public/r
+apps/docs/.image-preview
 packages/shadcn/.registry
 
 .twoslash
