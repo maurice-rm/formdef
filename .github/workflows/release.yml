@@ -120,3 +120,7 @@ jobs:
     uses: $/.github/workflows/docs.yml
     with:
       version: ${{ needs.publish.outputs.core-version }}
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_AUDIENCE: ${{ secrets.TS_AUDIENCE }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
