@@ -36,6 +36,7 @@ pnpm test             # runtime tests
 pnpm test:types       # type tests
 pnpm build            # build all packages
 pnpm --filter @formdef/docs dev   # the documentation at http://localhost:3010
+pnpm --filter @formdef/docs preview:images   # its images, from the running documentation
 pnpm changeset        # describe a change to a published package
 ```
 

@@ -1,4 +1,4 @@
-const LOCAL_URL = 'http://localhost:3010'
+export const LOCAL_URL = 'http://localhost:3010'
 
 const configured = process.env.DOCS_URL
 
