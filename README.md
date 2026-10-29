@@ -81,7 +81,8 @@ first form step by step.
 
 The [contributing guide](https://formdef.mauricereim.de/contributing) describes how the repository
 is set up, how code is written in it and how a change reaches a release. Report a vulnerability as
-[SECURITY.md](SECURITY.md) describes, never in a public issue.
+[SECURITY.md](SECURITY.md) describes, never in a public issue. Everyone taking part follows the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ### Repository
 

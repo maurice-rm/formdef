@@ -1,0 +1,17 @@
+name: Question
+description: How to do something with formdef, when the documentation does not answer it.
+labels: [question]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What you want to do, what you tried, and which page of the documentation you read.
+    validations:
+      required: true
+  - type: textarea
+    id: code
+    attributes:
+      label: Code
+      description: The config or component you have so far.
+      render: tsx

@@ -1,0 +1,36 @@
+name: Bug
+description: Something in @formdef/core or a widget does not work as the documentation says.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. A vulnerability goes through [private reporting](https://github.com/maurice-rm/formdef/security/advisories/new), never here.
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: What happens
+      description: What you did, what you expected, and what happened instead. Paste compiler errors and console output as text.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: The smallest config or component that shows it, or a link to a repository or sandbox.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: "@formdef/core, @tanstack/react-form, react and typescript."
+      placeholder: "@formdef/core 0.1.0, @tanstack/react-form 1.33.5, react 19.2.0, typescript 5.9.3"
+    validations:
+      required: true
+  - type: input
+    id: widget
+    attributes:
+      label: Widget
+      description: When a widget from the shadcn registry is involved, its name.
+      placeholder: "@formdef/text-field"
