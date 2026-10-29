@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://formdef.mauricereim.de
+    about: Guides, the API reference and the widgets.
+  - name: Security vulnerability
+    url: https://github.com/maurice-rm/formdef/security/advisories/new
+    about: Report it privately, never in a public issue.
