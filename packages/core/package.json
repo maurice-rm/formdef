@@ -1,6 +1,6 @@
 {
   "name": "@formdef/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Describe a form once as a typed object, render it as a React component, with the compiler checking that every widget fits its value. Built on TanStack Form.",
   "keywords": [
     "react",
