@@ -6,7 +6,7 @@ const withMDX = createMDX()
 const config = {
   output: 'export',
   reactStrictMode: true,
-  serverExternalPackages: ['typescript'],
+  serverExternalPackages: ['typescript', '@takumi-rs/core'],
 }
 
 export default withMDX(config)
