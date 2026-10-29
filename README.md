@@ -5,8 +5,8 @@
 Describe a form once as a typed object, render it as a React component — with the compiler
 checking that every widget fits the value it receives.
 
-formdef is built on [TanStack Form](https://tanstack.com/form). It is working towards its first
-release.
+formdef is built on [TanStack Form](https://tanstack.com/form). The documentation lives at
+[formdef.mauricereim.de](https://formdef.mauricereim.de).
 
 ## Repository
 
