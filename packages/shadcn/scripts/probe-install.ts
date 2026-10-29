@@ -179,7 +179,7 @@ const packumentOf = (
   },
 })
 
-// @formdef/core is not on npm before its first release; a scoped registry serves the local build.
+// The probe installs the local build of @formdef/core, not the published one; a scoped registry serves it.
 const coreServer = (tarball: Buffer, manifest: { name: string; version: string }): Server => {
   const server: Server = createServer((request, response) => {
     if (request.url === CORE_TARBALL_PATH) {
