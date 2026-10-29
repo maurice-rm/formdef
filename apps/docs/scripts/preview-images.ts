@@ -5,6 +5,7 @@ import { register } from 'fumadocs-mdx/node'
 
 register()
 
+const { BRAND_IMAGE_ROUTE, brandImages } = await import('../lib/brand-images.ts')
 const { pageImageUrl } = await import('../lib/page-image-url.ts')
 const { LOCAL_URL } = await import('../lib/site-url.ts')
 const { source } = await import('../lib/source.ts')
@@ -13,15 +14,24 @@ const OUT_DIR = join(import.meta.dirname, '../.image-preview')
 const INDEX_FILE = 'index.html'
 
 type PreviewImage = {
-  page: string
+  caption: string
   path: string
   file: string
 }
 
-const pageImages: PreviewImage[] = source.getPages().map((page) => {
-  const { url } = pageImageUrl(page)
-  return { page: page.url, path: url, file: url.slice(1).replaceAll('/', '-') }
+const fileOf = (path: string): string => path.slice(1).replaceAll('/', '-')
+
+const brandPreviewImages: PreviewImage[] = Object.keys(brandImages).map((name) => {
+  const path = `/${BRAND_IMAGE_ROUTE}/${name}`
+  return { caption: path, path, file: fileOf(path) }
 })
+
+const pagePreviewImages: PreviewImage[] = source.getPages().map((page) => {
+  const { url } = pageImageUrl(page)
+  return { caption: page.url, path: url, file: fileOf(url) }
+})
+
+const previewImages = [...brandPreviewImages, ...pagePreviewImages]
 
 const CONNECTION_REFUSED = 'ECONNREFUSED'
 
@@ -64,7 +74,7 @@ const indexHtml = (images: PreviewImage[]): string => `<!doctype html>
   figcaption { margin-top: 8px; font-size: 14px; color: #52525b; }
 </style>
 <main>
-${images.map(({ page, file }) => `<figure><img src="${file}" alt=""><figcaption>${page}</figcaption></figure>`).join('\n')}
+${images.map(({ caption, file }) => `<figure><img src="${file}" alt=""><figcaption>${caption}</figcaption></figure>`).join('\n')}
 </main>
 </html>
 `
@@ -72,15 +82,15 @@ ${images.map(({ page, file }) => `<figure><img src="${file}" alt=""><figcaption>
 const saveImages = async (): Promise<void> => {
   await rm(OUT_DIR, { recursive: true, force: true })
   await mkdir(OUT_DIR)
-  for (const image of pageImages) {
+  for (const image of previewImages) {
     await writeFile(join(OUT_DIR, image.file), Buffer.from(await fetchImage(image.path)))
   }
-  await writeFile(join(OUT_DIR, INDEX_FILE), indexHtml(pageImages))
+  await writeFile(join(OUT_DIR, INDEX_FILE), indexHtml(previewImages))
 }
 
 try {
   await saveImages()
-  console.log(`${pageImages.length} images in ${join(OUT_DIR, INDEX_FILE)}`)
+  console.log(`${previewImages.length} images in ${join(OUT_DIR, INDEX_FILE)}`)
 } catch (error) {
   console.error(error instanceof Error ? error.message : error)
   process.exit(1)

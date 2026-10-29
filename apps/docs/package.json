@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "node scripts/validate-links.ts && node scripts/check-widget-pages.ts && node scripts/check-api-pages.ts && next build && node scripts/check-expected-errors.ts",
+    "build": "node scripts/validate-links.ts && node scripts/check-widget-pages.ts && node scripts/check-api-pages.ts && next build && node scripts/check-expected-errors.ts && node scripts/check-brand-images.ts",
     "dev": "next dev --port 3010",
     "check-types": "next typegen && tsc --noEmit",
     "lint:links": "node scripts/validate-links.ts",
