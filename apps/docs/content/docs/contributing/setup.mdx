@@ -36,7 +36,7 @@ or pull request, with what it does and why the platform or an installed package 
 | `pnpm test:types` | runs the type tests |
 | `pnpm build` | builds every package and the documentation |
 | `pnpm --filter @formdef/docs dev` | serves the documentation at `http://localhost:3010` |
-| `pnpm --filter @formdef/docs preview:images` | saves every page's Open Graph image from the running documentation to `apps/docs/.image-preview`, with an `index.html` that shows them all |
+| `pnpm --filter @formdef/docs preview:images` | saves the README banner, the social preview and every page's Open Graph image from the running documentation to `apps/docs/.image-preview`, with an `index.html` that shows them all |
 | `pnpm changeset` | describes a change to `@formdef/core` for the changelog |
 
 Turborepo runs the package tasks and caches their results; a task whose inputs did not change
