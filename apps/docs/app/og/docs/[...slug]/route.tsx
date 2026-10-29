@@ -1,11 +1,14 @@
-import { generateOGImage } from 'fumadocs-ui/og'
 import { notFound } from 'next/navigation'
+import { ImageResponse } from 'takumi-js/response'
 
-import { appName } from '@/lib/app-name'
+import { PageImage } from '@/components/page-image'
 import { pageImageUrl } from '@/lib/page-image-url'
 import { source } from '@/lib/source'
 
 export const revalidate = false
+
+const IMAGE_WIDTH = 1200
+const IMAGE_HEIGHT = 630
 
 export async function GET(
   _request: Request,
@@ -17,11 +20,10 @@ export async function GET(
     notFound()
   }
 
-  return generateOGImage({
-    title: page.data.title,
-    description: page.data.description,
-    site: appName,
-  })
+  return new ImageResponse(
+    <PageImage title={page.data.title} description={page.data.description ?? ''} />,
+    { width: IMAGE_WIDTH, height: IMAGE_HEIGHT },
+  )
 }
 
 export function generateStaticParams(): { slug: string[] }[] {
