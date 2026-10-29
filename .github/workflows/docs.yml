@@ -7,6 +7,13 @@ on:
         description: The version of @formdef/core just published, which tags the image.
         type: string
         required: true
+    secrets:
+      TS_OAUTH_CLIENT_ID:
+        required: true
+      TS_AUDIENCE:
+        required: true
+      DEPLOY_SSH_KEY:
+        required: true
   workflow_dispatch:
     inputs:
       tag:
