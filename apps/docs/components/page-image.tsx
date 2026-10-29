@@ -21,7 +21,6 @@ type PageImageProps = {
   description: string
 }
 
-/** The Open Graph image of a documentation page: the wordmark above the page's title and description. */
 export const PageImage = ({ title, description }: PageImageProps): ReactNode => (
   <BrandCanvas
     theme={THEME}

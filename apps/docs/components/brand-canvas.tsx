@@ -7,14 +7,11 @@ const GLOW_FADE_STOP = '70%'
 
 type BrandCanvasProps = {
   theme: BrandTheme
-  /** The centre of the orange glow, as a CSS position such as `50% 115%`. */
   glowAt: string
-  /** Lays out the children above the glow. */
   contentStyle: CSSProperties
   children: ReactNode
 }
 
-/** The background of every formdef image rendered with Takumi: a plain surface with an orange glow. */
 export const BrandCanvas = ({
   theme,
   glowAt,

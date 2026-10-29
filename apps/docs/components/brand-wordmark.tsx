@@ -10,7 +10,6 @@ type BrandWordmarkProps = {
   fontSize: number
 }
 
-/** The "formdef." wordmark for images rendered with Takumi; the documentation's own header uses `BrandName`. */
 export const BrandWordmark = ({ fontSize }: BrandWordmarkProps): ReactNode => (
   <div style={{ fontSize, fontWeight: 800, letterSpacing: TRACKING, lineHeight: LINE_HEIGHT }}>
     {appName}
