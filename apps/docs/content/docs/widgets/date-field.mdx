@@ -53,6 +53,13 @@ The calendar is shadcn's `Calendar`, and the widget passes on a few of its props
 `min` and `max` only stop a day from being picked. A bound the data has to keep belongs in the
 schema as well.
 
+## Arrow keys in the calendar
+
+In shadcn's `Calendar` for Base UI, the arrow keys move only the focus ring, not the focus, so
+Enter picks the day that had the focus before. The bug is open as
+[shadcn-ui/ui#9401](https://github.com/shadcn-ui/ui/issues/9401); clicking a day and typing in
+the fields of a widget are not affected. The date range and date-time fields use the same calendar.
+
 ## A date someone knows
 
 A calendar suits a day someone picks: an appointment, a delivery slot. A date someone already knows,
