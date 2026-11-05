@@ -6,6 +6,8 @@ import { z } from 'zod'
 import type { RowProps, SectionProps } from '../config/structure'
 import type { FieldOf } from '../widget/field-of'
 import { createRegistry } from './create-registry'
+import type { FieldsOf } from './fields-of'
+import type { LayoutOf } from './layout-of'
 import type { Registry } from './registry'
 
 const { fieldContext, formContext } = createFormHookContexts()
@@ -310,6 +312,24 @@ describe('Registry.createForm', () => {
     })
     expectTypeOf(Signup).not.toBeAny()
   })
+
+  it('takes fields and a layout written apart as FieldsOf and LayoutOf', () => {
+    const signupFields: FieldsOf<typeof registry, Signup> = {
+      email: { widget: 'text', props: { label: 'Email' } },
+      age: { widget: 'number', props: { label: 'Age' } },
+    }
+    const signupLayout: LayoutOf<typeof registry, Signup> = [
+      { section: 'About you', layout: [{ row: ['email', 'age'] }] },
+      { component: 'SubmitButton', props: { label: 'Sign up' } },
+    ]
+    const Signup = registry.createForm({
+      schema,
+      defaultValues: { email: '', age: 0 },
+      fields: signupFields,
+      layout: signupLayout,
+    })
+    expectTypeOf(Signup).not.toBeAny()
+  })
 })
 
 describe('Registry.Fields', () => {
@@ -390,6 +410,27 @@ describe('Registry.Fields', () => {
           />
         </>
       )
+    }
+    expectTypeOf(Shell).not.toBeAny()
+  })
+
+  it('takes fields and a layout written apart as FieldsOf and LayoutOf', () => {
+    const customerFields: FieldsOf<typeof registry, Customer> = {
+      name: { widget: 'text', props: { label: 'Name' } },
+      billing: {
+        fields: {
+          street: { widget: 'text', props: { label: 'Street' } },
+          zip: { widget: 'text', props: { label: 'Postal code' } },
+        },
+      },
+    }
+    const customerLayout: LayoutOf<typeof registry, Customer> = [{ row: ['name', 'billing'] }]
+    const Shell = (): ReactNode => {
+      const form = registry.formHook.useAppForm({
+        defaultValues: { name: '', billing: { street: '', zip: '' } } as Customer,
+      })
+
+      return <registry.Fields form={form} fields={customerFields} layout={customerLayout} />
     }
     expectTypeOf(Shell).not.toBeAny()
   })

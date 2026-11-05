@@ -86,12 +86,13 @@ type FieldsForm = {
 
 type ValuesOf<TForm extends FieldsForm> = TForm['state']['values']
 
-// An inline entry under `Fields` receives the form `Fields` was given.
+// An inline entry under `Fields` receives the form `Fields` was given. `NoInfer` keeps a layout
+// annotated as `LayoutOf`, whose inline entries take a `FormHandle`, from inferring the form.
 type FieldsParts<TWidgets, TFormComponents, TStructure, TForm> = OwnParts<
   TWidgets,
   TFormComponents,
   TStructure
-> & { handle: TForm }
+> & { handle: NoInfer<TForm> }
 
 /**
  * What {@link createRegistry} returns: TanStack's form hook for the registered widgets and form

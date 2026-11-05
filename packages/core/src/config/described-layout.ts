@@ -1,16 +1,22 @@
-type NamesIn<TEntry> = TEntry extends string
+// `TSeen` holds the entry types already walked: a layout annotated as `LayoutOf` nests its own
+// recursive type, and a nested type assignable to a walked one names no name that one does not.
+type NamesInEntries<TEntries, TSeen> = [TEntries] extends [TSeen]
+  ? never
+  : NamesIn<TEntries, TSeen | TEntries>
+
+type NamesIn<TEntry, TSeen> = TEntry extends string
   ? TEntry
   : TEntry extends { layout: readonly (infer TNested)[] }
-    ? NamesIn<TNested>
+    ? NamesInEntries<TNested, TSeen>
     : TEntry extends { row: readonly (infer TNested)[] }
-      ? NamesIn<TNested>
+      ? NamesInEntries<TNested, TSeen>
       : never
 
 type UndescribedNames<TConfig> = TConfig extends {
   layout: readonly (infer TEntry)[]
   fields: infer TFields
 }
-  ? Exclude<NamesIn<TEntry>, keyof TFields>
+  ? Exclude<NamesInEntries<TEntry, never>, keyof TFields>
   : never
 
 type UndescribedName<TName extends string> =

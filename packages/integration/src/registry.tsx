@@ -124,6 +124,13 @@ export const EditCustomer = ({ name }: { name: string }): ReactNode => (
 // @ts-expect-error the form submits through its options
 export const SubmitsItself = (): ReactNode => <CustomerForm onSubmit={() => undefined} />
 
+export const OrderForm = registry.createForm({
+  schema: customerSchema,
+  defaultValues: { name: '', billing: { street: '', zip: '' }, shipping: { street: '', zip: '' } },
+  fields: customerFields,
+  layout: customerLayout,
+})
+
 export const SignUpForm = registry.createForm({
   schema: customerSchema,
   fields: customerFields,
