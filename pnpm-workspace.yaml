@@ -26,3 +26,6 @@ audit:
     # deepmerge, reached only through the shadcn CLI at build time; no patched version yet.
     # https://github.com/advisories/GHSA-gcqx-w48m-w2h4
     - GHSA-gcqx-w48m-w2h4
+    # minimatch, reached only through the shadcn CLI at build time; its ts-morph asks for ^10.
+    # https://github.com/advisories/GHSA-g3hv-75wg-m249
+    - GHSA-g3hv-75wg-m249
