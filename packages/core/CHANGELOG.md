@@ -1,5 +1,11 @@
 # @formdef/core
 
+## 0.1.2
+
+### Patch Changes
+
+- [#82](https://github.com/maurice-rm/formdef/pull/82) [`d420c66`](https://github.com/maurice-rm/formdef/commit/d420c665a41e9b5e99a026833d793a2035b34fe4) Thanks [@maurice-rm](https://github.com/maurice-rm)! - `createForm` and `Fields` take a `layout` annotated with `LayoutOf` beside `fields` annotated with `FieldsOf`, which stopped with "Type instantiation is excessively deep".
+
 ## 0.1.1
 
 ### Patch Changes
