@@ -142,6 +142,12 @@ export interface Registry<
    * The config is typed by its schema; its root `layout` may name only keys `fields` describes. The
    * component takes `FormProps`, with `options.defaultValues` required when the config has none.
    *
+   * When the component first renders, it validates the schema once with every leaf holding its
+   * widget's `emptyValue`; a widget that declares one receives `required`, true where the schema
+   * rejects that value. A `required` in the entry's `props` wins. A config that validates
+   * asynchronously (`validation.async`), or a schema that does not validate the empty values
+   * synchronously, marks no field and warns once outside production.
+   *
    * @typeParam TSchema - The Standard Schema of the form, inferred from `schema`.
    * @typeParam TConfig - The config as written, inferred.
    * @typeParam TSubmitMeta - What `handleSubmit` takes besides the values, inferred from

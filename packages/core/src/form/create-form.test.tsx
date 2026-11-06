@@ -73,6 +73,37 @@ const submit = async (): Promise<void> => {
   })
 }
 
+const MarkedField = ({
+  field,
+  label,
+  required,
+}: FieldOf<string> & { label: string; required?: boolean }): ReactNode => (
+  <label>
+    {label}
+    <input
+      required={required}
+      value={field.state.value}
+      onChange={(event) => field.handleChange(event.target.value)}
+    />
+  </label>
+)
+MarkedField.emptyValue = ''
+
+const PlainField = (props: FieldOf<string> & { label: string }): ReactNode => (
+  <output aria-label={props.label}>{'required' in props ? 'told' : 'untold'}</output>
+)
+
+const requiredWidgets = { marked: MarkedField, plain: PlainField }
+const requiredBinding = {
+  useAppForm: createFormHook({
+    fieldContext,
+    formContext,
+    fieldComponents: requiredWidgets,
+    formComponents: {},
+  }).useAppForm,
+  parts: { widgets: requiredWidgets, formComponents: {}, structure: {} },
+}
+
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
@@ -221,5 +252,83 @@ describe('createForm', () => {
 
     expect((await screen.findByRole('alert')).textContent).toBe('Wrong credentials')
     expect(onSubmit).not.toHaveBeenCalled()
+  })
+})
+
+describe('createForm, required fields', () => {
+  const marked = (label: string, props: object = {}): object => ({
+    widget: 'marked',
+    props: { label, ...props },
+  })
+
+  const isRequired = (label: string): boolean =>
+    (screen.getByLabelText(label) as HTMLInputElement).required
+
+  it('tells a widget with an empty value whether its field is required', () => {
+    const Profile = createForm(requiredBinding, {
+      schema: z.object({ name: z.string().min(1), nickname: z.string() }),
+      defaultValues: { name: '', nickname: '' },
+      fields: { name: marked('Name'), nickname: marked('Nickname') },
+    })
+    render(<Profile />)
+
+    expect(isRequired('Name')).toBe(true)
+    expect(isRequired('Nickname')).toBe(false)
+  })
+
+  it('lets a required in the props of the config win', () => {
+    const Profile = createForm(requiredBinding, {
+      schema: z.object({ name: z.string().min(1), nickname: z.string() }),
+      defaultValues: { name: '', nickname: '' },
+      fields: {
+        name: marked('Name', { required: false }),
+        nickname: marked('Nickname', { required: true }),
+      },
+    })
+    render(<Profile />)
+
+    expect(isRequired('Name')).toBe(false)
+    expect(isRequired('Nickname')).toBe(true)
+  })
+
+  it('marks the fields of every item of an array', () => {
+    const Contacts = createForm(requiredBinding, {
+      schema: z.object({ contacts: z.array(z.object({ name: z.string().min(1) })) }),
+      defaultValues: { contacts: [{ name: 'Ada' }, { name: '' }] },
+      fields: { contacts: { item: { fields: { name: marked('Name') } } } },
+    })
+    render(<Contacts />)
+
+    const inputs = screen.getAllByLabelText('Name') as HTMLInputElement[]
+    expect(inputs.map((input) => input.required)).toEqual([true, true])
+  })
+
+  it('tells a widget without an empty value nothing', () => {
+    const Profile = createForm(requiredBinding, {
+      schema: z.object({ name: z.string().min(1) }),
+      defaultValues: { name: '' },
+      fields: { name: { widget: 'plain', props: { label: 'Name' } } },
+    })
+    render(<Profile />)
+
+    expect(screen.getByLabelText('Name').textContent).toBe('untold')
+  })
+
+  it('marks no field and warns once when the config validates asynchronously', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const Profile = createForm(requiredBinding, {
+      schema: z.object({ name: z.string().min(1) }).refine(async () => true),
+      validation: { mode: 'onSubmit', async: true },
+      defaultValues: { name: '' },
+      fields: { name: marked('Name') },
+    })
+    render(<Profile />)
+    render(<Profile />)
+
+    expect(
+      screen.getAllByLabelText('Name').map((input) => (input as HTMLInputElement).required),
+    ).toEqual([false, false])
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('validates asynchronously'))
   })
 })

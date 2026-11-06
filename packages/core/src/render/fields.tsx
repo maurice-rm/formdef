@@ -1,10 +1,14 @@
-import type { ComponentType, ReactNode } from 'react'
+import { type ComponentType, type ReactNode, use } from 'react'
+
+import { declaresEmptyValue } from '../widget/declares-empty-value'
 
 import { ArrayEntry } from './array-entry'
 import { byName } from './by-name'
 import { childPath } from './child-path'
 import { Derived } from './derived'
+import { pathPattern } from './path-pattern'
 import type { AppFieldProps, RenderForm } from './render-form'
+import { RequiredPaths } from './required-paths'
 import { splitEntry } from './split-entry'
 import { warnOnce } from './warn-once'
 
@@ -118,6 +122,7 @@ const Item = ({ parts, form, entry, path, index, extra }: ItemProps): ReactNode 
 
 const FieldContent = ({ parts, form, entry, path, props, extra }: FieldContentProps): ReactNode => {
   const { own, fieldOptions } = entry
+  const requiredPaths = use(RequiredPaths)
 
   if (typeof own.widget === 'string') {
     const Widget = byName(parts.widgets, own.widget)
@@ -125,9 +130,14 @@ const FieldContent = ({ parts, form, entry, path, props, extra }: FieldContentPr
       throw new Error(`formdef: field "${path}" names the unregistered widget "${own.widget}".`)
     }
 
+    // The config's `required` comes after the found one, so it wins.
+    const found = declaresEmptyValue(Widget)
+      ? { required: requiredPaths.has(pathPattern(path)) }
+      : undefined
+
     return (
       <form.AppField {...fieldOptions} name={path}>
-        {(field) => <Widget {...props} {...extra} field={field} />}
+        {(field) => <Widget {...found} {...props} {...extra} field={field} />}
       </form.AppField>
     )
   }

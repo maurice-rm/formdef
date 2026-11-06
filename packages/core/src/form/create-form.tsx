@@ -4,6 +4,9 @@ import type { FormElementProps } from '../config/form-props'
 import type { BodyProps } from '../config/structure'
 import { Fields, type FieldsProps } from '../render/fields'
 import type { RenderForm } from '../render/render-form'
+import { RequiredPaths } from '../render/required-paths'
+import { warnOnce } from '../render/warn-once'
+import { findRequiredPaths } from './find-required-paths'
 import { formOptionsFor } from './form-options-for'
 
 type Options = Readonly<Record<string, unknown>>
@@ -36,6 +39,7 @@ type ConfigInput = Options & {
 type ConfiguredFormProps = FormComponentProps & {
   binding: FormBinding
   config: ConfigInput
+  requiredPaths: ReadonlySet<string>
 }
 
 const MISSING_DEFAULT_VALUES =
@@ -44,6 +48,7 @@ const MISSING_DEFAULT_VALUES =
 const ConfiguredForm = ({
   binding,
   config,
+  requiredPaths,
   options,
   ...formProps
 }: ConfiguredFormProps): ReactNode => {
@@ -71,24 +76,51 @@ const ConfiguredForm = ({
   return (
     <form.AppForm>
       <form noValidate {...formProps} onSubmit={handleSubmit}>
-        {Body === undefined ? content : <Body>{content}</Body>}
+        <RequiredPaths value={requiredPaths}>
+          {Body === undefined ? content : <Body>{content}</Body>}
+        </RequiredPaths>
       </form>
     </form.AppForm>
   )
 }
 
+const isAsyncValidation = (validation: unknown): boolean =>
+  typeof validation === 'object' && validation !== null && 'async' in validation
+    ? validation.async === true
+    : false
+
+const requiredPathsOf = (binding: FormBinding, config: ConfigInput): ReadonlySet<string> => {
+  const result = findRequiredPaths({
+    schema: config.schema,
+    validatesAsync: isAsyncValidation(config.validation),
+    fields: (config.fields ?? {}) as Readonly<Record<string, object>>,
+    widgets: binding.parts.widgets,
+  })
+  if ('problem' in result) {
+    warnOnce(config, result.problem)
+
+    return new Set()
+  }
+
+  return result.paths
+}
+
 /**
  * Turns a form config into a form component bound to `binding`: TanStack's form with the merged
  * options, a `<form>` element that submits through it, the registered body and the config's fields.
+ * When it first renders, it finds the config's required fields once.
  */
 export function createForm(
   binding: FormBinding,
   config: ConfigInput,
 ): (props: FormComponentProps) => ReactNode {
-  // biome-ignore lint/correctness/noComponentHookFactories: runs once per form at module level, like TanStack's createFormHook.
-  const Form = (props: FormComponentProps): ReactNode => (
-    <ConfiguredForm {...props} binding={binding} config={config} />
-  )
+  let requiredPaths: ReadonlySet<string> | undefined
 
-  return Form
+  return (props: FormComponentProps): ReactNode => {
+    requiredPaths ??= requiredPathsOf(binding, config)
+
+    return (
+      <ConfiguredForm {...props} binding={binding} config={config} requiredPaths={requiredPaths} />
+    )
+  }
 }
