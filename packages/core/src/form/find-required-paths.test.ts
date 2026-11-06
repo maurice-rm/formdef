@@ -12,6 +12,8 @@ const CheckboxField = (): ReactNode => null
 CheckboxField.emptyValue = false
 const TagsField = (): ReactNode => null
 TagsField.emptyValue = [] as string[]
+const RangeField = (): ReactNode => null
+RangeField.emptyValue = {}
 const PlainField = (): ReactNode => null
 
 const widgets = {
@@ -19,6 +21,7 @@ const widgets = {
   number: NumberField,
   checkbox: CheckboxField,
   tags: TagsField,
+  range: RangeField,
   plain: PlainField,
 }
 
@@ -88,6 +91,22 @@ describe('findRequiredPaths', () => {
         emails: { item: text },
       }),
     ).toEqual(['contacts[].name', 'emails[]'])
+  })
+
+  it('counts an issue inside the value of a leaf for that leaf', () => {
+    const schema = z.object({
+      stay: z.object({ from: z.iso.date(), to: z.iso.date() }),
+      window: z.object({ from: z.iso.date().optional(), to: z.iso.date().optional() }),
+      stays: z.array(z.object({ from: z.iso.date(), to: z.iso.date() })),
+    })
+
+    expect(
+      pathsOf(schema, {
+        stay: { widget: 'range' },
+        window: { widget: 'range' },
+        stays: { item: { widget: 'range' } },
+      }),
+    ).toEqual(['stay', 'stays[]'])
   })
 
   it('leaves a rule across fields unmarked', () => {

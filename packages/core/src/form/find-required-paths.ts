@@ -83,6 +83,20 @@ const issuePath = (issue: Issue): string =>
     }, undefined) ?? '',
   )
 
+const parentOf = (path: string): string =>
+  path.slice(0, Math.max(path.lastIndexOf('.'), path.lastIndexOf('[')))
+
+// A leaf's value may be an object or a list, so an issue below a leaf's path is the leaf's.
+const leafOf = (path: string, leaves: ReadonlySet<string>): string | undefined => {
+  for (let candidate = path; candidate !== ''; candidate = parentOf(candidate)) {
+    if (leaves.has(candidate)) {
+      return candidate
+    }
+  }
+
+  return undefined
+}
+
 // The promise is dropped unread; a rejection is the schema failing on empty values, not the form.
 const ignoreRejection = (): undefined => undefined
 
@@ -122,7 +136,7 @@ export function findRequiredPaths({
     return { problem: UNSETTLED_SCHEMA }
   }
 
-  const issuePaths = (result.issues ?? []).map(issuePath)
+  const leaves = (result.issues ?? []).map((issue) => leafOf(issuePath(issue), empty.declared))
 
-  return { paths: new Set(issuePaths.filter((path) => empty.declared.has(path))) }
+  return { paths: new Set(leaves.filter((leaf) => leaf !== undefined)) }
 }
