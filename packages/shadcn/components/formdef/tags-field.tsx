@@ -36,6 +36,7 @@ type TagsFieldProps = FieldOf<string[]> &
 
 const NO_RESULTS = 'No results.'
 const ENTER = 'Enter'
+const NO_TAGS: string[] = []
 
 const removeTag = (tag: string): string => `Remove ${tag}`
 
@@ -80,6 +81,7 @@ export const TagsField = ({
       labelAside={labelAside}
       description={description}
       disabled={attrs.disabled}
+      required={attrs.required}
     >
       <Combobox
         {...attrs}
@@ -141,3 +143,5 @@ export const TagsField = ({
     </FieldFrame>
   )
 }
+
+TagsField.emptyValue = NO_TAGS

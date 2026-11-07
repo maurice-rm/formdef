@@ -60,6 +60,7 @@ export const DateTimeField = ({
       labelAside={labelAside}
       description={description}
       disabled={disabled}
+      required={required}
     >
       <div className={cn('flex gap-2', className)}>
         <CalendarPopover
@@ -113,3 +114,5 @@ export const DateTimeField = ({
     </FieldFrame>
   )
 }
+
+DateTimeField.emptyValue = ''

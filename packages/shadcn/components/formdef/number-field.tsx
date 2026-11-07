@@ -38,6 +38,7 @@ export const NumberField = ({
       labelAside={labelAside}
       description={description}
       disabled={attrs.disabled}
+      required={attrs.required}
     >
       <Input
         {...attrs}
@@ -51,3 +52,5 @@ export const NumberField = ({
     </FieldFrame>
   )
 }
+
+NumberField.emptyValue = undefined

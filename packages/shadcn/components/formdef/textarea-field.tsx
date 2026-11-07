@@ -55,6 +55,7 @@ export const TextareaField = ({
       labelAside={labelAside}
       description={description}
       disabled={attrs.disabled}
+      required={attrs.required}
     >
       {hasAddons ? (
         <InputGroup>
@@ -71,3 +72,5 @@ export const TextareaField = ({
     </FieldFrame>
   )
 }
+
+TextareaField.emptyValue = ''

@@ -54,6 +54,7 @@ export const PasswordField = ({
       labelAside={labelAside}
       description={description}
       disabled={attrs.disabled}
+      required={attrs.required}
     >
       <InputGroup>
         <InputGroupInput
@@ -79,3 +80,5 @@ export const PasswordField = ({
     </FieldFrame>
   )
 }
+
+PasswordField.emptyValue = ''

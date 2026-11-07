@@ -2,6 +2,7 @@ import { type FieldOf, fieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
 import { FieldNotes } from '@/components/formdef/field-notes'
+import { LabelText } from '@/components/formdef/label-text'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Field,
@@ -22,16 +23,20 @@ type CheckboxGroupFieldProps = FieldOf<string[]> &
   Omit<FieldLabels, 'labelAside'> &
   Attrs & {
     options: Option[]
+    required?: boolean | undefined
   }
 
 const LEGEND_SUFFIX = '-legend'
 const DESCRIPTION_SUFFIX = '-description'
+
+const NONE_CHECKED: string[] = []
 
 export const CheckboxGroupField = ({
   field,
   label,
   description,
   options,
+  required,
   ...attrs
 }: CheckboxGroupFieldProps) => {
   const parts = fieldParts(field, { description })
@@ -55,7 +60,11 @@ export const CheckboxGroupField = ({
       aria-labelledby={label === undefined ? undefined : legendId}
       onBlur={blurLeaving(onBlur)}
     >
-      {label !== undefined && <FieldLegend id={legendId}>{label}</FieldLegend>}
+      {label !== undefined && (
+        <FieldLegend id={legendId}>
+          <LabelText required={required}>{label}</LabelText>
+        </FieldLegend>
+      )}
       <FieldGroup data-slot="checkbox-group">
         {options.map((option) => {
           const id = optionId(group.id, option.value)
@@ -93,3 +102,5 @@ export const CheckboxGroupField = ({
     </FieldSet>
   )
 }
+
+CheckboxGroupField.emptyValue = NONE_CHECKED

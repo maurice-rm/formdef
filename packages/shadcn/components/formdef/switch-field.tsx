@@ -2,6 +2,7 @@ import { type FieldOf, fieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
 import { FieldNotes } from '@/components/formdef/field-notes'
+import { LabelText } from '@/components/formdef/label-text'
 import { Field, FieldContent, FieldLabel, FieldTitle } from '@/components/ui/field'
 import { Switch } from '@/components/ui/switch'
 import type { FieldLabels } from '@/lib/formdef/field-labels'
@@ -48,7 +49,11 @@ export const SwitchField = ({
           data-disabled={attrs.disabled}
         >
           <FieldContent>
-            {label !== undefined && <FieldTitle id={titleId}>{label}</FieldTitle>}
+            {label !== undefined && (
+              <FieldTitle id={titleId}>
+                <LabelText required={attrs.required}>{label}</LabelText>
+              </FieldTitle>
+            )}
             {notes}
           </FieldContent>
           {toggle}
@@ -57,7 +62,11 @@ export const SwitchField = ({
     )
   }
 
-  const caption = label !== undefined && <FieldLabel htmlFor={control.id}>{label}</FieldLabel>
+  const caption = label !== undefined && (
+    <FieldLabel htmlFor={control.id}>
+      <LabelText required={attrs.required}>{label}</LabelText>
+    </FieldLabel>
+  )
 
   return (
     <Field orientation="horizontal" data-invalid={parts.isErrorDue} data-disabled={attrs.disabled}>
@@ -70,3 +79,5 @@ export const SwitchField = ({
     </Field>
   )
 }
+
+SwitchField.emptyValue = false

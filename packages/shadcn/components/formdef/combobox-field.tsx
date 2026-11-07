@@ -56,6 +56,7 @@ export const ComboboxField = ({
       labelAside={labelAside}
       description={description}
       disabled={attrs.disabled}
+      required={attrs.required}
     >
       <Combobox
         {...attrs}
@@ -98,3 +99,5 @@ export const ComboboxField = ({
     </FieldFrame>
   )
 }
+
+ComboboxField.emptyValue = ''

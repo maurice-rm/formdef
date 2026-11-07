@@ -2,6 +2,7 @@ import { type FieldOf, fieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
 import { FieldNotes } from '@/components/formdef/field-notes'
+import { LabelText } from '@/components/formdef/label-text'
 import {
   Field,
   FieldContent,
@@ -96,7 +97,11 @@ export const RadioField = ({
 
   return (
     <FieldSet>
-      {label !== undefined && <FieldLegend id={legendId}>{label}</FieldLegend>}
+      {label !== undefined && (
+        <FieldLegend id={legendId}>
+          <LabelText required={attrs.required}>{label}</LabelText>
+        </FieldLegend>
+      )}
       <RadioGroup
         {...attrs}
         {...group}
@@ -111,3 +116,5 @@ export const RadioField = ({
     </FieldSet>
   )
 }
+
+RadioField.emptyValue = ''

@@ -102,7 +102,7 @@ describe('DateTimeField', () => {
     const input = time()
     expect(input.getAttribute('aria-labelledby')).toBe('event-startsAt-label event-startsAt-time')
     expect(input.getAttribute('aria-label')).toBe('Uhrzeit')
-    expect(screen.getByText('Starts').id).toBe('event-startsAt-label')
+    expect(screen.getByText('Starts').closest('label')?.id).toBe('event-startsAt-label')
     expect(input.getAttribute('aria-describedby')).toBe('event-startsAt-description')
     expect(input.getAttribute('name')).toBeNull()
   })
