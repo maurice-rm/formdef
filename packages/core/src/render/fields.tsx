@@ -1,10 +1,14 @@
-import type { ComponentType, ReactNode } from 'react'
+import { type ComponentType, type ReactNode, use } from 'react'
+
+import { declaresEmptyValue } from '../widget/declares-empty-value'
 
 import { ArrayEntry } from './array-entry'
 import { byName } from './by-name'
 import { childPath } from './child-path'
 import { Derived } from './derived'
+import { pathPattern } from './path-pattern'
 import type { AppFieldProps, RenderForm } from './render-form'
+import { NO_REQUIRED_PATHS, RequiredPaths } from './required-paths'
 import { splitEntry } from './split-entry'
 import { warnOnce } from './warn-once'
 
@@ -34,6 +38,8 @@ export type FieldsProps = {
   form: RenderForm
   fields: LevelFields
   layout?: readonly unknown[] | undefined
+  /** The path patterns of the required fields; none unless `createForm` renders the level. */
+  requiredPaths?: ReadonlySet<string> | undefined
 }
 
 type Level = Omit<FieldsProps, 'layout'> & {
@@ -118,6 +124,7 @@ const Item = ({ parts, form, entry, path, index, extra }: ItemProps): ReactNode 
 
 const FieldContent = ({ parts, form, entry, path, props, extra }: FieldContentProps): ReactNode => {
   const { own, fieldOptions } = entry
+  const requiredPaths = use(RequiredPaths)
 
   if (typeof own.widget === 'string') {
     const Widget = byName(parts.widgets, own.widget)
@@ -125,9 +132,14 @@ const FieldContent = ({ parts, form, entry, path, props, extra }: FieldContentPr
       throw new Error(`formdef: field "${path}" names the unregistered widget "${own.widget}".`)
     }
 
+    // The config's `required` comes after the found one, so it wins.
+    const found = declaresEmptyValue(Widget)
+      ? { required: requiredPaths.has(pathPattern(path)) }
+      : undefined
+
     return (
       <form.AppField {...fieldOptions} name={path}>
-        {(field) => <Widget {...props} {...extra} field={field} />}
+        {(field) => <Widget {...found} {...props} {...extra} field={field} />}
       </form.AppField>
     )
   }
@@ -322,8 +334,11 @@ const LevelEntries = ({ layout, ...level }: LevelProps): ReactNode => {
  * into sections and rows and places form components and inline entries. A leaf renders as its
  * widget, an object as its own level, a custom entry through its `render`, an array through the
  * registered `structure.arrayFrame` or the bare default. An object entry with TanStack options of
- * its own also mounts a field at its path, so its validators run.
+ * its own also mounts a field at its path, so its validators run. A `Fields` nested in a form finds
+ * no required fields of its own, since its paths may be relative to a field group.
  */
-export const Fields = ({ parts, form, fields, layout }: FieldsProps): ReactNode => (
-  <LevelEntries parts={parts} form={form} fields={fields} layout={layout} path={undefined} />
+export const Fields = ({ parts, form, fields, layout, requiredPaths }: FieldsProps): ReactNode => (
+  <RequiredPaths value={requiredPaths ?? NO_REQUIRED_PATHS}>
+    <LevelEntries parts={parts} form={form} fields={fields} layout={layout} path={undefined} />
+  </RequiredPaths>
 )

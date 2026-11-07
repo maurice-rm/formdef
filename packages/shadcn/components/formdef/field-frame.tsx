@@ -9,6 +9,7 @@ import { type FieldLabels, labelIdFor } from '@/lib/formdef/field-labels'
 type FieldFrameProps = FieldLabels & {
   parts: FieldParts
   disabled?: boolean | undefined
+  required?: boolean | undefined
   children: ReactNode
 }
 
@@ -18,11 +19,17 @@ export const FieldFrame = ({
   labelAside,
   description,
   disabled,
+  required,
   children,
 }: FieldFrameProps) => (
   <Field data-invalid={parts.isErrorDue} data-disabled={disabled}>
     {label !== undefined && (
-      <LabelLine id={labelIdFor(parts.control.id)} htmlFor={parts.control.id} aside={labelAside}>
+      <LabelLine
+        id={labelIdFor(parts.control.id)}
+        htmlFor={parts.control.id}
+        aside={labelAside}
+        required={required}
+      >
         {label}
       </LabelLine>
     )}

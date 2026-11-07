@@ -49,6 +49,11 @@
           "target": "@components/formdef/label-line.tsx"
         },
         {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
+        },
+        {
           "path": "components/formdef/text-field.tsx",
           "type": "registry:component",
           "target": "@components/formdef/text-field.tsx"
@@ -89,6 +94,11 @@
           "path": "components/formdef/label-line.tsx",
           "type": "registry:component",
           "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
         },
         {
           "path": "components/formdef/textarea-field.tsx",
@@ -133,6 +143,11 @@
           "target": "@components/formdef/label-line.tsx"
         },
         {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
+        },
+        {
           "path": "components/formdef/password-field.tsx",
           "type": "registry:component",
           "target": "@components/formdef/password-field.tsx"
@@ -170,6 +185,11 @@
           "target": "@components/formdef/label-line.tsx"
         },
         {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
+        },
+        {
           "path": "components/formdef/number-field.tsx",
           "type": "registry:component",
           "target": "@components/formdef/number-field.tsx"
@@ -195,6 +215,11 @@
           "path": "components/formdef/field-notes.tsx",
           "type": "registry:component",
           "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
         },
         {
           "path": "components/formdef/checkbox-field.tsx",
@@ -224,6 +249,11 @@
           "target": "@components/formdef/field-notes.tsx"
         },
         {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
+        },
+        {
           "path": "components/formdef/switch-field.tsx",
           "type": "registry:component",
           "target": "@components/formdef/switch-field.tsx"
@@ -249,6 +279,11 @@
           "path": "components/formdef/field-notes.tsx",
           "type": "registry:component",
           "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
         },
         {
           "path": "components/formdef/radio-field.tsx",
@@ -298,6 +333,11 @@
           "target": "@components/formdef/label-line.tsx"
         },
         {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
+        },
+        {
           "path": "components/formdef/select-field.tsx",
           "type": "registry:component",
           "target": "@components/formdef/select-field.tsx"
@@ -328,6 +368,11 @@
           "path": "components/formdef/field-notes.tsx",
           "type": "registry:component",
           "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
         },
         {
           "path": "components/formdef/checkbox-group-field.tsx",
@@ -377,6 +422,11 @@
           "target": "@components/formdef/label-line.tsx"
         },
         {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
+        },
+        {
           "path": "components/formdef/combobox-field.tsx",
           "type": "registry:component",
           "target": "@components/formdef/combobox-field.tsx"
@@ -422,6 +472,11 @@
           "path": "components/formdef/label-line.tsx",
           "type": "registry:component",
           "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
         },
         {
           "path": "components/formdef/date-field.tsx",
@@ -471,6 +526,11 @@
           "target": "@components/formdef/label-line.tsx"
         },
         {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
+        },
+        {
           "path": "components/formdef/date-range-field.tsx",
           "type": "registry:component",
           "target": "@components/formdef/date-range-field.tsx"
@@ -518,6 +578,11 @@
           "target": "@components/formdef/label-line.tsx"
         },
         {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
+        },
+        {
           "path": "components/formdef/date-time-field.tsx",
           "type": "registry:component",
           "target": "@components/formdef/date-time-field.tsx"
@@ -558,6 +623,11 @@
           "path": "components/formdef/label-line.tsx",
           "type": "registry:component",
           "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
         },
         {
           "path": "components/formdef/tags-field.tsx",

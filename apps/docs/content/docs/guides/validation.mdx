@@ -78,6 +78,10 @@ export const SignUp = createForm({
 `asyncDebounceMs` waits that long after the event that runs the schema, so a burst of events
 starts one check, and exists only together with `async: true`. TanStack's own `asyncDebounceMs` at the top of the config wins over it.
 
+With `async: true`, formdef does not run the schema to find the
+[required fields](/guides/fields#required-fields), so a check like `isFree` sends no request
+before anyone types; outside production it warns once. Pass `required` in `props` for such a form.
+
 ## Rules that span fields
 
 A rule that compares fields belongs in the schema, where it sees every value. `path` decides which

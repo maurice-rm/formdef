@@ -44,6 +44,7 @@ export const SelectField = ({
       labelAside={labelAside}
       description={description}
       disabled={attrs.disabled}
+      required={attrs.required}
     >
       <Select
         {...attrs}
@@ -67,3 +68,5 @@ export const SelectField = ({
     </FieldFrame>
   )
 }
+
+SelectField.emptyValue = ''

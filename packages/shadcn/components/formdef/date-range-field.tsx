@@ -66,6 +66,7 @@ export const DateRangeField = ({
       labelAside={labelAside}
       description={description}
       disabled={disabled}
+      required={required}
     >
       <CalendarPopover
         control={parts.control}
@@ -91,3 +92,5 @@ export const DateRangeField = ({
     </FieldFrame>
   )
 }
+
+DateRangeField.emptyValue = {}

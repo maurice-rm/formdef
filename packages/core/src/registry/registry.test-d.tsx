@@ -77,6 +77,42 @@ describe('Registry', () => {
     base.extendRegistry({ formComponents: { SubmitButton } })
   })
 
+  it("takes a widget's empty value of the value type it serves", () => {
+    const NameField = (_: FieldOf<string> & { label: string }): ReactNode => null
+    NameField.emptyValue = ''
+    const AgeField = (_: FieldOf<number | undefined>): ReactNode => null
+    AgeField.emptyValue = undefined
+
+    const registry = createRegistry({
+      fieldContext,
+      formContext,
+      widgets: { name: NameField },
+    }).extendRegistry({ widgets: { age: AgeField } })
+    expectTypeOf(registry).not.toBeAny()
+  })
+
+  it('rejects an empty value that is no value of the widget', () => {
+    const NameField = (_: FieldOf<string> & { label: string }): ReactNode => null
+    NameField.emptyValue = undefined
+    const AgeField = (_: FieldOf<number>): ReactNode => null
+    AgeField.emptyValue = ''
+
+    // @ts-expect-error a text widget's empty value is a string
+    createRegistry({ fieldContext, formContext, widgets: { name: NameField } })
+    const base = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+    // @ts-expect-error a number widget's empty value is a number
+    base.extendRegistry({ widgets: { age: AgeField } })
+  })
+
+  it('checks an empty value a widget declares as optional', () => {
+    const DeclaredField = TextField as typeof TextField & { emptyValue?: string }
+    const WrongField = TextField as typeof TextField & { emptyValue?: number }
+
+    createRegistry({ fieldContext, formContext, widgets: { text: DeclaredField } })
+    // @ts-expect-error a text widget's empty value is a string
+    createRegistry({ fieldContext, formContext, widgets: { text: WrongField } })
+  })
+
   it("hands out TanStack's form hook without its own extension", () => {
     const { formHook } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
 

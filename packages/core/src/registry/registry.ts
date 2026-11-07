@@ -9,6 +9,7 @@ import type { InferData } from '../config/infer-data'
 import type { KnownKeys } from '../config/known-keys'
 import type { LevelConfig } from '../config/level-config'
 import type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from '../config/structure'
+import type { ValueOf } from '../widget/field-of'
 
 // biome-ignore lint/suspicious/noExplicitAny: createFormHook constrains its maps to ComponentType<any>.
 type AnyProps = any
@@ -32,6 +33,7 @@ type WrongSlotProps = 'formdef: this slot does not take the props the renderer p
 type DuplicateWidget = 'formdef: a widget with this name is already registered'
 type DuplicateFormComponent = 'formdef: a form component with this name is already registered'
 type DuplicateSlot = 'formdef: this structure slot is already filled'
+type WrongEmptyValue = 'formdef: the empty value is no value this widget serves'
 
 // A slot may declare props of its own on top; those the renderer passes must accept its values.
 type AcceptsSupplied<TComponent extends ComponentType<AnyProps>, TSupplied> =
@@ -49,6 +51,20 @@ export type CheckedStructure<TStructure> = {
       ? AcceptsSupplied<TStructure[Slot], SlotSupplied[Slot]>
       : TStructure[Slot]
     : UnknownSlot
+}
+
+// Inferred, not indexed: an optional `emptyValue` indexed adds an `undefined` the widget never set.
+type FitsEmptyValue<TWidget> = TWidget extends { emptyValue?: infer TEmpty }
+  ? [TEmpty] extends [ValueOf<TWidget>]
+    ? TWidget
+    : WrongEmptyValue
+  : TWidget
+
+/** Checks the `emptyValue` each widget of `TWidgets` declares against the value type it serves. */
+export type CheckedWidgets<TWidgets> = {
+  [Name in keyof TWidgets]: 'emptyValue' extends keyof TWidgets[Name]
+    ? FitsEmptyValue<TWidgets[Name]>
+    : TWidgets[Name]
 }
 
 type Fresh<TExisting, TMessage extends string> = { [Name in keyof TExisting]?: TMessage }
@@ -125,6 +141,12 @@ export interface Registry<
    * `<form>` element that submits through it, and the config's fields rendered with this registry.
    * The config is typed by its schema; its root `layout` may name only keys `fields` describes. The
    * component takes `FormProps`, with `options.defaultValues` required when the config has none.
+   *
+   * When the component first renders, it validates the schema once with every leaf holding its
+   * widget's `emptyValue`; a widget that declares one receives `required`, true where the schema
+   * rejects that value. A `required` in the entry's `props` wins. A config that validates
+   * asynchronously (`validation.async`), or a schema that does not validate the empty values
+   * synchronously, marks no field and warns once outside production.
    *
    * @typeParam TSchema - The Standard Schema of the form, inferred from `schema`.
    * @typeParam TConfig - The config as written, inferred.
@@ -232,7 +254,8 @@ export interface Registry<
    * @typeParam TNewFormComponents - The form components the extension adds.
    * @typeParam TNewStructure - The structure slots the extension fills.
    * @param extension - What the new registry holds on top of this one.
-   * @param extension.widgets - The widgets to add by name.
+   * @param extension.widgets - The widgets to add by name. A widget's static `emptyValue` must be
+   *   of the value type it serves.
    * @param extension.formComponents - The form components to add by name.
    * @param extension.structure - The structure slots to fill.
    * @defaultValue `extension.widgets`, `extension.formComponents` and `extension.structure`: none
@@ -243,7 +266,7 @@ export interface Registry<
     const TNewFormComponents extends NewFormComponents<TFormComponents> = Record<never, never>,
     const TNewStructure extends NewStructure<TStructure> = Record<never, never>,
   >(extension: {
-    widgets?: TNewWidgets
+    widgets?: TNewWidgets & CheckedWidgets<TNewWidgets>
     formComponents?: TNewFormComponents
     structure?: TNewStructure & CheckedStructure<TNewStructure>
   }) => Registry<

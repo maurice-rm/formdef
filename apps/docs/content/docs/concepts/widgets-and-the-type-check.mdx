@@ -21,6 +21,36 @@ const TextField = ({ field, label }: FieldOf<string> & { label?: string }) => (
 `V` is the value type the widget serves. Every other prop is the widget's own, and a config passes
 it through `props`. That is the whole contract: no base class, no wrapper, no decorator.
 
+## The empty value
+
+A widget may declare its **empty value**, the value it holds while nothing is filled in, as a
+static property. formdef validates the schema with it to find the
+[required fields](/guides/fields#required-fields), and passes the widget `required`:
+
+```tsx
+import type { FieldOf } from '@formdef/core'
+
+type TextFieldProps = FieldOf<string> & { label?: string; required?: boolean }
+
+export const TextField = ({ field, label, required }: TextFieldProps) => (
+  <label>
+    {label}
+    {required && ' *'}
+    <input
+      required={required}
+      value={field.state.value}
+      onChange={(event) => field.handleChange(event.target.value)}
+    />
+  </label>
+)
+
+TextField.emptyValue = ''
+```
+
+The empty value is a value of the widget's type: `''` for a string, `false` for a checkbox, `[]`
+for a list, `undefined` for a number that may be unset. A widget without one receives no
+`required` from formdef.
+
 ## Why the value type sits in the props
 
 TanStack's own pattern reads the field from a React context: `useFieldContext<string>()`. The value
@@ -71,6 +101,7 @@ each field the compiler checks that:
 | --- | --- |
 | The widget serves the field's value type. An optional or nullable field finds the widget of its base type. | `email: { widget: 'checkbox' }` |
 | `props` matches the widget's own props: no unknown keys, no wrong types, and present when the widget has a prop it cannot render without. | `email: { widget: 'text', props: { label: 'Email', min: 3 } }` |
+| A widget's `emptyValue` is a value of the type it serves, checked where the widget is registered. | `TextField.emptyValue = 0` |
 | `props.required` is `false` only where the schema makes the key optional. | `required: false` on a key the schema demands |
 | Field validators and listeners are typed against the field's value; `dependsOn` and the listen-to options take paths of the whole form. | a validator reading `value.length` on a number |
 | A function `props: (values) => …` returns props of the right types. | `props: () => ({ min: '3' })` |

@@ -18,6 +18,8 @@ formdef uses one word per concept, in the code, in error messages and here.
 | **leaf, object, array, custom** | The four shapes of a field entry, marked by `widget`, `fields`, `item` and `render`. |
 | **item** | One element of an array, and the key of an array entry that describes it. |
 | **widget** | A component that takes `FieldOf<V>`, registered under `widgets`. |
+| **empty value** | The value a widget holds while nothing is filled in, declared as its static `emptyValue`. |
+| **required** | A field whose empty value the schema rejects, so a person has to fill it in. |
 | **control** | The element of a widget that a person operates: an input, a button, a list. |
 | **form component** | A component registered under `formComponents` and placed by `{ component }` in a layout. |
 | **structure slot** | One of `body`, `section`, `row` and `arrayFrame`: the four places where formdef renders markup of its own. |

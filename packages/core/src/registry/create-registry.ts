@@ -6,6 +6,7 @@ import { Fields, type FieldsProps } from '../render/fields'
 
 import type {
   CheckedStructure,
+  CheckedWidgets,
   Components,
   NewFormComponents,
   NewStructure,
@@ -52,13 +53,14 @@ function buildRegistry<
     TFormComponents & TNewFormComponents,
     TStructure & TNewStructure
   > {
+    const addedWidgets: Components = extension.widgets ?? {}
     const addedStructure: Structure = extension.structure ?? {}
 
     // The extension's maps are optional, and spreading an optional generic map drops its type.
     return buildRegistry({
       fieldContext: parts.fieldContext,
       formContext: parts.formContext,
-      widgets: { ...parts.widgets, ...extension.widgets } as TWidgets & TNewWidgets,
+      widgets: { ...parts.widgets, ...addedWidgets } as TWidgets & TNewWidgets,
       formComponents: { ...parts.formComponents, ...extension.formComponents } as TFormComponents &
         TNewFormComponents,
       structure: { ...parts.structure, ...addedStructure } as TStructure & TNewStructure,
@@ -85,7 +87,12 @@ function buildRegistry<
     createForm: (config) => createForm(binding, config),
     // The member's signature types the level by the form it is given; the renderer reads it untyped.
     Fields: BoundFields as unknown as Registry<TWidgets, TFormComponents, TStructure>['Fields'],
-    extendRegistry,
+    // The member's signature checks the widgets' empty values; the implementation merges any map.
+    extendRegistry: extendRegistry as Registry<
+      TWidgets,
+      TFormComponents,
+      TStructure
+    >['extendRegistry'],
   }
 }
 
@@ -102,7 +109,8 @@ function buildRegistry<
  * @param config - The contexts and what the registry holds.
  * @param config.fieldContext - The field context from `createFormHookContexts()`.
  * @param config.formContext - The form context from `createFormHookContexts()`.
- * @param config.widgets - The widgets by name.
+ * @param config.widgets - The widgets by name. A widget's static `emptyValue`, the value it holds
+ *   while nothing is entered, must be of the value type it serves.
  * @param config.formComponents - The form components by name.
  * @param config.structure - The components that render the structure slots.
  * @defaultValue `config.formComponents` and `config.structure`: none registered.
@@ -129,13 +137,13 @@ export function createRegistry<
   const TStructure extends Structure = Record<never, never>,
 >(
   config: Contexts & {
-    widgets: TWidgets
+    widgets: TWidgets & CheckedWidgets<TWidgets>
     formComponents?: TFormComponents
     structure?: TStructure & CheckedStructure<TStructure>
   },
 ): Registry<TWidgets, TFormComponents, TStructure> {
   // Both maps fall back to their empty defaults exactly when they are left out.
-  return buildRegistry({
+  return buildRegistry<TWidgets, TFormComponents, TStructure>({
     fieldContext: config.fieldContext,
     formContext: config.formContext,
     widgets: config.widgets,
