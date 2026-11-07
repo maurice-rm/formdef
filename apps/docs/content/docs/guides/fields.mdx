@@ -54,6 +54,31 @@ export const Newsletter = createForm({
 `props` may also be a function of the form's values; [Visibility and derived
 props](/guides/visibility#derived-props) shows how.
 
+### Required fields
+
+formdef finds the fields a person has to fill in, so the config does not repeat what the schema
+says. When a form first renders, `createForm` validates the schema once with every leaf left
+empty, each holding its widget's [empty value](/concepts/widgets-and-the-type-check#the-empty-value).
+A leaf whose empty value fails is **required**, and its widget receives `required: true`; the
+others receive `required: false`. The schema decides, not the key: `z.string()` accepts `''` and
+is not required, `z.string().min(1)` and `z.email()` are. An array is validated with one empty
+item, and what that item requires holds for every item.
+
+This works with any [Standard Schema](https://standardschema.dev) library, since formdef only
+calls `validate`. Some fields are not found, and take `required` in `props` instead, which always
+wins over the found value:
+
+| Not found | Why |
+| --- | --- |
+| A field required only under a condition, through a rule across fields | The libraries skip such a rule while a field fails, and an empty form fails. |
+| Every field of a config with `validation.async` | The schema is not run, so an asynchronous check sends no request. |
+| A leaf whose widget declares no empty value, and a custom entry | formdef knows no empty value to try. |
+| A field rendered by `Fields` | `Fields` does not see the schema. |
+
+A schema that does not validate empty values synchronously, or that throws on them, marks no field
+either. In both cases, and for a config with `validation.async`, formdef warns once in the console
+outside production.
+
 A widget that takes `required` can only receive `required: false` where the schema makes the key
 optional, so a config never claims a value the schema does not demand:
 

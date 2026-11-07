@@ -88,6 +88,14 @@ export const AddressForm = createForm({
 the label, so it would focus the field instead of following the link. Checkbox, radio and switch do
 not take it: their label already sits beside the control.
 
+## Required fields
+
+Every widget declares its empty value, so formdef finds the
+[required fields](/guides/fields#required-fields) on its own. The label of a required field ends
+in a red `*`. The mark is drawn by CSS and hidden from screen readers, which announce the control's
+`required` instead; a checkbox group renders a `<fieldset>`, which has no `required`, so there the
+mark is visual only. `required` in `props` overrides what formdef found.
+
 ## Server and client
 
 The files that hold state or call hooks carry `'use client'`. The others reach the client through
