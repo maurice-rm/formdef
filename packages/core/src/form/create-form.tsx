@@ -4,7 +4,6 @@ import type { FormElementProps } from '../config/form-props'
 import type { BodyProps } from '../config/structure'
 import { Fields, type FieldsProps } from '../render/fields'
 import type { RenderForm } from '../render/render-form'
-import { RequiredPaths } from '../render/required-paths'
 import { warnOnce } from '../render/warn-once'
 import { findRequiredPaths } from './find-required-paths'
 import { formOptionsFor } from './form-options-for'
@@ -65,6 +64,7 @@ const ConfiguredForm = ({
       form={form}
       fields={config.fields as FieldsProps['fields']}
       layout={config.layout as FieldsProps['layout']}
+      requiredPaths={requiredPaths}
     />
   )
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
@@ -76,9 +76,7 @@ const ConfiguredForm = ({
   return (
     <form.AppForm>
       <form noValidate {...formProps} onSubmit={handleSubmit}>
-        <RequiredPaths value={requiredPaths}>
-          {Body === undefined ? content : <Body>{content}</Body>}
-        </RequiredPaths>
+        {Body === undefined ? content : <Body>{content}</Body>}
       </form>
     </form.AppForm>
   )

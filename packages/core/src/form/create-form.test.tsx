@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 
 import type { BodyProps } from '../config/structure'
+import { Fields } from '../render/fields'
+import type { RenderForm } from '../render/render-form'
 import type { FieldOf } from '../widget/field-of'
 import { createForm } from './create-form'
 
@@ -330,5 +332,23 @@ describe('createForm, required fields', () => {
     ).toEqual([false, false])
     expect(warn).toHaveBeenCalledTimes(1)
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('validates asynchronously'))
+  })
+
+  it('finds nothing for a Fields inside the form, whose paths may be those of a field group', () => {
+    const Profile = createForm(requiredBinding, {
+      schema: z.object({ name: z.string().min(1) }),
+      defaultValues: { name: '' },
+      fields: { name: marked('Name') },
+      layout: [
+        {
+          render: (form: RenderForm) => (
+            <Fields parts={requiredBinding.parts} form={form} fields={{ name: marked('Again') }} />
+          ),
+        },
+      ],
+    })
+    render(<Profile />)
+
+    expect(isRequired('Again')).toBe(false)
   })
 })

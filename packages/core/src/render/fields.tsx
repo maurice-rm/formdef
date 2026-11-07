@@ -8,7 +8,7 @@ import { childPath } from './child-path'
 import { Derived } from './derived'
 import { pathPattern } from './path-pattern'
 import type { AppFieldProps, RenderForm } from './render-form'
-import { RequiredPaths } from './required-paths'
+import { NO_REQUIRED_PATHS, RequiredPaths } from './required-paths'
 import { splitEntry } from './split-entry'
 import { warnOnce } from './warn-once'
 
@@ -38,6 +38,8 @@ export type FieldsProps = {
   form: RenderForm
   fields: LevelFields
   layout?: readonly unknown[] | undefined
+  /** The path patterns of the required fields; none unless `createForm` renders the level. */
+  requiredPaths?: ReadonlySet<string> | undefined
 }
 
 type Level = Omit<FieldsProps, 'layout'> & {
@@ -332,8 +334,11 @@ const LevelEntries = ({ layout, ...level }: LevelProps): ReactNode => {
  * into sections and rows and places form components and inline entries. A leaf renders as its
  * widget, an object as its own level, a custom entry through its `render`, an array through the
  * registered `structure.arrayFrame` or the bare default. An object entry with TanStack options of
- * its own also mounts a field at its path, so its validators run.
+ * its own also mounts a field at its path, so its validators run. A `Fields` nested in a form finds
+ * no required fields of its own, since its paths may be relative to a field group.
  */
-export const Fields = ({ parts, form, fields, layout }: FieldsProps): ReactNode => (
-  <LevelEntries parts={parts} form={form} fields={fields} layout={layout} path={undefined} />
+export const Fields = ({ parts, form, fields, layout, requiredPaths }: FieldsProps): ReactNode => (
+  <RequiredPaths value={requiredPaths ?? NO_REQUIRED_PATHS}>
+    <LevelEntries parts={parts} form={form} fields={fields} layout={layout} path={undefined} />
+  </RequiredPaths>
 )
