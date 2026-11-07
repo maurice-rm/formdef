@@ -1,5 +1,11 @@
 # @formdef/core
 
+## 0.2.0
+
+### Minor Changes
+
+- [#85](https://github.com/maurice-rm/formdef/pull/85) [`a64f738`](https://github.com/maurice-rm/formdef/commit/a64f738ddf4d4ed23f84e1433b139ac88ac28b43) Thanks [@maurice-rm](https://github.com/maurice-rm)! - `createForm` finds the fields the schema requires by validating it once with each widget's empty value, and passes `required` to every widget that declares a static `emptyValue`. A `required` in `props` wins.
+
 ## 0.1.2
 
 ### Patch Changes
