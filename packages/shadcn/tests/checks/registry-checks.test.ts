@@ -133,7 +133,7 @@ describe('dependencyProblems', () => {
   })
 
   it("reports a peer of the core declared without the core's range", () => {
-    const tanstack = "import { useStore } from '@tanstack/react-form'"
+    const tanstack = "import { useSelector } from '@tanstack/react-form'"
     const problems = dependencyProblems(
       item({ dependencies: ['@formdef/core', 'cn', '@tanstack/react-form'] }),
       { readFile: sourceOf(`${SOURCE}\n${tanstack}`), peers: PEERS },
@@ -145,7 +145,7 @@ describe('dependencyProblems', () => {
   })
 
   it("accepts a peer of the core declared with the core's range", () => {
-    const tanstack = "import { useStore } from '@tanstack/react-form'"
+    const tanstack = "import { useSelector } from '@tanstack/react-form'"
     const problems = dependencyProblems(
       item({ dependencies: ['@formdef/core', 'cn', '@tanstack/react-form@>=1.33.5 <1.34.0'] }),
       { readFile: sourceOf(`${SOURCE}\n${tanstack}`), peers: PEERS },
