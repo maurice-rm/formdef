@@ -1,3 +1,5 @@
+'use client'
+
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
 import { type FieldOf, useFieldParts } from '@formdef/core'
 import { XIcon } from 'lucide-react'

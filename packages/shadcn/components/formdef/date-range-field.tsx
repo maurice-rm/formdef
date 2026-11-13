@@ -1,3 +1,5 @@
+'use client'
+
 import { type FieldOf, useFieldParts } from '@formdef/core'
 
 import { type CalendarAttrs, CalendarPopover } from '@/components/formdef/calendar-popover'
