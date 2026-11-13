@@ -1,0 +1,73 @@
+---
+title: Multi combobox field
+description: Several choices among many options, searched by typing and shown as chips.
+---
+
+<WidgetPreview name="multi-combobox-field" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/multi-combobox-field
+```
+
+Register it under `widgets` in `lib/formdef/index.tsx`, as
+`widgets: { multiCombobox: MultiComboboxField }`. The widget serves `string[]` values.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { MultiComboboxField } from '@/components/formdef/multi-combobox-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { multiCombobox: MultiComboboxField },
+})
+// ---cut---
+export const ProjectForm = createForm({
+  schema: z.object({ memberIds: z.array(z.string()).max(50) }),
+  defaultValues: { memberIds: [] },
+  fields: {
+    memberIds: {
+      widget: 'multiCombobox',
+      props: {
+        label: 'Members',
+        placeholder: 'Search accounts',
+        empty: 'No account matches.',
+        removeLabel: (option) => `Remove ${option.label}`,
+        options: [
+          { value: 'u_1', label: 'Ada Lovelace' },
+          { value: 'u_2', label: 'Grace Hopper', description: 'No SSH key yet' },
+        ],
+      },
+    },
+  },
+})
+```
+
+Typing filters the options by their label; only options can be chosen, typed text never becomes a
+value. The value is the list of the chosen options' `value`s, and each chosen option shows as a chip
+with a button that removes it. A value the options do not carry stays in the form and shows as it
+is. An option's `description` shows below its label in the list, and a `disabled` option cannot be
+chosen.
+
+| Prop | Meaning |
+| --- | --- |
+| `options` | The options to choose from, each with `value`, `label` and optionally `description` and `disabled`. |
+| `removeLabel` | The accessible name of a chip's remove button. Defaults to `Remove <label>`. |
+| `empty` | The text shown when nothing matches. Defaults to `No results.` |
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/multi-combobox-field.tsx"
+  type="Omit<React.ComponentProps<typeof MultiComboboxField>, 'field'>"
+/>
+
+## Source
+
+<WidgetSource name="multi-combobox-field" />

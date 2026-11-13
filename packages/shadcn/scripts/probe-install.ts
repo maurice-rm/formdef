@@ -44,6 +44,7 @@ import { ComboboxField } from '@/components/formdef/combobox-field'
 import { DateField } from '@/components/formdef/date-field'
 import { DateRangeField } from '@/components/formdef/date-range-field'
 import { DateTimeField } from '@/components/formdef/date-time-field'
+import { MultiComboboxField } from '@/components/formdef/multi-combobox-field'
 import { NumberField } from '@/components/formdef/number-field'
 import { PasswordField } from '@/components/formdef/password-field'
 import { RadioField } from '@/components/formdef/radio-field'
@@ -72,6 +73,7 @@ export const registry = createRegistry({
     select: SelectField,
     checkboxes: CheckboxGroupField,
     combobox: ComboboxField,
+    multiCombobox: MultiComboboxField,
     date: DateField,
     dateRange: DateRangeField,
     dateTime: DateTimeField,

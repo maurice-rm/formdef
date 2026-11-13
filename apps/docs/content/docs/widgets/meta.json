@@ -12,6 +12,7 @@
     "select-field",
     "checkbox-group-field",
     "combobox-field",
+    "multi-combobox-field",
     "date-field",
     "date-range-field",
     "date-time-field",

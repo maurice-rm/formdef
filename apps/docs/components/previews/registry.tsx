@@ -8,6 +8,7 @@ import { ComboboxField } from '@formdef/shadcn/components/formdef/combobox-field
 import { DateField } from '@formdef/shadcn/components/formdef/date-field'
 import { DateRangeField } from '@formdef/shadcn/components/formdef/date-range-field'
 import { DateTimeField } from '@formdef/shadcn/components/formdef/date-time-field'
+import { MultiComboboxField } from '@formdef/shadcn/components/formdef/multi-combobox-field'
 import { NumberField } from '@formdef/shadcn/components/formdef/number-field'
 import { PasswordField } from '@formdef/shadcn/components/formdef/password-field'
 import { RadioField } from '@formdef/shadcn/components/formdef/radio-field'
@@ -36,6 +37,7 @@ export const { createForm } = createRegistry({
     select: SelectField,
     checkboxes: CheckboxGroupField,
     combobox: ComboboxField,
+    multiCombobox: MultiComboboxField,
     date: DateField,
     dateRange: DateRangeField,
     dateTime: DateTimeField,
