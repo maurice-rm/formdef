@@ -1,5 +1,11 @@
 # @formdef/core
 
+## 0.3.0
+
+### Minor Changes
+
+- [#92](https://github.com/maurice-rm/formdef/pull/92) [`415bd57`](https://github.com/maurice-rm/formdef/commit/415bd57ae11ad7b8dbc35d5b2a158752da72c68f) Thanks [@maurice-rm](https://github.com/maurice-rm)! - `useFieldParts` wires a widget's control like `fieldParts` and subscribes to the submit, so a field that was left before without an edit shows its error after a submit. `fieldParts` reads the submit without subscribing to it and is deprecated.
+
 ## 0.2.0
 
 ### Minor Changes
