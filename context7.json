@@ -1,0 +1,7 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "formdef",
+  "description": "Typed form configs rendered as React components, built on TanStack Form. The compiler checks that every widget fits its value; ready widgets for shadcn/ui come from formdef's shadcn registry.",
+  "folders": ["apps/docs/content/docs"],
+  "excludeFolders": ["apps/docs/content/docs/contributing"]
+}
