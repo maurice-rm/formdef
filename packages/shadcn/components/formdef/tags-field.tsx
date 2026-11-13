@@ -1,7 +1,7 @@
 'use client'
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import { XIcon } from 'lucide-react'
 import { type ComponentProps, type KeyboardEvent, useState } from 'react'
 
@@ -61,7 +61,7 @@ export const TagsField = ({
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [highlighted, setHighlighted] = useState<string | undefined>()
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...input } = parts.control
   const tags = field.state.value ?? []
   const offered = suggestions.filter((suggestion) => !tags.includes(suggestion))

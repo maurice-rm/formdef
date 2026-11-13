@@ -1,5 +1,7 @@
+'use client'
+
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import { XIcon } from 'lucide-react'
 import type { ComponentProps } from 'react'
 
@@ -43,7 +45,7 @@ export const ComboboxField = ({
   showClear,
   ...attrs
 }: ComboboxFieldProps) => {
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...input } = parts.control
   const value = field.state.value ?? ''
   const unknown: Option | null = value === '' ? null : { value, label: value }

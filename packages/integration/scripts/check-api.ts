@@ -24,6 +24,7 @@ const PUBLIC_EXPORTS = [
   'InferData',
   'LayoutOf',
   'Registry',
+  'useFieldParts',
 ]
 
 // TypeScript 5.4 reads the declarations because TypeScript 7 offers no stable compiler API, and

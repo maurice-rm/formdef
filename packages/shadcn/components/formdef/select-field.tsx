@@ -1,4 +1,6 @@
-import { type FieldOf, fieldParts } from '@formdef/core'
+'use client'
+
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
 import { FieldFrame } from '@/components/formdef/field-frame'
@@ -33,7 +35,7 @@ export const SelectField = ({
   className,
   ...attrs
 }: SelectFieldProps) => {
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...trigger } = parts.control
   const value = field.state.value ?? ''
 

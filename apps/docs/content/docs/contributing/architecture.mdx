@@ -33,7 +33,7 @@ registry  →  form  →  render  →  config  →  widget
 | `form/` | `createForm` at runtime: TanStack's options from a config, and the `<form>` |
 | `render/` | the renderer of field and layout entries |
 | `config/` | the types of a config: entries, layout, props, validation, structure slots |
-| `widget/` | what a widget is written with: `FieldOf`, `fieldParts`, `errorsOf`, `fieldId` |
+| `widget/` | what a widget is written with: `FieldOf`, `useFieldParts`, `errorsOf`, `fieldId` |
 
 An inner folder never imports an outer one: `widget/` imports none of the others, `config/` only
 `widget/`. A `noRestrictedImports` rule per folder in `biome.json` enforces this; a new rule is added

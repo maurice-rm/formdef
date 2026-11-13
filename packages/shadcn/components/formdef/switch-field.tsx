@@ -1,4 +1,6 @@
-import { type FieldOf, fieldParts } from '@formdef/core'
+'use client'
+
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
 import { FieldNotes } from '@/components/formdef/field-notes'
@@ -24,7 +26,7 @@ export const SwitchField = ({
   variant = 'split',
   ...attrs
 }: SwitchFieldProps) => {
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...control } = parts.control
   const checked = field.state.value ?? false
   const titleId = `${control.id}${TITLE_SUFFIX}`

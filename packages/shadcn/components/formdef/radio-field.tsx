@@ -1,4 +1,6 @@
-import { type FieldOf, fieldParts } from '@formdef/core'
+'use client'
+
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
 import { FieldNotes } from '@/components/formdef/field-notes'
@@ -41,7 +43,7 @@ export const RadioField = ({
   variant = 'list',
   ...attrs
 }: RadioFieldProps) => {
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, onBlur, ...group } = parts.control
   const legendId = `${group.id}${LEGEND_SUFFIX}`
   const value = field.state.value ?? ''

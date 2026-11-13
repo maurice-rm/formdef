@@ -14,6 +14,7 @@ export type TsDoc = {
   returns: string | undefined
   throws: string[]
   remarks: string | undefined
+  deprecated: string | undefined
   examples: string[]
 }
 
@@ -82,6 +83,9 @@ const addTag = (doc: TsDoc, block: string): void => {
     case 'remarks':
       doc.remarks = linkedText(text)
       break
+    case 'deprecated':
+      doc.deprecated = linkedText(text)
+      break
     case 'example':
       doc.examples.push(text)
       break
@@ -100,6 +104,7 @@ const parse = (comment: string): TsDoc => {
     returns: undefined,
     throws: [],
     remarks: undefined,
+    deprecated: undefined,
     examples: [],
   }
   for (const block of tags) {

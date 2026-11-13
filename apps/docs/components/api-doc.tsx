@@ -45,12 +45,13 @@ const tableOf = (column: string, tags: NamedTag[]): string =>
 const listOf = (items: string[]): string =>
   items.map((item) => `- ${item.replaceAll('\n', ' ')}`).join('\n')
 
-/** The TSDoc of an export of `@formdef/core`, read from its source: summary, type parameters, parameters, return value, errors, remarks and examples. */
+/** The TSDoc of an export of `@formdef/core`, read from its source: summary, deprecation, type parameters, parameters, return value, errors, remarks and examples. */
 export const ApiDoc = ({ name, headingLevel = DEFAULT_HEADING_LEVEL }: ApiDocProps): ReactNode => {
   const doc = readTsDoc(name)
   const heading = '#'.repeat(headingLevel)
   const sections = [
     doc.summary,
+    doc.deprecated !== undefined && `${heading} Deprecated\n\n${doc.deprecated}`,
     doc.typeParams.length > 0 && `${heading} Type parameters\n\n${tableOf('Name', doc.typeParams)}`,
     doc.params.length > 0 && `${heading} Parameters\n\n${tableOf('Name', doc.params)}`,
     doc.defaultValues.length > 0 && `${heading} Defaults\n\n${listOf(doc.defaultValues)}`,

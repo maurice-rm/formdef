@@ -7,7 +7,7 @@ const ERROR_SUFFIX = '-error'
 const IDREF_SEPARATOR = ' '
 
 /**
- * What {@link fieldParts} returns: the wiring of a widget's control and what it needs to render
+ * What {@link useFieldParts} returns: the wiring of a widget's control and what it needs to render
  * its description and its errors.
  */
 export interface FieldParts {
@@ -39,10 +39,9 @@ export interface FieldParts {
   errors: string[]
 }
 
-function isErrorDueFor<TValue>(field: FieldApiOf<TValue>): boolean {
+function isErrorDueFor<TValue>(field: FieldApiOf<TValue>, wasSubmitted: boolean): boolean {
   const { isBlurred, isDirty, isValid } = field.state.meta
   const wasEditedAndLeft = isBlurred && isDirty
-  const wasSubmitted = field.form.state.submissionAttempts > 0
 
   return !isValid && (wasEditedAndLeft || wasSubmitted)
 }
@@ -54,6 +53,41 @@ function idrefsOf(ids: (string | undefined)[]): string | undefined {
 }
 
 /**
+ * The parts of `field` with the submit state passed in, so the result depends on nothing the
+ * caller cannot see.
+ */
+export function fieldPartsFor<TValue>(
+  field: FieldApiOf<TValue>,
+  options: { description?: string | undefined; wasSubmitted: boolean },
+): FieldParts {
+  const id = fieldId(field.form.formId, field.name)
+  const descriptionId = `${id}${DESCRIPTION_SUFFIX}`
+  const errorId = `${id}${ERROR_SUFFIX}`
+  const isErrorDue = isErrorDueFor(field, options.wasSubmitted)
+  const errors = errorsOf(field)
+  const isErrorNamed = isErrorDue && errors.length > 0
+  const hasDescription = options.description !== undefined && options.description !== ''
+
+  return {
+    control: {
+      id,
+      name: field.name,
+      onBlur: field.handleBlur,
+      'aria-invalid': isErrorDue || undefined,
+      'aria-describedby': idrefsOf([
+        hasDescription ? descriptionId : undefined,
+        isErrorNamed ? errorId : undefined,
+      ]),
+      'aria-errormessage': isErrorNamed ? errorId : undefined,
+    },
+    descriptionId,
+    errorId,
+    isErrorDue,
+    errors,
+  }
+}
+
+/**
  * Wires a widget's control to its field: its id and name, the blur report, and the aria
  * attributes that tie it to its description and its errors.
  *
@@ -62,6 +96,11 @@ function idrefsOf(ids: (string | undefined)[]): string | undefined {
  * points at the error element through `aria-describedby` and `aria-errormessage`. An id appears in
  * them only when its element is rendered.
  *
+ * `fieldParts` reads whether the form was submitted without subscribing to it, so a widget whose
+ * field state does not change on a submit keeps its error hidden until it renders again.
+ *
+ * @deprecated Use {@link useFieldParts}, which subscribes to the submit and renders the widget
+ *   again.
  * @typeParam TValue - The value type of the field.
  * @param field - The field the widget renders.
  * @param options - What the widget renders besides the control.
@@ -91,29 +130,8 @@ export function fieldParts<TValue>(
   field: FieldApiOf<TValue>,
   options: { description?: string | undefined } = {},
 ): FieldParts {
-  const id = fieldId(field.form.formId, field.name)
-  const descriptionId = `${id}${DESCRIPTION_SUFFIX}`
-  const errorId = `${id}${ERROR_SUFFIX}`
-  const isErrorDue = isErrorDueFor(field)
-  const errors = errorsOf(field)
-  const isErrorNamed = isErrorDue && errors.length > 0
-  const hasDescription = options.description !== undefined && options.description !== ''
-
-  return {
-    control: {
-      id,
-      name: field.name,
-      onBlur: field.handleBlur,
-      'aria-invalid': isErrorDue || undefined,
-      'aria-describedby': idrefsOf([
-        hasDescription ? descriptionId : undefined,
-        isErrorNamed ? errorId : undefined,
-      ]),
-      'aria-errormessage': isErrorNamed ? errorId : undefined,
-    },
-    descriptionId,
-    errorId,
-    isErrorDue,
-    errors,
-  }
+  return fieldPartsFor(field, {
+    ...options,
+    wasSubmitted: field.form.state.submissionAttempts > 0,
+  })
 }

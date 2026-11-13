@@ -1,4 +1,6 @@
-import { type FieldOf, fieldParts } from '@formdef/core'
+'use client'
+
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
 import { FieldNotes } from '@/components/formdef/field-notes'
@@ -15,7 +17,7 @@ type Attrs = Pick<
 type CheckboxFieldProps = FieldOf<boolean> & Omit<FieldLabels, 'labelAside'> & Attrs
 
 export const CheckboxField = ({ field, label, description, ...attrs }: CheckboxFieldProps) => {
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...control } = parts.control
   const checked = field.state.value ?? false
 

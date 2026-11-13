@@ -1,6 +1,6 @@
 'use client'
 
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import { cn } from 'cn'
 import { ClockIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -47,7 +47,7 @@ export const DateTimeField = ({
   ...calendar
 }: DateTimeFieldProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const [day = '', time = ''] = (field.state.value ?? '').split(DATE_TIME_SEPARATOR)
   const selected = day === '' ? undefined : fromIsoDate(day)
   const { name: _carriedByTheForm, id: controlId, ...wiring } = parts.control
