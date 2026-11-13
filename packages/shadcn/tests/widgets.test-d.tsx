@@ -10,6 +10,7 @@ import { ComboboxField } from '@/components/formdef/combobox-field'
 import { DateField } from '@/components/formdef/date-field'
 import { DateRangeField } from '@/components/formdef/date-range-field'
 import { DateTimeField } from '@/components/formdef/date-time-field'
+import { MultiComboboxField } from '@/components/formdef/multi-combobox-field'
 import { NumberField } from '@/components/formdef/number-field'
 import { PasswordField } from '@/components/formdef/password-field'
 import { RadioField } from '@/components/formdef/radio-field'
@@ -240,6 +241,39 @@ describe('the tags widget', () => {
       defaultValues: { skills: [], name: '' },
       // @ts-expect-error a tags widget serves a list, not a string
       fields: { name: { widget: 'tags', props: { label: 'Name' } } },
+    })
+  })
+})
+
+describe('the multi combobox widget', () => {
+  const choosing = createRegistry({
+    fieldContext,
+    formContext,
+    widgets: { multiCombobox: MultiComboboxField },
+  })
+  const memberSchema = z.object({ memberIds: z.array(z.string()), name: z.string() })
+  const options = [{ value: 'u_1', label: 'Ada Lovelace' }]
+
+  it('registers and serves a list of strings from options', () => {
+    const Form = choosing.createForm({
+      schema: memberSchema,
+      defaultValues: { memberIds: [], name: '' },
+      fields: {
+        memberIds: {
+          widget: 'multiCombobox',
+          props: { label: 'Members', options, removeLabel: (option) => `Remove ${option.label}` },
+        },
+      },
+    })
+    expectTypeOf(Form).not.toBeAny()
+  })
+
+  it('rejects a string value', () => {
+    choosing.createForm({
+      schema: memberSchema,
+      defaultValues: { memberIds: [], name: '' },
+      // @ts-expect-error a multi combobox widget serves a list, not a string
+      fields: { name: { widget: 'multiCombobox', props: { label: 'Name', options } } },
     })
   })
 })

@@ -10,6 +10,7 @@ import { ComboboxField } from '@/components/formdef/combobox-field'
 import { DateField } from '@/components/formdef/date-field'
 import { DateRangeField } from '@/components/formdef/date-range-field'
 import { DateTimeField } from '@/components/formdef/date-time-field'
+import { MultiComboboxField } from '@/components/formdef/multi-combobox-field'
 import { NumberField } from '@/components/formdef/number-field'
 import { PasswordField } from '@/components/formdef/password-field'
 import { RadioField } from '@/components/formdef/radio-field'
@@ -31,6 +32,7 @@ const { createForm } = createRegistry({
     select: SelectField,
     radio: RadioField,
     combobox: ComboboxField,
+    multiCombobox: MultiComboboxField,
     tags: TagsField,
     checkbox: CheckboxField,
     checkboxGroup: CheckboxGroupField,
@@ -59,6 +61,7 @@ const Form = createForm({
     plan: filled,
     tier: filled,
     country: filled,
+    members: someOf,
     tags: someOf,
     terms: checked,
     topics: someOf,
@@ -78,6 +81,7 @@ const Form = createForm({
     plan: '',
     tier: '',
     country: '',
+    members: [],
     tags: [],
     terms: false,
     topics: [],
@@ -95,6 +99,7 @@ const Form = createForm({
     plan: { widget: 'select', props: { label: 'Plan', options: OPTIONS } },
     tier: { widget: 'radio', props: { label: 'Tier', options: OPTIONS } },
     country: { widget: 'combobox', props: { label: 'Country', options: OPTIONS } },
+    members: { widget: 'multiCombobox', props: { label: 'Members', options: OPTIONS } },
     tags: { widget: 'tags', props: { label: 'Tags' } },
     terms: { widget: 'checkbox', props: { label: 'Terms' } },
     topics: { widget: 'checkboxGroup', props: { label: 'Topics', options: OPTIONS } },
@@ -114,6 +119,7 @@ const REQUIRED_LABELS = [
   'Plan',
   'Tier',
   'Country',
+  'Members',
   'Tags',
   'Terms',
   'Topics',

@@ -446,6 +446,53 @@
       "categories": ["form", "field"]
     },
     {
+      "name": "multi-combobox-field",
+      "type": "registry:component",
+      "title": "Multi combobox field",
+      "description": "A formdef widget for several choices among many options, built on shadcn's Field and Combobox chips, filtered by what is typed.",
+      "dependencies": ["@base-ui/react", "@formdef/core", "lucide-react"],
+      "registryDependencies": ["button", "combobox", "field"],
+      "files": [
+        {
+          "path": "components/formdef/field-frame.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-frame.tsx"
+        },
+        {
+          "path": "components/formdef/field-notes.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "components/formdef/label-line.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-line.tsx"
+        },
+        {
+          "path": "components/formdef/label-text.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/label-text.tsx"
+        },
+        {
+          "path": "components/formdef/multi-combobox-field.tsx",
+          "type": "registry:component",
+          "target": "@components/formdef/multi-combobox-field.tsx"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
+        },
+        {
+          "path": "lib/formdef/options.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/options.ts"
+        }
+      ],
+      "docs": "Register it in lib/formdef: widgets: { multiCombobox: MultiComboboxField }. Its value is string[], the values of the chosen options. Rename the remove buttons with removeLabel and the text shown without matches with empty.",
+      "categories": ["form", "field"]
+    },
+    {
       "name": "date-field",
       "type": "registry:component",
       "title": "Date field",
