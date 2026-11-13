@@ -1,0 +1,99 @@
+---
+title: Compared with
+description: How formdef relates to React Hook Form, plain TanStack Form, AutoForm, BuzzForm and the form builders, and when to pick something else.
+---
+
+formdef is not the only way to build forms with React and shadcn/ui. This page says where it sits
+among the common alternatives, what each one checks, and when another one fits better.
+
+## At a glance
+
+| | You describe a form as | Runs on | Widget checked against its value | Wiring of label, description and error |
+| --- | --- | --- | --- | --- |
+| **formdef** | a typed config: which field gets which widget, in which layout | TanStack Form | yes, at compile time | done by the widget through `useFieldParts` |
+| **React Hook Form** with shadcn's `Field` | JSX per field with `Controller` | React Hook Form | no | written per field |
+| **Plain TanStack Form** | JSX per field, optionally through `createFormHook` | TanStack Form | no for registered field components; inline `form.Field` JSX is typed per field | written per field or per component |
+| **AutoForm** | the schema, with per-field settings on it | React Hook Form or TanStack Form | no | placed by its field wrappers; only the label is linked to the control |
+| **BuzzForm** | a config of typed fields | TanStack Form | no | done by its shadcn fields |
+| **Builders**: formcn, FormsCN, TANCN | a visual editor that generates code | React Hook Form or TanStack Form | whatever the generated code gives | in the generated code |
+
+## React Hook Form with shadcn's Field
+
+shadcn/ui documents forms with its `Field` components and guides for React Hook Form, TanStack Form
+and Formisch. With React Hook Form, each field is a `Controller` whose `render` function places
+`Field`, `FieldLabel`, the input and `FieldError`, and sets `data-invalid` and `aria-invalid` by
+hand.
+
+Field names are typed paths, and the value a field reads has the type of its path. What a control
+writes back through `onChange` is not checked, and nothing ties a control to the type of the field
+it renders. Every form repeats the wiring for each field.
+
+**Pick it when** your project already runs on React Hook Form, or a form is small enough that its
+JSX is the clearest description.
+
+## Plain TanStack Form
+
+TanStack Form is what formdef is built on, and formdef never hides it. `createFormHook` registers
+field components once, `form.AppField` binds a field by its name and hands the registered
+components to its children, and `withForm` and `withFieldGroup`
+split large forms. Field names are typed.
+
+Inside a field component, `useFieldContext<string>()` states the value type rather than checking
+it, so a component written for `string` can be bound to a `number` field without an error. JSX written
+inline with `form.Field` is typed per field. TanStack
+Form leaves markup, accessibility and layout to you, on purpose.
+
+formdef adds what sits on top: the config with its layout, widgets checked against their values,
+the wiring of each control, required fields found from the schema, and ready widgets. When formdef
+stops helping, you take over the form element or write plain TanStack next to it; see
+[Ways in](/concepts/ways-in).
+
+**Pick it when** a form is mostly custom markup, or you want TanStack Form with nothing in between.
+
+## AutoForm
+
+AutoForm generates a form from a schema at runtime, with adapters for several schema libraries and
+UI kits, shadcn/ui among them. Labels, descriptions and the field type are set on the schema
+itself, and custom fields are registered as components. Its README describes it as a drop-in form
+builder for internal tools and simple forms.
+
+The difference is where a form is described: AutoForm reads the schema and decides; formdef lists
+the fields and their widgets explicitly and never inspects the schema, apart from validating empty
+values to find required fields.
+
+**Pick it when** forms should follow the schema with as little code as possible, and you accept
+that the schema decides which fields appear.
+
+## BuzzForm
+
+BuzzForm is a runtime library on TanStack Form with a shadcn registry. A form is a list of field
+definitions with a `type` and a `name`; the value types are inferred from that list, and it ships
+layout fields such as rows, tabs and collapsible groups, and conditional logic.
+
+The two are close in spirit. formdef keys each level of its config by the keys of the schema's data
+type, so the schema stays the single source of the value types, and the widget of each field is
+checked against the value it receives.
+
+**Pick it when** its field types and layout components match what you need out of the box.
+
+## Form builders
+
+formcn, FormsCN and TANCN are visual editors that generate the code of a form: React Hook Form or
+TanStack Form, with shadcn components. The result is plain code in your project, with no library
+left at runtime, and whatever the generated code checks is what you get.
+
+**Pick one when** you want to click a form together once and own every line of it afterwards. A
+form that changes often has to be regenerated or edited by hand from then on.
+
+## When formdef is the wrong choice
+
+- **Forms built at runtime** from JSON, a CMS or a database. A formdef config is TypeScript and
+  holds functions; it is valuable only where the compiler sees it.
+- **A visual form builder** for people who do not write code.
+- **React 18, or another framework.** formdef needs React 19.
+- **TanStack Form 2.** formdef supports TanStack Form 1.33, the version its peer range names.
+- **Fields generated from the schema.** formdef does not read min lengths, enum values or labels
+  out of the schema; a widget that needs such a value takes it as a prop.
+- **A form posted natively** to a server action from the generated form. The generated form handles
+  the submit itself; a form that needs `action` takes its own shell, as
+  [Ways in](/concepts/ways-in) describes.
