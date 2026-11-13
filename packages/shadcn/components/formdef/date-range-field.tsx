@@ -1,4 +1,4 @@
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 
 import { type CalendarAttrs, CalendarPopover } from '@/components/formdef/calendar-popover'
 import { FieldFrame } from '@/components/formdef/field-frame'
@@ -46,7 +46,7 @@ export const DateRangeField = ({
   className,
   ...calendar
 }: DateRangeFieldProps) => {
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const { from, to } = field.state.value ?? {}
   const isEmpty = from === undefined && to === undefined
   const selected = isEmpty

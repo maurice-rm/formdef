@@ -4,7 +4,7 @@ description: When a widget shows an error, and the helpers that wire a control t
 ---
 
 formdef leaves the markup of a field to its widget. Three helpers do the wiring every widget
-repeats: `fieldParts`, `errorsOf` and `fieldId`.
+repeats: `useFieldParts`, `errorsOf` and `fieldId`.
 
 ## When an error is due
 
@@ -15,18 +15,18 @@ or the form was submitted.
 Edited **and** left means a person who tabs through an empty form sees no errors, and a person who
 is still typing is not interrupted. After a submit, every invalid field reports at once.
 
-## fieldParts
+## useFieldParts
 
-`fieldParts(field)` returns what a widget spreads onto its control and the ids of the elements
+`useFieldParts(field)` returns what a widget spreads onto its control and the ids of the elements
 around it:
 
 ```tsx title="form/text-field.tsx"
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 
 type TextFieldProps = FieldOf<string> & { label: string; description?: string }
 
 export const TextField = ({ field, label, description }: TextFieldProps) => {
-  const { control, descriptionId, errorId, isErrorDue, errors } = fieldParts(field, { description })
+  const { control, descriptionId, errorId, isErrorDue, errors } = useFieldParts(field, { description })
 
   return (
     <div>
@@ -59,6 +59,11 @@ The wiring follows a few rules, so a screen reader never meets a broken referenc
 - The id starts with the form's own id, so two forms on one page never share one. A widget that
   writes `id={field.name}` would collide in exactly that case.
 
+`useFieldParts` is a hook: it subscribes to whether the form was submitted, so a submit renders the
+widget again even when the field's own state does not change, as for a field that was left before
+without an edit. The deprecated `fieldParts(field)` returns the same parts without that
+subscription.
+
 ## errorsOf
 
 `errorsOf(field)` turns a field's errors into the texts to show. Validators return strings, schema
@@ -67,7 +72,7 @@ keeps a text that two validators report only once.
 
 ## fieldId and an error summary
 
-`fieldId(formId, path)` builds the id `fieldParts` gives the control at `path`, for code that
+`fieldId(formId, path)` builds the id `useFieldParts` gives the control at `path`, for code that
 has a path but no field. An error summary is the usual case. formdef ships none, because every
 field already reports its own error after a submit; a long form where an invalid field can be out
 of view may want one. An inline entry can build it:

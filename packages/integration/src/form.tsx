@@ -1,9 +1,9 @@
 import {
   type ArrayFrameProps,
   type FieldOf,
-  fieldParts,
   type InferData,
   type SectionProps,
+  useFieldParts,
 } from '@formdef/core'
 import { createFormHook, createFormHookContexts } from '@tanstack/react-form'
 import type { ReactNode } from 'react'
@@ -19,7 +19,7 @@ const { useAppForm } = createFormHook({
 
 const TextWidget = ({ field }: FieldOf<string>): ReactNode => (
   <input
-    {...fieldParts(field).control}
+    {...useFieldParts(field).control}
     value={field.state.value}
     onChange={(event) => field.handleChange(event.target.value)}
   />

@@ -1,4 +1,4 @@
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
 import { FieldFrame } from '@/components/formdef/field-frame'
@@ -28,7 +28,7 @@ export const NumberField = ({
   description,
   ...attrs
 }: NumberFieldProps) => {
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const value = field.state.value ?? ''
 
   return (

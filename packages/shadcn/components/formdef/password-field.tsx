@@ -1,6 +1,6 @@
 'use client'
 
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import { EyeIcon, EyeOffIcon } from 'lucide-react'
 import { type ComponentProps, useState } from 'react'
 
@@ -43,7 +43,7 @@ export const PasswordField = ({
   ...attrs
 }: PasswordFieldProps) => {
   const [isVisible, setIsVisible] = useState(false)
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const value = field.state.value ?? ''
   const toggleLabel = isVisible ? (reveal?.hide ?? HIDE_PASSWORD) : (reveal?.show ?? SHOW_PASSWORD)
 

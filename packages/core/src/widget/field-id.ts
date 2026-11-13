@@ -2,7 +2,7 @@ const PATH_SEPARATORS = /[.[\]]+/g
 const SELECTOR_SAFE_SEPARATOR = '__'
 
 /**
- * Builds the DOM id that `fieldParts` gives the control of a field, for code that has no
+ * Builds the DOM id that `useFieldParts` gives the control of a field, for code that has no
  * field at hand — an error summary above the form that links to each invalid field, for example.
  *
  * The id is the form's id, a hyphen, and the field's path with every run of dots and brackets

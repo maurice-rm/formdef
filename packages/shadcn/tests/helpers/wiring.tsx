@@ -7,7 +7,7 @@ type Wiring = {
   Form: ComponentType
   /** The element the label, the description and the error all reach. */
   control: () => HTMLElement
-  /** The id `fieldParts` gives the control: the form id and the field's path. */
+  /** The id `useFieldParts` gives the control: the form id and the field's path. */
   id: string
   description: string
   /** Makes the field's error due: an invalid edit and a blur, or a submit for a widget without text. */

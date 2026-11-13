@@ -102,4 +102,14 @@ describe('TextField', () => {
     expect(group?.textContent).toContain('@')
     expect(screen.getByRole('button', { name: 'Check' })).toBeDefined()
   })
+
+  it('announces the error on a submit after the field was left without an edit', async () => {
+    render(<Form />)
+
+    fireEvent.blur(email())
+    fireEvent.submit(email().closest('form') as HTMLFormElement)
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Too short')
+    expect(email().getAttribute('aria-invalid')).toBe('true')
+  })
 })

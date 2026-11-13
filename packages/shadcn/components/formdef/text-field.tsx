@@ -1,4 +1,4 @@
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
 import { FieldFrame } from '@/components/formdef/field-frame'
@@ -37,7 +37,7 @@ export const TextField = ({
   addons = [],
   ...attrs
 }: TextFieldProps) => {
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const value = field.state.value ?? ''
   const hasAddons = addons.length > 0
   const Control = hasAddons ? InputGroupInput : Input

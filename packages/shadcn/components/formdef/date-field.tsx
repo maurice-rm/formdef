@@ -1,6 +1,6 @@
 'use client'
 
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import { useState } from 'react'
 
 import { type CalendarAttrs, CalendarPopover } from '@/components/formdef/calendar-popover'
@@ -36,7 +36,7 @@ export const DateField = ({
   ...calendar
 }: DateFieldProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const value = field.state.value ?? ''
   const selected = value === '' ? undefined : fromIsoDate(value)
 

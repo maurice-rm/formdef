@@ -1,4 +1,4 @@
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 import type { ComponentProps } from 'react'
 
 import { FieldNotes } from '@/components/formdef/field-notes'
@@ -39,7 +39,7 @@ export const CheckboxGroupField = ({
   required,
   ...attrs
 }: CheckboxGroupFieldProps) => {
-  const parts = fieldParts(field, { description })
+  const parts = useFieldParts(field, { description })
   const {
     name: _carriedByTheForm,
     onBlur,

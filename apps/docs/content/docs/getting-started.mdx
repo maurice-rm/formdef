@@ -37,12 +37,12 @@ A widget is a React component that receives the field as a prop. `FieldOf<string
 value it serves:
 
 ```tsx title="form/text-field.tsx"
-import { type FieldOf, fieldParts } from '@formdef/core'
+import { type FieldOf, useFieldParts } from '@formdef/core'
 
 type TextFieldProps = FieldOf<string> & { label: string }
 
 export const TextField = ({ field, label }: TextFieldProps) => {
-  const { control, errorId, isErrorDue, errors } = fieldParts(field)
+  const { control, errorId, isErrorDue, errors } = useFieldParts(field)
 
   return (
     <div>
@@ -60,7 +60,7 @@ export const TextField = ({ field, label }: TextFieldProps) => {
 
 - `field` is TanStack's own field: `state.value`, `handleChange`, `state.meta`, unchanged.
 - `label` is the widget's own prop. A config passes it through `props`, like any other.
-- `fieldParts` does the wiring: an id unique to the form, the name, the blur handler and the aria
+- `useFieldParts` does the wiring: an id unique to the form, the name, the blur handler and the aria
   attributes that tie the input to its error. `isErrorDue` turns true once the field was edited and
   left, or the form was submitted.
 

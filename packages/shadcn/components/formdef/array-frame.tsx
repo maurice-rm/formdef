@@ -1,6 +1,6 @@
 'use client'
 
-import { type ArrayFrameProps, fieldParts } from '@formdef/core'
+import { type ArrayFrameProps, useFieldParts } from '@formdef/core'
 import { XIcon } from 'lucide-react'
 import { type ComponentProps, useEffect, useRef } from 'react'
 
@@ -34,7 +34,7 @@ export const ArrayFrame = ({
   max,
   className,
 }: ArrayFrameFrameProps) => {
-  const parts = fieldParts(field)
+  const parts = useFieldParts(field)
   const removeButtons = useRef<(HTMLButtonElement | null)[]>([])
   const addButton = useRef<HTMLButtonElement | null>(null)
   const removedAt = useRef<number | undefined>(undefined)
