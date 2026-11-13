@@ -1,6 +1,6 @@
 'use client'
 
-import { useStore } from '@tanstack/react-form'
+import { useSelector } from '@tanstack/react-form'
 import { LoaderCircleIcon } from 'lucide-react'
 import type { ComponentProps, ReactNode } from 'react'
 
@@ -15,7 +15,7 @@ type SubmitButtonProps = Pick<ComponentProps<typeof Button>, 'variant' | 'size' 
 
 export const SubmitButton = ({ label, icon, ...attrs }: SubmitButtonProps) => {
   const form = useFormContext()
-  const isSubmitting = useStore(form.store, (state) => state.isSubmitting)
+  const isSubmitting = useSelector(form.store, (state) => state.isSubmitting)
   const isSlow = useSlow(isSubmitting)
 
   return (
