@@ -23,10 +23,6 @@
     ·
     <a href="https://github.com/maurice-rm/formdef/releases">Releases</a>
   </p>
-
-  <a href="https://stackblitz.com/github/maurice-rm/formdef/tree/main/examples/vite">
-    <img src="apps/docs/public/media/formdef-demo.gif" alt="A formdef config in an editor: binding the notify field to the text widget fails to compile with “Type 'string' is not assignable to type 'never'”; then the rendered form shows its errors after a submit and is filled in." width="100%" />
-  </a>
 </div>
 
 formdef turns a typed config into a form built on [TanStack Form](https://tanstack.com/form). You
@@ -65,6 +61,10 @@ a Vite app with shadcn/ui and formdef's widgets, no installation needed.
 - **Bring your own components.** A widget is a React component that receives the field as a prop.
   Write your own, or fetch ready ones for shadcn/ui from formdef's shadcn registry, as source you
   own.
+
+<a href="https://stackblitz.com/github/maurice-rm/formdef/tree/main/examples/vite">
+  <img src="apps/docs/public/media/formdef-demo.gif" alt="A formdef config in an editor: binding the notify field to the text widget fails to compile with “Type 'string' is not assignable to type 'never'”; then the rendered form shows its errors after a submit and is filled in." width="100%" />
+</a>
 
 ## Installation
 
