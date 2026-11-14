@@ -3,6 +3,9 @@ contact_links:
   - name: Documentation
     url: https://formdef.mauricereim.de
     about: Guides, the API reference and the widgets.
+  - name: Question
+    url: https://github.com/maurice-rm/formdef/discussions/new?category=q-a
+    about: How to do something with formdef, when the documentation does not answer it.
   - name: Security vulnerability
     url: https://github.com/maurice-rm/formdef/security/advisories/new
     about: Report it privately, never in a public issue.

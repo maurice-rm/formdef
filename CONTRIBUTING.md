@@ -4,8 +4,10 @@ Thanks for helping with formdef. The [contributing guide](https://formdef.mauric
 in the documentation describes how the repository is set up, how code is written in it and how a
 change reaches a release; [AGENTS.md](AGENTS.md) sums up the rules for people and agents alike.
 
-- **Issues:** open one for a bug, a feature or a question. A change to the public API, the shape of
-  a form config or the vocabulary starts as an issue, before any code.
+- **Questions:** ask them in [Discussions](https://github.com/maurice-rm/formdef/discussions),
+  under Q&A; show what you built under Show and tell.
+- **Issues:** open one for a bug or a feature. A change to the public API, the shape of a form
+  config or the vocabulary starts as an issue, before any code.
 - **Pull requests:** against `main`, one concern each. The
   [setup page](https://formdef.mauricereim.de/contributing/setup) lists the commands and the checks a
   pull request has to pass.
