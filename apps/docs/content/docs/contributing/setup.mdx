@@ -50,8 +50,9 @@ A change counts as done when this passes:
 pnpm lint && pnpm knip && pnpm boundaries && pnpm turbo check-types test test:types build
 ```
 
-CI runs the same checks on every pull request, plus `pnpm audit`, a review of new dependencies and
-a scan of the workflows. Once a week, and on demand, a separate workflow runs the types and tests
+CI runs the same checks on every pull request, plus `pnpm audit`, a review of new dependencies, a
+scan of the workflows and a build of the Vite example in `examples/vite` against the published
+`@formdef/core`. Once a week, and on demand, a separate workflow runs the types and tests
 against the newest TanStack Form that the peer range of `@formdef/core` allows, so a breaking
 release shows up before a user reports it. `check-types` and `test:types` always run together: a type test reports
 only errors inside its test blocks, and `check-types` catches the rest of the file.
