@@ -12,6 +12,7 @@ description: The packages, the folders of @formdef/core, and the direction their
 | `packages/integration` | uses the built `@formdef/core` as an app would | no |
 | `packages/tsconfig` | the shared TypeScript configuration | no |
 | `apps/docs` | this documentation, built with Fumadocs | as a static site |
+| `examples/vite` | a Vite app with `@formdef/core` from npm and the widgets from the shadcn registry, outside the workspace | as source, opened in StackBlitz |
 
 `turbo boundaries` checks which package may depend on which. The published package depends on no
 other package of the repository except the shared TypeScript configuration, and nothing depends on

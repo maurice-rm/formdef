@@ -112,12 +112,30 @@ jobs:
           SCOPE: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
         run: pnpm turbo run "$TASK" ${SCOPE:+"$SCOPE"}
 
+  # The example installs @formdef/core from npm, as a user would, and stays outside the workspace.
+  example:
+    name: Example
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: $/.github/actions/setup
+        with:
+          install: "false"
+      - name: Build the Vite example
+        working-directory: examples/vite
+        run: npm ci --ignore-scripts && npm run build
+
   # The single required check for main. It always reports, so a skipped job never blocks a merge,
   # and a job added above only needs to join `needs` here.
   success:
     name: Success
     if: always()
-    needs: [lint, audit, zizmor, dependency-review, verify]
+    needs: [lint, audit, zizmor, dependency-review, verify, example]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}

@@ -23,6 +23,10 @@
     ·
     <a href="https://github.com/maurice-rm/formdef/releases">Releases</a>
   </p>
+
+  <a href="https://stackblitz.com/github/maurice-rm/formdef/tree/main/examples/vite">
+    <img src="apps/docs/public/media/formdef-demo.gif" alt="A formdef config in an editor: binding the notify field to the text widget fails to compile with “Type 'string' is not assignable to type 'never'”; then the rendered form shows its errors after a submit and is filled in." width="100%" />
+  </a>
 </div>
 
 formdef turns a typed config into a form built on [TanStack Form](https://tanstack.com/form). You
@@ -45,6 +49,9 @@ export const SignIn = createForm({
 
 `<SignIn />` renders a `<form>` with both fields, validates them with the schema and submits through
 TanStack.
+
+[Open the example in StackBlitz](https://stackblitz.com/github/maurice-rm/formdef/tree/main/examples/vite):
+a Vite app with shadcn/ui and formdef's widgets, no installation needed.
 
 ## Why formdef
 
@@ -92,6 +99,7 @@ packages/shadcn          the widgets, built as a shadcn registry into apps/docs/
 packages/integration     uses the built @formdef/core as a consumer would (private)
 packages/tsconfig        the shared TypeScript configuration (private)
 apps/docs                the documentation, built with Fumadocs (private)
+examples/vite            a Vite app with formdef from npm, outside the workspace; npm, not pnpm
 ```
 
 ### Prerequisites
