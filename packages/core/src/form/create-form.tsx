@@ -1,4 +1,4 @@
-import type { ComponentType, FormEvent, ReactNode } from 'react'
+import type { ComponentType, ReactNode, SubmitEvent } from 'react'
 
 import type { FormElementProps } from '../config/form-props'
 import type { BodyProps } from '../config/structure'
@@ -67,7 +67,7 @@ const ConfiguredForm = ({
       requiredPaths={requiredPaths}
     />
   )
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault()
     event.stopPropagation()
     void form.handleSubmit()
