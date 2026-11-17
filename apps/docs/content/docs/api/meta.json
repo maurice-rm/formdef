@@ -22,6 +22,8 @@
     "body-props",
     "section-props",
     "row-props",
-    "array-frame-props"
+    "array-frame-props",
+    "stepper-props",
+    "step-state"
   ]
 }

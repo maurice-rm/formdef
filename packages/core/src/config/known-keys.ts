@@ -14,7 +14,7 @@ type UnknownKey<TKey extends PropertyKey> = {
 }
 
 // The keys that mark the kind of an entry; markers make every other kind's key optional.
-type KindKey = 'widget' | 'component' | 'section' | 'row' | 'render' | 'item' | 'fields'
+type KindKey = 'widget' | 'component' | 'section' | 'row' | 'render' | 'item' | 'fields' | 'step'
 
 type KindOf<TActual> = Extract<KindKey, RequiredKeysOf<TActual>>
 

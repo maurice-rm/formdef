@@ -8,7 +8,15 @@ import type { FormPropsFor } from '../config/form-props'
 import type { InferData } from '../config/infer-data'
 import type { KnownKeys } from '../config/known-keys'
 import type { LevelConfig } from '../config/level-config'
-import type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from '../config/structure'
+import type { StepsNameLevels } from '../config/steps-name-levels'
+import type { StepsOnlyLayout } from '../config/steps-only-layout'
+import type {
+  ArrayFrameProps,
+  BodyProps,
+  RowProps,
+  SectionProps,
+  StepperProps,
+} from '../config/structure'
 import type { ValueOf } from '../widget/field-of'
 
 // biome-ignore lint/suspicious/noExplicitAny: createFormHook constrains its maps to ComponentType<any>.
@@ -23,12 +31,13 @@ type SlotSupplied = {
   section: SectionProps
   row: RowProps
   arrayFrame: ArrayFrameProps<AnyProps, AnyProps>
+  stepper: StepperProps
 }
 
 /** The structure slots a registry fills. */
 export type Structure = { [Slot in keyof SlotSupplied]?: ComponentType<AnyProps> }
 
-type UnknownSlot = 'formdef: the structure slots are body, section, row and arrayFrame'
+type UnknownSlot = 'formdef: the structure slots are body, section, row, arrayFrame and stepper'
 type WrongSlotProps = 'formdef: this slot does not take the props the renderer passes it'
 type DuplicateWidget = 'formdef: a widget with this name is already registered'
 type DuplicateFormComponent = 'formdef: a form component with this name is already registered'
@@ -184,6 +193,8 @@ export interface Registry<
         schema: TSchema
         onSubmitMeta?: TSubmitMeta
       } & DescribedLayout<TConfig> &
+      StepsOnlyLayout<TConfig> &
+      StepsNameLevels<TConfig> &
       NoInfer<
         KnownKeys<
           TConfig,

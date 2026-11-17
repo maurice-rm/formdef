@@ -2,7 +2,14 @@ import type { ReactNode } from 'react'
 import { describe, expectTypeOf, it } from 'vitest'
 
 import type { FieldApiOf } from '../widget/field-of'
-import type { ArrayFrameProps, BodyProps, RowProps, SectionProps } from './structure'
+import type {
+  ArrayFrameProps,
+  BodyProps,
+  RowProps,
+  SectionProps,
+  StepperProps,
+  StepState,
+} from './structure'
 
 type Contact = { name: string }
 
@@ -16,6 +23,32 @@ describe('RowProps and BodyProps', () => {
   it('carry the entries as children', () => {
     expectTypeOf<RowProps>().toEqualTypeOf<{ children: ReactNode }>()
     expectTypeOf<BodyProps>().toEqualTypeOf<{ children: ReactNode }>()
+  })
+})
+
+describe('StepperProps', () => {
+  it('describes each visible step by its label and where the person stands', () => {
+    expectTypeOf<StepState>().toEqualTypeOf<{
+      label: string
+      isCurrent: boolean
+      isVisited: boolean
+      isReachable: boolean
+      hasDueError: boolean
+    }>()
+  })
+
+  it('carries the steps, the navigation and the current step as children', () => {
+    expectTypeOf<StepperProps>().toEqualTypeOf<{
+      steps: readonly StepState[]
+      current: number
+      next: () => void
+      back: () => void
+      goTo: (index: number) => void
+      isFirst: boolean
+      isLast: boolean
+      isSubmitting: boolean
+      children: ReactNode
+    }>()
   })
 })
 

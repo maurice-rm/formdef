@@ -3,7 +3,7 @@ import type { ComponentType, ReactNode } from 'react'
 import { describe, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
 
-import type { RowProps, SectionProps } from '../config/structure'
+import type { RowProps, SectionProps, StepperProps } from '../config/structure'
 import type { FieldOf } from '../widget/field-of'
 import { createRegistry } from './create-registry'
 import type { FieldsOf } from './fields-of'
@@ -152,6 +152,185 @@ describe('Registry', () => {
       structure: { row: Row },
     })
     expectTypeOf(registry).not.toBeAny()
+  })
+
+  it('takes a stepper slot with props of its own on top of the renderer’s', () => {
+    const Stepper = ({ children, nextLabel }: StepperProps & { nextLabel?: string }): ReactNode => (
+      <section aria-label={nextLabel}>{children}</section>
+    )
+
+    const registry = createRegistry({
+      fieldContext,
+      formContext,
+      widgets: { text: TextField },
+      structure: { stepper: Stepper },
+    })
+    expectTypeOf(registry).not.toBeAny()
+  })
+
+  it('rejects a stepper slot that takes the current step as something other than a number', () => {
+    const NamedStepper = ({ children }: { current: string; children: ReactNode }): ReactNode => (
+      <section>{children}</section>
+    )
+
+    createRegistry({
+      fieldContext,
+      formContext,
+      widgets: { text: TextField },
+      // @ts-expect-error the renderer passes the index of the current step
+      structure: { stepper: NamedStepper },
+    })
+  })
+})
+
+describe('Registry.createForm with steps', () => {
+  const Stepper = ({ children }: StepperProps): ReactNode => <section>{children}</section>
+  const registry = createRegistry({
+    fieldContext,
+    formContext,
+    widgets: { text: TextField, number: NumberField },
+    formComponents: { SubmitButton },
+    structure: { stepper: Stepper },
+  })
+  const schema = z.object({
+    contact: z.object({ name: z.string() }),
+    building: z.object({ rooms: z.number() }),
+    notes: z.string(),
+  })
+  type Checklist = z.input<typeof schema>
+  const defaultValues = { contact: { name: '' }, building: { rooms: 0 }, notes: '' }
+  const fields = {
+    contact: { fields: { name: { widget: 'text', props: { label: 'Name' } } } },
+    building: { fields: { rooms: { widget: 'number', props: { label: 'Rooms' } } } },
+  } as const
+
+  it('renders the root level as steps, each an object key with a label', () => {
+    const Checklist = registry.createForm({
+      schema,
+      defaultValues,
+      fields,
+      layout: [
+        { step: 'contact', label: 'Contact' },
+        {
+          step: 'building',
+          label: 'Building',
+          visibleWhen: (values) => {
+            expectTypeOf(values).toEqualTypeOf<Checklist>()
+            return values.contact.name !== ''
+          },
+        },
+      ],
+    })
+    expectTypeOf(Checklist).not.toBeAny()
+  })
+
+  it('arranges each step by the layout of its level', () => {
+    const Checklist = registry.createForm({
+      schema,
+      defaultValues,
+      fields: {
+        contact: {
+          fields: { name: { widget: 'text', props: { label: 'Name' } } },
+          layout: [{ section: 'Who', layout: ['name'] }, { render: () => null }],
+        },
+      },
+      layout: [{ step: 'contact', label: 'Contact' }],
+    })
+    expectTypeOf(Checklist).not.toBeAny()
+  })
+
+  it('rejects a root layout that mixes steps with other entries', () => {
+    registry.createForm({
+      schema,
+      defaultValues,
+      fields,
+      // @ts-expect-error a root layout that holds a step holds only steps
+      layout: [{ step: 'contact', label: 'Contact' }, 'building'],
+    })
+  })
+
+  it('rejects a step on a key that is not an object', () => {
+    registry.createForm({
+      schema,
+      defaultValues,
+      fields: { ...fields, notes: { widget: 'text', props: { label: 'Notes' } } },
+      // @ts-expect-error `notes` holds a string, a step renders an object level
+      layout: [{ step: 'notes', label: 'Notes' }],
+    })
+  })
+
+  it('rejects a step on a key described by a widget or a render', () => {
+    registry.createForm({
+      schema,
+      defaultValues,
+      fields: { ...fields, contact: { render: () => null } },
+      // @ts-expect-error a step renders the fields of the entry it names
+      layout: [{ step: 'contact', label: 'Contact' }],
+    })
+  })
+
+  it('rejects a step on a key fields does not describe', () => {
+    registry.createForm({
+      schema,
+      defaultValues,
+      fields: { contact: fields.contact },
+      // @ts-expect-error `building` is not described in fields
+      layout: [
+        { step: 'contact', label: 'Contact' },
+        { step: 'building', label: 'Building' },
+      ],
+    })
+  })
+
+  it('rejects a step inside the layout of a level', () => {
+    registry.createForm({
+      schema,
+      defaultValues,
+      fields: {
+        contact: {
+          fields: { name: { widget: 'text', props: { label: 'Name' } } },
+          // @ts-expect-error a step is an entry of the root layout only
+          layout: [{ step: 'name', label: 'Name' }],
+        },
+      },
+    })
+  })
+
+  it('rejects an unknown key on a step', () => {
+    registry.createForm({
+      schema,
+      defaultValues,
+      fields,
+      // @ts-expect-error `title` is not a key of a step
+      layout: [{ step: 'contact', label: 'Contact', title: 'Contact' }],
+    })
+  })
+
+  it('rejects steps without a registered stepper', () => {
+    const bare = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+    bare.createForm({
+      schema: z.object({ contact: z.object({ name: z.string() }) }),
+      defaultValues: { contact: { name: '' } },
+      fields: { contact: { fields: { name: { widget: 'text', props: { label: 'Name' } } } } },
+      // @ts-expect-error a step needs a registered stepper
+      layout: [{ step: 'contact', label: 'Contact' }],
+    })
+  })
+
+  it('renders no steps under Fields', () => {
+    const Shell = (): ReactNode => {
+      const form = registry.formHook.useAppForm({ defaultValues })
+
+      return (
+        <registry.Fields
+          form={form}
+          fields={fields}
+          // @ts-expect-error only createForm renders steps
+          layout={[{ step: 'contact', label: 'Contact' }]}
+        />
+      )
+    }
+    expectTypeOf(Shell).not.toBeAny()
   })
 })
 

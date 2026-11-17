@@ -248,4 +248,18 @@ describe('LayoutEntry', () => {
       expectTypeOf(entry).not.toBeAny()
     })
   })
+
+  describe('step', () => {
+    it('is no entry of a level', () => {
+      // @ts-expect-error a step is an entry of the root layout of a form only
+      const entry: Layout = { step: 'email', label: 'Email' }
+      expectTypeOf(entry).not.toBeAny()
+    })
+
+    it('is no entry of a section', () => {
+      // @ts-expect-error a step is an entry of the root layout of a form only
+      const entry: Layout = { section: 'Account', layout: [{ step: 'email', label: 'Email' }] }
+      expectTypeOf(entry).not.toBeAny()
+    })
+  })
 })

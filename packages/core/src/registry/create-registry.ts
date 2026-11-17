@@ -105,7 +105,7 @@ function buildRegistry<
  *
  * @typeParam TWidgets - The widgets by name; each takes its field as a prop typed `FieldOf<V>`.
  * @typeParam TFormComponents - The form components by name, placed in a layout by `{ component }`.
- * @typeParam TStructure - The structure slots: `body`, `section`, `row` and `arrayFrame`.
+ * @typeParam TStructure - The structure slots: `body`, `section`, `row`, `arrayFrame` and `stepper`.
  * @param config - The contexts and what the registry holds.
  * @param config.fieldContext - The field context from `createFormHookContexts()`.
  * @param config.formContext - The form context from `createFormHookContexts()`.

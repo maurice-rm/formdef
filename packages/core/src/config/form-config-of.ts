@@ -5,6 +5,7 @@ import type { FormHandle } from './form-handle'
 import type { FormOptionsOf } from './form-options'
 import type { InferData } from './infer-data'
 import type { LevelConfig } from './level-config'
+import type { StepEntry } from './step-entry'
 import type { Validation } from './validation'
 
 /** The parts of a registry a form config reads, without the handle, which the form decides. */
@@ -12,6 +13,16 @@ type FormParts = Omit<ConfigParts, 'handle'>
 
 type PartsWithHandle<TParts extends FormParts, TData, TSubmitMeta> = TParts & {
   handle: FormHandle<TData, TSubmitMeta>
+}
+
+// A form's root layout arranges its fields as every level does, or holds only steps.
+type FormLevel<TParts extends ConfigParts, TData> = Pick<LevelConfig<TParts, TData>, 'fields'> & {
+  /**
+   * The order and grouping of the root level, or its steps.
+   *
+   * @defaultValue the fields in the order `fields` declares them
+   */
+  layout?: NonNullable<LevelConfig<TParts, TData>['layout']> | StepEntry<TParts, TData>[]
 }
 
 /**
@@ -24,7 +35,7 @@ export type FormConfigOf<
   TSchema extends StandardSchemaV1,
   TSubmitMeta,
 > = FormOptionsOf<InferData<TSchema>, TSubmitMeta> &
-  LevelConfig<PartsWithHandle<TParts, InferData<TSchema>, TSubmitMeta>, InferData<TSchema>> & {
+  FormLevel<PartsWithHandle<TParts, InferData<TSchema>, TSubmitMeta>, InferData<TSchema>> & {
     /** The schema that validates the form; its input type is the form's data type. */
     schema: TSchema
     /**

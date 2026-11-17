@@ -52,6 +52,68 @@ export interface BodyProps {
 }
 
 /**
+ * One visible step of a stepped form, as {@link StepperProps} lists it.
+ */
+export interface StepState {
+  /** The label the step entry names. */
+  label: string
+  /** Whether this is the step shown now. */
+  isCurrent: boolean
+  /** Whether the step was shown before or is shown now. */
+  isVisited: boolean
+  /** Whether `goTo` moves to this step now: it was visited and every step before it is valid. */
+  isReachable: boolean
+  /** Whether an error of a field in this step is due. */
+  hasDueError: boolean
+}
+
+/**
+ * The props a registered `structure.stepper` component receives: the visible steps of a stepped
+ * form, the navigation between them, and the current step. The stepper renders the progress and
+ * the controls that move; the renderer renders no text of its own. Props the stepper declares on
+ * top are its own.
+ *
+ * @example
+ * ```tsx
+ * const Stepper = ({ steps, current, next, back, isFirst, isLast, children }: StepperProps) => (
+ *   <section>
+ *     <h2>{steps[current]?.label}</h2>
+ *     {children}
+ *     {!isFirst && <button type="button" onClick={back}>Back</button>}
+ *     <button type="button" onClick={next}>{isLast ? 'Submit' : 'Next'}</button>
+ *   </section>
+ * )
+ * ```
+ */
+export interface StepperProps {
+  /** The visible steps, in layout order. */
+  steps: readonly StepState[]
+  /** The index of the current step in `steps`. */
+  current: number
+  /**
+   * Submits the current step: moves to the next visible step when it is valid, otherwise shows
+   * its errors. On the last step, submits the form.
+   */
+  next: () => void
+  /** Moves to the previous visible step. */
+  back: () => void
+  /**
+   * Moves to the step at `index` when it is reachable; does nothing otherwise.
+   *
+   * @param index - The position of the step in `steps`.
+   */
+  goTo: (index: number) => void
+  /** Whether the current step is the first visible one. */
+  isFirst: boolean
+  /** Whether the current step is the last visible one, whose `next` submits the form. */
+  isLast: boolean
+  /** Whether the form is being submitted. */
+  isSubmitting: boolean
+  /** The rendered current step. */
+  children: ReactNode
+}
+
+/**
  * The props a registered `structure.arrayFrame` component receives: the array field, a renderer
  * for each item, the labels of its controls and the operations that change the array. Props the
  * array entry passes under `props` come on top.
