@@ -10,7 +10,9 @@
         "src/form.tsx",
         "src/registry.tsx",
         "src/type-cost/form.ts",
-        "src/type-cost/no-form.ts"
+        "src/type-cost/no-form.ts",
+        "src/type-cost/checklist.ts",
+        "src/type-cost/no-checklist.ts"
       ]
     },
     "packages/core": {

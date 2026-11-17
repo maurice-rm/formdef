@@ -16,7 +16,9 @@ eighteen forms stopped compiling with TS2859, "Excessive complexity". Pull reque
 
 `packages/integration/scripts/check-type-cost.ts` guards against that. It compiles a registry of
 fourteen widgets twice, with and without one form, and fails when the form costs more than 100,000
-instantiations. It runs with `pnpm test`.
+instantiations. It compiles a large form the same way, ten steps of ten leaves each, a fifth of
+them conditional, and fails when one leaf costs more than 8,000 instantiations; that catches a
+cost that grows faster than the leaves do. It runs with `pnpm test`.
 
 To measure a change of your own, build `@formdef/core`, compile the fixture with the extended
 diagnostics and compare the instantiation count before and after:
