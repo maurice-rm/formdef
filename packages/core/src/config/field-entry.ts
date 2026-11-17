@@ -4,6 +4,7 @@ import type { FieldApiOf } from '../widget/field-of'
 import type { ConfigParts } from './config-parts'
 import type { ExtraProps } from './extra-props'
 import type { FieldEntryOptions } from './field-entry-options'
+import type { IsLevel } from './is-level'
 import type { LayoutEntry } from './layout-entry'
 import type { LeafEntry } from './leaf-entry'
 import type { PropsEntry } from './props-entry'
@@ -23,33 +24,6 @@ type ShapeMarkers<TValue> = {
 }
 
 type Owns<TMarker extends keyof ShapeMarkers<unknown>, TValue> = Omit<ShapeMarkers<TValue>, TMarker>
-
-type PlatformValue =
-  | Date
-  | File
-  | Blob
-  | RegExp
-  | ReadonlyMap<unknown, unknown>
-  | ReadonlySet<unknown>
-
-type SingleValue =
-  | PlatformValue
-  | string
-  | number
-  | bigint
-  | boolean
-  | symbol
-  | readonly unknown[]
-  | ((...args: never[]) => unknown)
-
-// `unknown` is checked first: its non-nullable part is `{}`, which passes for an object.
-type IsLevel<TValue> = unknown extends TValue
-  ? false
-  : [Extract<NonNullable<TValue>, SingleValue>] extends [never]
-    ? NonNullable<TValue> extends object
-      ? true
-      : false
-    : false
 
 // A tuple is no array entry: its length is fixed, so items cannot be added or removed.
 type IsArray<TValue> = unknown extends TValue
