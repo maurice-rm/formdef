@@ -15,6 +15,7 @@ import { RadioField } from '@formdef/shadcn/components/formdef/radio-field'
 import { Row } from '@formdef/shadcn/components/formdef/row'
 import { Section } from '@formdef/shadcn/components/formdef/section'
 import { SelectField } from '@formdef/shadcn/components/formdef/select-field'
+import { Stepper } from '@formdef/shadcn/components/formdef/stepper'
 import { SubmitButton } from '@formdef/shadcn/components/formdef/submit-button'
 import { SwitchField } from '@formdef/shadcn/components/formdef/switch-field'
 import { TagsField } from '@formdef/shadcn/components/formdef/tags-field'
@@ -44,5 +45,11 @@ export const { createForm } = createRegistry({
     tags: TagsField,
   },
   formComponents: { SubmitButton },
-  structure: { body: FieldGroup, section: Section, row: Row, arrayFrame: ArrayFrame },
+  structure: {
+    body: FieldGroup,
+    section: Section,
+    row: Row,
+    arrayFrame: ArrayFrame,
+    stepper: Stepper,
+  },
 })
