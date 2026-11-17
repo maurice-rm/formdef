@@ -8,8 +8,8 @@ you own. Moving from one to the next keeps the config you already wrote.
 
 | Way | You write | formdef renders | Use it when |
 | --- | --- | --- | --- |
-| **One call** | `createForm(config)` and `<Form options />` | the `<form>` element, the submission and the fields | a form is fields and a submit button; values may come from hooks through `options` |
-| **Own shell** | `formHook.useAppForm(…)`, `<form.AppForm>`, the `<form>` element and anything around it | `<Fields form fields layout />`, as often as you like, each with a part of the fields | the shell reacts to form state, a wizard shows one step at a time, your own markup sits between groups, the form posts to a server action |
+| **One call** | `createForm(config)` and `<Form options />` | the `<form>` element, the submission and the fields | a form is fields and a submit button, or steps filled in one at a time; values may come from hooks through `options` |
+| **Own shell** | `formHook.useAppForm(…)`, `<form.AppForm>`, the `<form>` element and anything around it | `<Fields form fields layout />`, as often as you like, each with a part of the fields | the shell reacts to form state, your own markup sits between groups, the form posts to a server action |
 | **Plain TanStack** | everything | nothing | a form formdef does not help with |
 
 ## Moving between them

@@ -157,14 +157,21 @@ export interface Registry<
    * asynchronously (`validation.async`), or a schema that does not validate the empty values
    * synchronously, marks no field and warns once outside production.
    *
+   * A root `layout` of steps renders one step at a time, each a TanStack form group at the object
+   * key it names, inside the registered `structure.stepper`. Its `next` submits the step's group and
+   * moves on when the step is valid; on the last step, and on a submit of the `<form>` element
+   * there, it submits the form. A submit of the `<form>` element on any other step is `next`.
+   *
    * @typeParam TSchema - The Standard Schema of the form, inferred from `schema`.
    * @typeParam TConfig - The config as written, inferred.
    * @typeParam TSubmitMeta - What `handleSubmit` takes besides the values, inferred from
    *   `onSubmitMeta`; none without it.
    * @param config - The form config.
    * @returns The form component.
-   * @throws When rendered with default values in neither the config nor `options`, or with a
-   *   widget, layout name or form component the registry does not know.
+   * @throws When rendered with default values in neither the config nor `options`, with a
+   *   widget, layout name or form component the registry does not know, or with steps the config
+   *   or the registry cannot render: mixed with other root entries, below the root, naming no entry
+   *   with fields, or without a registered `structure.stepper`.
    *
    * @example
    * ```tsx
@@ -212,7 +219,8 @@ export interface Registry<
    * @typeParam TLevel - The `fields` and `layout` as written, inferred.
    * @param props - The form to render into, and the `fields` and `layout` to render.
    * @returns The rendered entries.
-   * @throws When rendered with a widget, layout name or form component the registry does not know.
+   * @throws When rendered with a widget, layout name or form component the registry does not know,
+   *   or with a step, which only `createForm` renders.
    *
    * @example
    * ```tsx
