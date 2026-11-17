@@ -57,6 +57,10 @@ it.
 The content of a hidden entry is not built at all, so a condition can guard code that only works
 while the entry shows.
 
+In a form of [steps](/guides/steps#two-rules-for-the-schema), a hidden field the schema still
+demands keeps its step from moving on, with no error to see; make what a condition hides optional
+in the schema.
+
 ## Derived props
 
 `props` may be a function of the form's values, on a leaf, a section, a row, a form component and

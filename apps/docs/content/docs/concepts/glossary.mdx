@@ -24,9 +24,11 @@ formdef uses one word per concept, in the code, in error messages and here.
 | **form component** | A component registered under `formComponents` and placed by `{ component }` in a layout. |
 | **structure slot** | One of `body`, `section`, `row`, `arrayFrame` and `stepper`: the places where formdef renders markup of its own. |
 | **array frame** | What renders the items of an array, with their add and remove controls. |
-| **layout entry** | One entry of a `layout`: a name, a section, a row, a form component or an inline entry. |
+| **layout entry** | One entry of a `layout`: a name, a section, a row, a form component, an inline entry or, at the root, a step. |
 | **section, row** | The two layout entries that group others. |
 | **inline entry** | A `{ render }` entry in a layout. |
+| **step** | A `{ step, label }` entry of a form's root layout: an object of the values, filled in on its own. |
+| **stepper** | The structure slot that frames the current step with the progress and the buttons back and next. |
 | **registry** | What `createRegistry` returns. |
 | **shadcn registry** | The distribution of formdef's widgets for shadcn, always named with its qualifier. |
 | **base** | The primitive library that shadcn components are built on; for formdef's widgets, Base UI. |
