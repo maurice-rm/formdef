@@ -1,14 +1,16 @@
 import { useSelector } from '@tanstack/react-form'
+import { use } from 'react'
 
 import type { FieldApiOf } from './field-of'
 import { type FieldParts, fieldPartsFor } from './field-parts'
+import { StepSubmitted } from './step-submitted'
 
 /**
  * Wires a widget's control to its field: its id and name, the blur report, and the aria
  * attributes that tie it to its description and its errors.
  *
- * An error is due once the field is invalid and was edited and left, or once the form was
- * submitted. While one is due, `aria-invalid` is `true`; while one with text is due, the control
+ * An error is due once the field is invalid and was edited and left, once the form was submitted,
+ * or, in a form of steps, once the step it is shown in was submitted. While one is due, `aria-invalid` is `true`; while one with text is due, the control
  * points at the error element through `aria-describedby` and `aria-errormessage`. An id appears in
  * them only when its element is rendered.
  *
@@ -44,7 +46,8 @@ export function useFieldParts<TValue>(
   field: FieldApiOf<TValue>,
   options: { description?: string | undefined } = {},
 ): FieldParts {
-  const wasSubmitted = useSelector(field.form.store, (state) => state.submissionAttempts > 0)
+  const wasFormSubmitted = useSelector(field.form.store, (state) => state.submissionAttempts > 0)
+  const wasStepSubmitted = use(StepSubmitted)
 
-  return fieldPartsFor(field, { ...options, wasSubmitted })
+  return fieldPartsFor(field, { ...options, wasSubmitted: wasFormSubmitted || wasStepSubmitted })
 }

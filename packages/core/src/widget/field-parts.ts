@@ -33,7 +33,7 @@ export interface FieldParts {
   errorId: string
   /**
    * Whether the widget shows the field's errors now: the field is invalid and was edited and
-   * left, or the form was submitted.
+   * left, or the form was submitted, or, read by {@link useFieldParts}, the step it is shown in.
    */
   isErrorDue: boolean
   /** The texts of the field's errors, as {@link errorsOf} returns them. */

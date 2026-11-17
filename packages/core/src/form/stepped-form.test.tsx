@@ -7,6 +7,7 @@ import { z } from 'zod'
 import type { StepperProps } from '../config/structure'
 import { Fields } from '../render/fields'
 import type { FieldOf } from '../widget/field-of'
+import { useFieldParts } from '../widget/use-field-parts'
 import { createForm } from './create-form'
 
 const { fieldContext, formContext } = createFormHookContexts()
@@ -15,18 +16,22 @@ const TextField = ({
   field,
   label,
   required,
-}: FieldOf<string> & { label: string; required?: boolean }): ReactNode => (
-  <label>
-    {label}
-    <input
-      name={field.name}
-      required={required}
-      value={field.state.value}
-      onBlur={field.handleBlur}
-      onChange={(event) => field.handleChange(event.target.value)}
-    />
-  </label>
-)
+}: FieldOf<string> & { label: string; required?: boolean }): ReactNode => {
+  const { control, errorId, isErrorDue, errors } = useFieldParts(field)
+
+  return (
+    <div>
+      <label htmlFor={control.id}>{label}</label>
+      <input
+        {...control}
+        required={required}
+        value={field.state.value}
+        onChange={(event) => field.handleChange(event.target.value)}
+      />
+      {isErrorDue && <p id={errorId}>{errors.join(' ')}</p>}
+    </div>
+  )
+}
 TextField.emptyValue = ''
 
 const Stepper = ({
@@ -390,6 +395,232 @@ describe('createForm with steps', () => {
 
     expect(() => render(<StepsUnderFields />)).toThrow(
       'formdef: the layout of the form holds a step; a step is an entry of the root layout of a form only.',
+    )
+  })
+})
+
+describe('createForm with steps, errors and focus', () => {
+  for (const mode of MODES) {
+    it(`shows the errors of a step once it was submitted, with validation mode ${mode}`, async () => {
+      const Checklist = createForm(BINDING, checklistConfig({ validation: { mode } }))
+      render(<Checklist />)
+
+      expect(screen.queryByText('Enter a name')).toBeNull()
+      await click('Next')
+
+      expect(screen.getByText('Enter a name')).toBeDefined()
+      expect(screen.getByLabelText('Name')).toHaveProperty('ariaInvalid', 'true')
+    })
+
+    it(`shows no error of a step it moves to, with validation mode ${mode}`, async () => {
+      const Checklist = createForm(
+        BINDING,
+        checklistConfig({
+          validation: { mode },
+          defaultValues: { ...DEFAULT_VALUES, contact: { name: 'Ada' } },
+        }),
+      )
+      render(<Checklist />)
+
+      await click('Next')
+      await click('Next')
+
+      expect(currentStep()).toBe('Go to Heating')
+      expect(screen.queryByText('Enter a kind')).toBeNull()
+    })
+  }
+
+  it('focuses the first invalid control of a step it stays on', async () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: schema.extend({
+          contact: z.object({ name: z.string(), email: z.string().min(1, 'Enter an email') }),
+        }),
+        defaultValues: { ...DEFAULT_VALUES, contact: { name: '', email: '' } },
+        fields: {
+          ...FIELDS,
+          contact: {
+            fields: {
+              name: { widget: 'text', props: { label: 'Name' } },
+              email: { widget: 'text', props: { label: 'Email' } },
+            },
+          },
+        },
+      }),
+    )
+    render(<Checklist />)
+
+    await click('Next')
+
+    expect(document.activeElement).toBe(screen.getByLabelText('Email'))
+  })
+
+  it('moves to the first step holding an error when the form fails to submit', async () => {
+    const onSubmitInvalid = vi.fn()
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: schema.refine((values) => values.heating.kind !== 'oil', {
+          path: ['contact', 'name'],
+          message: 'Ada does not heat with oil',
+        }),
+        defaultValues: { ...DEFAULT_VALUES, contact: { name: 'Ada' } },
+        onSubmitInvalid,
+      }),
+    )
+    render(<Checklist />)
+
+    await click('Next')
+    await click('Next')
+    await type('Kind', 'oil')
+    await click('Submit')
+
+    expect(currentStep()).toBe('Go to Contact')
+    expect(screen.getByText('Ada does not heat with oil')).toBeDefined()
+    expect(document.activeElement).toBe(screen.getByLabelText('Name'))
+    expect(onSubmitInvalid).toHaveBeenCalledOnce()
+  })
+
+  it('focuses invalid controls in the order they are rendered, a field shown later included', async () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: schema.extend({
+          contact: z.object({
+            toggle: z.string(),
+            email: z.string().min(1, 'Enter an email'),
+            name: z.string().min(1, 'Enter a name'),
+          }),
+        }),
+        defaultValues: { ...DEFAULT_VALUES, contact: { toggle: '', email: '', name: '' } },
+        fields: {
+          ...FIELDS,
+          contact: {
+            fields: {
+              toggle: { widget: 'text', props: { label: 'Toggle' } },
+              email: {
+                widget: 'text',
+                props: { label: 'Email' },
+                visibleWhen: (values: { contact: { toggle: string } }) =>
+                  values.contact.toggle === 'y',
+              },
+              name: { widget: 'text', props: { label: 'Name' } },
+            },
+          },
+        },
+      }),
+    )
+    render(<Checklist />)
+
+    await type('Toggle', 'y')
+    await click('Next')
+
+    expect(document.activeElement).toBe(screen.getByLabelText('Email'))
+  })
+
+  it('warns when the last step fails to submit only through fields it does not render', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        defaultValues: { ...DEFAULT_VALUES, contact: { name: 'Ada' } },
+        fields: {
+          ...FIELDS,
+          heating: {
+            fields: {
+              kind: { ...FIELDS.heating.fields.kind, visibleWhen: () => false },
+            },
+          },
+        },
+      }),
+    )
+    render(<Checklist />)
+
+    await click('Next')
+    await click('Next')
+    await click('Submit')
+
+    expect(currentStep()).toBe('Go to Heating')
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the step "heating" is held back by errors on fields it does not render: heating.kind. What a condition hides is optional in the schema.',
+    )
+  })
+
+  it('focuses a field of the step when the step itself holds an error too', async () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: schema.extend({
+          contact: z
+            .object({ name: z.string().min(1, 'Enter a name') })
+            .refine(() => false, { message: 'Contact is incomplete' }),
+        }),
+      }),
+    )
+    render(<Checklist />)
+
+    await click('Next')
+
+    expect(document.activeElement).toBe(screen.getByLabelText('Name'))
+  })
+
+  it('warns once when a step is held back only by fields it does not render', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: schema.extend({
+          contact: z.object({ name: z.string(), email: z.string().min(1, 'Enter an email') }),
+        }),
+        defaultValues: { ...DEFAULT_VALUES, contact: { name: '', email: '' } },
+        fields: {
+          ...FIELDS,
+          contact: {
+            fields: {
+              name: { widget: 'text', props: { label: 'Name' } },
+              email: {
+                widget: 'text',
+                props: { label: 'Email' },
+                visibleWhen: (values: { contact: { name: string } }) => values.contact.name !== '',
+              },
+            },
+          },
+        },
+      }),
+    )
+    render(<Checklist />)
+
+    await click('Next')
+    await click('Next')
+
+    expect(currentStep()).toBe('Go to Contact')
+    expect(warn).toHaveBeenCalledOnce()
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the step "contact" is held back by errors on fields it does not render: contact.email. What a condition hides is optional in the schema.',
+    )
+  })
+
+  it('warns once when a step key starts another root key, whose fields its group would count', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: schema.extend({ contactExtra: z.object({ note: z.string() }) }),
+        defaultValues: { ...DEFAULT_VALUES, contactExtra: { note: '' } },
+        fields: {
+          ...FIELDS,
+          contactExtra: { fields: { note: { widget: 'text', props: { label: 'Note' } } } },
+        },
+        layout: [...STEPS, { step: 'contactExtra', label: 'Extra' }],
+      }),
+    )
+    render(<Checklist />)
+    render(<Checklist />)
+
+    expect(warn).toHaveBeenCalledOnce()
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the step "contact" starts the root key "contactExtra"; its form group would count the fields of "contactExtra" as its own.',
     )
   })
 })
