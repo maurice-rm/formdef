@@ -64,13 +64,10 @@ type SteppedFormProps = {
   submitStep: RefObject<(() => void) | undefined>
 }
 
-type CurrentStepProps = {
+type GroupHandleProps = {
   group: StepGroup
-  stepper: ComponentType<StepperProps>
-  stepperProps: Omit<StepperProps, 'next' | 'children'>
-  onAttempt: () => void
-  submitForm: () => void
-  submitStep: SteppedFormProps['submitStep']
+  /** Receives the form group of the current step, for `next` to submit it. */
+  currentGroup: RefObject<StepGroup | undefined>
   children: ReactNode
 }
 
@@ -145,33 +142,12 @@ const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): 
   )
 }
 
-const CurrentStep = ({
-  group,
-  stepper: Stepper,
-  stepperProps,
-  onAttempt,
-  submitForm,
-  submitStep,
-  children,
-}: CurrentStepProps): ReactNode => {
-  const next = (): void => {
-    onAttempt()
-    if (stepperProps.isLast) {
-      submitForm()
-      return
-    }
-    void group.handleSubmit()
-  }
-
+const GroupHandle = ({ group, currentGroup, children }: GroupHandleProps): ReactNode => {
   useEffect(() => {
-    submitStep.current = next
+    currentGroup.current = group
   })
 
-  return (
-    <Stepper {...stepperProps} next={next}>
-      {children}
-    </Stepper>
-  )
+  return children
 }
 
 /**
@@ -239,11 +215,7 @@ export const SteppedForm = ({
     control.focus()
   }, [isFocusPending, form, currentKey, fields, steps])
 
-  const Stepper = parts.structure.stepper
-  if (Stepper === undefined) {
-    throw new Error(NO_STEPPER)
-  }
-  warnAboutWiderKeys(steps, fields)
+  const currentGroup = useRef<StepGroup | undefined>(undefined)
 
   const visible: VisibleStep[] = steps
     .map((step, position) => ({ step, position }))
@@ -288,6 +260,23 @@ export const SteppedForm = ({
     setIsFocusPending(true)
   }
   const following = visible[current + 1]
+  const next = (): void => {
+    markAttempted()
+    if (following === undefined) {
+      void submitForm()
+      return
+    }
+    void currentGroup.current?.handleSubmit()
+  }
+  useEffect(() => {
+    submitStep.current = next
+  })
+
+  const Stepper = parts.structure.stepper
+  if (Stepper === undefined) {
+    throw new Error(NO_STEPPER)
+  }
+  warnAboutWiderKeys(steps, fields)
 
   const Body = parts.structure.body
   const content = (
@@ -301,42 +290,38 @@ export const SteppedForm = ({
   )
 
   return (
-    <form.FormGroup
-      key={currentKey}
-      name={currentKey}
-      onGroupSubmit={() => {
-        if (following !== undefined && shownKey.current === currentKey) {
-          moveTo(following.step.step)
-        }
-      }}
-      onGroupSubmitInvalid={() => {
-        if (shownKey.current === currentKey) {
-          setIsFocusPending(true)
-        }
-      }}
+    <Stepper
+      steps={states}
+      current={current}
+      next={next}
+      back={back}
+      goTo={goTo}
+      isFirst={current === 0}
+      isLast={following === undefined}
+      isSubmitting={isSubmitting}
     >
-      {(group) => (
-        <CurrentStep
-          group={group}
-          stepper={Stepper}
-          stepperProps={{
-            steps: states,
-            current,
-            back,
-            goTo,
-            isFirst: current === 0,
-            isLast: following === undefined,
-            isSubmitting,
-          }}
-          onAttempt={markAttempted}
-          submitForm={() => void submitForm()}
-          submitStep={submitStep}
-        >
-          <StepSubmitted value={attempted.has(currentKey)}>
-            {Body === undefined ? content : <Body>{content}</Body>}
-          </StepSubmitted>
-        </CurrentStep>
-      )}
-    </form.FormGroup>
+      <form.FormGroup
+        key={currentKey}
+        name={currentKey}
+        onGroupSubmit={() => {
+          if (following !== undefined && shownKey.current === currentKey) {
+            moveTo(following.step.step)
+          }
+        }}
+        onGroupSubmitInvalid={() => {
+          if (shownKey.current === currentKey) {
+            setIsFocusPending(true)
+          }
+        }}
+      >
+        {(group) => (
+          <GroupHandle group={group} currentGroup={currentGroup}>
+            <StepSubmitted value={attempted.has(currentKey)}>
+              {Body === undefined ? content : <Body>{content}</Body>}
+            </StepSubmitted>
+          </GroupHandle>
+        )}
+      </form.FormGroup>
+    </Stepper>
   )
 }
