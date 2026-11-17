@@ -601,6 +601,26 @@ describe('createForm with steps, errors and focus', () => {
     )
   })
 
+  it('warns when the form fails to submit only through a step its condition hides', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        defaultValues: { ...DEFAULT_VALUES, contact: { name: 'Ada' } },
+        layout: [STEPS[0], STEPS[1], { ...STEPS[2], visibleWhen: () => false }],
+      }),
+    )
+    render(<Checklist />)
+
+    await click('Next')
+    await click('Submit')
+
+    expect(currentStep()).toBe('Go to Building')
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the form fails to submit through errors in the hidden step "heating": heating.kind. What a condition hides is optional in the schema.',
+    )
+  })
+
   it('warns once when a step key starts another root key, whose fields its group would count', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const Checklist = createForm(

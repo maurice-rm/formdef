@@ -142,6 +142,19 @@ const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): 
   )
 }
 
+// A hidden step has a condition; its function is a stable owner the other warnings do not use.
+const warnAboutHiddenSteps = (steps: RootSteps, fieldMeta: StepFormState['fieldMeta']): void => {
+  for (const step of steps) {
+    const erring = erringPathsUnder(fieldMeta, step.step)
+    if (erring.length > 0 && step.visibleWhen !== undefined) {
+      warnOnce(
+        step.visibleWhen,
+        `formdef: the form fails to submit through errors in the hidden step "${step.step}": ${erring.join(', ')}. What a condition hides is optional in the schema.`,
+      )
+    }
+  }
+}
+
 const GroupHandle = ({ group, currentGroup, children }: GroupHandleProps): ReactNode => {
   useEffect(() => {
     currentGroup.current = group
@@ -254,6 +267,7 @@ export const SteppedForm = ({
     const { fieldMeta } = form.store.get()
     const erring = visible.find(({ step }) => erringPathsUnder(fieldMeta, step.step).length > 0)
     if (erring === undefined) {
+      warnAboutHiddenSteps(steps, fieldMeta)
       return
     }
     moveTo(erring.step.step)
