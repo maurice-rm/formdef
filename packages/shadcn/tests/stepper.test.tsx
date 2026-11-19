@@ -134,6 +134,35 @@ describe('Stepper', () => {
     expect(screen.getByText('Up next: Heating').classList).not.toContain('truncate')
   })
 
+  describe('stickyNav', () => {
+    const navs = (container: HTMLElement): HTMLElement[] => [
+      ...container.querySelectorAll<HTMLElement>('[data-slot=stepper-nav]'),
+    ]
+
+    it('keeps the wide rail in view while the step scrolls, within the height of the viewport', () => {
+      const Checklist = checklistWith({ variant: 'rail', stickyNav: true })
+      const { container } = render(<Checklist />)
+
+      const [collapsed, wide] = navs(container)
+      expect(wide?.dataset.sticky).toBe('true')
+      expect(wide?.classList).toContain('self-start')
+      expect(wide?.className).toMatch(/max-h-/)
+      expect(collapsed?.dataset.sticky).toBeUndefined()
+    })
+
+    it('leaves the navigation in the flow by default and in other variants', () => {
+      const Rail = checklistWith({ variant: 'rail' })
+      const { container, unmount } = render(<Rail />)
+      expect(navs(container).some((nav) => nav.dataset.sticky === 'true')).toBe(false)
+      unmount()
+
+      const Steps = checklistWith({ variant: 'steps', stickyNav: true })
+      const steps = render(<Steps />)
+      expect(navs(steps.container).some((nav) => nav.dataset.sticky === 'true')).toBe(false)
+      expect(navs(steps.container).some((nav) => nav.className.includes('sticky'))).toBe(false)
+    })
+  })
+
   describe('railStepSize', () => {
     const railItems = (container: HTMLElement): HTMLElement[] => [
       ...container.querySelectorAll<HTMLElement>('[data-slot=stepper-rail] > li'),

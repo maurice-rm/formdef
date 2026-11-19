@@ -130,6 +130,26 @@ different lengths place the circles at different distances. `railStepSize` (`sm`
 `lg`, 64, 80 or 112 pixels) gives every step but the last that height at least, so the circles sit
 evenly; a step whose text needs more grows beyond it.
 
+`stickyNav` keeps the wide `rail` in view while a long step scrolls, like `stickyActions` keeps the
+buttons. The rail is at most as tall as the viewport and scrolls on its own beyond that, so its last
+steps stay reachable on a short screen; where the rail collapses, the navigation stays in the flow.
+It sticks to the top of the nearest scrolling ancestor, and an ancestor with `overflow: hidden`
+stops it. Below a fixed header, give it the header's height from the `className`:
+
+```tsx
+import type { StepperProps } from '@formdef/core'
+import { Stepper, type StepperStepProps } from '@/components/formdef/stepper'
+// ---cut---
+const StickyStepper = (props: StepperProps<StepperStepProps>) => (
+  <Stepper
+    {...props}
+    variant="rail"
+    stickyNav
+    className="**:data-[slot=stepper-nav]:data-[sticky=true]:top-16 **:data-[slot=stepper-nav]:data-[sticky=true]:max-h-[calc(100dvh-4rem)]"
+  />
+)
+```
+
 Its texts are props too, so a form in another language registers a stepper with its texts set:
 
 | Prop | Meaning |
