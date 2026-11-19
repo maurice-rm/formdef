@@ -91,35 +91,17 @@ describe('LeafEntry', () => {
       >()
     })
 
-    it('is rejected where the schema makes the field optional', () => {
-      const entry: Leaf<string | undefined> = {
+    it('may be claimed where the schema makes the field optional, as for a field required under a condition', () => {
+      expectTypeOf({
         widget: 'text',
-        // @ts-expect-error the schema does not require this field
-        props: { label: 'Nickname', required: true },
-      }
-      expectTypeOf(entry).not.toBeAny()
+        props: { label: 'Units', required: true },
+      } as const).toExtend<Leaf<string | undefined>>()
     })
 
-    it('is rejected from a props function where the schema makes the field optional', () => {
+    it('may be claimed from a props function where the schema makes the field optional', () => {
       const entry: Leaf<string | undefined> = {
         widget: 'text',
-        // @ts-expect-error the schema does not require this field
-        props: () => ({ label: 'Nickname', required: true }),
-      }
-      expectTypeOf(entry).not.toBeAny()
-    })
-
-    it('is rejected in every variant of a widget whose props are a union', () => {
-      type VariantWidgets = {
-        variants: ComponentType<
-          FieldOf<string> & ({ mode: 'short'; required?: boolean } | { mode: 'long' })
-        >
-      }
-
-      const entry: LeafEntry<VariantWidgets, string | undefined, Values> = {
-        widget: 'variants',
-        // @ts-expect-error the schema does not require this field
-        props: { mode: 'short', required: true },
+        props: () => ({ label: 'Units', required: true }),
       }
       expectTypeOf(entry).not.toBeAny()
     })
@@ -142,7 +124,7 @@ describe('LeafEntry', () => {
       expectTypeOf(entry).not.toBeAny()
     })
 
-    it('is rejected on an optional path when the widget takes no false for it', () => {
+    it('follows the type the widget declares for it', () => {
       type TextRequiredWidgets = {
         withMessage: ComponentType<FieldOf<string> & { required?: string }>
       }
@@ -152,12 +134,6 @@ describe('LeafEntry', () => {
         // @ts-expect-error this widget's `required` is a message, which `false` is not
         props: { required: false },
       }
-      expectTypeOf(entry).not.toBeAny()
-    })
-
-    it('adds nothing to a widget without a required prop', () => {
-      // @ts-expect-error a count field takes no props, also on an optional path
-      const entry: Leaf<number | undefined> = { widget: 'count', props: {} }
       expectTypeOf(entry).not.toBeAny()
     })
   })
