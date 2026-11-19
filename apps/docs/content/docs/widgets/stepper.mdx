@@ -46,8 +46,8 @@ The stepper shows the steps as numbered circles joined by a line, "Step 1 of 2" 
 of the current step as its heading, the step's fields, and the buttons back and next. Next submits
 the current step: a valid step moves on, an invalid one shows its errors and focuses its first
 invalid field. On the last step, next submits the form. Enter in a field does what next does. A
-complete step shows a tick and takes the person back when chosen; a step with a due error shows a
-warning sign.
+complete step shows a tick, and a step with a due error shows a warning sign. A step already
+visited takes the person back when chosen, while every step before it is valid.
 
 When the step changes, the heading of the new step takes the focus, so a screen reader announces
 where the person is.
