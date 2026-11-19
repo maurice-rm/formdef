@@ -149,6 +149,26 @@ describe('Stepper', () => {
     expect(screen.queryByText('How we reach you', { selector: 'p' })).toBeNull()
   })
 
+  it('reserves no block for a heading with nothing to show, and still moves the focus to it', async () => {
+    const Checklist = checklistWith({ showHeading: false, showProgress: false })
+    const { container } = render(<Checklist />)
+
+    expect(container.querySelector('[data-slot=stepper-heading]')).toBeNull()
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Ada' } })
+    await click('Next')
+
+    expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Heating' }))
+  })
+
+  it('keeps the progress in the heading block when only the heading is hidden', () => {
+    const Checklist = checklistWith({ showHeading: false })
+    const { container } = render(<Checklist />)
+
+    const heading = container.querySelector('[data-slot=stepper-heading]')
+    expect(heading?.textContent).toBe('Step 1 of 2')
+  })
+
   it('ticks a complete step, names it so and goes back to it', async () => {
     const Checklist = checklist()
     render(<Checklist />)

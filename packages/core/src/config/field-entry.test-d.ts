@@ -146,12 +146,11 @@ describe('FieldEntry', () => {
       expectTypeOf(entry).not.toBeAny()
     })
 
-    it('keeps an optional key of an optional object from claiming to be required', () => {
+    it('lets an optional key of an optional object claim to be required', () => {
       const entry: Entry<Values> = {
         fields: {
           billing: {
             fields: {
-              // @ts-expect-error the schema does not require a note
               note: { widget: 'text', props: { label: 'Note', required: true } },
             },
           },

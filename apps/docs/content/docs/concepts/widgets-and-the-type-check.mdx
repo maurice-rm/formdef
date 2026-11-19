@@ -102,7 +102,6 @@ each field the compiler checks that:
 | The widget serves the field's value type. An optional or nullable field finds the widget of its base type. | `email: { widget: 'checkbox' }` |
 | `props` matches the widget's own props: no unknown keys, no wrong types, and present when the widget has a prop it cannot render without. | `email: { widget: 'text', props: { label: 'Email', min: 3 } }` |
 | A widget's `emptyValue` is a value of the type it serves, checked where the widget is registered. | `TextField.emptyValue = 0` |
-| `props.required` is `false` only where the schema makes the key optional. | `required: false` on a key the schema demands |
 | Field validators and listeners are typed against the field's value; `dependsOn` and the listen-to options take paths of the whole form. | a validator reading `value.length` on a number |
 | A function `props: (values) => …` returns props of the right types. | `props: () => ({ min: '3' })` |
 | The names under `fields` and in a layout exist in the schema, and the default values match its data type. | `layout: ['emial']` |

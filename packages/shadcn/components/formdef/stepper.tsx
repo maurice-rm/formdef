@@ -310,6 +310,12 @@ function Stepper({
   }, [label])
 
   const collapse = collapseOf(variant, collapseBelow, collapsedVariant)
+  const eyebrowClass = eyebrowClassOf(variant, collapsedVariant, collapse)
+  const heading = (
+    <StepperTitle ref={title} id={titleId} className={cn(!showHeading && 'sr-only')}>
+      {label}
+    </StepperTitle>
+  )
   const nav = {
     steps,
     current,
@@ -352,19 +358,24 @@ function Stepper({
           </div>
         )}
         <div className="flex min-w-0 flex-col gap-6">
-          <StepperHeading>
-            {showProgress && (
-              <StepperEyebrow className={eyebrowClassOf(variant, collapsedVariant, collapse)}>
-                {progress}
-              </StepperEyebrow>
-            )}
-            <StepperTitle ref={title} id={titleId} className={cn(!showHeading && 'sr-only')}>
-              {label}
-            </StepperTitle>
-            {showHeading && showDescriptions && step?.description && (
-              <StepperDescription>{step.description}</StepperDescription>
-            )}
-          </StepperHeading>
+          {showHeading ? (
+            <StepperHeading>
+              {showProgress && <StepperEyebrow className={eyebrowClass}>{progress}</StepperEyebrow>}
+              {heading}
+              {showDescriptions && step?.description && (
+                <StepperDescription>{step.description}</StepperDescription>
+              )}
+            </StepperHeading>
+          ) : (
+            <>
+              {showProgress && (
+                <StepperHeading className={eyebrowClass}>
+                  <StepperEyebrow>{progress}</StepperEyebrow>
+                </StepperHeading>
+              )}
+              {heading}
+            </>
+          )}
           <StepperContent>{children}</StepperContent>
           <StepperActions align={actions} sticky={stickyActions}>
             {!isFirst && (
