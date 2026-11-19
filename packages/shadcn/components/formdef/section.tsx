@@ -25,7 +25,9 @@ export const Section = ({
 
   return (
     <FieldSet className={className} aria-describedby={hasDescription ? descriptionId : undefined}>
-      <FieldLegend variant={variant}>{label}</FieldLegend>
+      <FieldLegend variant={variant} className="data-[variant=legend]:font-semibold">
+        {label}
+      </FieldLegend>
       {hasDescription && <FieldDescription id={descriptionId}>{description}</FieldDescription>}
       <FieldGroup>{children}</FieldGroup>
     </FieldSet>

@@ -63,7 +63,7 @@ export const CheckboxGroupField = ({
       onBlur={blurLeaving(onBlur)}
     >
       {label !== undefined && (
-        <FieldLegend id={legendId}>
+        <FieldLegend id={legendId} variant="label">
           <LabelText required={required}>{label}</LabelText>
         </FieldLegend>
       )}
@@ -91,7 +91,9 @@ export const CheckboxGroupField = ({
                 onCheckedChange={(isChecked) => toggle(option.value, isChecked)}
               />
               <FieldContent>
-                <FieldLabel htmlFor={id}>{option.label}</FieldLabel>
+                <FieldLabel htmlFor={id} className="font-normal">
+                  {option.label}
+                </FieldLabel>
                 {hasDescription && (
                   <FieldDescription id={descriptionId}>{option.description}</FieldDescription>
                 )}
