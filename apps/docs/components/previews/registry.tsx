@@ -1,6 +1,6 @@
 'use client'
 
-import { createRegistry } from '@formdef/core'
+import { createRegistry, type StepperProps } from '@formdef/core'
 import { ArrayFrame } from '@formdef/shadcn/components/formdef/array-frame'
 import { CheckboxField } from '@formdef/shadcn/components/formdef/checkbox-field'
 import { CheckboxGroupField } from '@formdef/shadcn/components/formdef/checkbox-group-field'
@@ -15,7 +15,7 @@ import { RadioField } from '@formdef/shadcn/components/formdef/radio-field'
 import { Row } from '@formdef/shadcn/components/formdef/row'
 import { Section } from '@formdef/shadcn/components/formdef/section'
 import { SelectField } from '@formdef/shadcn/components/formdef/select-field'
-import { Stepper } from '@formdef/shadcn/components/formdef/stepper'
+import { Stepper, type StepperStepProps } from '@formdef/shadcn/components/formdef/stepper'
 import { SubmitButton } from '@formdef/shadcn/components/formdef/submit-button'
 import { SwitchField } from '@formdef/shadcn/components/formdef/switch-field'
 import { TagsField } from '@formdef/shadcn/components/formdef/tags-field'
@@ -23,6 +23,17 @@ import { TextField } from '@formdef/shadcn/components/formdef/text-field'
 import { TextareaField } from '@formdef/shadcn/components/formdef/textarea-field'
 import { FieldGroup } from '@formdef/shadcn/components/ui/field'
 import { fieldContext, formContext } from '@formdef/shadcn/lib/formdef/context'
+import { use } from 'react'
+
+import { StepperVariantContext } from './stepper-variant-context'
+
+const PreviewStepper = (props: StepperProps<StepperStepProps>) => {
+  const variant = use(StepperVariantContext)
+
+  return (
+    <Stepper {...props} variant={variant} collapseBelow={variant === 'rail' ? 'lg' : undefined} />
+  )
+}
 
 export const { createForm } = createRegistry({
   fieldContext,
@@ -50,6 +61,6 @@ export const { createForm } = createRegistry({
     section: Section,
     row: Row,
     arrayFrame: ArrayFrame,
-    stepper: Stepper,
+    stepper: PreviewStepper,
   },
 })
