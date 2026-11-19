@@ -62,14 +62,21 @@ commit, tags it with the version and deploys it, so the site and the registry al
 package on npm. The deploy never writes the server's `~/docs/.env`; an admin creates it before the
 first deploy, and it may be empty.
 
+A push to `main` that changes `apps/docs` or `packages/shadcn` deploys too, so a fix to a widget does
+not wait for a release of the core. It deploys only what npm already serves
+(`.github/deploy/released.sh`): no changeset for `@formdef/core` is waiting, the version of
+`@formdef/core` on `main` is published, and so is every version of `@formdef/core` the registry
+requires. Otherwise the site would document, or the registry import, a core that is not on npm yet;
+the next release deploys it instead.
+
 The same build renders the images for GitHub: the README banner, light and dark, at
 `/brand/banner-light.png` and `/brand/banner-dark.png`, and the repository's social preview at
 `/brand/social.png`. GitHub keeps its own copy of the social preview, so after it changes a maintainer
 uploads the new one under the repository's settings.
 
-A fix to the documentation between two releases goes out by starting the "Docs" workflow by hand:
-without a tag it builds and deploys `main`; with the tag of an image built before, such as `0.1.0`,
-it deploys that image again. The image builds locally the same way:
+The "Docs" workflow also starts by hand, without these checks: without a tag it builds and deploys
+`main`; with the tag of an image built before, such as `0.1.0`, it deploys that image again. The
+image builds locally the same way:
 
 ```bash
 docker build -f apps/docs/Dockerfile --build-arg DOCS_URL=http://localhost:3010 -t formdef-docs .
