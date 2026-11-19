@@ -27,6 +27,7 @@ const PUBLIC_EXPORTS = [
   'LayoutOf',
   'Registry',
   'useFieldParts',
+  'ValueOf',
 ]
 
 // TypeScript 5.7 reads the declarations because TypeScript 7 offers no stable compiler API, and

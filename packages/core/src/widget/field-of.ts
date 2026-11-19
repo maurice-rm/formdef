@@ -75,7 +75,17 @@ export interface FieldOf<TValue> {
 
 /**
  * The value type a widget declares through `FieldOf`; `unknown` for a widget that takes its
- * field from context instead.
+ * field from context instead. For code that builds on widgets, such as a field kind that checks a
+ * widget's values.
+ *
+ * @typeParam TWidget - The widget component.
+ *
+ * @example
+ * ```ts
+ * const TextField = ({ field }: FieldOf<string> & { label: string }) => null
+ *
+ * type Served = ValueOf<typeof TextField> // string
+ * ```
  */
 export type ValueOf<TWidget> =
   TWidget extends ComponentType<infer Props>
