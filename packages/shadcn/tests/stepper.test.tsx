@@ -118,6 +118,17 @@ describe('Stepper', () => {
     }
   })
 
+  it('sets the step labels in the heading face, like the step title', () => {
+    const Checklist = checklistWith({})
+    const { container } = render(<Checklist />)
+
+    const labels = container.querySelectorAll('[data-slot=stepper-label] > span:first-child')
+    expect(labels.length).toBeGreaterThan(0)
+    for (const label of labels) {
+      expect(label.classList).toContain('font-heading')
+    }
+  })
+
   it('shows a step description in the list in full', () => {
     const Checklist = checklistWith({ variant: 'rail' })
     const { container } = render(<Checklist />)

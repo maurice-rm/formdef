@@ -92,6 +92,7 @@ describe('Section', () => {
     render(<Titled />)
 
     expect(screen.getByText('Building').classList).toContain('data-[variant=legend]:font-semibold')
+    expect(screen.getByText('Building').classList).toContain('data-[variant=legend]:font-heading')
   })
 
   it('separates a legend section from the entry before it, above its title, with its class on the outermost element', () => {

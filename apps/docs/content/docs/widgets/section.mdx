@@ -45,11 +45,12 @@ export const CheckoutForm = createForm({
 ```
 
 The section renders a `<fieldset>`. Its `<legend>` is the entry's title, and a `description` sits
-below it, tied to the fieldset with `aria-describedby`. A line above the title separates a section
-from the entry before it, except side by side in a row; it sits on a wrapper around the fieldset, since a fieldset draws its top
-border through its legend, and `className` lands on that wrapper. For a section inside another
-one, `variant: 'label'` sets the legend in the size of a field label, without a line, and
-`className` lands on the fieldset.
+below it, tied to the fieldset with `aria-describedby`. The title is set in the project's heading
+font (`font-heading`), where the theme defines one. A line above the title separates a section
+from the entry before it, except side by side in a row; it sits on a wrapper around the fieldset,
+since a fieldset draws its top border through its legend, and `className` lands on that wrapper.
+For a section inside another one, `variant: 'label'` sets the legend in the size and font of a
+field label, without a line, and `className` lands on the fieldset.
 
 [Layout](/guides/layout) describes sections, rows and the other layout entries.
 
