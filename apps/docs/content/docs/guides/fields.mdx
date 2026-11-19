@@ -79,27 +79,45 @@ A schema that does not validate empty values synchronously, or that throws on th
 either. In both cases, and for a config with `validation.async`, formdef warns once in the console
 outside production.
 
-A widget that takes `required` can only receive `required: false` where the schema makes the key
-optional, so a config never claims a value the schema does not demand:
+A field required only under a condition is marked in the config. Its key is often optional, since
+the schema has to accept every value while the field is hidden, and `required: true` is allowed
+there:
 
 ```tsx
-// @errors: 2322
 import { createRegistry, type FieldOf } from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
 import { z } from 'zod'
 const { fieldContext, formContext } = createFormHookContexts()
-const TextField = (_: FieldOf<string> & { label: string; required?: boolean }) => null
-const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const SelectField = (_: FieldOf<string> & { label: string; options: string[] }) => null
+const NumberField = (_: FieldOf<number | undefined> & { label: string; required?: boolean }) =>
+  null
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { select: SelectField, number: NumberField },
+})
 // ---cut---
-export const Profile = createForm({
-  schema: z.object({ name: z.string().min(1), nickname: z.string().optional() }),
-  defaultValues: { name: '' },
+export const Building = createForm({
+  schema: z
+    .object({ houseType: z.string(), units: z.number().optional() })
+    .refine((building) => building.houseType !== 'multi' || building.units !== undefined, {
+      path: ['units'],
+      message: 'Enter the number of units',
+    }),
+  defaultValues: { houseType: '' },
   fields: {
-    name: { widget: 'text', props: { label: 'Name', required: true } },
-    nickname: { widget: 'text', props: { label: 'Nickname', required: true } },
+    houseType: { widget: 'select', props: { label: 'House type', options: ['single', 'multi'] } },
+    units: {
+      widget: 'number',
+      props: { label: 'Units', required: true },
+      visibleWhen: (values) => values.houseType === 'multi',
+    },
   },
 })
 ```
+
+The config may claim `required` where the schema does not demand a value; formdef does not check
+the claim against the schema.
 
 ## Object
 
