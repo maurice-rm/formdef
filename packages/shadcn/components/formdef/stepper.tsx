@@ -813,7 +813,7 @@ function StepperLabel({
       <span
         style={textStyle}
         className={cn(
-          'text-sm font-medium text-balance wrap-break-word transition-colors group-data-[size=lg]/stepper:text-base',
+          'font-heading text-sm font-medium text-balance wrap-break-word transition-colors group-data-[size=lg]/stepper:text-base',
           state === 'upcoming' && 'text-muted-foreground',
           state === 'error' && 'text-destructive',
           step.isReachable && !step.isCurrent && 'group-hover/stepper-trigger:text-foreground',

@@ -30,7 +30,10 @@ export const Section = ({
       className={isSeparated ? undefined : className}
       aria-describedby={hasDescription ? descriptionId : undefined}
     >
-      <FieldLegend variant={variant} className="data-[variant=legend]:font-semibold">
+      <FieldLegend
+        variant={variant}
+        className="data-[variant=legend]:font-heading data-[variant=legend]:font-semibold"
+      >
         {label}
       </FieldLegend>
       {hasDescription && <FieldDescription id={descriptionId}>{description}</FieldDescription>}
