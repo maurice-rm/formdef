@@ -145,6 +145,20 @@ describe('Stepper', () => {
     expect(screen.getByText('Up next: Heating').classList).not.toContain('truncate')
   })
 
+  it('keeps a hidden segment label one pixel wide, so a narrow container does not scroll sideways', () => {
+    const Checklist = checklistWith({ variant: 'segments' })
+    const { container } = render(<Checklist />)
+
+    const labels = container.querySelectorAll(
+      '[data-slot=stepper-segments] [data-slot=stepper-label]',
+    )
+    expect(labels.length).toBeGreaterThan(0)
+    for (const label of labels) {
+      expect(label.classList).toContain('sr-only')
+      expect(label.classList).not.toContain('w-full')
+    }
+  })
+
   describe('stickyNav', () => {
     const navs = (container: HTMLElement): HTMLElement[] => [
       ...container.querySelectorAll<HTMLElement>('[data-slot=stepper-nav]'),
