@@ -80,6 +80,8 @@ type StepChecks = ReadonlyMap<string, StepCheck>
 
 const NO_STEPPER = 'formdef: the form has steps, but no structure.stepper is registered.'
 
+const HIDDEN_VALUES_RULE = 'What a condition hides must accept every value it can hold.'
+
 const isUnder = (path: string, key: string): boolean =>
   path === key || path.startsWith(`${key}.`) || path.startsWith(`${key}[`)
 
@@ -204,7 +206,7 @@ const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): 
 
   warnOnce(
     owner,
-    `formdef: the step "${key}" is held back by errors on fields it does not render: ${erring.join(', ')}. What a condition hides is optional in the schema.`,
+    `formdef: the step "${key}" is held back by errors on fields it does not render: ${erring.join(', ')}. ${HIDDEN_VALUES_RULE}`,
   )
 }
 
@@ -215,7 +217,7 @@ const warnAboutHiddenSteps = (steps: RootSteps, fieldMeta: StepFormState['fieldM
     if (erring.length > 0 && step.visibleWhen !== undefined) {
       warnOnce(
         step.visibleWhen,
-        `formdef: the form fails to submit through errors in the hidden step "${step.step}": ${erring.join(', ')}. What a condition hides is optional in the schema.`,
+        `formdef: the form fails to submit through errors in the hidden step "${step.step}": ${erring.join(', ')}. ${HIDDEN_VALUES_RULE}`,
       )
     }
   }
