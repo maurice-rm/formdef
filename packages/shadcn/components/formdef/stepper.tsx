@@ -26,6 +26,8 @@ type StepperBreakpoint = 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
 
 type StepperActionsAlign = 'between' | 'end'
 
+type StepperLabels = 'all' | 'current' | 'currentExpanded'
+
 type StepperItemState = 'complete' | 'current' | 'upcoming' | 'error'
 
 type StepperTexts = {
@@ -46,6 +48,7 @@ type StepperOptions = {
   showProgress?: boolean | undefined
   showHeading?: boolean | undefined
   showUpNext?: boolean | undefined
+  labels?: StepperLabels | undefined
   collapseBelow?: StepperBreakpoint | 'never' | undefined
   collapsedVariant?: StepperVariant | undefined
   navigable?: boolean | undefined
@@ -121,6 +124,7 @@ type StepperNavProps = {
   navigable: boolean
   showDescriptions: boolean
   showUpNext: boolean
+  labels: StepperLabels
   errorLabel: string
   completeLabel: string
   progress: string
@@ -135,6 +139,7 @@ type StepperListProps = {
   marker?: StepperMarkerKind | undefined
   navigable?: boolean | undefined
   showDescriptions?: boolean | undefined
+  labels?: StepperLabels | undefined
   errorLabel?: string | undefined
   completeLabel?: string | undefined
   className?: string | undefined
@@ -191,6 +196,11 @@ function progressOf(step: number, total: number) {
 
 function upNextOf(label: string) {
   return `Up next: ${label}`
+}
+
+function runOnWidthOf(index: number, total: number) {
+  const share = (total - 1 - index) / (total - 1)
+  return `calc((100cqw - var(--stepper-marker) - 1rem) * ${share} + var(--stepper-marker) + 1rem)`
 }
 
 function stateOf(step: StepperStep): StepperItemState {
@@ -280,6 +290,7 @@ function Stepper({
   showProgress = true,
   showHeading = true,
   showUpNext = true,
+  labels = 'all',
   collapseBelow = DEFAULT_COLLAPSE[variant],
   collapsedVariant = DEFAULT_COLLAPSED_VARIANT[variant],
   navigable = true,
@@ -324,6 +335,7 @@ function Stepper({
     navigable,
     showDescriptions,
     showUpNext,
+    labels,
     errorLabel,
     completeLabel,
     progress,
@@ -401,41 +413,59 @@ function StepperSteps({
   marker = 'number',
   navigable = true,
   showDescriptions = true,
+  labels = 'all',
   errorLabel = DEFAULT_ERROR_LABEL,
   completeLabel = DEFAULT_COMPLETE_LABEL,
   className,
 }: StepperListProps) {
   return (
-    <ol data-slot="stepper-steps" data-orientation="horizontal" className={cn('flex', className)}>
-      {steps.map((step, index) => (
-        <StepperItem
-          key={step.label}
-          step={step}
-          className="relative min-w-0 flex-1 last:flex-none"
-        >
-          {index < steps.length - 1 && (
-            <StepperConnector
-              isComplete={step.isComplete && !step.isCurrent}
-              className="absolute top-[calc(var(--stepper-marker)/2)] right-3 left-[calc(var(--stepper-marker)+0.75rem)]"
-            />
-          )}
-          <StepperTrigger
+    <ol
+      data-slot="stepper-steps"
+      data-orientation="horizontal"
+      className={cn('@container flex', className)}
+    >
+      {steps.map((step, index) => {
+        const isLast = index === steps.length - 1
+        const isLabelShown = labels === 'all' || step.isCurrent
+        const isLabelRunningOn = labels === 'current' && step.isCurrent && !isLast
+        const isExpanded = labels === 'currentExpanded' && step.isCurrent
+
+        return (
+          <StepperItem
+            key={step.label}
             step={step}
-            navigable={navigable}
-            onSelect={() => goTo(index)}
-            className="flex-col gap-3 pr-4"
+            className={cn('relative min-w-0 flex-1 last:flex-none', isExpanded && 'flex-[3]')}
           >
-            <StepperMarker step={step} kind={marker} index={index} />
-            <StepperLabel
+            {!isLast && (
+              <StepperConnector
+                isComplete={step.isComplete && !step.isCurrent}
+                className="absolute top-[calc(var(--stepper-marker)/2)] right-3 left-[calc(var(--stepper-marker)+0.75rem)]"
+              />
+            )}
+            <StepperTrigger
               step={step}
-              errorLabel={errorLabel}
-              completeLabel={completeLabel}
-              className="sr-only @lg/stepper:not-sr-only @lg/stepper:flex"
-              descriptionClassName={cn('hidden', showDescriptions && '@3xl/stepper:block')}
-            />
-          </StepperTrigger>
-        </StepperItem>
-      ))}
+              navigable={navigable}
+              onSelect={() => goTo(index)}
+              className="flex-col gap-3 pr-4"
+            >
+              <StepperMarker step={step} kind={marker} index={index} />
+              <StepperLabel
+                step={step}
+                errorLabel={errorLabel}
+                completeLabel={completeLabel}
+                className={
+                  isLabelShown ? 'sr-only @lg/stepper:not-sr-only @lg/stepper:flex' : 'sr-only'
+                }
+                textClassName={cn(isLabelRunningOn && 'w-max')}
+                textStyle={
+                  isLabelRunningOn ? { maxWidth: runOnWidthOf(index, steps.length) } : undefined
+                }
+                descriptionClassName={cn('hidden', showDescriptions && '@3xl/stepper:block')}
+              />
+            </StepperTrigger>
+          </StepperItem>
+        )
+      })}
     </ol>
   )
 }
@@ -710,12 +740,16 @@ function StepperLabel({
   errorLabel = DEFAULT_ERROR_LABEL,
   completeLabel = DEFAULT_COMPLETE_LABEL,
   className,
+  textClassName,
+  textStyle,
   descriptionClassName,
 }: {
   step: StepperStep
   errorLabel?: string | undefined
   completeLabel?: string | undefined
   className?: string | undefined
+  textClassName?: string | undefined
+  textStyle?: React.CSSProperties | undefined
   descriptionClassName?: string | undefined
 }) {
   const state = stateOf(step)
@@ -726,11 +760,13 @@ function StepperLabel({
       className={cn('min-w-0 flex-col gap-0.5', className)}
     >
       <span
+        style={textStyle}
         className={cn(
           'text-sm font-medium text-balance wrap-break-word transition-colors group-data-[size=lg]/stepper:text-base',
           state === 'upcoming' && 'text-muted-foreground',
           state === 'error' && 'text-destructive',
           step.isReachable && !step.isCurrent && 'group-hover/stepper-trigger:text-foreground',
+          textClassName,
         )}
       >
         {step.label}
@@ -878,6 +914,7 @@ export {
   StepperHeading,
   StepperItem,
   StepperLabel,
+  type StepperLabels,
   StepperMarker,
   type StepperMarkerKind,
   StepperNext,

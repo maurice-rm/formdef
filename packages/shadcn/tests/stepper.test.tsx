@@ -134,6 +134,69 @@ describe('Stepper', () => {
     expect(screen.getByText('Up next: Heating').classList).not.toContain('truncate')
   })
 
+  describe('labels', () => {
+    const labelOf = (text: string): HTMLElement =>
+      screen
+        .getByText(text, { selector: '[data-slot=stepper-steps] span' })
+        .closest('[data-slot=stepper-label]') as HTMLElement
+
+    it('shows every label by default', () => {
+      const Checklist = checklistWith({})
+      render(<Checklist />)
+
+      expect(labelOf('Contact').className).toContain('@lg/stepper:not-sr-only')
+      expect(labelOf('Heating').className).toContain('@lg/stepper:not-sr-only')
+    })
+
+    it('shows only the label of the current step, keeping the others for assistive technology', () => {
+      const Checklist = checklistWith({ labels: 'current' })
+      render(<Checklist />)
+
+      expect(labelOf('Contact').className).toContain('@lg/stepper:not-sr-only')
+      expect(labelOf('Heating').className).not.toContain('not-sr-only')
+      expect(labelOf('Heating').classList).toContain('sr-only')
+    })
+
+    it('lets the current label run on in one line, as far as the row reaches', () => {
+      const Checklist = checklistWith({ labels: 'current' })
+      render(<Checklist />)
+
+      const text = labelOf('Contact').firstElementChild as HTMLElement
+      expect(text.classList).toContain('w-max')
+      expect(text.style.maxWidth).toContain('cqw')
+    })
+
+    it('measures the run-on width against the steps row itself', () => {
+      const Checklist = checklistWith({ labels: 'current' })
+      const { container } = render(<Checklist />)
+
+      expect(container.querySelector('[data-slot=stepper-steps]')?.classList).toContain(
+        '@container',
+      )
+    })
+
+    it('keeps the label of the last step in its own place, where nothing follows to run on below', async () => {
+      const Checklist = checklistWith({ labels: 'current' })
+      render(<Checklist />)
+
+      fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Ada' } })
+      await click('Next')
+
+      const text = labelOf('Heating').firstElementChild as HTMLElement
+      expect(text.classList).not.toContain('w-max')
+      expect(text.style.maxWidth).toBe('')
+    })
+
+    it('gives the current step more of the row when expanded', () => {
+      const Checklist = checklistWith({ labels: 'currentExpanded' })
+      render(<Checklist />)
+
+      expect(labelOf('Contact').closest('li')?.classList).toContain('flex-[3]')
+      expect(labelOf('Heating').closest('li')?.classList).not.toContain('flex-[3]')
+      expect(labelOf('Heating').classList).toContain('sr-only')
+    })
+  })
+
   it('shows the description a step entry passes, under the heading and in the list', () => {
     const Checklist = checklistWith({})
     render(<Checklist />)

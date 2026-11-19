@@ -119,6 +119,12 @@ below which `collapsedVariant` shows instead, such as `collapseBelow="lg"` with
 `collapsedVariant="compact"`. `size`, `marker` (`number`, `icon` or `dot`), `actions` (`between`
 or `end`), `stickyActions`, `navigable` and the `show…` props are listed below.
 
+When many steps leave their labels little room, `labels="current"` shows only the label of the
+current step in the `steps` variant, also where a `rail` collapses to it; the other labels stay for
+screen readers. The current label runs on in one line below the steps after it, so every line
+between the circles keeps its length. `labels="currentExpanded"` gives the current step more of
+the row instead.
+
 Its texts are props too, so a form in another language registers a stepper with its texts set:
 
 | Prop | Meaning |
