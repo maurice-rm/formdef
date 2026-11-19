@@ -8,14 +8,18 @@ squash; `main` is always releasable.
 
 ## Changesets
 
-A pull request that changes what `@formdef/core` ships adds a changeset:
+A pull request that changes what `@formdef/core` ships, or what the shadcn registry hands out,
+adds a changeset:
 
 ```bash
 pnpm changeset
 ```
 
-It names the bump, patch, minor or major, and one line for the changelog, written for the people
-who use the package. A change to the documentation, the tests or the private packages needs none.
+It names the package and the bump, patch, minor or major, and one line for the changelog, written
+for the people who use it. The registry is the private package `@formdef/shadcn`: it gets a version
+and a changelog, so a project that copied its widgets sees what changed since, but it is never
+published to npm. A change to the documentation, the tests or the other private packages needs
+none.
 
 ## Previews
 
@@ -51,8 +55,9 @@ Every push to `main` runs the release workflow. What it does depends on what `ma
   the workflow then tags the release and creates the GitHub release.
 - **Neither:** nothing.
 
-The widgets of the shadcn registry are not versioned on npm: the documentation site serves them,
-and `shadcn add` fetches the version that site was built from.
+The widgets of the shadcn registry are not published to npm: the documentation site serves them,
+and `shadcn add` fetches the version that site was built from. The version pull request raises the
+version of `@formdef/shadcn` and writes its changelog like any other.
 
 ## The documentation site
 
