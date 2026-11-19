@@ -186,8 +186,18 @@ const warnAboutWiderKeys = (steps: RootSteps, fields: FieldsProps['fields']): vo
   }
 }
 
+const holdsOwnError = (form: StepForm, key: string): boolean =>
+  (form.store.get().fieldMeta[key]?.errors?.length ?? 0) > 0
+
 const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): void => {
   const erring = erringFieldPathsUnder(form, key)
+  if (erring.length === 0 && holdsOwnError(form, key)) {
+    warnOnce(
+      owner,
+      `formdef: the step "${key}" is held back by an error on the step itself, which no field shows. A rule across the fields of a step puts its path on one of them.`,
+    )
+    return
+  }
   if (erring.length === 0 || erring.some((path) => isRendered(form, path))) {
     return
   }

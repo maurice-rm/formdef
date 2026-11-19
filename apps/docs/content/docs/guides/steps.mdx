@@ -199,13 +199,17 @@ export const Order = createForm({
 
 ## Two rules for the schema
 
-The schema validates the whole form, steps or not. Two habits keep a person from getting stuck:
+The schema validates the whole form, steps or not. Three habits keep a person from getting stuck:
 
 - **What a condition hides is optional in the schema.** A field or a step that is hidden is still
   validated. When the schema demands a hidden field, the step cannot move on, and the person sees no
   error to fix. Make the field optional, or require it only under the same condition with a
   `refine`. The same holds for a hidden step: when the schema demands its fields, the form cannot be
   submitted. Outside production, formdef warns in both cases and names the fields.
+- **A rule across the fields of a step names a field.** A `refine` on a step's object without a
+  `path` reports on the step itself, which no field shows: next stays and the person sees nothing
+  to fix. Put its `path` on the field to change. Outside production, formdef warns and names the
+  step.
 - **A rule across steps reports at the later step.** A `refine` that compares a value of an earlier
   step with one of a later step puts its `path` on the later field. Reported at the earlier one, it
   stops next there, while the value to change sits further on.

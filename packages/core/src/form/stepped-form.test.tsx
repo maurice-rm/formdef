@@ -798,6 +798,28 @@ describe('createForm with steps, errors and focus', () => {
     expect(document.activeElement).toBe(screen.getByLabelText('Name'))
   })
 
+  it('warns when a step is held back only by an error on the step itself', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: schema.extend({
+          contact: z
+            .object({ name: z.string() })
+            .refine(() => false, { message: 'Contact is incomplete' }),
+        }),
+      }),
+    )
+    render(<Checklist />)
+
+    await click('Next')
+
+    expect(currentStep()).toBe('Go to Contact')
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the step "contact" is held back by an error on the step itself, which no field shows. A rule across the fields of a step puts its path on one of them.',
+    )
+  })
+
   it('warns once when a step is held back only by fields it does not render', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const Checklist = createForm(
