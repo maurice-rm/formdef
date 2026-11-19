@@ -94,6 +94,12 @@ const schema = z.object({
   heating: z.object({ kind: z.string().min(1, 'Enter a kind') }),
 })
 
+const strictSchema = z.object({
+  contact: z.object({ name: z.string().min(1, 'Enter a name') }),
+  building: z.object({ city: z.string().min(1, 'Enter a city') }),
+  heating: z.object({ kind: z.string().min(1, 'Enter a kind') }),
+})
+
 const DEFAULT_VALUES = { contact: { name: '' }, building: { city: '' }, heating: { kind: '' } }
 
 const FIELDS = {
@@ -371,6 +377,83 @@ describe('createForm with steps', () => {
     expect(buildProps).not.toHaveBeenCalled()
     await type('Name', 'Ada')
     expect(stepItem('Building').dataset.description).toBe('Your building')
+  })
+
+  for (const mode of MODES) {
+    it(`keeps a step left invalid incomplete and in the way, with validation mode ${mode}`, async () => {
+      const Checklist = createForm(
+        BINDING,
+        checklistConfig({ schema: strictSchema, validation: { mode } }),
+      )
+      render(<Checklist />)
+
+      await type('Name', 'Ada')
+      await click('Next')
+      await click('Next')
+      await click('Back')
+
+      expect(stepItem('Building').dataset.complete).toBe('false')
+      expect(stepItem('Building').dataset.dueError).toBe('true')
+      expect(stepItem('Heating').dataset.reachable).toBe('false')
+
+      await click('Go to Building')
+      expect(screen.getByText('Enter a city')).toBeDefined()
+    })
+  }
+
+  it('keeps a step emptied after its check incomplete once it is left, in a mode checking on change', async () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({ schema: strictSchema, validation: { mode: 'onChange' } }),
+    )
+    render(<Checklist />)
+
+    await type('Name', 'Ada')
+    await click('Next')
+    await type('City', 'Bonn')
+    await click('Next')
+    await click('Back')
+    await type('City', '')
+    await click('Back')
+
+    expect(stepItem('Building').dataset.complete).toBe('false')
+    expect(stepItem('Heating').dataset.reachable).toBe('false')
+  })
+
+  it('keeps the last step incomplete when a failed submit shows an earlier one', async () => {
+    const Checklist = createForm(BINDING, checklistConfig({ schema: strictSchema }))
+    render(<Checklist />)
+
+    await type('Name', 'Ada')
+    await click('Next')
+    await type('City', 'Bonn')
+    await click('Next')
+    await click('Back')
+    await type('City', '')
+    await click('Go to Heating')
+    await click('Submit')
+
+    expect(currentStep()).toBe('Go to Building')
+    expect(stepItem('Heating').dataset.complete).toBe('false')
+    expect(stepItem('Heating').dataset.dueError).toBe('true')
+  })
+
+  it('keeps the error of the last step due when only it fails the submit, and completes it once fixed', async () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({ schema: strictSchema, validation: { mode: 'onChange' } }),
+    )
+    render(<Checklist />)
+
+    await type('Name', 'Ada')
+    await click('Next')
+    await type('City', 'Bonn')
+    await click('Next')
+    await click('Submit')
+
+    expect(stepItem('Heating').dataset.dueError).toBe('true')
+    await type('Kind', 'Gas')
+    expect(stepItem('Heating').dataset.complete).toBe('true')
   })
 
   it('marks a step whose errors are due once it was submitted', async () => {

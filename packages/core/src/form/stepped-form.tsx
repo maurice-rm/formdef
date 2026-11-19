@@ -29,7 +29,10 @@ type StepFormState = {
   isSubmitting: boolean
 }
 
-type StepGroup = { handleSubmit: () => Promise<void> }
+type StepGroup = {
+  handleSubmit: () => Promise<void>
+  validate: (cause: 'submit') => unknown
+}
 
 type FormGroupProps = {
   name: string
@@ -73,6 +76,11 @@ type GroupHandleProps = {
 
 type VisibleStep = { step: RootStep; position: number }
 
+/** What the last check of a step found, kept while its fields are not rendered. */
+type StepCheck = { hasErrors: boolean; hasDueError: boolean }
+
+type StepChecks = ReadonlyMap<string, StepCheck>
+
 const NO_STEPPER = 'formdef: the form has steps, but no structure.stepper is registered.'
 
 const isUnder = (path: string, key: string): boolean =>
@@ -91,6 +99,29 @@ const hasDueErrorUnder = (
   Object.entries(fieldMeta).some(
     ([path, meta]) => isUnder(path, key) && meta !== undefined && hasDueError(meta, wasSubmitted),
   )
+
+// Unmounting a field resets its meta, so a step not shown keeps what its fields held when it was left.
+const checkOf = (form: StepForm, key: string, wasChecked: boolean): StepCheck => {
+  const { fieldMeta } = form.store.get()
+
+  return {
+    hasErrors: erringPathsUnder(fieldMeta, key).length > 0,
+    hasDueError: hasDueErrorUnder(fieldMeta, key, wasChecked),
+  }
+}
+
+const withCheck = (checks: StepChecks, key: string, check: StepCheck): StepChecks =>
+  new Map(checks).set(key, check)
+
+const withoutCheck = (checks: StepChecks, key: string): StepChecks => {
+  if (!checks.has(key)) {
+    return checks
+  }
+  const remaining = new Map(checks)
+  remaining.delete(key)
+
+  return remaining
+}
 
 const isShown = (step: RootStep, values: unknown): boolean =>
   step.visibleWhen === undefined || step.visibleWhen(values)
@@ -194,6 +225,8 @@ const GroupHandle = ({ group, currentGroup, children }: GroupHandleProps): React
  * errors become due and its first invalid control takes the focus. The last step submits the
  * form; when that fails, the first step holding an error is shown and its first invalid control
  * takes the focus. A step its condition hides is skipped, except while it is the current one. The
+ * state of a step not shown is what its fields held when it was left, since their meta goes with
+ * them; a checked step shown again is checked again, so its errors show. The
  * props of each step entry arrive flat on its state; props built from the values are read again
  * when the values change, never for a hidden step, and the stepper renders again only when one of
  * them changed.
@@ -214,6 +247,9 @@ export const SteppedForm = ({
   const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set([currentKey]))
   const [attempted, setAttempted] = useState<ReadonlySet<string>>(() => new Set())
   const [isFocusPending, setIsFocusPending] = useState(false)
+  const [lastChecks, setLastChecks] = useState<StepChecks>(() => new Map())
+  // The step to check again once its fields are mounted, so the errors it was left with show again.
+  const recheckKey = useRef<string | undefined>(undefined)
   const shownByCondition = useSelector(
     form.store,
     (state) => steps.map((step) => isShown(step, state.values)),
@@ -268,36 +304,63 @@ export const SteppedForm = ({
   }, [isFocusPending, form, currentKey, fields, steps])
 
   const currentGroup = useRef<StepGroup | undefined>(undefined)
+  // Runs after GroupHandle's effect, which hands over the form group of the step just mounted.
+  useEffect(() => {
+    const forgetCheck = (): void => setLastChecks((checks) => withoutCheck(checks, currentKey))
+    const group = currentGroup.current
+    if (recheckKey.current !== currentKey || group === undefined) {
+      forgetCheck()
+      return
+    }
+    recheckKey.current = undefined
+    void Promise.resolve(group.validate('submit')).then(forgetCheck)
+  }, [currentKey])
 
   const visible: VisibleStep[] = steps
     .map((step, position) => ({ step, position }))
     .filter(({ step, position }) => step.step === currentKey || shownByCondition[position])
   const current = visible.findIndex(({ step }) => step.step === currentKey)
-  const isValidAt = ({ position }: VisibleStep): boolean => !hasErrors[position]
-  const states: StepState[] = visible.map(({ step, position }, index) => ({
-    ...stepProps[position],
-    label: step.label,
+  const isChecked = (key: string): boolean => wasSubmitted || attempted.has(key)
+  const checkAt = ({ step, position }: VisibleStep): StepCheck =>
+    lastChecks.get(step.step) ?? {
+      hasErrors: hasErrors[position] ?? false,
+      hasDueError: hasDueErrors[position] ?? false,
+    }
+  const isValidAt = (step: VisibleStep): boolean => !checkAt(step).hasErrors
+  const states: StepState[] = visible.map((shown, index) => ({
+    ...stepProps[shown.position],
+    label: shown.step.label,
     isCurrent: index === current,
-    isVisited: visited.has(step.step),
-    isReachable: visited.has(step.step) && visible.slice(0, index).every(isValidAt),
-    isComplete: (wasSubmitted || attempted.has(step.step)) && !hasErrors[position],
-    hasDueError: hasDueErrors[position] ?? false,
+    isVisited: visited.has(shown.step.step),
+    isReachable: visited.has(shown.step.step) && visible.slice(0, index).every(isValidAt),
+    isComplete: isChecked(shown.step.step) && isValidAt(shown),
+    hasDueError: checkAt(shown).hasDueError,
   }))
 
-  const moveTo = (key: string): void => {
+  const switchTo = (key: string): void => {
+    if (key === currentKey) {
+      return
+    }
+    const wasChecked = form.store.get().submissionAttempts > 0 || attempted.has(currentKey)
+    const left = checkOf(form, currentKey, wasChecked)
+    setLastChecks((checks) => withCheck(checks, currentKey, left))
+    recheckKey.current = isChecked(key) ? key : undefined
     setCurrentKey(key)
+  }
+  const moveTo = (key: string): void => {
+    switchTo(key)
     setVisited((previous) => new Set(previous).add(key))
   }
   const back = (): void => {
     const previous = visible[current - 1]
     if (previous !== undefined) {
-      setCurrentKey(previous.step.step)
+      switchTo(previous.step.step)
     }
   }
   const goTo = (index: number): void => {
     const target = visible[index]
     if (target !== undefined && states[index]?.isReachable === true) {
-      setCurrentKey(target.step.step)
+      switchTo(target.step.step)
     }
   }
   const markAttempted = (): void => {
@@ -306,6 +369,14 @@ export const SteppedForm = ({
   const submitForm = async (): Promise<void> => {
     await form.handleSubmit()
     const { fieldMeta } = form.store.get()
+    const notShown = visible.filter(({ step }) => step.step !== shownKey.current)
+    setLastChecks(
+      (checks) =>
+        new Map([
+          ...checks,
+          ...notShown.map(({ step }) => [step.step, checkOf(form, step.step, true)] as const),
+        ]),
+    )
     const erring = visible.find(({ step }) => erringPathsUnder(fieldMeta, step.step).length > 0)
     if (erring === undefined) {
       warnAboutHiddenSteps(steps, fieldMeta)

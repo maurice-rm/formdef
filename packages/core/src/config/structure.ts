@@ -52,7 +52,9 @@ export interface BodyProps {
 }
 
 /**
- * One visible step of a stepped form, as {@link StepperProps} lists it.
+ * One visible step of a stepped form, as {@link StepperProps} lists it. A step not shown now is
+ * valid or holds a due error as its fields were when it was last left or the form was submitted;
+ * shown again after a check, it is checked again.
  */
 export interface StepState {
   /** The label the step entry names. */
