@@ -57,6 +57,7 @@ type StepperOptions = {
   navigable?: boolean | undefined
   actions?: StepperActionsAlign | undefined
   stickyActions?: boolean | undefined
+  stickyNav?: boolean | undefined
   className?: string | undefined
 }
 
@@ -99,6 +100,8 @@ const COLLAPSE_CLASSES: Record<
 }
 
 const RAIL_COLUMNS = 'grid-cols-[14rem_minmax(0,1fr)]'
+
+const STICKY_NAV = 'sticky top-0 -m-1 max-h-dvh self-start overflow-y-auto p-1'
 
 const DEFAULT_COLLAPSE: Record<StepperVariant, StepperBreakpoint | 'never'> = {
   steps: 'never',
@@ -256,6 +259,41 @@ function StepperNav({
   return <StepperSteps {...listProps} />
 }
 
+function StepperNavigation({
+  nav,
+  variant,
+  collapse,
+  collapsedVariant,
+  isSticky,
+}: {
+  nav: Omit<StepperNavProps, 'variant'>
+  variant: StepperVariant
+  collapse: Collapse | undefined
+  collapsedVariant: StepperVariant
+  isSticky: boolean
+}) {
+  const wide = (
+    <div
+      data-slot="stepper-nav"
+      data-sticky={isSticky}
+      className={cn(collapse?.wide, isSticky && STICKY_NAV)}
+    >
+      <StepperNav {...nav} variant={variant} />
+    </div>
+  )
+  if (!collapse) {
+    return wide
+  }
+  return (
+    <>
+      <div data-slot="stepper-nav" data-collapsed className={collapse.narrow}>
+        <StepperNav {...nav} variant={collapsedVariant} />
+      </div>
+      {wide}
+    </>
+  )
+}
+
 function collapseOf(
   variant: StepperVariant,
   collapseBelow: StepperBreakpoint | 'never',
@@ -309,6 +347,7 @@ function Stepper({
   navigable = true,
   actions = 'between',
   stickyActions = false,
+  stickyNav = false,
   backLabel = 'Back',
   nextLabel = 'Next',
   submitLabel = 'Submit',
@@ -369,20 +408,13 @@ function Stepper({
       )}
     >
       <div data-slot="stepper-layout" className={layoutClassOf(variant, collapse)}>
-        {collapse ? (
-          <>
-            <div data-slot="stepper-nav" data-collapsed className={collapse.narrow}>
-              <StepperNav {...nav} variant={collapsedVariant} />
-            </div>
-            <div data-slot="stepper-nav" className={collapse.wide}>
-              <StepperNav {...nav} variant={variant} />
-            </div>
-          </>
-        ) : (
-          <div data-slot="stepper-nav">
-            <StepperNav {...nav} variant={variant} />
-          </div>
-        )}
+        <StepperNavigation
+          nav={nav}
+          variant={variant}
+          collapse={collapse}
+          collapsedVariant={collapsedVariant}
+          isSticky={stickyNav && variant === 'rail'}
+        />
         <div className="flex min-w-0 flex-col gap-6">
           {showHeading ? (
             <StepperHeading>
