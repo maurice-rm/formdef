@@ -888,7 +888,7 @@ describe('createForm with steps, errors and focus', () => {
 
     expect(currentStep()).toBe('Go to Heating')
     expect(warn).toHaveBeenCalledWith(
-      'formdef: the step "heating" is held back by errors on fields it does not render: heating.kind. What a condition hides is optional in the schema.',
+      'formdef: the step "heating" is held back by errors on fields it does not render: heating.kind. What a condition hides must accept every value it can hold.',
     )
   })
 
@@ -964,7 +964,7 @@ describe('createForm with steps, errors and focus', () => {
     expect(currentStep()).toBe('Go to Contact')
     expect(warn).toHaveBeenCalledOnce()
     expect(warn).toHaveBeenCalledWith(
-      'formdef: the step "contact" is held back by errors on fields it does not render: contact.email. What a condition hides is optional in the schema.',
+      'formdef: the step "contact" is held back by errors on fields it does not render: contact.email. What a condition hides must accept every value it can hold.',
     )
   })
 
@@ -984,7 +984,7 @@ describe('createForm with steps, errors and focus', () => {
 
     expect(currentStep()).toBe('Go to Building')
     expect(warn).toHaveBeenCalledWith(
-      'formdef: the form fails to submit through errors in the hidden step "heating": heating.kind. What a condition hides is optional in the schema.',
+      'formdef: the form fails to submit through errors in the hidden step "heating": heating.kind. What a condition hides must accept every value it can hold.',
     )
   })
 
