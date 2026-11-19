@@ -10,6 +10,8 @@ const PUBLIC_EXPORTS = [
   'createRegistry',
   'RowProps',
   'SectionProps',
+  'StepperProps',
+  'StepState',
   'Validation',
   'errorsOf',
   'fieldId',

@@ -14,7 +14,10 @@ export const readCoreExports = (): Map<string, string> =>
       ([, names = '', file = '']) =>
         names
           .split(',')
-          .map((name) => [name.trim(), join(CORE_SOURCE, `${file}${SOURCE_EXTENSION}`)] as const),
+          .map((name) => name.trim())
+          // A list the formatter breaks over lines ends in a comma.
+          .filter((name) => name !== '')
+          .map((name) => [name, join(CORE_SOURCE, `${file}${SOURCE_EXTENSION}`)] as const),
     ),
   )
 

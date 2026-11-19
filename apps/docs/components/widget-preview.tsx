@@ -19,6 +19,7 @@ import { RadioFieldPreview } from './previews/radio-field'
 import { RowPreview } from './previews/row'
 import { SectionPreview } from './previews/section'
 import { SelectFieldPreview } from './previews/select-field'
+import { StepperVariantPreview } from './previews/stepper-variant-preview'
 import { SubmitButtonPreview } from './previews/submit-button'
 import { SwitchFieldPreview } from './previews/switch-field'
 import { TagsFieldPreview } from './previews/tags-field'
@@ -40,6 +41,7 @@ const PREVIEWS = {
   row: RowPreview,
   section: SectionPreview,
   'select-field': SelectFieldPreview,
+  stepper: StepperVariantPreview,
   'submit-button': SubmitButtonPreview,
   'switch-field': SwitchFieldPreview,
   'tags-field': TagsFieldPreview,

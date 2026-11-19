@@ -6,11 +6,13 @@ type NamesInEntries<TEntries, TSeen> = [TEntries] extends [TSeen]
 
 type NamesIn<TEntry, TSeen> = TEntry extends string
   ? TEntry
-  : TEntry extends { layout: readonly (infer TNested)[] }
-    ? NamesInEntries<TNested, TSeen>
-    : TEntry extends { row: readonly (infer TNested)[] }
+  : TEntry extends { step: infer TStep extends string }
+    ? TStep
+    : TEntry extends { layout: readonly (infer TNested)[] }
       ? NamesInEntries<TNested, TSeen>
-      : never
+      : TEntry extends { row: readonly (infer TNested)[] }
+        ? NamesInEntries<TNested, TSeen>
+        : never
 
 type UndescribedNames<TConfig> = TConfig extends {
   layout: readonly (infer TEntry)[]

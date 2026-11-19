@@ -292,6 +292,11 @@ const ComponentNode = ({ level, entry, props }: LayoutKindProps): ReactNode => {
 }
 
 const LayoutKind = ({ level, entry, props }: LayoutKindProps): ReactNode => {
+  if ('step' in entry) {
+    throw new Error(
+      `formdef: the layout of ${layoutOwner(level.path)} holds a step; a step is an entry of the root layout of a form only.`,
+    )
+  }
   if ('section' in entry) {
     return <SectionNode level={level} entry={entry} props={props} />
   }

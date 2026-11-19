@@ -52,6 +52,87 @@ export interface BodyProps {
 }
 
 /**
+ * One visible step of a stepped form, as {@link StepperProps} lists it. A step not shown now is
+ * valid or holds a due error as its fields were when it was last left or the form was submitted;
+ * shown again after a check, it is checked again.
+ */
+export interface StepState {
+  /** The label the step entry names. */
+  label: string
+  /** Whether this is the step shown now. */
+  isCurrent: boolean
+  /** Whether the step was shown before or is shown now. */
+  isVisited: boolean
+  /** Whether `goTo` moves to this step now: it was visited and every step before it is valid. */
+  isReachable: boolean
+  /**
+   * Whether the step was checked, by its `next` or a submit of the form, and none of its fields
+   * holds an error now. A step only visited was never checked and is not complete.
+   */
+  isComplete: boolean
+  /** Whether an error of a field in this step is due. */
+  hasDueError: boolean
+}
+
+// Step props take any key but those of StepState, which the core fills. Without `& object` the
+// check for a weak type rejects step props that share no key with StepState, which is all of them.
+type StepPropsShape = { [Key in keyof StepState]?: never } & object
+
+/**
+ * The props a registered `structure.stepper` component receives: the visible steps of a stepped
+ * form, the navigation between them, and the current step. The stepper renders the progress and
+ * the controls that move; the renderer renders no text of its own. Props the stepper declares on
+ * top are its own.
+ *
+ * @typeParam TStep - The props each step entry passes under `props`, which arrive flat on each
+ *   step's state next to its `label`; none by default. The core gives them no meaning.
+ *
+ * @example
+ * ```tsx
+ * const Stepper = ({ steps, current, next, back, isFirst, isLast, children }: StepperProps) => (
+ *   <section>
+ *     <h2>{steps[current]?.label}</h2>
+ *     {children}
+ *     {!isFirst && <button type="button" onClick={back}>Back</button>}
+ *     <button type="button" onClick={next}>{isLast ? 'Submit' : 'Next'}</button>
+ *   </section>
+ * )
+ * ```
+ */
+export interface StepperProps<
+  // biome-ignore lint/complexity/noBannedTypes: `{}` alone vanishes from `StepState & TStep`, so a stepper without step props reads `StepState`.
+  TStep extends StepPropsShape = {},
+> {
+  /** The visible steps, in layout order, each with the props its entry passes. */
+  steps: readonly (StepState & TStep)[]
+  /** The index of the current step in `steps`. */
+  current: number
+  /**
+   * Submits the current step: moves to the next visible step when it is valid, otherwise shows
+   * its errors and focuses its first invalid control. On the last step, submits the form; when
+   * that fails, shows the first step holding an error and focuses its first invalid control. Does
+   * nothing while the form is being submitted.
+   */
+  next: () => void
+  /** Moves to the previous visible step. */
+  back: () => void
+  /**
+   * Moves to the step at `index` when it is reachable; does nothing otherwise.
+   *
+   * @param index - The position of the step in `steps`.
+   */
+  goTo: (index: number) => void
+  /** Whether the current step is the first visible one. */
+  isFirst: boolean
+  /** Whether the current step is the last visible one, whose `next` submits the form. */
+  isLast: boolean
+  /** Whether the form is being submitted. */
+  isSubmitting: boolean
+  /** The rendered current step. */
+  children: ReactNode
+}
+
+/**
  * The props a registered `structure.arrayFrame` component receives: the array field, a renderer
  * for each item, the labels of its controls and the operations that change the array. Props the
  * array entry passes under `props` come on top.

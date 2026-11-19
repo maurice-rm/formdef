@@ -1,0 +1,164 @@
+---
+title: Stepper
+description: The frame around a form of steps, with how far the person is, the current step and the buttons back and next.
+---
+
+<WidgetPreview name="stepper" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/stepper
+```
+
+Register it in the `stepper` structure slot in `lib/formdef/index.tsx`, as `structure: { stepper:
+Stepper }`. It then frames every form whose root layout holds steps.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+import { Stepper } from '@/components/formdef/stepper'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField }, structure: { stepper: Stepper } })
+// ---cut---
+export const SignUpForm = createForm({
+  schema: z.object({
+    account: z.object({ email: z.email('Enter an email') }),
+    profile: z.object({ name: z.string().min(1, 'Enter your name') }),
+  }),
+  defaultValues: { account: { email: '' }, profile: { name: '' } },
+  fields: {
+    account: { fields: { email: { widget: 'text', props: { label: 'Email' } } } },
+    profile: { fields: { name: { widget: 'text', props: { label: 'Name' } } } },
+  },
+  layout: [
+    { step: 'account', label: 'Account' },
+    { step: 'profile', label: 'Profile' },
+  ],
+})
+```
+
+The stepper shows the steps as numbered circles joined by a line, "Step 1 of 2" above the label
+of the current step as its heading, the step's fields, and the buttons back and next. Next submits
+the current step: a valid step moves on, an invalid one shows its errors and focuses its first
+invalid field. On the last step, next submits the form. Enter in a field does what next does. A
+complete step shows a tick, and a step with a due error shows a warning sign. A step already
+visited takes the person back when chosen, while every step before it is valid.
+
+When the step changes, the heading of the new step takes the focus, so a screen reader announces
+where the person is.
+
+## Step props
+
+A step entry passes a `description` and an `icon` under `props`. The description shows under the
+heading, and under the step's label in the rail and, once the container is `@3xl` wide, in the
+circles and segments; the icon takes the place of the number with `marker="icon"`:
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+import { Stepper } from '@/components/formdef/stepper'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField }, structure: { stepper: Stepper } })
+const schema = z.object({ account: z.object({ email: z.string() }), profile: z.object({ name: z.string() }) })
+const fields = {
+  account: { fields: { email: { widget: 'text', props: { label: 'Email' } } } },
+  profile: { fields: { name: { widget: 'text', props: { label: 'Name' } } } },
+} as const
+// ---cut---
+export const SignUpForm = createForm({
+  schema,
+  defaultValues: { account: { email: '' }, profile: { name: '' } },
+  fields,
+  layout: [
+    { step: 'account', label: 'Account', props: { description: 'How you sign in' } },
+    { step: 'profile', label: 'Profile', props: { description: 'What others see' } },
+  ],
+})
+```
+
+## Variants and options
+
+The registered stepper takes options as props. Set them where you register it, once for every form
+of the registry:
+
+```tsx
+import { createRegistry, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { TextField } from '@/components/formdef/text-field'
+import { Stepper, type StepperStepProps } from '@/components/formdef/stepper'
+const { fieldContext, formContext } = createFormHookContexts()
+// ---cut---
+export const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+  structure: {
+    stepper: (props: StepperProps<StepperStepProps>) => (
+      <Stepper {...props} variant="rail" marker="icon" backLabel="Zurück" nextLabel="Weiter" />
+    ),
+  },
+})
+```
+
+| Variant | Looks like | On a narrow container |
+| --- | --- | --- |
+| `steps` | numbered circles joined by a line, labels below | the circles alone |
+| `rail` | a list of steps beside the form | `steps` below `@3xl` |
+| `segments` | one bar per step, labels below | the bars alone |
+| `compact` | "Step 1 of 3", the next step and a progress bar | the same |
+
+The stepper measures its own container, not the screen. `collapseBelow` names the container width
+below which `collapsedVariant` shows instead, such as `collapseBelow="lg"` with
+`collapsedVariant="compact"`. `size`, `marker` (`number`, `icon` or `dot`), `actions` (`between`
+or `end`), `stickyActions`, `navigable` and the `show…` props are listed below.
+
+Its texts are props too, so a form in another language registers a stepper with its texts set:
+
+| Prop | Meaning |
+| --- | --- |
+| `backLabel` | The text of the back button. |
+| `nextLabel` | The text of the next button. |
+| `submitLabel` | The text of the next button on the last step. |
+| `progressLabel` | `(step, total) => string`, the text above the heading and the name of the progress bar. |
+| `upNextLabel` | `(label) => string`, the next step in the compact variant. |
+| `errorLabel` | Read out after the label of a step with a due error, and after the progress in the compact variant. |
+| `completeLabel` | Read out after the label of a complete step. |
+
+## Styling and composition
+
+Every part carries a `data-slot`, such as `stepper-marker` or `stepper-actions`, and the parts of
+a step carry its `data-state`: `complete`, `current`, `upcoming` or `error`. The root carries
+`data-variant`, `data-size` and `data-marker`; `stepper-compact` carries `data-state="error"` while
+the current step has a due error. Style them from a `className` on the stepper:
+
+```tsx
+import type { StepperProps } from '@formdef/core'
+import { Stepper, type StepperStepProps } from '@/components/formdef/stepper'
+// ---cut---
+const RoundedStepper = (props: StepperProps<StepperStepProps>) => (
+  <Stepper {...props} className="**:data-[slot=stepper-marker]:rounded-md" />
+)
+```
+
+For a layout of your own, the file exports its parts, `StepperSteps`, `StepperRail`,
+`StepperSegments`, `StepperCompact`, `StepperTitle`, `StepperActions`, `StepperNext` and the others,
+and a stepper of your own composes them; the file is yours to edit.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/stepper.tsx"
+  type="Omit<React.ComponentProps<typeof Stepper>, 'steps' | 'current' | 'next' | 'back' | 'goTo' |
+'isFirst' | 'isLast' | 'isSubmitting' | 'children'>"
+/>
+
+## Source
+
+<WidgetSource name="stepper" />

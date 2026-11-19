@@ -67,6 +67,9 @@ its value and is still validated, exactly like a key `fields` leaves out.
 
 An entry is exactly one of these. A section with a `component` does not compile.
 
+The root layout of a form can instead list steps, `{ step: 'key', label: 'Title' }`, which show one
+at a time; [Steps](/guides/steps) describes them.
+
 ## Sections and rows
 
 Sections and rows hold layout entries, not just names, so they nest: a row inside a section, a
@@ -143,7 +146,7 @@ Inline entries also hold content that is not bound to the form at all, a heading
 
 ## The markup formdef renders
 
-formdef renders markup of its own in four places. Each is a **structure slot** you can fill with a
+formdef renders markup of its own in five places. Each is a **structure slot** you can fill with a
 component when you create the registry:
 
 | Slot | Where | Without it | Receives |
@@ -152,6 +155,7 @@ component when you create the registry:
 | `section` | each `{ section }` entry | `<fieldset><legend>` | `SectionProps`: `label`, `children` |
 | `row` | each `{ row }` entry | `<div data-formdef-row>` | `RowProps`: `children` |
 | `arrayFrame` | each array entry | the items and their buttons | `ArrayFrameProps`, see [Arrays](/guides/arrays#a-frame-of-your-own) |
+| `stepper` | a form whose root layout holds steps | does not compile; steps need it | `StepperProps`, see [Steps](/guides/steps) |
 
 ```tsx
 import {
@@ -185,6 +189,8 @@ export const { createForm, Fields } = createRegistry({
 ```
 
 A slot component may take props of its own beyond these; a section or row entry then passes them
-through `props`, checked against the component. `body` takes none, since no entry describes it.
+through `props`, checked against the component. A step entry passes what the stepper declares per
+step, as [Steps](/guides/steps#props-for-the-stepper) shows. `body` takes none, since no entry
+describes it.
 When you build the `<form>` yourself with `Fields`, `body` is not applied: the shell is yours, and
 so is the wrapper.

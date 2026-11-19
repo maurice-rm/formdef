@@ -1,26 +1,26 @@
-import type { ComponentType, FormEvent, ReactNode } from 'react'
+import { type ComponentType, type ReactNode, type SubmitEvent, useRef } from 'react'
 
 import type { FormElementProps } from '../config/form-props'
-import type { BodyProps } from '../config/structure'
+import type { BodyProps, StepperProps } from '../config/structure'
 import { Fields, type FieldsProps } from '../render/fields'
-import type { RenderForm } from '../render/render-form'
 import { warnOnce } from '../render/warn-once'
 import { findRequiredPaths } from './find-required-paths'
 import { formOptionsFor } from './form-options-for'
+import { rootStepsOf } from './root-steps'
+import { type StepForm, SteppedForm } from './stepped-form'
 
 type Options = Readonly<Record<string, unknown>>
 
 /** The form `useAppForm` returns, as far as the shell uses it. */
-type ShellForm = RenderForm & {
+type ShellForm = StepForm & {
   AppForm: ComponentType<{ children?: ReactNode }>
-  handleSubmit: () => Promise<void>
 }
 
 /** What a registry binds a form to: its form hook and the maps the renderer looks names up in. */
 export type FormBinding = {
   useAppForm: (options: Options) => ShellForm
   parts: FieldsProps['parts'] & {
-    structure: { body?: ComponentType<BodyProps> }
+    structure: { body?: ComponentType<BodyProps>; stepper?: ComponentType<StepperProps> }
   }
 }
 
@@ -57,29 +57,53 @@ const ConfiguredForm = ({
   }
 
   const form = binding.useAppForm(formOptions)
-  const Body = binding.parts.structure.body
-  const content = (
-    <Fields
-      parts={binding.parts}
-      form={form}
-      fields={config.fields as FieldsProps['fields']}
-      layout={config.layout as FieldsProps['layout']}
-      requiredPaths={requiredPaths}
-    />
-  )
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  const submitStep = useRef<(() => void) | undefined>(undefined)
+  const fields = (config.fields ?? {}) as FieldsProps['fields']
+  const steps = rootStepsOf(config.layout, fields)
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault()
     event.stopPropagation()
-    void form.handleSubmit()
+    if (submitStep.current === undefined) {
+      void form.handleSubmit()
+      return
+    }
+    submitStep.current()
   }
 
   return (
     <form.AppForm>
       <form noValidate {...formProps} onSubmit={handleSubmit}>
-        {Body === undefined ? content : <Body>{content}</Body>}
+        {steps === undefined ? (
+          <PlainContent
+            parts={binding.parts}
+            form={form}
+            fields={fields}
+            layout={config.layout as FieldsProps['layout']}
+            requiredPaths={requiredPaths}
+          />
+        ) : (
+          <SteppedForm
+            parts={binding.parts}
+            form={form}
+            fields={fields}
+            steps={steps}
+            requiredPaths={requiredPaths}
+            submitStep={submitStep}
+          />
+        )}
       </form>
     </form.AppForm>
   )
+}
+
+const PlainContent = ({
+  parts,
+  ...level
+}: FieldsProps & { parts: FormBinding['parts'] }): ReactNode => {
+  const Body = parts.structure.body
+  const content = <Fields parts={parts} {...level} />
+
+  return Body === undefined ? content : <Body>{content}</Body>
 }
 
 const isAsyncValidation = (validation: unknown): boolean =>

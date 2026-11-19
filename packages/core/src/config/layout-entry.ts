@@ -8,14 +8,17 @@ import type { Visibility } from './visibility'
 
 type OneKind = 'formdef: a layout entry has one kind: section, row, component or render'
 
+type RootOnly = 'formdef: a step is an entry of the root layout of a form only'
+
 type KindMarkers = {
   section?: OneKind
   row?: OneKind
   component?: OneKind
   render?: OneKind
+  step?: RootOnly
 }
 
-type Owns<TMarker extends keyof KindMarkers> = Omit<KindMarkers, TMarker>
+type Owns<TMarker extends Exclude<keyof KindMarkers, 'step'>> = Omit<KindMarkers, TMarker>
 
 // Without a registered slot the renderer draws the bare element, which takes a class name only.
 type BareElementProps = { className?: string }

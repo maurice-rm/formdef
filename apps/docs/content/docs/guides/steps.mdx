@@ -1,0 +1,232 @@
+---
+title: Steps
+description: Fill in a long form one step at a time, with progress, validation per step and focus where it belongs.
+---
+
+A long form is easier to fill in one topic at a time. A root `layout` of **steps** turns one config
+into such a form: `createForm` shows one step, checks it when the person moves on, and submits the
+form from the last one.
+
+## A form of steps
+
+Each step is an object of the form's values, and the root `layout` lists the steps by their keys:
+
+```tsx
+import { createRegistry, type FieldOf, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const Stepper = ({ children }: StepperProps) => <section>{children}</section>
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+  structure: { stepper: Stepper },
+})
+// ---cut---
+const schema = z.object({
+  contact: z.object({ name: z.string().min(1, 'Enter your name'), email: z.email() }),
+  building: z.object({ city: z.string(), rooms: z.string() }),
+  heating: z.object({ kind: z.string().min(1, 'Name your heating') }),
+})
+
+export const Checklist = createForm({
+  schema,
+  defaultValues: {
+    contact: { name: '', email: '' },
+    building: { city: '', rooms: '' },
+    heating: { kind: '' },
+  },
+  fields: {
+    contact: {
+      fields: {
+        name: { widget: 'text', props: { label: 'Name' } },
+        email: { widget: 'text', props: { label: 'Email' } },
+      },
+    },
+    building: {
+      fields: {
+        city: { widget: 'text', props: { label: 'City' } },
+        rooms: { widget: 'text', props: { label: 'Rooms' } },
+      },
+      layout: [{ row: ['city', 'rooms'] }],
+    },
+    heating: { fields: { kind: { widget: 'text', props: { label: 'Heating' } } } },
+  },
+  layout: [
+    { step: 'contact', label: 'Contact' },
+    { step: 'building', label: 'Building' },
+    { step: 'heating', label: 'Heating' },
+  ],
+})
+```
+
+- `step` names a key of the root level whose value is an object; `label` is what the stepper shows.
+- Inside a step, everything a level offers still works: its own `layout` with sections, rows, form
+  components and inline entries, conditions and derived props.
+- A root layout that holds a step holds only steps. A step below the root, or a step mixed with
+  other root entries, does not compile.
+- Steps render through the registered `structure.stepper`, which draws the progress and the
+  buttons. The [stepper](/widgets/stepper) of the shadcn registry is one; a config with steps and no
+  registered stepper does not compile.
+
+Each step is a TanStack [form group](https://tanstack.com/form/latest/docs/framework/react/guides/form-groups)
+at its key. That is why a step is one object of the values: a form group covers one path.
+
+## Props for the stepper
+
+A stepper can show more per step than its label, a line under it or an icon. It declares what it
+reads per step as the type parameter of `StepperProps`, and each step entry passes those props
+under `props`, checked against the registered stepper like the props of a section:
+
+```tsx
+import { createRegistry, type FieldOf, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+// ---cut---
+const Stepper = ({ steps, children }: StepperProps<{ description?: string }>) => (
+  <section>
+    <ol>
+      {steps.map((step) => (
+        <li key={step.label}>
+          {step.label}
+          {step.description !== undefined && <small>{step.description}</small>}
+        </li>
+      ))}
+    </ol>
+    {children}
+  </section>
+)
+
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+  structure: { stepper: Stepper },
+})
+
+export const Checklist = createForm({
+  schema: z.object({
+    contact: z.object({ name: z.string() }),
+    building: z.object({ city: z.string() }),
+  }),
+  defaultValues: { contact: { name: '' }, building: { city: '' } },
+  fields: {
+    contact: { fields: { name: { widget: 'text', props: { label: 'Name' } } } },
+    building: { fields: { city: { widget: 'text', props: { label: 'City' } } } },
+  },
+  layout: [
+    { step: 'contact', label: 'Contact', props: { description: 'How we reach you' } },
+    {
+      step: 'building',
+      label: 'Building',
+      props: (values) => ({
+        description: values.contact.name === '' ? 'Your building' : `${values.contact.name}'s building`,
+      }),
+    },
+  ],
+})
+```
+
+- The props arrive flat on each step's state, next to its `label`: `steps[0].description`.
+- `props` is absent when the stepper declares nothing per step, optional when every prop it
+  declares is optional, and required otherwise.
+- Like every `props`, it is an object or a function of the form's values. The stepper renders
+  again when such a function returns a different value; it is not called while its step is hidden.
+- The keys of [`StepState`](/api/step-state) are filled by formdef and cannot be step props.
+- formdef gives step props no meaning; which ones exist is the stepper's choice. The
+  [stepper](/widgets/stepper) of the shadcn registry reads `description` and `icon`.
+
+## Moving between steps
+
+| Action | What happens |
+| --- | --- |
+| next | The step is checked against the form's schema. Valid: the next step shows. Invalid: its errors show and its first invalid field takes the focus. |
+| next on the last step | The form is submitted. When that fails, the first step holding an error shows and its first invalid field takes the focus. `onSubmitInvalid` still runs. Next again while the submit runs does nothing. |
+| Enter in a field | The same as next. |
+| back | The previous step shows, always. |
+| going to a step | Allowed for a step already visited, while every step before it is valid. |
+
+Values stay in the form while their step is not shown, so going back finds them as they were. A
+reset of the form after it was submitted, such as `formApi.reset()` in `onSubmit`, starts the steps
+over at the first one.
+
+A step is **complete** once it was checked, by its next or a submit of the form, and none of its
+fields holds an error now; the stepper reads it as `isComplete` to tick the step. A step only
+visited, left by back or by going to another step, was never checked and is not complete.
+
+After pressing next, every invalid field of the step shows its error, like a submit does for a whole
+form; fields of later steps stay quiet until their turn. [Errors and accessibility](/guides/errors-and-accessibility#when-an-error-is-due)
+describes when an error is due.
+
+## Steps under a condition
+
+A step takes `visibleWhen` and `dependsOn`, like every layout entry. A hidden step is skipped forward
+and back, and the stepper does not count it:
+
+```tsx
+import { createRegistry, type FieldOf, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const CheckboxField = (_: FieldOf<boolean> & { label: string }) => null
+const Stepper = ({ children }: StepperProps) => <section>{children}</section>
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField, checkbox: CheckboxField },
+  structure: { stepper: Stepper },
+})
+// ---cut---
+export const Order = createForm({
+  schema: z.object({
+    order: z.object({ isGift: z.boolean() }),
+    gift: z.object({ message: z.string() }),
+  }),
+  defaultValues: { order: { isGift: false }, gift: { message: '' } },
+  fields: {
+    order: { fields: { isGift: { widget: 'checkbox', props: { label: 'This is a gift' } } } },
+    gift: { fields: { message: { widget: 'text', props: { label: 'Gift message' } } } },
+  },
+  layout: [
+    { step: 'order', label: 'Order' },
+    { step: 'gift', label: 'Gift', visibleWhen: (values) => values.order.isGift },
+  ],
+})
+```
+
+## Three rules for the schema
+
+The schema validates the whole form, steps or not. Three habits keep a person from getting stuck:
+
+- **What a condition hides is optional in the schema.** A field or a step that is hidden is still
+  validated. When the schema demands a hidden field, the step cannot move on, and the person sees no
+  error to fix. Make the field optional, or require it only under the same condition with a
+  `refine`. The same holds for a hidden step: when the schema demands its fields, the form cannot be
+  submitted. Outside production, formdef warns in both cases and names the fields.
+- **A rule across the fields of a step names a field.** A `refine` on a step's object without a
+  `path` reports on the step itself, which no field shows: next stays and the person sees nothing
+  to fix. Put its `path` on the field to change. Outside production, formdef warns and names the
+  step.
+- **A rule across steps reports at the later step.** A `refine` that compares a value of an earlier
+  step with one of a later step puts its `path` on the later field. Reported at the earlier one, it
+  stops next there, while the value to change sits further on.
+
+[Validation](/guides/validation#rules-that-span-fields) shows how a rule across fields is written.
+
+## Focus
+
+When the step changes, the stepper of the shadcn registry moves the focus to the heading of the new
+step, so a screen reader announces where the person is. A stepper of your own does the same with
+the label of `steps[current]`. When a step stays because it is invalid, formdef moves the focus to
+its first invalid field, in the order the fields are rendered; that focus wins over the stepper's.
+
+## Steps in a form you build yourself
+
+Only `createForm` renders steps. A form whose shell you build yourself renders a part of the config
+per step with `Fields` and uses TanStack's `form.FormGroup` directly; `Fields` rejects a step
+entry.

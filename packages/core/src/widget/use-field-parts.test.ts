@@ -1,7 +1,9 @@
 import { FieldApi, FormApi } from '@tanstack/react-form'
 import { act, renderHook } from '@testing-library/react'
+import { createElement } from 'react'
 import { describe, expect, it } from 'vitest'
 
+import { StepSubmitted } from './step-submitted'
 import { useFieldParts } from './use-field-parts'
 
 const EMAIL_MESSAGE = 'Enter an email address'
@@ -37,6 +39,18 @@ describe('useFieldParts', () => {
     expect(result.current.isErrorDue).toBe(true)
     expect(result.current.control['aria-invalid']).toBe(true)
     expect(result.current.errors).toEqual([EMAIL_MESSAGE])
+  })
+
+  it('renders the error of a field once the step it is shown in was submitted', () => {
+    const field = emailField()
+    act(() => field.handleChange('ada'))
+    const outsideStep = renderHook(() => useFieldParts(field))
+    const insideSubmittedStep = renderHook(() => useFieldParts(field), {
+      wrapper: ({ children }) => createElement(StepSubmitted, { value: true }, children),
+    })
+
+    expect(outsideStep.result.current.isErrorDue).toBe(false)
+    expect(insideSubmittedStep.result.current.isErrorDue).toBe(true)
   })
 
   it('ties the control to the description it is given', () => {

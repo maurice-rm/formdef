@@ -1,6 +1,7 @@
 import { errorsOf } from './errors-of'
 import { fieldId } from './field-id'
 import type { FieldApiOf } from './field-of'
+import { hasDueError } from './has-due-error'
 
 const DESCRIPTION_SUFFIX = '-description'
 const ERROR_SUFFIX = '-error'
@@ -32,18 +33,11 @@ export interface FieldParts {
   errorId: string
   /**
    * Whether the widget shows the field's errors now: the field is invalid and was edited and
-   * left, or the form was submitted.
+   * left, or the form was submitted, or, read by {@link useFieldParts}, the step it is shown in.
    */
   isErrorDue: boolean
   /** The texts of the field's errors, as {@link errorsOf} returns them. */
   errors: string[]
-}
-
-function isErrorDueFor<TValue>(field: FieldApiOf<TValue>, wasSubmitted: boolean): boolean {
-  const { isBlurred, isDirty, isValid } = field.state.meta
-  const wasEditedAndLeft = isBlurred && isDirty
-
-  return !isValid && (wasEditedAndLeft || wasSubmitted)
 }
 
 function idrefsOf(ids: (string | undefined)[]): string | undefined {
@@ -63,7 +57,7 @@ export function fieldPartsFor<TValue>(
   const id = fieldId(field.form.formId, field.name)
   const descriptionId = `${id}${DESCRIPTION_SUFFIX}`
   const errorId = `${id}${ERROR_SUFFIX}`
-  const isErrorDue = isErrorDueFor(field, options.wasSubmitted)
+  const isErrorDue = hasDueError(field.state.meta, options.wasSubmitted)
   const errors = errorsOf(field)
   const isErrorNamed = isErrorDue && errors.length > 0
   const hasDescription = options.description !== undefined && options.description !== ''
