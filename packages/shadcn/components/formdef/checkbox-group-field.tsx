@@ -37,6 +37,7 @@ export const CheckboxGroupField = ({
   field,
   label,
   description,
+  descriptionPosition,
   options,
   required,
   ...attrs
@@ -67,42 +68,43 @@ export const CheckboxGroupField = ({
           <LabelText required={required}>{label}</LabelText>
         </FieldLegend>
       )}
-      <FieldGroup data-slot="checkbox-group">
-        {options.map((option) => {
-          const id = optionId(group.id, option.value)
-          const descriptionId = `${id}${DESCRIPTION_SUFFIX}`
-          const hasDescription = option.description !== undefined && option.description !== ''
+      <FieldNotes parts={parts} description={description} descriptionPosition={descriptionPosition}>
+        <FieldGroup data-slot="checkbox-group">
+          {options.map((option) => {
+            const id = optionId(group.id, option.value)
+            const descriptionId = `${id}${DESCRIPTION_SUFFIX}`
+            const hasDescription = option.description !== undefined && option.description !== ''
 
-          return (
-            <Field
-              key={option.value}
-              orientation="horizontal"
-              data-invalid={parts.isErrorDue}
-              data-disabled={attrs.disabled === true || option.disabled === true}
-            >
-              <Checkbox
-                {...attrs}
-                id={id}
-                disabled={attrs.disabled === true || option.disabled === true}
-                aria-invalid={ariaInvalid}
-                aria-errormessage={ariaErrorMessage}
-                aria-describedby={hasDescription ? descriptionId : undefined}
-                checked={values.includes(option.value)}
-                onCheckedChange={(isChecked) => toggle(option.value, isChecked)}
-              />
-              <FieldContent>
-                <FieldLabel htmlFor={id} className="font-normal">
-                  {option.label}
-                </FieldLabel>
-                {hasDescription && (
-                  <FieldDescription id={descriptionId}>{option.description}</FieldDescription>
-                )}
-              </FieldContent>
-            </Field>
-          )
-        })}
-      </FieldGroup>
-      <FieldNotes parts={parts} description={description} />
+            return (
+              <Field
+                key={option.value}
+                orientation="horizontal"
+                data-invalid={parts.isErrorDue}
+                data-disabled={attrs.disabled === true || option.disabled === true}
+              >
+                <Checkbox
+                  {...attrs}
+                  id={id}
+                  disabled={attrs.disabled === true || option.disabled === true}
+                  aria-invalid={ariaInvalid}
+                  aria-errormessage={ariaErrorMessage}
+                  aria-describedby={hasDescription ? descriptionId : undefined}
+                  checked={values.includes(option.value)}
+                  onCheckedChange={(isChecked) => toggle(option.value, isChecked)}
+                />
+                <FieldContent>
+                  <FieldLabel htmlFor={id} className="font-normal">
+                    {option.label}
+                  </FieldLabel>
+                  {hasDescription && (
+                    <FieldDescription id={descriptionId}>{option.description}</FieldDescription>
+                  )}
+                </FieldContent>
+              </Field>
+            )
+          })}
+        </FieldGroup>
+      </FieldNotes>
     </FieldSet>
   )
 }

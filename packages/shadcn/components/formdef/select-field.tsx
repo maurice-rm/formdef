@@ -30,6 +30,7 @@ export const SelectField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   options,
   placeholder,
   className,
@@ -45,6 +46,7 @@ export const SelectField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={attrs.disabled}
       required={attrs.required}
     >

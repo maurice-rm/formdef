@@ -36,6 +36,7 @@ export const TextField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   addons = [],
   ...attrs
 }: TextFieldProps) => {
@@ -59,6 +60,7 @@ export const TextField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={attrs.disabled}
       required={attrs.required}
     >

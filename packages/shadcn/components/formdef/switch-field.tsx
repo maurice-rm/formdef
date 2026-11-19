@@ -14,7 +14,7 @@ type Attrs = Pick<ComponentProps<typeof Switch>, 'className' | 'disabled' | 'rea
 const TITLE_SUFFIX = '-title'
 
 type SwitchFieldProps = FieldOf<boolean> &
-  Omit<FieldLabels, 'labelAside'> &
+  Omit<FieldLabels, 'labelAside' | 'descriptionPosition'> &
   Attrs & {
     variant?: 'split' | 'list' | 'card' | undefined
   }

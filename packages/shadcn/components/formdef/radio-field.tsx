@@ -39,6 +39,7 @@ export const RadioField = ({
   field,
   label,
   description,
+  descriptionPosition,
   options,
   variant = 'list',
   ...attrs
@@ -106,17 +107,18 @@ export const RadioField = ({
           <LabelText required={attrs.required}>{label}</LabelText>
         </FieldLegend>
       )}
-      <RadioGroup
-        {...attrs}
-        {...group}
-        aria-labelledby={label === undefined ? undefined : legendId}
-        onBlur={blurLeaving(onBlur)}
-        value={value}
-        onValueChange={(chosen) => field.handleChange(String(chosen ?? ''))}
-      >
-        {options.map(item)}
-      </RadioGroup>
-      <FieldNotes parts={parts} description={description} />
+      <FieldNotes parts={parts} description={description} descriptionPosition={descriptionPosition}>
+        <RadioGroup
+          {...attrs}
+          {...group}
+          aria-labelledby={label === undefined ? undefined : legendId}
+          onBlur={blurLeaving(onBlur)}
+          value={value}
+          onValueChange={(chosen) => field.handleChange(String(chosen ?? ''))}
+        >
+          {options.map(item)}
+        </RadioGroup>
+      </FieldNotes>
     </FieldSet>
   )
 }

@@ -34,6 +34,7 @@ export const TextareaField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   addons = [],
   ...attrs
 }: TextareaFieldProps) => {
@@ -56,6 +57,7 @@ export const TextareaField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={attrs.disabled}
       required={attrs.required}
     >

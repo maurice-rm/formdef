@@ -35,6 +35,7 @@ export const DateTimeField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   placeholder = PICK_DATE_AND_TIME,
   format = asIs,
   timeLabel = TIME,
@@ -59,6 +60,7 @@ export const DateTimeField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={disabled}
       required={required}
     >
