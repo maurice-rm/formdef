@@ -44,7 +44,7 @@ const Stepper = ({
   isLast,
   isSubmitting,
   children,
-}: StepperProps): ReactNode => (
+}: StepperProps<{ description?: string }>): ReactNode => (
   <section aria-label="Stepper" data-submitting={String(isSubmitting)}>
     <ol>
       {steps.map((step, index) => (
@@ -55,6 +55,7 @@ const Stepper = ({
           data-reachable={String(step.isReachable)}
           data-complete={String(step.isComplete)}
           data-due-error={String(step.hasDueError)}
+          data-description={step.description}
         >
           <button type="button" onClick={() => goTo(index)}>{`Go to ${step.label}`}</button>
         </li>
@@ -311,6 +312,66 @@ describe('createForm with steps', () => {
       expect(stepItem('Contact').dataset.complete).toBe('true')
     })
   }
+
+  it('passes the props of each step entry flat on its state', () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        layout: [{ ...STEPS[0], props: { description: 'How we reach you' } }, STEPS[1], STEPS[2]],
+      }),
+    )
+    render(<Checklist />)
+
+    expect(stepItem('Contact').dataset.description).toBe('How we reach you')
+    expect(stepItem('Building').dataset.description).toBeUndefined()
+  })
+
+  it('builds the props of a step from the values of the form', async () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        layout: [
+          STEPS[0],
+          {
+            ...STEPS[1],
+            props: (values: typeof DEFAULT_VALUES) => ({
+              description:
+                values.contact.name === '' ? 'Your building' : `${values.contact.name}'s building`,
+            }),
+          },
+          STEPS[2],
+        ],
+      }),
+    )
+    render(<Checklist />)
+
+    expect(stepItem('Building').dataset.description).toBe('Your building')
+    await type('Name', 'Ada')
+    expect(stepItem('Building').dataset.description).toBe("Ada's building")
+  })
+
+  it('builds no props for a step its condition hides', async () => {
+    const buildProps = vi.fn(() => ({ description: 'Your building' }))
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        layout: [
+          STEPS[0],
+          {
+            ...STEPS[1],
+            visibleWhen: (values: typeof DEFAULT_VALUES) => values.contact.name !== '',
+            props: buildProps,
+          },
+          STEPS[2],
+        ],
+      }),
+    )
+    render(<Checklist />)
+
+    expect(buildProps).not.toHaveBeenCalled()
+    await type('Name', 'Ada')
+    expect(stepItem('Building').dataset.description).toBe('Your building')
+  })
 
   it('marks a step whose errors are due once it was submitted', async () => {
     const Checklist = createForm(BINDING, checklistConfig())

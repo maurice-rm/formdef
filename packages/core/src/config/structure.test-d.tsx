@@ -38,6 +38,17 @@ describe('StepperProps', () => {
     }>()
   })
 
+  it('puts the props a stepper declares per step on each step’s state', () => {
+    expectTypeOf<StepperProps<{ description?: string }>['steps']>().toEqualTypeOf<
+      readonly (StepState & { description?: string })[]
+    >()
+  })
+
+  it('keeps the keys of a step’s state from being declared as step props', () => {
+    // @ts-expect-error the core fills the label of each step
+    expectTypeOf<StepperProps<{ label: string }>>().not.toBeAny()
+  })
+
   it('carries the steps, the navigation and the current step as children', () => {
     expectTypeOf<StepperProps>().toEqualTypeOf<{
       steps: readonly StepState[]

@@ -422,8 +422,12 @@ export const Checklist = createForm({
     },
   },
   layout: [
-    { step: 'contact', label: 'Contact' },
-    { step: 'building', label: 'Building' },
+    { step: 'contact', label: 'Contact', props: { description: 'How we reach you' } },
+    {
+      step: 'building',
+      label: 'Building',
+      props: (values) => ({ description: values.contact.name }),
+    },
     { step: 'envelope', label: 'Envelope' },
     { step: 'heating', label: 'Heating', visibleWhen: (values) => values.building.isActive },
     { step: 'solar', label: 'Solar' },

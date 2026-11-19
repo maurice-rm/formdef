@@ -189,6 +189,8 @@ export const { createForm, Fields } = createRegistry({
 ```
 
 A slot component may take props of its own beyond these; a section or row entry then passes them
-through `props`, checked against the component. `body` takes none, since no entry describes it.
+through `props`, checked against the component. A step entry passes what the stepper declares per
+step, as [Steps](/guides/steps#props-for-the-stepper) shows. `body` takes none, since no entry
+describes it.
 When you build the `<form>` yourself with `Fields`, `body` is not applied: the shell is yours, and
 so is the wrapper.

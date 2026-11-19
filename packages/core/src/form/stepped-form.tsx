@@ -98,6 +98,31 @@ const isShown = (step: RootStep, values: unknown): boolean =>
 const hasSameItems = (first: readonly boolean[], second: readonly boolean[]): boolean =>
   first.length === second.length && first.every((item, index) => item === second[index])
 
+type StepProps = Readonly<Record<string, unknown>> | undefined
+
+const stepPropsOf = (step: RootStep, values: unknown): StepProps => {
+  const props = typeof step.props === 'function' ? step.props(values) : step.props
+
+  return typeof props === 'object' && props !== null ? props : undefined
+}
+
+const hasSameProps = (first: StepProps, second: StepProps): boolean => {
+  if (first === undefined || second === undefined) {
+    return first === second
+  }
+  const keys = Object.keys(first)
+
+  return (
+    keys.length === Object.keys(second).length &&
+    keys.every((key) => Object.hasOwn(second, key) && Object.is(first[key], second[key]))
+  )
+}
+
+// Props a function of the values builds anew are equal when every value is the same.
+const hasSameStepProps = (first: readonly StepProps[], second: readonly StepProps[]): boolean =>
+  first.length === second.length &&
+  first.every((props, index) => hasSameProps(props, second[index]))
+
 // The step's own path belongs to its form group, which renders no control.
 const erringFieldPathsUnder = (form: StepForm, key: string): string[] =>
   erringPathsUnder(form.store.get().fieldMeta, key).filter((path) => path !== key)
@@ -168,7 +193,10 @@ const GroupHandle = ({ group, currentGroup, children }: GroupHandleProps): React
  * key, inside the registered stepper. A step moves on when its group submits valid; otherwise its
  * errors become due and its first invalid control takes the focus. The last step submits the
  * form; when that fails, the first step holding an error is shown and its first invalid control
- * takes the focus. A step its condition hides is skipped, except while it is the current one.
+ * takes the focus. A step its condition hides is skipped, except while it is the current one. The
+ * props of each step entry arrive flat on its state; props built from the values are read again
+ * when the values change, never for a hidden step, and the stepper renders again only when one of
+ * them changed.
  *
  * @throws When no `structure.stepper` is registered.
  */
@@ -208,6 +236,16 @@ export const SteppedForm = ({
       ),
     { compare: hasSameItems },
   )
+  const stepProps = useSelector(
+    form.store,
+    (state) =>
+      steps.map((step) =>
+        step.step === currentKey || isShown(step, state.values)
+          ? stepPropsOf(step, state.values)
+          : undefined,
+      ),
+    { compare: hasSameStepProps },
+  )
   const wasSubmitted = useSelector(form.store, (state) => state.submissionAttempts > 0)
   const isSubmitting = useSelector(form.store, (state) => state.isSubmitting)
   // A step's submit settles after its validation; by then another step may be shown.
@@ -237,6 +275,7 @@ export const SteppedForm = ({
   const current = visible.findIndex(({ step }) => step.step === currentKey)
   const isValidAt = ({ position }: VisibleStep): boolean => !hasErrors[position]
   const states: StepState[] = visible.map(({ step, position }, index) => ({
+    ...stepProps[position],
     label: step.label,
     isCurrent: index === current,
     isVisited: visited.has(step.step),

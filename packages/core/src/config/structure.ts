@@ -72,11 +72,18 @@ export interface StepState {
   hasDueError: boolean
 }
 
+// Step props take any key but those of StepState, which the core fills. Without `& object` the
+// check for a weak type rejects step props that share no key with StepState, which is all of them.
+type StepPropsShape = { [Key in keyof StepState]?: never } & object
+
 /**
  * The props a registered `structure.stepper` component receives: the visible steps of a stepped
  * form, the navigation between them, and the current step. The stepper renders the progress and
  * the controls that move; the renderer renders no text of its own. Props the stepper declares on
  * top are its own.
+ *
+ * @typeParam TStep - The props each step entry passes under `props`, which arrive flat on each
+ *   step's state next to its `label`; none by default. The core gives them no meaning.
  *
  * @example
  * ```tsx
@@ -90,9 +97,12 @@ export interface StepState {
  * )
  * ```
  */
-export interface StepperProps {
-  /** The visible steps, in layout order. */
-  steps: readonly StepState[]
+export interface StepperProps<
+  // biome-ignore lint/complexity/noBannedTypes: `{}` alone vanishes from `StepState & TStep`, so a stepper without step props reads `StepState`.
+  TStep extends StepPropsShape = {},
+> {
+  /** The visible steps, in layout order, each with the props its entry passes. */
+  steps: readonly (StepState & TStep)[]
   /** The index of the current step in `steps`. */
   current: number
   /**

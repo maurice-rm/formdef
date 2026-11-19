@@ -31,7 +31,7 @@ type SlotSupplied = {
   section: SectionProps
   row: RowProps
   arrayFrame: ArrayFrameProps<AnyProps, AnyProps>
-  stepper: StepperProps
+  stepper: StepperProps<AnyProps>
 }
 
 /** The structure slots a registry fills. */

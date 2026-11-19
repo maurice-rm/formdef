@@ -60,6 +60,7 @@ export const { createForm } = createRegistry({
     section: (_: SectionProps & { description?: string }): ReactNode => null,
     row: (_: RowProps & { className?: string }): ReactNode => null,
     arrayFrame: <TItem,>(_: ArrayFrameProps<TItem> & { label?: string }): ReactNode => null,
-    stepper: (_: StepperProps & { nextLabel?: string }): ReactNode => null,
+    stepper: (_: StepperProps<{ description?: string }> & { nextLabel?: string }): ReactNode =>
+      null,
   },
 })

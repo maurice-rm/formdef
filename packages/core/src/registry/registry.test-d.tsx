@@ -317,6 +317,51 @@ describe('Registry.createForm with steps', () => {
     })
   })
 
+  it('types the props of a step after the registered stepper', () => {
+    const DescribedStepper = ({
+      steps,
+      children,
+    }: StepperProps<{ description?: string; icon: ReactNode }>): ReactNode => (
+      <section aria-description={steps[0]?.description}>{children}</section>
+    )
+    const described = createRegistry({
+      fieldContext,
+      formContext,
+      widgets: { text: TextField, number: NumberField },
+      structure: { stepper: DescribedStepper },
+    })
+
+    const Checklist = described.createForm({
+      schema,
+      defaultValues,
+      fields,
+      layout: [
+        {
+          step: 'contact',
+          label: 'Contact',
+          props: { icon: null, description: 'How we reach you' },
+        },
+        {
+          step: 'building',
+          label: 'Building',
+          props: (values) => ({ icon: null, description: values.contact.name }),
+        },
+      ],
+    })
+    expectTypeOf(Checklist).not.toBeAny()
+
+    described.createForm({
+      schema,
+      defaultValues,
+      fields,
+      // @ts-expect-error the stepper needs an icon for each step
+      layout: [
+        { step: 'contact', label: 'Contact' },
+        { step: 'building', label: 'Building', props: { icon: null } },
+      ],
+    })
+  })
+
   it('renders no steps under Fields', () => {
     const Shell = (): ReactNode => {
       const form = registry.formHook.useAppForm({ defaultValues })

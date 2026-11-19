@@ -74,6 +74,71 @@ export const Checklist = createForm({
 Each step is a TanStack [form group](https://tanstack.com/form/latest/docs/framework/react/guides/form-groups)
 at its key. That is why a step is one object of the values: a form group covers one path.
 
+## Props for the stepper
+
+A stepper can show more per step than its label, a line under it or an icon. It declares what it
+reads per step as the type parameter of `StepperProps`, and each step entry passes those props
+under `props`, checked against the registered stepper like the props of a section:
+
+```tsx
+import { createRegistry, type FieldOf, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+// ---cut---
+const Stepper = ({ steps, children }: StepperProps<{ description?: string }>) => (
+  <section>
+    <ol>
+      {steps.map((step) => (
+        <li key={step.label}>
+          {step.label}
+          {step.description !== undefined && <small>{step.description}</small>}
+        </li>
+      ))}
+    </ol>
+    {children}
+  </section>
+)
+
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+  structure: { stepper: Stepper },
+})
+
+export const Checklist = createForm({
+  schema: z.object({
+    contact: z.object({ name: z.string() }),
+    building: z.object({ city: z.string() }),
+  }),
+  defaultValues: { contact: { name: '' }, building: { city: '' } },
+  fields: {
+    contact: { fields: { name: { widget: 'text', props: { label: 'Name' } } } },
+    building: { fields: { city: { widget: 'text', props: { label: 'City' } } } },
+  },
+  layout: [
+    { step: 'contact', label: 'Contact', props: { description: 'How we reach you' } },
+    {
+      step: 'building',
+      label: 'Building',
+      props: (values) => ({
+        description: values.contact.name === '' ? 'Your building' : `${values.contact.name}'s building`,
+      }),
+    },
+  ],
+})
+```
+
+- The props arrive flat on each step's state, next to its `label`: `steps[0].description`.
+- `props` is absent when the stepper declares nothing per step, optional when every prop it
+  declares is optional, and required otherwise.
+- Like every `props`, it is an object or a function of the form's values. The stepper renders
+  again when such a function returns a different value; it is not called while its step is hidden.
+- The keys of [`StepState`](/api/step-state) are filled by formdef and cannot be step props.
+- formdef gives step props no meaning; which ones exist is the stepper's choice.
+
 ## Moving between steps
 
 | Action | What happens |
@@ -85,6 +150,10 @@ at its key. That is why a step is one object of the values: a form group covers 
 | going to a step | Allowed for a step already visited, while every step before it is valid. |
 
 Values stay in the form while their step is not shown, so going back finds them as they were.
+
+A step is **complete** once it was checked, by its next or a submit of the form, and none of its
+fields holds an error now; the stepper reads it as `isComplete` to tick the step. A step only
+visited, left by back or by going to another step, was never checked and is not complete.
 
 After pressing next, every invalid field of the step shows its error, like a submit does for a whole
 form; fields of later steps stay quiet until their turn. [Errors and accessibility](/guides/errors-and-accessibility#when-an-error-is-due)

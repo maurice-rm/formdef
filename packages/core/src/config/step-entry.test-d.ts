@@ -20,6 +20,14 @@ type Parts<TStructure> = {
 
 type Step = StepEntry<Parts<{ stepper: ComponentType<StepperProps> }>, Values>
 type StepWithoutStepper = StepEntry<Parts<Record<never, never>>, Values>
+type StepWithDescription = StepEntry<
+  Parts<{ stepper: ComponentType<StepperProps<{ description?: string }>> }>,
+  Values
+>
+type StepWithIcon = StepEntry<
+  Parts<{ stepper: ComponentType<StepperProps<{ icon: string; description?: string }>> }>,
+  Values
+>
 
 describe('StepEntry', () => {
   it('names an object key of the root level and a label', () => {
@@ -63,9 +71,50 @@ describe('StepEntry', () => {
     expectTypeOf(entry).not.toBeAny()
   })
 
-  it('takes no props', () => {
-    // @ts-expect-error a step carries no props for the stepper
+  it('takes no props when the stepper declares none per step', () => {
+    // @ts-expect-error the registered stepper reads nothing per step beyond its state
     const entry: Step = { step: 'contact', label: 'Contact', props: { icon: 'user' } }
+    expectTypeOf(entry).not.toBeAny()
+  })
+
+  it('takes the props the stepper declares per step, optional when every one is', () => {
+    const plain: StepWithDescription = { step: 'contact', label: 'Contact' }
+    const described: StepWithDescription = {
+      step: 'contact',
+      label: 'Contact',
+      props: { description: 'How we reach you' },
+    }
+    expectTypeOf(plain).not.toBeAny()
+    expectTypeOf(described).not.toBeAny()
+  })
+
+  it('requires props when the stepper declares one it needs', () => {
+    // @ts-expect-error the stepper needs an icon for each step
+    const entry: StepWithIcon = { step: 'contact', label: 'Contact' }
+    const withIcon: StepWithIcon = { step: 'contact', label: 'Contact', props: { icon: 'user' } }
+    expectTypeOf(entry).not.toBeAny()
+    expectTypeOf(withIcon).not.toBeAny()
+  })
+
+  it('rejects a prop the stepper does not declare', () => {
+    const entry: StepWithDescription = {
+      step: 'contact',
+      label: 'Contact',
+      // @ts-expect-error the stepper reads a description per step, nothing else
+      props: { icon: 'user' },
+    }
+    expectTypeOf(entry).not.toBeAny()
+  })
+
+  it('builds props from the values of the whole form', () => {
+    const entry: StepWithDescription = {
+      step: 'contact',
+      label: 'Contact',
+      props: (values) => {
+        expectTypeOf(values).toEqualTypeOf<Values>()
+        return { description: values.contact.name }
+      },
+    }
     expectTypeOf(entry).not.toBeAny()
   })
 
