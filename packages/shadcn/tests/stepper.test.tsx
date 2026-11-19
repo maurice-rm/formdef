@@ -1,9 +1,9 @@
-import { createRegistry } from '@formdef/core'
+import { createRegistry, type StepperProps } from '@formdef/core'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 
-import { Stepper } from '@/components/formdef/stepper'
+import { Stepper, type StepperStepProps } from '@/components/formdef/stepper'
 import { TextField } from '@/components/formdef/text-field'
 import { fieldContext, formContext } from '@/lib/formdef/context'
 
@@ -18,6 +18,34 @@ const schema = z.object({
   contact: z.object({ name: z.string().min(1, 'Enter a name') }),
   heating: z.object({ kind: z.string() }),
 })
+
+type StepperOptions = Omit<Parameters<typeof Stepper>[0], keyof StepperProps>
+
+const registryWith = (options: StepperOptions) =>
+  createRegistry({
+    fieldContext,
+    formContext,
+    widgets: { text: TextField },
+    structure: {
+      stepper: (props: StepperProps<StepperStepProps>) => <Stepper {...props} {...options} />,
+    },
+  })
+
+const fields = {
+  contact: { fields: { name: { widget: 'text', props: { label: 'Name' } } } },
+  heating: { fields: { kind: { widget: 'text', props: { label: 'Kind' } } } },
+} as const
+
+const checklistWith = (options: StepperOptions) =>
+  registryWith(options).createForm({
+    schema,
+    defaultValues: { contact: { name: '' }, heating: { kind: '' } },
+    fields,
+    layout: [
+      { step: 'contact', label: 'Contact', props: { description: 'How we reach you' } },
+      { step: 'heating', label: 'Heating' },
+    ],
+  })
 
 const checklist = (onSubmit = vi.fn()) =>
   createForm({
@@ -55,15 +83,73 @@ const Translated = ({ children, ...props }: Parameters<typeof Stepper>[0]) => (
 afterEach(cleanup)
 
 describe('Stepper', () => {
-  it('names the current step in a heading and shows how far the person is', () => {
+  it('names the current step in a heading and lists the steps with the current one marked', () => {
     const Checklist = checklist()
     render(<Checklist />)
 
     expect(screen.getByRole('heading', { name: 'Contact' })).toBeDefined()
     expect(screen.getByText('Step 1 of 2')).toBeDefined()
+    const items = screen.getAllByRole('listitem')
+    expect(items).toHaveLength(2)
+    expect(items[0]?.querySelector('[aria-current="step"]')).not.toBeNull()
+    expect(items[1]?.dataset.state).toBe('upcoming')
+  })
+
+  it('shows how far the person is as a named progress bar in the compact variant', () => {
+    const Checklist = checklistWith({ variant: 'compact' })
+    render(<Checklist />)
+
     const progress = screen.getByRole('progressbar', { name: 'Step 1 of 2' })
     expect(progress.getAttribute('aria-valuenow')).toBe('1')
     expect(progress.getAttribute('aria-valuemax')).toBe('2')
+    expect(progress.getAttribute('aria-valuetext')).toBe('Step 1 of 2')
+    expect(screen.getByText('Up next: Heating')).toBeDefined()
+  })
+
+  it('shows the description a step entry passes, under the heading and in the list', () => {
+    const Checklist = checklistWith({})
+    render(<Checklist />)
+
+    expect(screen.getAllByText('How we reach you')).toHaveLength(2)
+  })
+
+  it('leaves out the descriptions and the heading when told to, keeping the heading for assistive technology', () => {
+    const Checklist = checklistWith({ showDescriptions: false, showHeading: false })
+    render(<Checklist />)
+
+    expect(screen.getByRole('heading', { name: 'Contact' }).className).toContain('sr-only')
+    expect(screen.queryByText('How we reach you', { selector: 'p' })).toBeNull()
+  })
+
+  it('ticks a complete step, names it so and goes back to it', async () => {
+    const Checklist = checklist()
+    render(<Checklist />)
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Ada' } })
+    await click('Next')
+    await click('Contact, Complete')
+
+    expect(screen.getByRole('heading', { name: 'Contact' })).toBeDefined()
+  })
+
+  it('offers no way to a step through the list when it is not navigable', async () => {
+    const Checklist = checklistWith({ navigable: false })
+    render(<Checklist />)
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Ada' } })
+    await click('Next')
+
+    expect(screen.queryByRole('button', { name: 'Contact, Complete' })).toBeNull()
+  })
+
+  it('names a step whose errors are due', async () => {
+    const Checklist = checklist()
+    render(<Checklist />)
+
+    await click('Next')
+
+    expect(screen.getByText(', Has errors')).toBeDefined()
+    expect(screen.getAllByRole('listitem')[0]?.dataset.state).toBe('error')
   })
 
   it('offers no way back on the first step and a submit on the last', async () => {
@@ -148,13 +234,6 @@ describe('Stepper', () => {
 
     expect(screen.getByText('Step 1 of 2')).toBeDefined()
     expect(document.activeElement).toBe(name)
-  })
-
-  it('names its progress for assistive technology as it shows it', () => {
-    const Checklist = checklist()
-    render(<Checklist />)
-
-    expect(screen.getByRole('progressbar').getAttribute('aria-valuetext')).toBe('Step 1 of 2')
   })
 
   it('submits once while a submit is running', async () => {

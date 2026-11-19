@@ -137,7 +137,8 @@ export const Checklist = createForm({
 - Like every `props`, it is an object or a function of the form's values. The stepper renders
   again when such a function returns a different value; it is not called while its step is hidden.
 - The keys of [`StepState`](/api/step-state) are filled by formdef and cannot be step props.
-- formdef gives step props no meaning; which ones exist is the stepper's choice.
+- formdef gives step props no meaning; which ones exist is the stepper's choice. The
+  [stepper](/widgets/stepper) of the shadcn registry reads `description` and `icon`.
 
 ## Moving between steps
 

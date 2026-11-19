@@ -47,8 +47,12 @@ export const StepperPreview = createForm({
     wishes: { fields: { notes: { widget: 'textarea', props: { label: 'Notes' } } } },
   },
   layout: [
-    { step: 'contact', label: 'Contact' },
-    { step: 'heating', label: 'Current heating' },
-    { step: 'wishes', label: 'Your wishes' },
+    { step: 'contact', label: 'Contact', props: { description: 'How we reach you' } },
+    {
+      step: 'heating',
+      label: 'Current heating',
+      props: { description: 'What heats your home today' },
+    },
+    { step: 'wishes', label: 'Your wishes', props: { description: 'Anything we should know' } },
   ],
 })

@@ -750,9 +750,9 @@
       "name": "stepper",
       "type": "registry:component",
       "title": "Stepper",
-      "description": "A formdef structure slot that frames a form of steps: how far the person is, the current step under its heading, and the buttons back and next.",
-      "dependencies": ["@formdef/core", "cn"],
-      "registryDependencies": ["button"],
+      "description": "A formdef structure slot that frames a form of steps in one of four variants: circles, a rail, segments or a compact bar, with the current step under its heading and the buttons back and next.",
+      "dependencies": ["@formdef/core", "class-variance-authority", "cn", "lucide-react"],
+      "registryDependencies": ["button", "progress"],
       "files": [
         {
           "path": "components/formdef/stepper.tsx",
@@ -760,7 +760,7 @@
           "target": "@components/formdef/stepper.tsx"
         }
       ],
-      "docs": "Register it in lib/formdef: structure: { stepper: Stepper }. A root layout of steps, [{ step: 'contact', label: 'Contact' }, ...], renders through it. Its texts are props: backLabel, nextLabel, submitLabel and progressLabel.",
+      "docs": "Register it in lib/formdef: structure: { stepper: Stepper }, or with props set: structure: { stepper: (props) => <Stepper {...props} variant=\"rail\" /> }. A step entry passes description and icon under props: { step: 'contact', label: 'Contact', props: { description: 'How we reach you' } }.",
       "categories": ["form", "layout"]
     },
     {
