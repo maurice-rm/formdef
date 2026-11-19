@@ -695,7 +695,7 @@
       "type": "registry:component",
       "title": "Section",
       "description": "A formdef structure slot that renders a titled group as a fieldset, with an optional description.",
-      "dependencies": ["@formdef/core@>=0.4.0"],
+      "dependencies": ["@formdef/core@>=0.4.0", "cn"],
       "registryDependencies": ["field"],
       "files": [
         {
