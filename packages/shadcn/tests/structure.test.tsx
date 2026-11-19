@@ -93,6 +93,29 @@ describe('Section', () => {
 
     expect(screen.getByText('Building').classList).toContain('data-[variant=legend]:font-semibold')
   })
+
+  it('separates a legend section from the entry before it, above its title, with its class on the outermost element', () => {
+    const Sections = createForm({
+      schema: z.object({ name: z.string(), city: z.string() }),
+      defaultValues: { name: '', city: '' },
+      fields: {
+        name: { widget: 'text', props: { label: 'Name' } },
+        city: { widget: 'text', props: { label: 'City' } },
+      },
+      layout: [
+        { section: 'Contact', layout: ['name'] },
+        { section: 'Building', props: { className: 'mt-4' }, layout: ['city'] },
+      ],
+    })
+    render(<Sections />)
+
+    const building = screen.getByRole('group', { name: 'Building' })
+    const wrapper = building.parentElement as HTMLElement
+    expect(wrapper.dataset.slot).toBe('section')
+    expect(wrapper.classList).toContain('not-in-data-[slot=field-row]:not-first:border-t')
+    expect(wrapper.classList).toContain('mt-4')
+    expect(building.classList).not.toContain('mt-4')
+  })
 })
 
 describe('Row', () => {
