@@ -20,6 +20,11 @@
         "entry": ["src/**/*.test.{ts,tsx}", "src/**/*.test-d.{ts,tsx}"]
       }
     },
+    "packages/document": {
+      "vitest": {
+        "entry": ["src/**/*.test.ts", "src/**/*.test-d.ts"]
+      }
+    },
     "packages/shadcn": {
       "entry": ["lib/formdef/*.{ts,tsx}", "components/formdef/*.tsx", "hooks/formdef/*.ts"],
       "vitest": {
