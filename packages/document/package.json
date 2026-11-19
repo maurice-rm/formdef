@@ -38,6 +38,8 @@
     "test:types": "vitest run --typecheck.only"
   },
   "peerDependencies": {
+    "@formdef/core": "workspace:^",
+    "react": "^19.0.0",
     "typescript": ">=5.7"
   },
   "peerDependenciesMeta": {
@@ -47,8 +49,12 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.5",
+    "@formdef/core": "workspace:*",
     "@formdef/tsconfig": "workspace:*",
+    "@tanstack/react-form": "catalog:",
+    "@types/react": "catalog:",
     "publint": "0.3.25",
+    "react": "catalog:",
     "tsdown": "0.23.2",
     "typescript": "catalog:",
     "vitest": "catalog:"

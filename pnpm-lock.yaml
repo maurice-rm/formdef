@@ -365,12 +365,24 @@ importers:
       '@arethetypeswrong/core':
         specifier: 0.18.5
         version: 0.18.5
+      '@formdef/core':
+        specifier: workspace:*
+        version: link:../core
       '@formdef/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@tanstack/react-form':
+        specifier: 'catalog:'
+        version: 1.33.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.3.0
       publint:
         specifier: 0.3.25
         version: 0.3.25
+      react:
+        specifier: 'catalog:'
+        version: 19.3.1
       tsdown:
         specifier: 0.23.2
         version: 0.23.2(@arethetypeswrong/core@0.18.5)(oxc-resolver@11.24.2)(publint@0.3.25)(typescript@7.0.2)

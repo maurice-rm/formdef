@@ -8,6 +8,7 @@ const config: UserConfig = defineConfig({
   sourcemap: true,
   deps: {
     neverBundle: true,
+    onlyImport: ['@formdef/core', 'react'],
   },
   exports: {
     devExports: '@formdef/source',
