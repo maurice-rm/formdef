@@ -106,6 +106,34 @@ describe('Stepper', () => {
     expect(screen.getByText('Up next: Heating')).toBeDefined()
   })
 
+  it('wraps a long step label instead of cutting it off', () => {
+    const Checklist = checklistWith({})
+    const { container } = render(<Checklist />)
+
+    const labels = container.querySelectorAll('[data-slot=stepper-label] > span:first-child')
+    expect(labels.length).toBeGreaterThan(0)
+    for (const label of labels) {
+      expect(label.classList).not.toContain('truncate')
+      expect(label.classList).toContain('text-balance')
+    }
+  })
+
+  it('shows a step description in the list in full', () => {
+    const Checklist = checklistWith({ variant: 'rail' })
+    const { container } = render(<Checklist />)
+
+    const description = container.querySelector('[data-slot=stepper-label-description]')
+    expect(description?.textContent).toBe('How we reach you')
+    expect(description?.className).not.toMatch(/line-clamp/)
+  })
+
+  it('shows the next step in the compact variant in full', () => {
+    const Checklist = checklistWith({ variant: 'compact' })
+    render(<Checklist />)
+
+    expect(screen.getByText('Up next: Heating').classList).not.toContain('truncate')
+  })
+
   it('shows the description a step entry passes, under the heading and in the list', () => {
     const Checklist = checklistWith({})
     render(<Checklist />)

@@ -545,7 +545,7 @@ function StepperCompact({
       <div className="flex items-baseline justify-between gap-4 text-sm">
         <p
           className={cn(
-            'flex items-center gap-1.5 font-medium tabular-nums',
+            'flex items-center gap-1.5 font-medium tabular-nums @md/stepper:shrink-0',
             hasError && 'text-destructive',
           )}
         >
@@ -554,7 +554,9 @@ function StepperCompact({
           {hasError && <span className="sr-only">, {errorLabel}</span>}
         </p>
         {upNext && (
-          <p className="hidden truncate text-muted-foreground @md/stepper:block">{upNext}</p>
+          <p className="hidden text-end text-pretty text-muted-foreground @md/stepper:block">
+            {upNext}
+          </p>
         )}
       </div>
       <Progress
@@ -714,7 +716,7 @@ function StepperLabel({
     >
       <span
         className={cn(
-          'truncate text-sm font-medium transition-colors group-data-[size=lg]/stepper:text-base',
+          'text-sm font-medium text-balance wrap-break-word transition-colors group-data-[size=lg]/stepper:text-base',
           state === 'upcoming' && 'text-muted-foreground',
           state === 'error' && 'text-destructive',
           step.isReachable && !step.isCurrent && 'group-hover/stepper-trigger:text-foreground',
@@ -728,7 +730,7 @@ function StepperLabel({
         <span
           data-slot="stepper-label-description"
           className={cn(
-            'line-clamp-2 text-xs text-muted-foreground group-data-[size=lg]/stepper:text-sm',
+            'text-xs text-pretty text-muted-foreground group-data-[size=lg]/stepper:text-sm',
             descriptionClassName,
           )}
         >
