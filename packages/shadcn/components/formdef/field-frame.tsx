@@ -18,6 +18,7 @@ export const FieldFrame = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   disabled,
   required,
   children,
@@ -33,7 +34,8 @@ export const FieldFrame = ({
         {label}
       </LabelLine>
     )}
-    {children}
-    <FieldNotes parts={parts} description={description} />
+    <FieldNotes parts={parts} description={description} descriptionPosition={descriptionPosition}>
+      {children}
+    </FieldNotes>
   </Field>
 )

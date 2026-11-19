@@ -37,6 +37,7 @@ export const ComboboxField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   options,
   empty = NO_RESULTS,
   clearLabel = CLEAR,
@@ -57,6 +58,7 @@ export const ComboboxField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={attrs.disabled}
       required={attrs.required}
     >

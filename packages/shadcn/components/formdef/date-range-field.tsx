@@ -37,6 +37,7 @@ export const DateRangeField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   placeholder = PICK_A_RANGE,
   format = asIs,
   separator = EN_DASH,
@@ -67,6 +68,7 @@ export const DateRangeField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={disabled}
       required={required}
     >

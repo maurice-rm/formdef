@@ -45,6 +45,7 @@ export const MultiComboboxField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   options,
   empty = NO_RESULTS,
   removeLabel = removeOption,
@@ -66,6 +67,7 @@ export const MultiComboboxField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={attrs.disabled}
       required={attrs.required}
     >

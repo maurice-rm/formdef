@@ -28,6 +28,7 @@ export const NumberField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   ...attrs
 }: NumberFieldProps) => {
   const parts = useFieldParts(field, { description })
@@ -39,6 +40,7 @@ export const NumberField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={attrs.disabled}
       required={attrs.required}
     >

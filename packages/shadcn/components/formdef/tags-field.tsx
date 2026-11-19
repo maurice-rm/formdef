@@ -50,6 +50,7 @@ export const TagsField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   suggestions = [],
   empty = NO_RESULTS,
   removeLabel = removeTag,
@@ -80,6 +81,7 @@ export const TagsField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={attrs.disabled}
       required={attrs.required}
     >

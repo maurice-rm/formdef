@@ -741,6 +741,11 @@
           "path": "components/formdef/field-notes.tsx",
           "type": "registry:component",
           "target": "@components/formdef/field-notes.tsx"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
         }
       ],
       "docs": "Register it in lib/formdef: structure: { arrayFrame: ArrayFrame }. An array entry's props take label, description, min and max.",

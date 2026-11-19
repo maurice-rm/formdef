@@ -39,6 +39,7 @@ export const PasswordField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   reveal,
   ...attrs
 }: PasswordFieldProps) => {
@@ -53,6 +54,7 @@ export const PasswordField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={attrs.disabled}
       required={attrs.required}
     >

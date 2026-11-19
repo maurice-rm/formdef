@@ -26,6 +26,7 @@ export const DateField = ({
   label,
   labelAside,
   description,
+  descriptionPosition,
   placeholder = PICK_A_DATE,
   format = asIs,
   disabled,
@@ -46,6 +47,7 @@ export const DateField = ({
       label={label}
       labelAside={labelAside}
       description={description}
+      descriptionPosition={descriptionPosition}
       disabled={disabled}
       required={required}
     >

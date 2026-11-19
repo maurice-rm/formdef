@@ -14,7 +14,9 @@ type Attrs = Pick<
   'className' | 'disabled' | 'readOnly' | 'required'
 >
 
-type CheckboxFieldProps = FieldOf<boolean> & Omit<FieldLabels, 'labelAside'> & Attrs
+type CheckboxFieldProps = FieldOf<boolean> &
+  Omit<FieldLabels, 'labelAside' | 'descriptionPosition'> &
+  Attrs
 
 export const CheckboxField = ({ field, label, description, ...attrs }: CheckboxFieldProps) => {
   const parts = useFieldParts(field, { description })
