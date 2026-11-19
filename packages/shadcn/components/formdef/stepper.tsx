@@ -600,7 +600,7 @@ function StepperSegments({
               step={step}
               errorLabel={errorLabel}
               completeLabel={completeLabel}
-              className="sr-only w-full @lg/stepper:not-sr-only @lg/stepper:flex"
+              className="sr-only @lg/stepper:not-sr-only @lg/stepper:flex @lg/stepper:w-full"
               descriptionClassName={cn('hidden', showDescriptions && '@3xl/stepper:block')}
             />
           </StepperTrigger>
