@@ -1,5 +1,13 @@
 # @formdef/core
 
+## 0.4.0
+
+### Minor Changes
+
+- [#100](https://github.com/maurice-rm/formdef/pull/100) [`3571a86`](https://github.com/maurice-rm/formdef/commit/3571a864c23936afc66f2b16fa9c49a5c80bb622) Thanks [@maurice-rm](https://github.com/maurice-rm)! - A root `layout` of steps, `{ step: 'key', label: 'Title' }`, renders a form one step at a time through a new `structure.stepper` slot (`StepperProps`, `StepState`). Each step is a TanStack form group: next checks the step against the schema and moves on when it is valid, the last step submits the form, and a failed submit shows the first step holding an error. `StepState` tells the stepper whether a step is complete: checked by its next or a submit of the form, with no field holding an error now. A stepper declares what it reads per step as `StepperProps<{ description?: string }>`, and each step entry passes it under `props`, typed after the registered stepper and flat on each step's state. `useFieldParts` treats an error as due once the step it is shown in was submitted.
+
+- [#103](https://github.com/maurice-rm/formdef/pull/103) [`2388be2`](https://github.com/maurice-rm/formdef/commit/2388be24f94ed149c3d0c659841661bad2d83312) Thanks [@maurice-rm](https://github.com/maurice-rm)! - formdef now needs TypeScript 5.7 or later. TypeScript 5.4 to 5.6 leave `values` of a field's `visibleWhen` and derived `props` inside `createForm` implicitly `any`, so the earlier floor of 5.4 did not hold.
+
 ## 0.3.0
 
 ### Minor Changes
