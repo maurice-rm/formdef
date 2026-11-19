@@ -19,6 +19,23 @@ const corePackage = JSON.parse(readFileSync(join(ROOT, '../core/package.json'), 
 
 const readFile = (path: string): string => readFileSync(join(ROOT, path), 'utf8')
 
+const CORE = '@formdef/core'
+
+const MINIMUM_RANGE = /^>=\d+\.\d+\.\d+$/
+
+const coreDeclarations = registry.items.flatMap((item) =>
+  (item.dependencies ?? []).filter(
+    (declaration) => declaration === CORE || declaration.startsWith(`${CORE}@`),
+  ),
+)
+
+it(`names one minimum version of ${CORE} in every item that imports it`, () => {
+  const ranges = new Set(coreDeclarations.map((declaration) => declaration.slice(CORE.length + 1)))
+
+  expect([...ranges]).toHaveLength(1)
+  expect([...ranges][0]).toMatch(MINIMUM_RANGE)
+})
+
 describe.each(registry.items.map((item) => [item.name, item] as const))('%s', (_name, item) => {
   it('lands every file where it is written, in a formdef folder', () => {
     expect(landingProblems(item)).toEqual([])

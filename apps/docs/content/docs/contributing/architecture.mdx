@@ -62,7 +62,9 @@ The files are copied into users' projects, which shapes the package:
 
 - they import through the `@/` alias of a shadcn project, which the shadcn CLI rewrites;
 - their tests sit in `tests/`, not beside them, so a test never travels into a project;
-- `registry.json` lists every file an item installs, including the files it shares with others.
+- `registry.json` lists every file an item installs, including the files it shares with others;
+- every item names one minimum version of `@formdef/core`, raised when a file starts to use a
+  newer release, so a project never installs a core that lacks what the files import.
 
 ## The documentation
 
