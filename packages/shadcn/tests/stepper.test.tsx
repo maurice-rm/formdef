@@ -142,6 +142,19 @@ describe('Stepper', () => {
     expect(screen.queryByRole('button', { name: 'Contact, Complete' })).toBeNull()
   })
 
+  it('shows a due error of the current step in the compact variant', async () => {
+    const Checklist = checklistWith({ variant: 'compact' })
+    render(<Checklist />)
+
+    expect(screen.queryByText(', Has errors')).toBeNull()
+    await click('Next')
+
+    expect(screen.getByText(', Has errors')).toBeDefined()
+    expect(
+      document.querySelector('[data-slot="stepper-compact"]')?.getAttribute('data-state'),
+    ).toBe('error')
+  })
+
   it('names a step whose errors are due', async () => {
     const Checklist = checklist()
     render(<Checklist />)

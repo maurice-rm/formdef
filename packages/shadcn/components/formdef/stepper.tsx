@@ -226,6 +226,8 @@ function StepperNav({
         max={steps.length}
         progress={progress}
         upNext={showUpNext ? upNext : undefined}
+        hasError={steps[current]?.hasDueError}
+        errorLabel={list.errorLabel}
       />
     )
   }
@@ -522,17 +524,35 @@ function StepperCompact({
   max,
   progress,
   upNext,
+  hasError = false,
+  errorLabel = DEFAULT_ERROR_LABEL,
   ...props
 }: React.ComponentProps<'div'> & {
   value: number
   max: number
   progress: string
   upNext?: string | undefined
+  hasError?: boolean | undefined
+  errorLabel?: string | undefined
 }) {
   return (
-    <div data-slot="stepper-compact" className={cn('flex flex-col gap-3', className)} {...props}>
+    <div
+      data-slot="stepper-compact"
+      data-state={hasError ? 'error' : undefined}
+      className={cn('flex flex-col gap-3', className)}
+      {...props}
+    >
       <div className="flex items-baseline justify-between gap-4 text-sm">
-        <p className="font-medium tabular-nums">{progress}</p>
+        <p
+          className={cn(
+            'flex items-center gap-1.5 font-medium tabular-nums',
+            hasError && 'text-destructive',
+          )}
+        >
+          {hasError && <TriangleAlert className="size-4 shrink-0 self-center" />}
+          {progress}
+          {hasError && <span className="sr-only">, {errorLabel}</span>}
+        </p>
         {upNext && (
           <p className="hidden truncate text-muted-foreground @md/stepper:block">{upNext}</p>
         )}
@@ -542,7 +562,10 @@ function StepperCompact({
         max={max}
         aria-label={progress}
         getAriaValueText={() => progress}
-        className="**:data-[slot=progress-track]:h-2 group-data-[size=lg]/stepper:**:data-[slot=progress-track]:h-3 group-data-[size=sm]/stepper:**:data-[slot=progress-track]:h-1.5"
+        className={cn(
+          '**:data-[slot=progress-track]:h-2 group-data-[size=lg]/stepper:**:data-[slot=progress-track]:h-3 group-data-[size=sm]/stepper:**:data-[slot=progress-track]:h-1.5',
+          hasError && '**:data-[slot=progress-indicator]:bg-destructive',
+        )}
       />
     </div>
   )
