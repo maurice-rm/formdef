@@ -1,4 +1,4 @@
-import type { FieldOf, Registry } from '@formdef/core'
+import type { Registry, ValueOf } from '@formdef/core'
 import type { ComponentType } from 'react'
 
 import type { FieldKind } from './field-kind'
@@ -13,9 +13,6 @@ type WidgetsOf<TRegistry> =
   TRegistry extends Registry<infer TWidgets, any, any> ? TWidgets : never
 
 type PropsOf<TWidget> = TWidget extends ComponentType<infer TProps> ? TProps : never
-
-// As the core reads a widget's value type: a widget that declares none serves `unknown`.
-type ValueOf<TWidget> = PropsOf<TWidget> extends FieldOf<infer TValue> ? TValue : unknown
 
 /** What the renderer passes every widget itself, so a field kind does not. */
 type Supplied = 'field' | 'label' | 'description' | 'required'
