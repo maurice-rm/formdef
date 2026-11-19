@@ -203,10 +203,12 @@ export const Order = createForm({
 
 The schema validates the whole form, steps or not. Three habits keep a person from getting stuck:
 
-- **What a condition hides is optional in the schema.** A field or a step that is hidden is still
-  validated. When the schema demands a hidden field, the step cannot move on, and the person sees no
-  error to fix. Make the field optional, or require it only under the same condition with a
-  `refine`. The same holds for a hidden step: when the schema demands its fields, the form cannot be
+- **What a condition hides accepts every value it can hold.** A field or a step that is hidden is
+  still validated, with the value it held when the condition hid it. When the schema rejects that
+  value, the step cannot move on, and the person sees no error to fix. Making the field optional is
+  not enough: a postal code typed as `123` and then hidden still fails its format. Let the field's
+  own schema accept any value, and check its rule with a `refine` under the same condition, as
+  below. The same holds for a hidden step: when the schema rejects its values, the form cannot be
   submitted. Outside production, formdef warns in both cases and names the fields.
 - **A rule across the fields of a step names a field.** A `refine` on a step's object without a
   `path` reports on the step itself, which no field shows: next stays and the person sees nothing
@@ -215,6 +217,60 @@ The schema validates the whole form, steps or not. Three habits keep a person fr
 - **A rule across steps reports at the later step.** A `refine` that compares a value of an earlier
   step with one of a later step puts its `path` on the later field. Reported at the earlier one, it
   stops next there, while the value to change sits further on.
+
+A postal code shown by a checkbox follows the first rule. Its key accepts any string, and the step's
+object checks the format only while the checkbox is ticked, reported at the field:
+
+```tsx
+import { createRegistry, type FieldOf, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const CheckboxField = (_: FieldOf<boolean> & { label: string }) => null
+const Stepper = ({ children }: StepperProps) => <section>{children}</section>
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField, checkbox: CheckboxField },
+  structure: { stepper: Stepper },
+})
+// ---cut---
+const POSTAL_CODE = /^\d{5}$/
+
+export const Delivery = createForm({
+  schema: z.object({
+    contact: z
+      .object({ hasOtherAddress: z.boolean(), otherPostalCode: z.string() })
+      .refine(
+        (contact) => !contact.hasOtherAddress || POSTAL_CODE.test(contact.otherPostalCode),
+        { path: ['otherPostalCode'], message: 'Enter five digits' },
+      ),
+    order: z.object({ note: z.string() }),
+  }),
+  defaultValues: {
+    contact: { hasOtherAddress: false, otherPostalCode: '' },
+    order: { note: '' },
+  },
+  fields: {
+    contact: {
+      fields: {
+        hasOtherAddress: { widget: 'checkbox', props: { label: 'Deliver to another address' } },
+        otherPostalCode: {
+          widget: 'text',
+          props: { label: 'Postal code' },
+          visibleWhen: (values) => values.contact.hasOtherAddress,
+        },
+      },
+    },
+    order: { fields: { note: { widget: 'text', props: { label: 'Note' } } } },
+  },
+  layout: [
+    { step: 'contact', label: 'Contact' },
+    { step: 'order', label: 'Order' },
+  ],
+})
+```
 
 [Validation](/guides/validation#rules-that-span-fields) shows how a rule across fields is written.
 

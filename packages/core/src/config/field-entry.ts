@@ -49,19 +49,13 @@ type PartOf<TValue, TKey extends keyof NonNullable<TValue>> = undefined extends 
  * optional field entry for each key of the level's object.
  */
 export type LevelFields<TParts extends ConfigParts, TValue, TValues> = {
-  [Key in keyof NonNullable<TValue>]?: FieldEntry<
-    TParts,
-    PartOf<TValue, Key>,
-    TValues,
-    NonNullable<TValue>[Key]
-  >
+  [Key in keyof NonNullable<TValue>]?: FieldEntry<TParts, PartOf<TValue, Key>, TValues>
 }
 
-type LeafShape<TParts extends ConfigParts, TValue, TValues, TDeclared> = LeafEntry<
+type LeafShape<TParts extends ConfigParts, TValue, TValues> = LeafEntry<
   TParts['widgets'],
   TValue,
-  TValues,
-  TDeclared
+  TValues
 > &
   Owns<'widget', TValue>
 
@@ -97,13 +91,12 @@ type CustomShape<TValue> = {
  * One entry under `fields`, for a value of type `TValue` in a form whose values are `TValues`, with
  * the widgets and slots of `TParts`: a leaf (`widget`), an object (`fields`), an array (`item`) or a
  * custom entry (`render`), each with the options every entry shares; an array leaves `mode` to the
- * renderer. An entry has exactly one of these shapes. `TDeclared` is the value type its own level
- * declares; it differs from `TValue` only below an optional or nullable object.
+ * renderer. An entry has exactly one of these shapes.
  */
-export type FieldEntry<TParts extends ConfigParts, TValue, TValues, TDeclared = TValue> =
+export type FieldEntry<TParts extends ConfigParts, TValue, TValues> =
   | (FieldEntryOptions<TValue, TValues> &
       (
-        | LeafShape<TParts, TValue, TValues, TDeclared>
+        | LeafShape<TParts, TValue, TValues>
         | (IsLevel<TValue> extends true ? ObjectShape<TParts, TValue, TValues> : never)
         | CustomShape<TValue>
       ))
