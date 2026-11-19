@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import ts from 'typescript54'
+import ts from 'typescript57'
 
 // The public API of `@formdef/core`, name by name. A name is added here in the change that
 // exports it, never as a side effect of exporting it.
@@ -29,8 +29,8 @@ const PUBLIC_EXPORTS = [
   'useFieldParts',
 ]
 
-// TypeScript 5.4 reads the declarations because TypeScript 7 offers no stable compiler API, and
-// because 5.4 is the oldest compiler the declarations have to work on.
+// TypeScript 5.7 reads the declarations because TypeScript 7 offers no stable compiler API, and
+// because 5.7 is the oldest compiler the declarations have to work on.
 const declarationFile = fileURLToPath(import.meta.resolve('@formdef/core')).replace(
   /\.js$/,
   '.d.ts',

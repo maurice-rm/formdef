@@ -7,7 +7,7 @@
   "scripts": {
     "check-types": "pnpm run --sequential \"/^check-types:/\"",
     "check-types:current": "tsc -p tsconfig.bundler.json && tsc -p tsconfig.json && tsc -p scripts/tsconfig.json",
-    "check-types:floor": "node node_modules/typescript54/bin/tsc -p tsconfig.bundler.json && node node_modules/typescript54/bin/tsc -p tsconfig.json",
+    "check-types:floor": "node node_modules/typescript57/bin/tsc -p tsconfig.bundler.json && node node_modules/typescript57/bin/tsc -p tsconfig.json",
     "test": "node scripts/check-api.ts && node scripts/check-type-cost.ts"
   },
   "devDependencies": {
@@ -18,7 +18,7 @@
     "@types/react": "catalog:",
     "react": "catalog:",
     "typescript": "catalog:",
-    "typescript54": "npm:typescript@5.4.5",
+    "typescript57": "npm:typescript@5.7.3",
     "zod": "catalog:"
   }
 }

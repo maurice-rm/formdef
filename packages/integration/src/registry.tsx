@@ -154,6 +154,26 @@ export const SignUp = (): ReactNode => (
 // @ts-expect-error the config leaves the default values to the instance
 export const SignUpWithoutValues = (): ReactNode => <SignUpForm />
 
+// The oldest supported TypeScript types `values` of a field's condition and derived props on
+// every level; 5.6 and earlier leave them implicitly `any`.
+export const ShippingForm = registry.createForm({
+  schema: customerSchema,
+  fields: {
+    name: { widget: 'text', props: (values) => ({ label: values.billing.zip }) },
+    billing: { fields: addressFields },
+    shipping: {
+      fields: {
+        street: {
+          widget: 'text',
+          props: { label: 'Street' },
+          visibleWhen: (values) => values.billing.street !== '',
+        },
+        zip: { widget: 'text', props: { label: 'ZIP' } },
+      },
+    },
+  },
+})
+
 registry.createForm({
   schema: customerSchema,
   fields: { name: { widget: 'text', props: { label: 'Name' } } },
