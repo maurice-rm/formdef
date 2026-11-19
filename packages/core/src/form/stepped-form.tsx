@@ -123,6 +123,9 @@ const withoutCheck = (checks: StepChecks, key: string): StepChecks => {
 const isShown = (step: RootStep, values: unknown): boolean =>
   step.visibleWhen === undefined || step.visibleWhen(values)
 
+const firstShownKey = (steps: RootSteps, values: unknown): string =>
+  (steps.find((step) => isShown(step, values)) ?? steps[0]).step
+
 const hasSameItems = (first: readonly boolean[], second: readonly boolean[]): boolean =>
   first.length === second.length && first.every((item, index) => item === second[index])
 
@@ -231,7 +234,8 @@ const GroupHandle = ({ group, currentGroup, children }: GroupHandleProps): React
  * key, inside the registered stepper. A step moves on when its group submits valid; otherwise its
  * errors become due and its first invalid control takes the focus. The last step submits the
  * form; when that fails, the first step holding an error is shown and its first invalid control
- * takes the focus. A step its condition hides is skipped, except while it is the current one. The
+ * takes the focus. A step its condition hides is skipped, except while it is the current one. A
+ * reset of the submitted form starts the steps over. The
  * state of a step not shown is what its fields held when it was left, since their meta goes with
  * them; a checked step shown again is checked again, so its errors show. The
  * props of each step entry arrive flat on its state; props built from the values are read again
@@ -248,9 +252,7 @@ export const SteppedForm = ({
   requiredPaths,
   submitStep,
 }: SteppedFormProps): ReactNode => {
-  const [currentKey, setCurrentKey] = useState(
-    () => (steps.find((step) => isShown(step, form.store.get().values)) ?? steps[0]).step,
-  )
+  const [currentKey, setCurrentKey] = useState(() => firstShownKey(steps, form.store.get().values))
   const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set([currentKey]))
   const [attempted, setAttempted] = useState<ReadonlySet<string>>(() => new Set())
   const [isFocusPending, setIsFocusPending] = useState(false)
@@ -293,6 +295,22 @@ export const SteppedForm = ({
     { compare: hasSameStepProps },
   )
   const wasSubmitted = useSelector(form.store, (state) => state.submissionAttempts > 0)
+  // A reset of the form, such as `formApi.reset()` in `onSubmit`, sets its submit attempts back to
+  // none; the steps start over with it.
+  const wasSubmittedBefore = useRef(wasSubmitted)
+  useEffect(() => {
+    const isReset = wasSubmittedBefore.current && !wasSubmitted
+    wasSubmittedBefore.current = wasSubmitted
+    if (!isReset) {
+      return
+    }
+    const first = firstShownKey(steps, form.store.get().values)
+    recheckKey.current = undefined
+    setCurrentKey(first)
+    setVisited(new Set([first]))
+    setAttempted(new Set())
+    setLastChecks(new Map())
+  }, [wasSubmitted, steps, form])
   const isSubmitting = useSelector(form.store, (state) => state.isSubmitting)
   // A step's submit settles after its validation; by then another step may be shown.
   const shownKey = useRef(currentKey)

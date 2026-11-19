@@ -150,7 +150,9 @@ export const Checklist = createForm({
 | back | The previous step shows, always. |
 | going to a step | Allowed for a step already visited, while every step before it is valid. |
 
-Values stay in the form while their step is not shown, so going back finds them as they were.
+Values stay in the form while their step is not shown, so going back finds them as they were. A
+reset of the form after it was submitted, such as `formApi.reset()` in `onSubmit`, starts the steps
+over at the first one.
 
 A step is **complete** once it was checked, by its next or a submit of the form, and none of its
 fields holds an error now; the stepper reads it as `isComplete` to tick the step. A step only

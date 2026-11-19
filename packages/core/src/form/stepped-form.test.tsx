@@ -572,6 +572,29 @@ describe('createForm with steps', () => {
     expect(onSubmit).toHaveBeenCalledOnce()
   })
 
+  it('starts the steps over when onSubmit resets the form', async () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        onSubmit: ({ formApi }: { formApi: { reset: () => void } }) => formApi.reset(),
+      }),
+    )
+    render(<Checklist />)
+
+    await type('Name', 'Ada')
+    await click('Next')
+    await click('Next')
+    await type('Kind', 'Gas')
+    await click('Submit')
+
+    expect(currentStep()).toBe('Go to Contact')
+    expect(screen.getByLabelText('Name')).toHaveProperty('value', '')
+    for (const label of ['Contact', 'Building', 'Heating']) {
+      expect(stepItem(label).dataset.complete).toBe('false')
+      expect(stepItem(label).dataset.visited).toBe(String(label === 'Contact'))
+    }
+  })
+
   it('marks a step whose errors are due once it was submitted', async () => {
     const Checklist = createForm(BINDING, checklistConfig())
     render(<Checklist />)
