@@ -208,6 +208,7 @@ export const SteppedForm = ({
       ),
     { compare: hasSameItems },
   )
+  const wasSubmitted = useSelector(form.store, (state) => state.submissionAttempts > 0)
   const isSubmitting = useSelector(form.store, (state) => state.isSubmitting)
   // A step's submit settles after its validation; by then another step may be shown.
   const shownKey = useRef(currentKey)
@@ -240,6 +241,7 @@ export const SteppedForm = ({
     isCurrent: index === current,
     isVisited: visited.has(step.step),
     isReachable: visited.has(step.step) && visible.slice(0, index).every(isValidAt),
+    isComplete: (wasSubmitted || attempted.has(step.step)) && !hasErrors[position],
     hasDueError: hasDueErrors[position] ?? false,
   }))
 

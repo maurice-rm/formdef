@@ -53,6 +53,7 @@ const Stepper = ({
           aria-current={step.isCurrent ? 'step' : undefined}
           data-visited={String(step.isVisited)}
           data-reachable={String(step.isReachable)}
+          data-complete={String(step.isComplete)}
           data-due-error={String(step.hasDueError)}
         >
           <button type="button" onClick={() => goTo(index)}>{`Go to ${step.label}`}</button>
@@ -249,6 +250,67 @@ describe('createForm with steps', () => {
     await click('Go to Building')
     expect(currentStep()).toBe('Go to Contact')
   })
+
+  it('marks a step complete once next checked it and none of its fields holds an error', async () => {
+    const Checklist = createForm(BINDING, checklistConfig())
+    render(<Checklist />)
+
+    expect(stepItem('Contact').dataset.complete).toBe('false')
+    await click('Next')
+    expect(stepItem('Contact').dataset.complete).toBe('false')
+
+    await type('Name', 'Ada')
+    expect(stepItem('Contact').dataset.complete).toBe('true')
+
+    await click('Next')
+    expect(stepItem('Building').dataset.complete).toBe('false')
+    await click('Back')
+    expect(stepItem('Building').dataset.visited).toBe('true')
+    expect(stepItem('Building').dataset.complete).toBe('false')
+
+    await type('Name', '')
+    await click('Next')
+    expect(stepItem('Contact').dataset.complete).toBe('false')
+  })
+
+  it('counts a submit of the form as a check of a step next never reached', async () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        layout: [
+          { step: 'contact', label: 'Contact' },
+          {
+            step: 'building',
+            label: 'Building',
+            visibleWhen: (values: typeof DEFAULT_VALUES) => values.heating.kind !== '',
+          },
+          { step: 'heating', label: 'Heating' },
+        ],
+      }),
+    )
+    render(<Checklist />)
+
+    await type('Name', 'Ada')
+    await click('Next')
+    await type('Kind', 'Gas')
+    expect(stepItem('Building').dataset.complete).toBe('false')
+
+    await click('Submit')
+    expect(stepItem('Building').dataset.complete).toBe('true')
+  })
+
+  for (const mode of MODES) {
+    it(`marks a valid step complete once next leaves it, with validation mode ${mode}`, async () => {
+      const Checklist = createForm(BINDING, checklistConfig({ validation: { mode } }))
+      render(<Checklist />)
+
+      await type('Name', 'Ada')
+      await click('Next')
+
+      expect(currentStep()).toBe('Go to Building')
+      expect(stepItem('Contact').dataset.complete).toBe('true')
+    })
+  }
 
   it('marks a step whose errors are due once it was submitted', async () => {
     const Checklist = createForm(BINDING, checklistConfig())

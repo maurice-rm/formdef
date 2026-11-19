@@ -33,6 +33,7 @@ describe('StepperProps', () => {
       isCurrent: boolean
       isVisited: boolean
       isReachable: boolean
+      isComplete: boolean
       hasDueError: boolean
     }>()
   })

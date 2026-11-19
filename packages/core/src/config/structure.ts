@@ -63,6 +63,11 @@ export interface StepState {
   isVisited: boolean
   /** Whether `goTo` moves to this step now: it was visited and every step before it is valid. */
   isReachable: boolean
+  /**
+   * Whether the step was checked, by its `next` or a submit of the form, and none of its fields
+   * holds an error now. A step only visited was never checked and is not complete.
+   */
+  isComplete: boolean
   /** Whether an error of a field in this step is due. */
   hasDueError: boolean
 }
