@@ -139,7 +139,8 @@ Its texts are props too, so a form in another language registers a stepper with 
 
 ## Styling and composition
 
-Every part carries a `data-slot`, such as `stepper-marker` or `stepper-actions`, and the parts of
+The step title and the step labels are set in the project's heading font (`font-heading`), where
+the theme defines one. Every part carries a `data-slot`, such as `stepper-marker` or `stepper-actions`, and the parts of
 a step carry its `data-state`: `complete`, `current`, `upcoming` or `error`. The root carries
 `data-variant`, `data-size` and `data-marker`; `stepper-compact` carries `data-state="error"` while
 the current step has a due error. Style them from a `className` on the stepper:
