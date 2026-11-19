@@ -145,7 +145,7 @@ export const Checklist = createForm({
 | Action | What happens |
 | --- | --- |
 | next | The step is checked against the form's schema. Valid: the next step shows. Invalid: its errors show and its first invalid field takes the focus. |
-| next on the last step | The form is submitted. When that fails, the first step holding an error shows and its first invalid field takes the focus. `onSubmitInvalid` still runs. |
+| next on the last step | The form is submitted. When that fails, the first step holding an error shows and its first invalid field takes the focus. `onSubmitInvalid` still runs. Next again while the submit runs does nothing. |
 | Enter in a field | The same as next. |
 | back | The previous step shows, always. |
 | going to a step | Allowed for a step already visited, while every step before it is valid. |

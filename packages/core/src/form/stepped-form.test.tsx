@@ -456,6 +456,33 @@ describe('createForm with steps', () => {
     expect(stepItem('Heating').dataset.complete).toBe('true')
   })
 
+  it('submits once when next or Enter comes again while the submit runs', async () => {
+    let settle: () => void = () => undefined
+    const onSubmit = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          settle = resolve
+        }),
+    )
+    const Checklist = createForm(BINDING, checklistConfig({ onSubmit }))
+    render(<Checklist />)
+    await type('Name', 'Ada')
+    await click('Next')
+    await click('Next')
+    await type('Kind', 'Gas')
+
+    await click('Submit')
+    await click('Submit')
+    await act(async () => {
+      fireEvent.submit(screen.getByLabelText('Kind').closest('form') as HTMLFormElement)
+    })
+    await act(async () => {
+      settle()
+    })
+
+    expect(onSubmit).toHaveBeenCalledOnce()
+  })
+
   it('marks a step whose errors are due once it was submitted', async () => {
     const Checklist = createForm(BINDING, checklistConfig())
     render(<Checklist />)

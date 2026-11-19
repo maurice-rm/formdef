@@ -387,6 +387,9 @@ export const SteppedForm = ({
   }
   const following = visible[current + 1]
   const next = (): void => {
+    if (form.store.get().isSubmitting) {
+      return
+    }
     markAttempted()
     if (following === undefined) {
       void submitForm()

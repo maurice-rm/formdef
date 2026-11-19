@@ -110,7 +110,8 @@ export interface StepperProps<
   /**
    * Submits the current step: moves to the next visible step when it is valid, otherwise shows
    * its errors and focuses its first invalid control. On the last step, submits the form; when
-   * that fails, shows the first step holding an error and focuses its first invalid control.
+   * that fails, shows the first step holding an error and focuses its first invalid control. Does
+   * nothing while the form is being submitted.
    */
   next: () => void
   /** Moves to the previous visible step. */
