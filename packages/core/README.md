@@ -34,7 +34,7 @@ The widgets for shadcn/ui come from formdef's shadcn registry; the
 
 - React 19
 - `@tanstack/react-form` `>=1.33.5 <1.34.0`
-- TypeScript 5.4 or later
+- TypeScript 5.7 or later
 - Node 22 or later
 
 ## Documentation

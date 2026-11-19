@@ -80,7 +80,7 @@ For the widgets for shadcn/ui, add the registry to your `components.json` as the
 npx shadcn@latest add @formdef/setup @formdef/text-field
 ```
 
-formdef needs React 19, TypeScript 5.4 or later with `strict` on, and `@tanstack/react-form` from
+formdef needs React 19, TypeScript 5.7 or later with `strict` on, and `@tanstack/react-form` from
 1.33.5 below 1.34. [Getting started](https://formdef.mauricereim.de/getting-started) builds a
 first form step by step.
 
