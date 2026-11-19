@@ -4,6 +4,7 @@
 - [ ] It does one thing; an improvement noticed on the way is an issue of its own.
 - [ ] A new test failed before the change that makes it pass; the description says how it was seen
       failing.
-- [ ] A change to what `@formdef/core` ships has a changeset (`pnpm changeset`).
+- [ ] A change to what `@formdef/core` ships or the shadcn registry hands out has a changeset
+      (`pnpm changeset`).
 - [ ] Documentation, TSDoc and error messages that the change makes wrong are updated.
 - [ ] `pnpm lint && pnpm knip && pnpm boundaries && pnpm turbo check-types test test:types build` passes.
