@@ -29,10 +29,7 @@ type StepFormState = {
   isSubmitting: boolean
 }
 
-type StepGroup = {
-  handleSubmit: () => Promise<void>
-  validate: (cause: 'submit') => unknown
-}
+type StepGroup = { handleSubmit: () => Promise<void> }
 
 type FormGroupProps = {
   name: string
@@ -260,6 +257,9 @@ export const SteppedForm = ({
   const [lastChecks, setLastChecks] = useState<StepChecks>(() => new Map())
   // The step to check again once its fields are mounted, so the errors it was left with show again.
   const recheckKey = useRef<string | undefined>(undefined)
+  // A recheck submits the step's group, which a remount reset, so a mode like `revalidate` checks
+  // on change again; it neither moves on nor takes the focus.
+  const recheckingKey = useRef<string | undefined>(undefined)
   const shownByCondition = useSelector(
     form.store,
     (state) => steps.map((step) => isShown(step, state.values)),
@@ -323,7 +323,13 @@ export const SteppedForm = ({
       return
     }
     recheckKey.current = undefined
-    void Promise.resolve(group.validate('submit')).then(forgetCheck)
+    recheckingKey.current = currentKey
+    void group.handleSubmit().then(() => {
+      if (recheckingKey.current === currentKey) {
+        recheckingKey.current = undefined
+      }
+      forgetCheck()
+    })
   }, [currentKey])
 
   const visible: VisibleStep[] = steps
@@ -405,6 +411,7 @@ export const SteppedForm = ({
       void submitForm()
       return
     }
+    recheckingKey.current = undefined
     void currentGroup.current?.handleSubmit()
   }
   useEffect(() => {
@@ -443,11 +450,17 @@ export const SteppedForm = ({
         key={currentKey}
         name={currentKey}
         onGroupSubmit={() => {
+          if (recheckingKey.current === currentKey) {
+            return
+          }
           if (following !== undefined && shownKey.current === currentKey) {
             moveTo(following.step.step)
           }
         }}
         onGroupSubmitInvalid={() => {
+          if (recheckingKey.current === currentKey) {
+            return
+          }
           if (shownKey.current === currentKey) {
             setIsFocusPending(true)
           }

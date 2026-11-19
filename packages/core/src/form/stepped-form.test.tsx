@@ -401,6 +401,92 @@ describe('createForm with steps', () => {
     })
   }
 
+  it('checks a step shown again on change, as before it was left, in the default mode', async () => {
+    const Checklist = createForm(BINDING, checklistConfig({ schema: strictSchema }))
+    render(<Checklist />)
+
+    await type('Name', 'Ada')
+    await click('Next')
+    await click('Next')
+    await click('Back')
+    await click('Go to Building')
+    expect(screen.getByText('Enter a city')).toBeDefined()
+
+    await type('City', 'Bonn')
+
+    expect(screen.queryByText('Enter a city')).toBeNull()
+    expect(stepItem('Building').dataset.complete).toBe('true')
+    expect(currentStep()).toBe('Go to Building')
+  })
+
+  it('takes the tick from a step emptied after it was shown again, in the default mode', async () => {
+    const Checklist = createForm(BINDING, checklistConfig({ schema: strictSchema }))
+    render(<Checklist />)
+
+    await type('Name', 'Ada')
+    await click('Next')
+    await type('City', 'Bonn')
+    await click('Next')
+    await click('Back')
+    await type('City', '')
+
+    expect(stepItem('Building').dataset.complete).toBe('false')
+    expect(stepItem('Heating').dataset.reachable).toBe('false')
+    expect(currentStep()).toBe('Go to Building')
+  })
+
+  it('stays on a step shown again when the recheck of a step shown before it settles first', async () => {
+    const holds: (() => void)[][] = [[], []]
+    let isHolding = false
+    const heldRule = (index: number) => () =>
+      isHolding
+        ? new Promise<undefined>((resolve) => holds[index]?.push(() => resolve(undefined)))
+        : Promise.resolve(undefined)
+    const settle = async (index: number): Promise<void> => {
+      await act(async () => {
+        holds[index]?.shift()?.()
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+    }
+    const settleRendering = async (): Promise<void> => {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+      })
+    }
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        defaultValues: { ...DEFAULT_VALUES, contact: { name: 'Ada' }, building: { city: 'Bonn' } },
+        fields: {
+          ...FIELDS,
+          contact: {
+            fields: {
+              name: { ...FIELDS.contact.fields.name, validators: { onSubmitAsync: heldRule(0) } },
+            },
+          },
+          building: {
+            fields: {
+              city: { ...FIELDS.building.fields.city, validators: { onSubmitAsync: heldRule(1) } },
+            },
+          },
+        },
+      }),
+    )
+    render(<Checklist />)
+    await click('Next')
+    await settleRendering()
+    await click('Next')
+    await settleRendering()
+
+    isHolding = true
+    await click('Go to Contact')
+    await click('Go to Building')
+    await settle(0)
+    await settle(1)
+
+    expect(currentStep()).toBe('Go to Building')
+  })
+
   it('keeps a step emptied after its check incomplete once it is left, in a mode checking on change', async () => {
     const Checklist = createForm(
       BINDING,
@@ -421,7 +507,10 @@ describe('createForm with steps', () => {
   })
 
   it('keeps the last step incomplete when a failed submit shows an earlier one', async () => {
-    const Checklist = createForm(BINDING, checklistConfig({ schema: strictSchema }))
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({ schema: strictSchema, validation: { mode: 'onSubmit' } }),
+    )
     render(<Checklist />)
 
     await type('Name', 'Ada')
