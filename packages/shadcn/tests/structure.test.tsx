@@ -81,6 +81,18 @@ describe('Section', () => {
     expect(within(section).getByLabelText('Name')).toBeDefined()
     expect(within(section).getByText('About you').getAttribute('data-variant')).toBe('label')
   })
+
+  it('sets the title of a legend section heavier than the questions it holds', () => {
+    const Titled = createForm({
+      schema: z.object({ name: z.string() }),
+      defaultValues: { name: '' },
+      fields: { name: { widget: 'text', props: { label: 'Name' } } },
+      layout: [{ section: 'Building', layout: ['name'] }],
+    })
+    render(<Titled />)
+
+    expect(screen.getByText('Building').classList).toContain('data-[variant=legend]:font-semibold')
+  })
 })
 
 describe('Row', () => {

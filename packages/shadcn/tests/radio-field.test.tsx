@@ -41,6 +41,13 @@ const group = (): HTMLElement => screen.getByRole('radiogroup', { name: 'Plan' }
 afterEach(cleanup)
 
 describe('RadioField', () => {
+  it('sets its question like the label of any field, and its options in a lighter weight', () => {
+    render(<Form />)
+
+    expect(screen.getByText('Plan').closest('legend')?.dataset.variant).toBe('label')
+    expect(screen.getByText('Team', { selector: 'label' }).classList).toContain('font-normal')
+  })
+
   it('names the group by its legend and ties the description to it', () => {
     render(<Form />)
 

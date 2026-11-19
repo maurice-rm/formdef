@@ -67,7 +67,9 @@ export const RadioField = ({
         {variant === 'card' ? (
           <FieldTitle id={titleId}>{option.label}</FieldTitle>
         ) : (
-          <FieldLabel htmlFor={id}>{option.label}</FieldLabel>
+          <FieldLabel htmlFor={id} className="font-normal">
+            {option.label}
+          </FieldLabel>
         )}
         {hasDescription && (
           <FieldDescription id={`${id}${DESCRIPTION_SUFFIX}`}>
@@ -100,7 +102,7 @@ export const RadioField = ({
   return (
     <FieldSet>
       {label !== undefined && (
-        <FieldLegend id={legendId}>
+        <FieldLegend id={legendId} variant="label">
           <LabelText required={attrs.required}>{label}</LabelText>
         </FieldLegend>
       )}

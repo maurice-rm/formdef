@@ -57,6 +57,13 @@ const values = (): string | null => screen.getByRole('status').textContent
 afterEach(cleanup)
 
 describe('CheckboxGroupField', () => {
+  it('sets its question like the label of any field, and its options in a lighter weight', () => {
+    render(<Form />)
+
+    expect(screen.getByText('Channels').closest('legend')?.dataset.variant).toBe('label')
+    expect(screen.getByText('SMS', { selector: 'label' }).classList).toContain('font-normal')
+  })
+
   it('names the group by its legend and ties the description to it', () => {
     render(<Form />)
 
