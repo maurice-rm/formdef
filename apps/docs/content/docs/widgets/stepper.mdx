@@ -125,6 +125,11 @@ screen readers. The current label runs on in one line below the steps after it, 
 between the circles keeps its length. `labels="currentExpanded"` gives the current step more of
 the row instead.
 
+In the `rail`, every step is as tall as its text by default, so labels and descriptions of
+different lengths place the circles at different distances. `railStepSize` (`sm`, `default` or
+`lg`, 64, 80 or 112 pixels) gives every step but the last that height at least, so the circles sit
+evenly; a step whose text needs more grows beyond it.
+
 Its texts are props too, so a form in another language registers a stepper with its texts set:
 
 | Prop | Meaning |

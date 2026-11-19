@@ -28,6 +28,8 @@ type StepperActionsAlign = 'between' | 'end'
 
 type StepperLabels = 'all' | 'current' | 'currentExpanded'
 
+type StepperRailStepSize = 'auto' | 'sm' | 'default' | 'lg'
+
 type StepperItemState = 'complete' | 'current' | 'upcoming' | 'error'
 
 type StepperTexts = {
@@ -49,6 +51,7 @@ type StepperOptions = {
   showHeading?: boolean | undefined
   showUpNext?: boolean | undefined
   labels?: StepperLabels | undefined
+  railStepSize?: StepperRailStepSize | undefined
   collapseBelow?: StepperBreakpoint | 'never' | undefined
   collapsedVariant?: StepperVariant | undefined
   navigable?: boolean | undefined
@@ -125,6 +128,7 @@ type StepperNavProps = {
   showDescriptions: boolean
   showUpNext: boolean
   labels: StepperLabels
+  railStepSize: StepperRailStepSize
   errorLabel: string
   completeLabel: string
   progress: string
@@ -140,9 +144,17 @@ type StepperListProps = {
   navigable?: boolean | undefined
   showDescriptions?: boolean | undefined
   labels?: StepperLabels | undefined
+  railStepSize?: StepperRailStepSize | undefined
   errorLabel?: string | undefined
   completeLabel?: string | undefined
   className?: string | undefined
+}
+
+const RAIL_STEP_HEIGHTS: Record<StepperRailStepSize, string | undefined> = {
+  auto: undefined,
+  sm: 'not-last:min-h-16',
+  default: 'not-last:min-h-20',
+  lg: 'not-last:min-h-28',
 }
 
 const segmentVariants = cva(
@@ -291,6 +303,7 @@ function Stepper({
   showHeading = true,
   showUpNext = true,
   labels = 'all',
+  railStepSize = 'auto',
   collapseBelow = DEFAULT_COLLAPSE[variant],
   collapsedVariant = DEFAULT_COLLAPSED_VARIANT[variant],
   navigable = true,
@@ -336,6 +349,7 @@ function Stepper({
     showDescriptions,
     showUpNext,
     labels,
+    railStepSize,
     errorLabel,
     completeLabel,
     progress,
@@ -476,6 +490,7 @@ function StepperRail({
   marker = 'number',
   navigable = true,
   showDescriptions = true,
+  railStepSize = 'auto',
   errorLabel = DEFAULT_ERROR_LABEL,
   completeLabel = DEFAULT_COMPLETE_LABEL,
   className,
@@ -487,7 +502,11 @@ function StepperRail({
       className={cn('flex flex-col', className)}
     >
       {steps.map((step, index) => (
-        <StepperItem key={step.label} step={step} className="relative pb-6 last:pb-0">
+        <StepperItem
+          key={step.label}
+          step={step}
+          className={cn('relative pb-6 last:pb-0', RAIL_STEP_HEIGHTS[railStepSize])}
+        >
           {index < steps.length - 1 && (
             <StepperConnector
               isComplete={step.isComplete && !step.isCurrent}
@@ -919,6 +938,7 @@ export {
   type StepperMarkerKind,
   StepperNext,
   StepperRail,
+  type StepperRailStepSize,
   StepperSegments,
   type StepperSize,
   type StepperStep,

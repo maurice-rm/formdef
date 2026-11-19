@@ -134,6 +134,36 @@ describe('Stepper', () => {
     expect(screen.getByText('Up next: Heating').classList).not.toContain('truncate')
   })
 
+  describe('railStepSize', () => {
+    const railItems = (container: HTMLElement): HTMLElement[] => [
+      ...container.querySelectorAll<HTMLElement>('[data-slot=stepper-rail] > li'),
+    ]
+
+    it('lets each step of the rail take the height of its text by default', () => {
+      const Checklist = checklistWith({ variant: 'rail', collapseBelow: 'never' })
+      const { container } = render(<Checklist />)
+
+      for (const item of railItems(container)) {
+        expect(item.className).not.toMatch(/min-h-/)
+      }
+    })
+
+    it('gives every step but the last the same minimum height, so the markers sit evenly', () => {
+      const Checklist = checklistWith({
+        variant: 'rail',
+        collapseBelow: 'never',
+        railStepSize: 'lg',
+      })
+      const { container } = render(<Checklist />)
+
+      const items = railItems(container)
+      expect(items).toHaveLength(2)
+      for (const item of items) {
+        expect(item.classList).toContain('not-last:min-h-28')
+      }
+    })
+  })
+
   describe('labels', () => {
     const labelOf = (text: string): HTMLElement =>
       screen
