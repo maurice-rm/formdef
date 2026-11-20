@@ -36,7 +36,13 @@ const NPM_SETTING = 'npm_'
 type RegistryFile = { path: string; target: string }
 type RegistryItem = { name: string; files: RegistryFile[]; dependencies?: string[] }
 type Aliases = Record<string, string>
-type PackedPackage = { tarball: Buffer; manifest: { name: string; version: string } }
+type Manifest = {
+  name: string
+  version: string
+  dependencies?: Record<string, string> | undefined
+  peerDependencies?: Record<string, string> | undefined
+}
+type PackedPackage = { tarball: Buffer; manifest: Manifest }
 
 const REGISTRY_SOURCE = `'use client'
 
@@ -236,26 +242,68 @@ const floorOf = (items: readonly RegistryItem[], name: string): string | undefin
       undefined,
     )
 
+type Raised = ReadonlyMap<string, string>
+
+const raisedRanges = (
+  ranges: Readonly<Record<string, string>> | undefined,
+  raised: Raised,
+): Record<string, string> | undefined =>
+  ranges === undefined
+    ? undefined
+    : Object.fromEntries(
+        Object.entries(ranges).map(([name, range]) => {
+          const version = raised.get(name)
+          return [name, version === undefined ? range : `^${version}`]
+        }),
+      )
+
+const isRaising = ({ manifest }: PackedPackage, raised: Raised): boolean =>
+  [manifest.name, ...Object.keys({ ...manifest.dependencies, ...manifest.peerDependencies })].some(
+    (name) => raised.has(name),
+  )
+
 // A package not released yet still carries the version before its first changeset, below the
-// minimum the registry already names; the probe serves it at that minimum, as the release will.
-const raiseVersion = async (
+// minimum the registry already names; the probe serves it at that minimum, as the release will,
+// and the ranges of the other packages that name it as `workspace:^` turns into on release.
+const raiseVersions = async (
   packed: PackedPackage & { path: string },
-  version: string,
+  raised: Raised,
 ): Promise<PackedPackage> => {
+  if (!isRaising(packed, raised)) {
+    return packed
+  }
   const folder = dirname(packed.path)
   await runIn(folder, 'tar', ['-xzf', packed.path])
-  const manifest = { ...packed.manifest, version }
-  await writeFile(join(folder, 'package/package.json'), JSON.stringify(manifest, null, 2))
+  const { manifest } = packed
+  const raisedManifest = {
+    ...manifest,
+    version: raised.get(manifest.name) ?? manifest.version,
+    dependencies: raisedRanges(manifest.dependencies, raised),
+    peerDependencies: raisedRanges(manifest.peerDependencies, raised),
+  }
+  await writeFile(join(folder, 'package/package.json'), JSON.stringify(raisedManifest, null, 2))
   await runIn(folder, 'tar', ['-czf', RAISED_TARBALL, 'package'])
 
-  return { tarball: await readFile(join(folder, RAISED_TARBALL)), manifest }
+  return { tarball: await readFile(join(folder, RAISED_TARBALL)), manifest: raisedManifest }
 }
+
+const raisedVersionsOf = (
+  packed: readonly PackedPackage[],
+  items: readonly RegistryItem[],
+): Raised =>
+  new Map(
+    packed.flatMap(({ manifest }) => {
+      const floor = floorOf(items, manifest.name)
+      return floor !== undefined && isBelow(manifest.version, floor)
+        ? [[manifest.name, floor] as const]
+        : []
+    }),
+  )
 
 const packPackage = async (
   folder: string,
   into: string,
-  floor: string | undefined,
-): Promise<PackedPackage> => {
+): Promise<PackedPackage & { path: string }> => {
   const destination = await mkdtemp(join(into, 'pack-'))
   await runIn(folder, 'pnpm', ['pack', '--pack-destination', destination])
   const file = (await readdir(destination)).find((name) => name.endsWith('.tgz'))
@@ -266,11 +314,7 @@ const packPackage = async (
   const manifest = JSON.parse(
     await runIn(destination, 'tar', ['-xzOf', path, 'package/package.json']),
   )
-  const packed = { tarball: await readFile(path), manifest, path }
-
-  return floor !== undefined && isBelow(manifest.version, floor)
-    ? raiseVersion(packed, floor)
-    : packed
+  return { tarball: await readFile(path), manifest, path }
 }
 
 const landedPathOf = (target: string, aliases: Aliases): string => {
@@ -360,9 +404,9 @@ const probe = async (folder: string): Promise<void> => {
   ])
   const items = await readItems()
   const version = await shadcnVersion()
-  const packed = await Promise.all(
-    PACKAGES.map((entry) => packPackage(entry.folder, folder, floorOf(items, entry.name))),
-  )
+  const local = await Promise.all(PACKAGES.map((entry) => packPackage(entry.folder, folder)))
+  const raised = raisedVersionsOf(local, items)
+  const packed = await Promise.all(local.map((entry) => raiseVersions(entry, raised)))
   const registry = registryServer()
   const packages = packageServer(packed)
   try {
