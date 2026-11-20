@@ -16,7 +16,8 @@ const updateBelow = (
   { parent: rest, position }: Target,
   update: ChildrenUpdate,
 ): Parent => {
-  const children = childrenOf(parent) ?? failAtPosition(position, 'a field holds no items.')
+  const children =
+    childrenOf(parent) ?? failAtPosition(position, 'a field or a block holds no items.')
   const [index, ...deeper] = rest
   if (index === undefined) {
     return withChildren(parent, update(children, parent))
@@ -31,7 +32,7 @@ const updateBelow = (
  * Returns the document with the children of the node at `target.parent`, `[]` for the root,
  * replaced by what `update` returns.
  *
- * @throws When no node sits there, or it is a field.
+ * @throws When no node sits there, or it is a field or a block.
  */
 export function updateChildren(
   document: FormDocument,

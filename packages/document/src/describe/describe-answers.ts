@@ -159,6 +159,9 @@ const describeItems = (items: readonly DocumentItem[], described: Described): An
       const shown = described.shownByKey.get(item.key)
       return shown === undefined ? [] : [describeField(shown, described)]
     }
+    if (item.type === 'block') {
+      return []
+    }
     const inner = describeItems(item.items, described)
     if (item.type === 'row' || inner.length === 0) {
       return inner

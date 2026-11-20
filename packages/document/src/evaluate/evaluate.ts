@@ -99,7 +99,7 @@ const walkItems = (
   walk: EvaluationWalk,
 ): void => {
   for (const item of items) {
-    if (!isShown(item, walk)) {
+    if (item.type === 'block' || !isShown(item, walk)) {
       continue
     }
     if (item.type === 'field') {

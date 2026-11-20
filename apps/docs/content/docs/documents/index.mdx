@@ -56,10 +56,13 @@ a field may be is decided in code, once: by the project's [field kinds](/documen
 - A document holds either `items`, a plain form, or `steps`, filled in one at a time. A step has a
   `key`, a `label`, an optional `description` under the label in the stepper, an optional
   `visibleWhen`, and its `items`.
-- An item is a **field**, a **row** of fields side by side, or a **section**: a `label` over its
-  `items`, and an optional `description` under it. A section inside a section is a group that
-  reads like one question, such as an address; a third level is not allowed. A row holds fields
-  only.
+- An item is a **field**, a **block** of content without an answer, a **row** of fields and blocks
+  side by side, or a **section**: a `label` over its `items`, and an optional `description` under
+  it. A section inside a section is a group that reads like one question, such as an address; a
+  third level is not allowed. A row holds fields and blocks only.
+- A block has a `key`, the `kind` of a registered [block kind](/documents/field-kinds#block-kinds),
+  and optionally `settings` and `visibleWhen`. It gives no answer and is not validated; a condition
+  cannot name it.
 - A field has a `key`, the `kind` of a registered field kind and a `label`, and optionally a
   `description` between the label and the control, `required`, `visibleWhen`, `settings` and
   [`messages`](/documents/validation-and-answers#error-texts), its own error texts.

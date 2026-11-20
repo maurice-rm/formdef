@@ -14,10 +14,11 @@ import { updateChildren } from './update-children'
  *
  * @param document - The document.
  * @param position - Where the node goes.
- * @param node - The step, section, row or field.
+ * @param node - The step, section, row, field or block.
  * @returns The document with the node inserted.
  * @throws When the place does not exist, or cannot hold the node: steps go only into the steps of
- *   a form, a form with steps holds steps only, and a row holds fields only.
+ *   a form, a form with steps holds steps only, a row holds fields and blocks only, and a field or
+ *   a block holds no items.
  *
  * @example
  * ```ts

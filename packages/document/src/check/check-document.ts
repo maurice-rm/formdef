@@ -1,6 +1,12 @@
 import { DOCUMENT_PATH } from '../document-path'
 import { fieldsOf } from '../fields-of'
-import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
+import type {
+  BlockItem,
+  DocumentItem,
+  DocumentStep,
+  FieldItem,
+  FormDocument,
+} from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
 import type { ValueType } from '../kinds/value-type'
 import { pathTo } from '../path-to'
@@ -98,10 +104,31 @@ const checkItems = (items: readonly DocumentItem[], level: Level): void => {
   })
 }
 
+const checkBlock = (block: BlockItem, { walk, path }: At, seenKeys: Set<string>): void => {
+  if (seenKeys.has(block.key)) {
+    report(walk, { code: 'duplicateKey', path: `${path}.key`, params: { key: block.key } })
+  }
+  seenKeys.add(block.key)
+  checkKey(block.key, { walk, path })
+
+  const kind = walk.blockKindNamed(block.kind)
+  if (kind === undefined) {
+    report(walk, { code: 'unknownKind', path: `${path}.kind`, params: { kind: block.kind } })
+  }
+  checkVisibleWhen(block, { walk, path })
+  if (kind !== undefined) {
+    checkSettings(block, kind, { walk, path })
+  }
+}
+
 const checkItem = (item: DocumentItem, level: Level): void => {
   const { at, seenKeys } = level
   if (item.type === 'field') {
     checkField(item, at, seenKeys)
+    return
+  }
+  if (item.type === 'block') {
+    checkBlock(item, at, seenKeys)
     return
   }
   if (item.type === 'section') {
@@ -145,7 +172,7 @@ const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
  * Checks a form document as a form, once {@link readDocument} has checked its shape, and reports
  * every problem in document order: keys used twice, conditions on fields that do not exist or come
  * later, operators and compared values that do not fit the field compared, empty steps, sections
- * and rows, sections nested too deep, unknown field kinds, and settings that are unknown, missing,
+ * and rows, sections nested too deep, unknown field and block kinds, and settings that are unknown, missing,
  * of the wrong type or outside their constraints.
  *
  * A builder lists the problems while a document is edited; rendering refuses a document that has
@@ -169,6 +196,7 @@ export function checkDocument(
     document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
   const walk: CheckWalk = {
     kindNamed: (name) => catalog.findFieldKind(name),
+    blockKindNamed: (name) => catalog.findBlockKind(name),
     languages: document.languages,
     allFieldKeys: new Set(fieldsOf(items).map((field) => field.key)),
     earlier: new Map(),

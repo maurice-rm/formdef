@@ -3,6 +3,7 @@ import { conditionsOf } from '../conditions-of'
 import { DOCUMENT_PATH } from '../document-path'
 import { failAt } from '../fail-at'
 import type { DocumentItem, FormDocument } from '../form-document'
+import { isLeaf } from '../is-leaf'
 import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
 import { pathTo } from '../path-to'
@@ -15,7 +16,7 @@ const OPTIONS_SETTING = 'options'
 const placedIn = (items: readonly DocumentItem[], path: string): PlacedItem[] =>
   items.flatMap((item, index) => {
     const itemPath = pathTo.entry(path, 'items', index)
-    const inner = item.type === 'field' ? [] : placedIn(item.items, itemPath)
+    const inner = isLeaf(item) ? [] : placedIn(item.items, itemPath)
     return [{ item, path: itemPath }, ...inner]
   })
 
@@ -43,7 +44,7 @@ const checkOptionList = (value: JsonValue, { path, limit }: { path: string; limi
 }
 
 const checkOptions = ({ item, path }: PlacedItem, limit: number): void => {
-  const options = item.type === 'field' ? item.settings?.[OPTIONS_SETTING] : undefined
+  const options = isLeaf(item) ? item.settings?.[OPTIONS_SETTING] : undefined
   if (options === undefined) {
     return
   }
@@ -60,7 +61,7 @@ const checkOptions = ({ item, path }: PlacedItem, limit: number): void => {
 
 /**
  * Checks that a document read holds no more items, comparisons in conditions and options of one
- * field than the limits allow.
+ * field or block than the limits allow.
  *
  * @throws At the document, or at the options of the field, beyond a limit.
  */

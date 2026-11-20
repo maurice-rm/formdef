@@ -35,7 +35,7 @@ describe('moveNode', () => {
 
   it('refuses a move into a place that cannot hold the node', () => {
     expect(() => moveNode(plain, [2], [1, 0])).toThrow(
-      'formdef: position [1, 0]: a row holds fields only.',
+      'formdef: position [1, 0]: a row holds fields and blocks only.',
     )
   })
 })

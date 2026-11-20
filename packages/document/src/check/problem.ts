@@ -3,11 +3,11 @@ import type { JsonValue } from '../json-value'
 /**
  * What a problem of a form document is about:
  *
- * - `duplicateKey`: a step or field key used twice;
- * - `invalidKey`: a step or field key that is empty or holds a dot or a bracket;
+ * - `duplicateKey`: a step key used twice, or a key of fields and blocks used twice;
+ * - `invalidKey`: a step, field or block key that is empty or holds a dot or a bracket;
  * - `overlappingKey`: a step key that starts with another step's key, such as `s10` after `s1`;
  * - `duplicateOption`: an option value used twice in one field;
- * - `unknownKind`: a field of a field kind that is not registered;
+ * - `unknownKind`: a field or block of a kind that is not registered;
  * - `unknownField`: a condition on a field the document does not hold;
  * - `laterField`: a condition on a field that comes later, or on the field itself;
  * - `operatorMismatch`: an operator that does not fit the value type of the field compared;

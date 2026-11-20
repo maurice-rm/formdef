@@ -1,6 +1,7 @@
 import type { Condition } from './condition'
-import type { DocumentNode, FieldItem, FormDocument, Varying } from './form-document'
+import type { DocumentNode, FormDocument, Varying } from './form-document'
 import { isField } from './is-field'
+import { isLeaf } from './is-leaf'
 import { isPlainObject } from './is-plain-object'
 import { isVarying } from './is-varying'
 import type { JsonValue } from './json-value'
@@ -41,8 +42,11 @@ const optionCases = (value: JsonValue | Varying, path: string): Placed[] =>
     ),
   )
 
-const settingCases = (field: FieldItem, path: string): Placed[] =>
-  Object.entries(field.settings ?? {}).flatMap(([name, value]) => {
+const settingCases = (
+  { settings }: { settings?: Record<string, JsonValue | Varying> },
+  path: string,
+): Placed[] =>
+  Object.entries(settings ?? {}).flatMap(([name, value]) => {
     const settingPath = pathTo.setting(path, name)
     const own = isVarying(value) ? casesOf(value, settingPath) : []
     return [...own, ...optionCases(value, settingPath)]
@@ -53,9 +57,12 @@ const ownConditions = (node: DocumentNode, path: string): Placed[] => {
     node.visibleWhen === undefined
       ? []
       : [{ condition: node.visibleWhen, path: pathTo.visibleWhen(path) }]
-  if (!isField(node)) {
+  if (!isLeaf(node)) {
     const description = 'description' in node ? node.description : undefined
     return [...own, ...casesOf(description, `${path}.description`)]
+  }
+  if (!isField(node)) {
+    return [...own, ...settingCases(node, path)]
   }
 
   const required =

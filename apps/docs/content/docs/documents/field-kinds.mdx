@@ -139,6 +139,40 @@ export const catalog = createCatalog(registry, { valueTypes: [address], fields: 
   value. Every value type has `isFilled` and `isEmpty` besides, so its own operators take other
   names.
 
+## Block kinds
+
+A block is content between fields that gives no answer, such as a notice. A block kind binds a
+form component of the registry to the props a block's settings give:
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { createCatalog, defineBlockKind, setting } from '@formdef/document'
+declare const Notice: (props: { children: string }) => null
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: {},
+  formComponents: { notice: Notice },
+})
+// ---cut---
+const notice = defineBlockKind(registry, {
+  name: 'notice',
+  label: 'Notice',
+  component: 'notice',
+  settings: { body: setting.text({ label: 'Text', required: true }) },
+  props: ({ body }) => ({ children: body }),
+})
+
+export const catalog = createCatalog(registry, { fields: [], blocks: [notice] })
+```
+
+- `component` names a form component of the registry; the compiler checks `props` against it.
+- Its settings work as a field kind's do: they may follow an answer, take placeholders and be
+  translated. A block has no value, rules or `required`.
+- A block's key shares the keys of fields: `renameKey` and `dependentsOf` treat it like a field.
+
 ## Settings
 
 A setting is what a person may change on a field, described as data. A builder renders its

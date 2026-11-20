@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
+import { defineBlockKind } from '../kinds/define-block-kind'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { defineValueType } from '../kinds/define-value-type'
 import { setting } from '../kinds/setting'
@@ -993,5 +994,78 @@ describe('checkDocument with languages', () => {
     }
 
     expect(codesOf(document)).toEqual(['settingLimit document.items[0].settings.placeholder.de'])
+  })
+})
+
+const Notice = (_: { children: string }) => null
+
+describe('checkDocument with blocks', () => {
+  const withNotice = registry.extendRegistry({ formComponents: { notice: Notice } })
+  const notice = defineBlockKind(withNotice, {
+    name: 'notice',
+    label: 'Notice',
+    component: 'notice',
+    settings: { body: setting.text({ label: 'Text', required: true, maxLength: 20 }) },
+    props: ({ body }) => ({ children: body }),
+  })
+  const text = defineFieldKind(withNotice, {
+    name: 'text',
+    label: 'Text',
+    widget: 'text',
+    valueType: valueTypes.text,
+  })
+  const withBlocks = createCatalog(withNotice, { fields: [text], blocks: [notice] })
+  const codesWithBlocks = (document: FormDocument) =>
+    checkDocument(document, withBlocks).map(({ code, path }) => `${code} ${path}`)
+
+  it('takes a block of a known kind, with its settings and a condition on an earlier field', () => {
+    const document: FormDocument = {
+      format: 1,
+      items: [
+        { type: 'field', key: 'f1', kind: 'text', label: 'Name' },
+        {
+          type: 'block',
+          key: 'b1',
+          kind: 'notice',
+          settings: { body: 'Thanks, {f1}.' },
+          visibleWhen: { field: 'f1', op: 'isFilled' },
+        },
+      ],
+    }
+
+    expect(codesWithBlocks(document)).toEqual([])
+  })
+
+  it("reports a block's key used by a field, its unknown kind, its settings and conditions", () => {
+    const document: FormDocument = {
+      format: 1,
+      items: [
+        {
+          type: 'block',
+          key: 'k1',
+          kind: 'notice',
+          settings: { body: 'Far too long for this notice' },
+        },
+        { type: 'field', key: 'k1', kind: 'text', label: 'Name' },
+        { type: 'block', key: 'b2', kind: 'banner' },
+        { type: 'block', key: 'b3', kind: 'notice', visibleWhen: { field: 'f9', op: 'isFilled' } },
+        {
+          type: 'field',
+          key: 'f4',
+          kind: 'text',
+          label: 'After',
+          visibleWhen: { field: 'b3', op: 'isFilled' },
+        },
+      ],
+    }
+
+    expect(codesWithBlocks(document)).toEqual([
+      'settingLimit document.items[0].settings.body',
+      'duplicateKey document.items[1].key',
+      'unknownKind document.items[2].kind',
+      'unknownField document.items[3].visibleWhen.field',
+      'missingSetting document.items[3].settings.body',
+      'unknownField document.items[4].visibleWhen.field',
+    ])
   })
 })

@@ -167,6 +167,21 @@ describe('renameKey', () => {
     )
   })
 
+  it("renames a block's key, and placeholders in its settings", () => {
+    const withBlock: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        { type: 'block', key: 'b1', kind: 'notice', settings: { body: '{f1}' } },
+      ],
+    }
+
+    expect(renameKey(withBlock, 'b1', 'intro').items?.[1]).toMatchObject({ key: 'intro' })
+    expect(renameKey(withBlock, 'f1', 'name').items?.[1]).toMatchObject({
+      settings: { body: '{name}' },
+    })
+  })
+
   it('renames a step key', () => {
     expect(renameKey(document, 's2', 'heating').steps?.map(({ key }) => key)).toEqual([
       's1',

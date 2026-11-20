@@ -37,6 +37,7 @@ formdef uses one word per concept, in the code, in error messages and here.
 | **error is due** | The moment a widget shows a field's error: the field is invalid, and it was edited and left, the form was submitted, or the step it is shown in was submitted. |
 | **form document** | A form described as data: JSON with a format version that holds steps or items, read with `readDocument`. See [Form documents](/documents). |
 | **field kind** | What a field of a form document may be: a widget, its value type, its settings, the props they give and its rules. Defined with `defineFieldKind`. |
+| **block** | An item of a form document that gives no answer, such as a notice: a registered **block kind**, defined with `defineBlockKind`, rendered by a form component from its settings. |
 | **catalog** | Every kind a project offers for form documents, for one registry, collected with `createCatalog`; rendering, checking, validating and describing a document take it. |
 | **setting** | A value of a field in a form document that a person may change, such as a unit, declared by its field kind with `setting.*`. |
 | **text** | A text of a form document, such as a label: a string for every language, or its translations into the document's `languages`; most texts may follow an answer with `cases` and `otherwise`. |

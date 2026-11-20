@@ -22,7 +22,7 @@ export type ReadLimits = {
    */
   conditions: number
   /**
-   * The most options of one field.
+   * The most options of one field or block.
    *
    * @defaultValue `1000`
    */

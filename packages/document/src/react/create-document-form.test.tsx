@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
+import { defineBlockKind } from '../kinds/define-block-kind'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { setting } from '../kinds/setting'
 import { valueTypes } from '../kinds/value-types'
@@ -93,12 +94,25 @@ const Stepper = ({
   </section>
 )
 
+const Notice = ({ children }: { children: ReactNode }): ReactNode => (
+  <aside aria-label="Notice">{children}</aside>
+)
+
 const { fieldContext, formContext } = createFormHookContexts()
 const registry = createRegistry({
   fieldContext,
   formContext,
   widgets: { text: TextField, choice: ChoiceField },
+  formComponents: { notice: Notice },
   structure: { stepper: Stepper },
+})
+
+const notice = defineBlockKind(registry, {
+  name: 'notice',
+  label: 'Notice',
+  component: 'notice',
+  settings: { body: setting.text({ label: 'Text', required: true }) },
+  props: ({ body }) => ({ children: body }),
 })
 
 const fieldKinds = [
@@ -125,7 +139,7 @@ const fieldKinds = [
     props: ({ options }) => ({ options }),
   }),
 ]
-const catalog = createCatalog(registry, { fields: fieldKinds })
+const catalog = createCatalog(registry, { fields: fieldKinds, blocks: [notice] })
 
 const field = (key: string, kind: string, extra: Partial<FieldItem> = {}): FieldItem => ({
   type: 'field',
@@ -418,6 +432,37 @@ describe('createDocumentForm without steps', () => {
   it('refuses a document with problems', () => {
     expect(() => createDocumentForm(plain(field('name', 'signature')), catalog)).toThrow(
       'formdef: document: the document has 1 problem; checkDocument lists it.',
+    )
+  })
+})
+
+describe('createDocumentForm with blocks', () => {
+  it('renders a block through its form component, as its condition and placeholders say', async () => {
+    const Form = createDocumentForm(
+      plain(houseType, {
+        type: 'row',
+        items: [
+          field('name', 'text', { label: 'Name' }),
+          {
+            type: 'block',
+            key: 'b1',
+            kind: 'notice',
+            settings: { body: 'Hello {name}, in the {house}.' },
+            visibleWhen: isApartmentBlock,
+          },
+        ],
+      }),
+      catalog,
+    )
+    render(<Form />)
+
+    expect(screen.queryByRole('complementary', { name: 'Notice' })).toBeNull()
+
+    await choose('House type', 'o2')
+    await type('Name', 'Ada')
+
+    expect(screen.getByRole('complementary', { name: 'Notice' }).textContent).toBe(
+      'Hello Ada, in the Apartment block.',
     )
   })
 })

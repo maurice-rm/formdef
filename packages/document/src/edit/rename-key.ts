@@ -1,6 +1,7 @@
 import type { Condition } from '../condition'
 import type { DocumentNode, FieldItem, FormDocument, Varying } from '../form-document'
 import { isField } from '../is-field'
+import { isLeaf } from '../is-leaf'
 import { isPlainObject } from '../is-plain-object'
 import { isStep } from '../is-step'
 import type { JsonValue } from '../json-value'
@@ -50,19 +51,22 @@ const renameInOptions = (list: readonly JsonValue[], rename: Rename): JsonValue[
 const renameInSetting = (value: JsonValue | Varying, rename: Rename): JsonValue | Varying =>
   mapOptionLists(renameInCases(value, rename), (list) => renameInOptions(list, rename))
 
-const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
-  ...renameInTexts(field, rename),
-  ...(typeof field.required === 'object' ? { required: renameIn(field.required, rename) } : {}),
-  ...(field.settings === undefined
+const renameInSettings = (
+  { settings }: { settings?: Record<string, JsonValue | Varying> },
+  rename: Rename,
+): { settings?: Record<string, JsonValue | Varying> } =>
+  settings === undefined
     ? {}
     : {
         settings: Object.fromEntries(
-          Object.entries(field.settings).map(([name, value]) => [
-            name,
-            renameInSetting(value, rename),
-          ]),
+          Object.entries(settings).map(([name, value]) => [name, renameInSetting(value, rename)]),
         ),
-      }),
+      }
+
+const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
+  ...renameInTexts(field, rename),
+  ...(typeof field.required === 'object' ? { required: renameIn(field.required, rename) } : {}),
+  ...renameInSettings(field, rename),
   ...(field.messages === undefined
     ? {}
     : {
@@ -84,9 +88,12 @@ const renamePlaceholdersIn = <TNode extends DocumentNode>(node: TNode, rename: R
 const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
   const visibility =
     node.visibleWhen === undefined ? {} : { visibleWhen: renameIn(node.visibleWhen, rename) }
-  if (isField(node)) {
-    const field = renamePlaceholdersIn({ ...renameInField(node, rename), ...visibility }, rename)
-    return field.key === rename.from ? { ...field, key: rename.to } : field
+  if (isLeaf(node)) {
+    const own = isField(node)
+      ? renameInField(node, rename)
+      : { ...node, ...renameInSettings(node, rename) }
+    const leaf = renamePlaceholdersIn({ ...own, ...visibility }, rename)
+    return leaf.key === rename.from ? { ...leaf, key: rename.to } : leaf
   }
   const items = node.items.map((child) => renameInNode(child, rename))
   const description =
@@ -101,7 +108,7 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
 }
 
 /**
- * Renames the key of a step or field in a form document, and the field in every condition and
+ * Renames the key of a step, field or block in a form document, and the field in every condition and
  * placeholder that names it, leaving the document given as it was. A step and a field that share the key are both
  * renamed. A key that is taken already, or not a plain name, {@link checkDocument} reports
  * afterwards.

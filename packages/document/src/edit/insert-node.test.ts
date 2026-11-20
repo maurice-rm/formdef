@@ -48,9 +48,17 @@ describe('insertNode', () => {
     ])
   })
 
+  it('inserts a block into a row, next to its fields', () => {
+    const block = { type: 'block', key: 'b1', kind: 'notice' } as const
+
+    expect(insertNode(plain, [1, 1], block).items?.[1]).toEqual(
+      row(field('f2'), block as unknown as FieldItem, field('f3')),
+    )
+  })
+
   it('refuses a node its place cannot hold, and a position that does not exist', () => {
     expect(() => insertNode(plain, [1, 0], section('Wall'))).toThrow(
-      'formdef: position [1, 0]: a row holds fields only.',
+      'formdef: position [1, 0]: a row holds fields and blocks only.',
     )
     expect(() => insertNode(stepped, [1], field('f9'))).toThrow(
       'formdef: position [1]: a form with steps holds steps only.',
@@ -62,7 +70,18 @@ describe('insertNode', () => {
       'formdef: position [5]: there is no such place.',
     )
     expect(() => insertNode(plain, [0, 0], field('f9'))).toThrow(
-      'formdef: position [0, 0]: a field holds no items.',
+      'formdef: position [0, 0]: a field or a block holds no items.',
+    )
+  })
+
+  it('refuses a node inside a block', () => {
+    const withBlock: FormDocument = {
+      format: 1,
+      items: [{ type: 'block', key: 'b1', kind: 'notice' }],
+    }
+
+    expect(() => insertNode(withBlock, [0, 0], field('f9'))).toThrow(
+      'formdef: position [0, 0]: a field or a block holds no items.',
     )
   })
 })

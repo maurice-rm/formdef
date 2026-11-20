@@ -1,9 +1,8 @@
 import type { FieldItem } from '../form-document'
 import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
-import type { FieldKind } from '../kinds/field-kind'
 import { isOption } from '../kinds/is-option'
-import type { SettingType } from '../kinds/setting'
+import type { Setting, SettingType } from '../kinds/setting'
 import type { Text } from '../text'
 import type { Answers } from './answers'
 import { resolveVaryingText } from './resolve-varying-text'
@@ -38,17 +37,17 @@ const resolveTexts = (
 }
 
 /**
- * A field's settings for these answers, in a language: a setting that follows an answer takes
- * its case's value, a text setting takes its translation, and the texts of options their case and
- * translation.
+ * The settings of a field or block for these answers, in a language: a setting that follows an
+ * answer takes its case's value, a text setting takes its translation, and the texts of options
+ * their case and translation.
  */
 export function resolveSettings(
-  field: FieldItem,
-  kind: FieldKind<unknown>,
+  owner: Pick<FieldItem, 'settings'>,
+  kind: { readonly settings: Readonly<Record<string, Setting<unknown>>> },
   context: Context,
 ): Readonly<Record<string, JsonValue>> {
   return Object.fromEntries(
-    Object.entries(field.settings ?? {}).map(([name, value]) => {
+    Object.entries(owner.settings ?? {}).map(([name, value]) => {
       const plain = isVarying(value) ? valueFor(value, context.answers) : value
       return [name, resolveTexts(plain, { type: kind.settings[name]?.type, context })]
     }),

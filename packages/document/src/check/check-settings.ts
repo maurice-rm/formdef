@@ -1,7 +1,6 @@
-import type { FieldItem, Varying } from '../form-document'
+import type { Varying } from '../form-document'
 import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
-import type { FieldKind } from '../kinds/field-kind'
 import type { DocumentOption } from '../kinds/is-option'
 import { optionValuesOf } from '../kinds/option-values-of'
 import type { Setting } from '../kinds/setting'
@@ -15,7 +14,10 @@ import type { CheckWalk } from './check-walk'
 import { fitsSettingType } from './fits-setting-type'
 import { report } from './report'
 
-type At = { walk: CheckWalk; path: string; name: string; field: FieldItem }
+/** A field or a block: what holds the settings of a kind. */
+type Owner = { key: string; settings?: Record<string, JsonValue | Varying> }
+
+type At = { walk: CheckWalk; path: string; name: string; field: Owner }
 
 const reportMismatch = ({ walk, path, name }: At, type: string): void => {
   report(walk, { code: 'settingMismatch', path, params: { setting: name, type } })
@@ -125,12 +127,12 @@ const checkSetting = (value: JsonValue | Varying, setting: Setting<unknown>, at:
 }
 
 /**
- * Checks the settings of one field against its field kind: each known setting in the kind's
+ * Checks the settings of one field or block against its kind: each known setting in the kind's
  * order, then those the kind does not have.
  */
 export function checkSettings(
-  field: FieldItem,
-  kind: FieldKind<unknown>,
+  field: Owner,
+  kind: { readonly settings: Readonly<Record<string, Setting<unknown>>> },
   { walk, path }: { walk: CheckWalk; path: string },
 ): void {
   const values = field.settings ?? {}

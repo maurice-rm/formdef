@@ -9,12 +9,19 @@ import { isRequired } from '../evaluate/is-required'
 import { resolveSettings } from '../evaluate/resolve-settings'
 import { resolveVaryingText } from '../evaluate/resolve-varying-text'
 import { fieldsOf } from '../fields-of'
-import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
+import type {
+  BlockItem,
+  DocumentItem,
+  DocumentStep,
+  FieldItem,
+  FormDocument,
+} from '../form-document'
 import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
+import { blockKindOf } from '../kinds/block-kind-of'
 import type { Catalog } from '../kinds/create-catalog'
-import type { FieldKind } from '../kinds/field-kind'
 import { kindOf } from '../kinds/kind-of'
+import type { Setting } from '../kinds/setting'
 import type { ValueType } from '../kinds/value-type'
 import { nestValues } from '../nest-values'
 import { resolveFixedText } from '../resolve-fixed-text'
@@ -69,7 +76,7 @@ const formatOption = (option: unknown): unknown =>
 // The settings are resolved to strings; the descriptions of options render formatted.
 const withFormattedOptions = (
   settings: Readonly<Record<string, JsonValue>>,
-  kind: FieldKind<unknown>,
+  kind: { readonly settings: Readonly<Record<string, Setting<unknown>>> },
 ): Readonly<Record<string, unknown>> =>
   Object.fromEntries(
     Object.entries(settings).map(([name, value]) => [
@@ -105,10 +112,23 @@ const fieldEntry = (field: FieldItem, build: Build): Entry => {
   return { widget: kind.widget, props, ...visibility(field, build) }
 }
 
+const blockEntry = (block: BlockItem, build: Build): Entry => {
+  const kind = blockKindOf(build.catalog, block)
+  const props = (values: unknown): Entry => {
+    const answers = build.answersOf(values)
+    const settings = resolveSettings(block, kind, { answers, language: build.language })
+    return kind.props(withFormattedOptions(settings, kind))
+  }
+  return { component: kind.component, props, ...visibility(block, build) }
+}
+
 const layoutOf = (items: readonly DocumentItem[], build: Build): unknown[] =>
   items.map((item) => {
     if (item.type === 'field') {
       return item.key
+    }
+    if (item.type === 'block') {
+      return blockEntry(item, build)
     }
     if (item.type === 'row') {
       return { row: layoutOf(item.items, build), ...visibility(item, build) }

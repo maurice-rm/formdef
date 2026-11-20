@@ -147,18 +147,18 @@ describe('readDocument', () => {
     const broken = { format: 1, items: [{ type: 'image', key: 'f1' }] }
 
     expect(() => readDocument(broken)).toThrow(
-      'formdef: document.items[0].type: expected one of field, section, row.',
+      'formdef: document.items[0].type: expected one of field, block, section, row.',
     )
   })
 
-  it('refuses a row that holds something other than fields', () => {
+  it('refuses a row that holds something other than fields and blocks', () => {
     const broken = {
       format: 1,
       items: [{ type: 'row', items: [{ type: 'section', label: 'A', items: [] }] }],
     }
 
     expect(() => readDocument(broken)).toThrow(
-      'formdef: document.items[0].items[0].type: a row holds fields only.',
+      'formdef: document.items[0].items[0].type: expected one of field, block.',
     )
   })
 
@@ -320,6 +320,35 @@ describe('readDocument with languages', () => {
     ).toThrow('formdef: document.items[0].label: this text does not follow answers.')
   })
 
+  it('reads blocks among items and in rows, with settings and a condition', () => {
+    const withBlocks = {
+      format: 1,
+      items: [
+        { type: 'block', key: 'b1', kind: 'notice', settings: { body: 'Read this.' } },
+        {
+          type: 'row',
+          items: [
+            { type: 'field', key: 'f1', kind: 'text', label: 'Name' },
+            {
+              type: 'block',
+              key: 'b2',
+              kind: 'divider',
+              visibleWhen: { field: 'f1', op: 'isFilled' },
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(readDocument(withBlocks)).toEqual(withBlocks)
+    expect(() =>
+      readDocument({
+        format: 1,
+        items: [{ type: 'block', key: 'b1', kind: 'notice', label: 'x' }],
+      }),
+    ).toThrow('formdef: document.items[0].label: unknown key.')
+  })
+
   it("reads a field's own error texts by issue code", () => {
     const withMessages = {
       format: 1,
@@ -470,6 +499,21 @@ describe('readDocument within its limits', () => {
 
     expect(() => readDocument(varying, { limits: { options: 1 } })).toThrow(
       'formdef: document.items[1].settings.options.otherwise: more than 1 options (limit options).',
+    )
+  })
+
+  it('refuses a block with more options than its limit', () => {
+    const options = [
+      { value: 'o1', label: 'One' },
+      { value: 'o2', label: 'Two' },
+    ]
+    const withBlock = {
+      format: 1,
+      items: [{ type: 'block', key: 'b1', kind: 'list', settings: { options } }],
+    }
+
+    expect(() => readDocument(withBlock, { limits: { options: 1 } })).toThrow(
+      'formdef: document.items[0].settings.options: more than 1 options (limit options).',
     )
   })
 

@@ -23,6 +23,7 @@ export { renameKey } from './edit/rename-key'
 export { splitIntoSteps } from './edit/split-into-steps'
 export { updateNode } from './edit/update-node'
 export type {
+  BlockItem,
   DocumentItem,
   DocumentNode,
   DocumentStep,
@@ -35,7 +36,9 @@ export type {
 export { FORMAT_VERSION } from './format-version'
 export type { IssueParams } from './issue-params'
 export type { JsonValue } from './json-value'
+export type { BlockKind } from './kinds/block-kind'
 export { type Catalog, type CatalogOptions, createCatalog } from './kinds/create-catalog'
+export { type BlockKindDefinition, defineBlockKind } from './kinds/define-block-kind'
 export {
   defineFieldKind,
   type FieldKindDefinition,

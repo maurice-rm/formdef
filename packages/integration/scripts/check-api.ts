@@ -49,6 +49,9 @@ const ENTRIES: readonly Entry[] = [
     packageName: '@formdef/document',
     publicExports: [
       'AnswerDescription',
+      'BlockItem',
+      'BlockKind',
+      'BlockKindDefinition',
       'Catalog',
       'CatalogOptions',
       'changeKind',
@@ -57,6 +60,7 @@ const ENTRIES: readonly Entry[] = [
       'createCatalog',
       'createKey',
       'createValidator',
+      'defineBlockKind',
       'defineFieldKind',
       'defineValueType',
       'Dependent',

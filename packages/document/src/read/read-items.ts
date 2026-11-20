@@ -1,6 +1,12 @@
 import type { Condition } from '../condition'
-import { failAt } from '../fail-at'
-import type { DocumentItem, FieldItem, RowItem, SectionItem, Varying } from '../form-document'
+import type {
+  BlockItem,
+  DocumentItem,
+  FieldItem,
+  RowItem,
+  SectionItem,
+  Varying,
+} from '../form-document'
 import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
 import { looksVarying } from '../looks-varying'
@@ -20,7 +26,8 @@ import { readVaryingText } from './read-varying-text'
 import { readVisibleWhen } from './read-visible-when'
 import { withOptional } from './with-optional'
 
-const ITEM_TYPES = ['field', 'section', 'row'] as const
+const ITEM_TYPES = ['field', 'block', 'section', 'row'] as const
+const ROW_ITEM_TYPES = ['field', 'block'] as const
 
 const FIELD_KEYS = [
   'type',
@@ -33,6 +40,7 @@ const FIELD_KEYS = [
   'settings',
   'messages',
 ]
+const BLOCK_KEYS = ['type', 'key', 'kind', 'visibleWhen', 'settings']
 const ROW_KEYS = ['type', 'visibleWhen', 'items']
 const SECTION_KEYS = ['type', 'label', 'description', 'visibleWhen', 'items']
 const OPTION_TEXTS = ['label', 'description']
@@ -103,19 +111,32 @@ const readField = (shape: Shape, path: string): FieldItem => {
   }
 }
 
-const readRowField = (value: unknown, path: string): FieldItem => {
-  const shape = readShape(value, path)
-  if (shape.type !== 'field') {
-    failAt(`${path}.type`, 'a row holds fields only.')
-  }
+const readBlock = (shape: Shape, path: string): BlockItem => {
+  readOnlyKeys(shape, BLOCK_KEYS, path)
 
-  return readField(shape, path)
+  return {
+    type: 'block',
+    key: readText(shape.key, `${path}.key`),
+    kind: readText(shape.kind, `${path}.kind`),
+    ...readVisibleWhen(shape, path),
+    ...withOptional(
+      'settings',
+      shape.settings === undefined ? undefined : readSettings(shape.settings, `${path}.settings`),
+    ),
+  }
+}
+
+const readRowItem = (value: unknown, path: string): FieldItem | BlockItem => {
+  const shape = readShape(value, path)
+  const type = readOneOf(shape.type, ROW_ITEM_TYPES, `${path}.type`)
+
+  return type === 'field' ? readField(shape, path) : readBlock(shape, path)
 }
 
 const readRow = (shape: Shape, path: string): RowItem => {
   readOnlyKeys(shape, ROW_KEYS, path)
   const items = readList(shape.items, `${path}.items`).map((entry, index) =>
-    readRowField(entry, `${path}.items[${index}]`),
+    readRowItem(entry, `${path}.items[${index}]`),
   )
 
   return { type: 'row', ...readVisibleWhen(shape, path), items }
@@ -139,6 +160,9 @@ const readItem = (value: unknown, path: string): DocumentItem => {
 
   if (type === 'field') {
     return readField(shape, path)
+  }
+  if (type === 'block') {
+    return readBlock(shape, path)
   }
   if (type === 'row') {
     return readRow(shape, path)

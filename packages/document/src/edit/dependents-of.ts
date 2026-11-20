@@ -2,6 +2,7 @@ import { conditionsOf } from '../conditions-of'
 import { fieldsOf } from '../fields-of'
 import type { FieldItem, FormDocument } from '../form-document'
 import { isField } from '../is-field'
+import { isLeaf } from '../is-leaf'
 import { placeholdersIn } from '../placeholders-in'
 import type { Position } from '../position'
 import { fieldsNamed } from './fields-named'
@@ -37,7 +38,7 @@ const isWithin = (position: Position, ancestor: Position): boolean =>
  */
 export function dependentsOf(document: FormDocument, position: Position): Dependent[] {
   const node = nodeAt(document, position)
-  const fields: FieldItem[] = isField(node) ? [node] : fieldsOf(node.items)
+  const fields: FieldItem[] = isLeaf(node) ? (isField(node) ? [node] : []) : fieldsOf(node.items)
   const keys = new Set(fields.map((field) => field.key))
 
   const fromConditions = conditionsOf(document)

@@ -3,6 +3,7 @@ import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import { createCatalog } from './create-catalog'
+import { defineBlockKind } from './define-block-kind'
 import { defineFieldKind } from './define-field-kind'
 import { defineValueType } from './define-value-type'
 import { setting } from './setting'
@@ -20,6 +21,13 @@ const registry = createRegistry({
   widgets: { text: TextWidget, choice: ChoiceWidget },
 })
 const otherRegistry = createRegistry({ fieldContext, formContext, widgets: { text: TextWidget } })
+const Notice = (_: { children: string }) => null
+const withNotice = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: {},
+  formComponents: { notice: Notice },
+})
 
 const postalCode = defineValueType({
   name: 'postalCode',
@@ -127,6 +135,37 @@ describe('createCatalog', () => {
     expect(() => createCatalog(registry, { fields: [text, foreign] })).toThrow(
       'formdef: fields[1]: the field kind "foreign" was defined with another registry.',
     )
+  })
+
+  it('finds a block kind by its name, apart from the field kinds', () => {
+    const notice = defineBlockKind(withNotice, {
+      name: 'text',
+      label: 'Notice',
+      component: 'notice',
+      props: () => ({ children: 'Note' }),
+    })
+    const catalog = createCatalog(withNotice, { fields: [], blocks: [notice] })
+
+    expect(catalog.blocks).toEqual([notice])
+    expect(catalog.findBlockKind('text')).toBe(notice)
+    expect(catalog.findFieldKind('text')).toBeUndefined()
+  })
+
+  it('refuses two block kinds of the same name, and one of another registry', () => {
+    const notice = defineBlockKind(withNotice, {
+      name: 'notice',
+      label: 'Notice',
+      component: 'notice',
+      props: () => ({ children: 'Note' }),
+    })
+    const foreign = { ...notice, registry: otherRegistry }
+
+    expect(() => createCatalog(withNotice, { fields: [], blocks: [notice, notice] })).toThrow(
+      'formdef: blocks[1].name: the name "notice" is used twice.',
+    )
+    expect(() =>
+      createCatalog(withNotice, { fields: [], blocks: [foreign as unknown as typeof notice] }),
+    ).toThrow('formdef: blocks[0]: the block kind "notice" was defined with another registry.')
   })
 
   it('refuses a field kind without a value type, as untyped code could pass', () => {

@@ -39,7 +39,7 @@ const problems = checkDocument(document, catalog)
 | `depth` | levels of nesting of objects and lists, the document being the first | `32` |
 | `items` | items of the whole document, counting those inside rows and sections | `2000` |
 | `conditions` | comparisons in all conditions together | `2000` |
-| `options` | options of one field | `1000` |
+| `options` | options of one field or block | `1000` |
 | `textLength` | characters of one text, such as a label or a setting | `20000` |
 
 ```ts
@@ -54,11 +54,11 @@ and the `params` an error text names. The text is the project's, keyed by the co
 
 | `code` | The document has | `params` |
 | --- | --- | --- |
-| `duplicateKey` | a step or field key used twice | `key` |
+| `duplicateKey` | a step key used twice, or a key of fields and blocks used twice | `key` |
 | `invalidKey` | a key that is empty or holds a dot or a bracket | `key` |
 | `overlappingKey` | a step key that starts with another step's key, such as `s10` after `s1` | `key`, `start` |
 | `duplicateOption` | an option value used twice in one field | `value` |
-| `unknownKind` | a field of a field kind that is not registered | `kind` |
+| `unknownKind` | a field or block of a kind that is not registered | `kind` |
 | `unknownField` | a condition or placeholder on a field the document does not hold | `field` |
 | `laterField` | a condition or placeholder on a field that comes later, or on the field itself | `field` |
 | `operatorMismatch` | an operator the value type of the field compared does not have | `op`, `valueType` |
@@ -92,7 +92,7 @@ second step.
 | `moveNode(document, from, to)` | Moves a step or item. `to` is counted in the document after the node was taken out, as a drag and drop list reports it. |
 | `updateNode(document, position, update)` | Replaces a step or item with what `update` returns, such as the field with a new label. |
 | `changeKind(document, position, kind)` | Gives a field another field kind. It keeps the settings the new kind has, by name, and drops the others. |
-| `renameKey(document, from, to)` | Renames a step or field key, and the field in every condition and placeholder that names it. |
+| `renameKey(document, from, to)` | Renames a step, field or block key, and the field in every condition and placeholder that names it. |
 
 ```ts
 import { checkDocument, createKey, insertNode, updateNode, type FormDocument } from '@formdef/document'
@@ -110,7 +110,8 @@ const problems = checkDocument(renamed, catalog)
 ```
 
 An operation throws when its position finds nothing or a place that cannot hold the node: steps go
-only into the steps of a form, a form with steps holds steps only, and a row holds fields only.
+only into the steps of a form, a form with steps holds steps only, a row holds fields and blocks
+only, and a field or a block holds no items.
 Everything else, such as a key taken already or a condition whose operator no longer fits after
 `changeKind`, the operation leaves in place for `checkDocument` to report.
 

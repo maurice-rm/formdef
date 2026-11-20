@@ -1,6 +1,6 @@
 import { DOCUMENT_PATH } from './document-path'
 import type { DocumentNode, FormDocument } from './form-document'
-import { isField } from './is-field'
+import { isLeaf } from './is-leaf'
 import { pathTo } from './path-to'
 import type { Position } from './position'
 
@@ -14,7 +14,7 @@ export type PlacedNode = {
 
 const nodesBelow = (node: DocumentNode, position: Position, path: string): PlacedNode[] => [
   { node, position, path },
-  ...(isField(node)
+  ...(isLeaf(node)
     ? []
     : node.items.flatMap((child, index) =>
         nodesBelow(child, [...position, index], pathTo.entry(path, 'items', index)),

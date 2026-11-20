@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import type { Condition } from '../condition'
 import type { FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
+import { defineBlockKind } from '../kinds/define-block-kind'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { defineValueType } from '../kinds/define-value-type'
 import { setting } from '../kinds/setting'
@@ -30,6 +31,13 @@ const registry = createRegistry({
     choices: ChoicesWidget,
     check: CheckWidget,
   },
+  formComponents: { divider: () => null },
+})
+
+const divider = defineBlockKind(registry, {
+  name: 'divider',
+  label: 'Divider',
+  component: 'divider',
 })
 
 const fieldKinds = [
@@ -76,7 +84,7 @@ const fieldKinds = [
     props: ({ options }) => ({ options }),
   }),
 ]
-const catalog = createCatalog(registry, { fields: fieldKinds })
+const catalog = createCatalog(registry, { fields: fieldKinds, blocks: [divider] })
 
 const HOUSE_TYPES = [
   { value: 'o1', label: 'Detached' },
@@ -346,6 +354,23 @@ describe('describeAnswers', () => {
           answer: { valueType: 'choice', value: 'h1', label: 'Central' },
         },
       ],
+    })
+  })
+
+  it('leaves out blocks, which hold no answers', () => {
+    const document: FormDocument = {
+      format: 1,
+      items: [
+        { type: 'block', key: 'b1', kind: 'divider' },
+        {
+          type: 'row',
+          items: [field('flats', 'count'), { type: 'block', key: 'b2', kind: 'divider' }],
+        },
+      ],
+    }
+
+    expect(describeAnswers(document, catalog, { values: { flats: 2 } })).toEqual({
+      items: [expect.objectContaining({ key: 'flats' })],
     })
   })
 
