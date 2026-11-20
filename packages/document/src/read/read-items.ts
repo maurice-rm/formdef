@@ -1,27 +1,16 @@
 import type { Condition } from '../condition'
-import type {
-  BlockItem,
-  DocumentItem,
-  FieldItem,
-  RowItem,
-  SectionItem,
-  Varying,
-} from '../form-document'
-import { isPlainObject } from '../is-plain-object'
-import type { JsonValue } from '../json-value'
-import { looksVarying } from '../looks-varying'
+import type { BlockItem, DocumentItem, FieldItem, RowItem, SectionItem } from '../form-document'
 import { pathTo } from '../path-to'
 import type { VaryingText } from '../varying-text'
 import { readCondition } from './read-condition'
-import { readJson } from './read-json'
 import { readList } from './read-list'
 import { readOneOf } from './read-one-of'
 import { readOnlyKeys } from './read-only-keys'
 import { readOptionalText } from './read-optional-text'
+import { readSettings } from './read-settings'
 import { readShape, type Shape } from './read-shape'
 import { readText } from './read-text'
 import { readTranslatableText } from './read-translatable-text'
-import { readVarying } from './read-varying'
 import { readVaryingText } from './read-varying-text'
 import { readVisibleWhen } from './read-visible-when'
 import { withOptional } from './with-optional'
@@ -43,38 +32,9 @@ const FIELD_KEYS = [
 const BLOCK_KEYS = ['type', 'key', 'kind', 'visibleWhen', 'settings']
 const ROW_KEYS = ['type', 'visibleWhen', 'items']
 const SECTION_KEYS = ['type', 'label', 'description', 'visibleWhen', 'items']
-const OPTION_TEXTS = ['label', 'description']
 
 const readRequired = (value: unknown, path: string): boolean | Condition =>
   typeof value === 'boolean' ? value : readCondition(value, path)
-
-const readOption = (value: unknown, path: string): JsonValue => {
-  const entry = readJson(value, path)
-  if (!isPlainObject(value) || !OPTION_TEXTS.some((name) => looksVarying(value[name]))) {
-    return entry
-  }
-  const texts = OPTION_TEXTS.filter((name) => looksVarying(value[name])).map((name) => [
-    name,
-    readVaryingText(value[name], `${path}.${name}`),
-  ])
-  return { ...(entry as Record<string, JsonValue>), ...Object.fromEntries(texts) }
-}
-
-const readSettingValue = (value: unknown, path: string): JsonValue =>
-  Array.isArray(value)
-    ? value.map((entry, index) => readOption(entry, `${path}[${index}]`))
-    : readJson(value, path)
-
-const readSetting = (value: unknown, path: string): JsonValue | Varying =>
-  looksVarying(value) ? readVarying(value, path, readSettingValue) : readSettingValue(value, path)
-
-const readSettings = (value: unknown, path: string): Record<string, JsonValue | Varying> =>
-  Object.fromEntries(
-    Object.entries(readShape(value, path)).map(([name, setting]) => [
-      name,
-      readSetting(setting, `${path}.${name}`),
-    ]),
-  )
 
 const readMessages = (value: unknown, path: string): Record<string, VaryingText> =>
   Object.fromEntries(
