@@ -1,6 +1,7 @@
 import {
   createCatalog,
   defineBlockKind,
+  defineDisplayKind,
   defineFieldKind,
   rule,
   setting,
@@ -12,8 +13,9 @@ import { registry } from '@/lib/formdef'
 // This file is yours. Its catalog holds the field kinds a form builder offers and form documents
 // are made of. Each one renders with a widget registered in index.tsx under the name it writes as `widget`:
 // remove a kind whose widget you do not fetch, change the labels, and add kinds of your own with
-// defineFieldKind. The block kinds at the end render with the form components Notice and Heading,
-// registered under formComponents. It stays without 'use client', so a server validates answers with it too.
+// defineFieldKind. The block kinds render with the form components Notice and Heading, registered
+// under formComponents; the display kinds give props to the Stepper and Section under structure.
+// It stays without 'use client', so a server validates answers with it too.
 
 const options = setting.options({ label: 'Options', minCount: 1 })
 const placeholder = setting.text({ label: 'Placeholder' })
@@ -154,7 +156,36 @@ const heading = defineBlockKind(registry, {
   props: ({ text }) => ({ children: text }),
 })
 
+const rail = defineDisplayKind(registry, {
+  name: 'rail',
+  label: 'Steps as a rail',
+  appliesTo: 'form',
+  props: () => ({ variant: 'rail' }),
+})
+
+const segments = defineDisplayKind(registry, {
+  name: 'segments',
+  label: 'Steps as segments',
+  appliesTo: 'form',
+  props: () => ({ variant: 'segments' }),
+})
+
+const compact = defineDisplayKind(registry, {
+  name: 'compact',
+  label: 'Steps as a compact bar',
+  appliesTo: 'form',
+  props: () => ({ variant: 'compact' }),
+})
+
+const group = defineDisplayKind(registry, {
+  name: 'group',
+  label: 'Group that reads as one question',
+  appliesTo: 'section',
+  props: () => ({ variant: 'label' }),
+})
+
 export const catalog = createCatalog(registry, {
   fields: [text, email, longText, decimal, number, checkbox, radio, select, checkboxes, date],
   blocks: [notice, heading],
+  displays: [rail, segments, compact, group],
 })

@@ -58,6 +58,7 @@ import { RadioField } from '@/components/formdef/radio-field'
 import { Row } from '@/components/formdef/row'
 import { Section } from '@/components/formdef/section'
 import { SelectField } from '@/components/formdef/select-field'
+import { Stepper } from '@/components/formdef/stepper'
 import { SubmitButton } from '@/components/formdef/submit-button'
 import { SwitchField } from '@/components/formdef/switch-field'
 import { TagsField } from '@/components/formdef/tags-field'
@@ -87,7 +88,13 @@ export const registry = createRegistry({
     tags: TagsField,
   },
   formComponents: { SubmitButton, Notice, Heading },
-  structure: { body: FieldGroup, section: Section, row: Row, arrayFrame: ArrayFrame },
+  structure: {
+    body: FieldGroup,
+    section: Section,
+    row: Row,
+    arrayFrame: ArrayFrame,
+    stepper: Stepper,
+  },
 })
 
 export const { createForm, Fields, formHook } = registry

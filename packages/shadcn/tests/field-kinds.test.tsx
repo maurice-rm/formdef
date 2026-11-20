@@ -96,6 +96,36 @@ describe('the shipped field kinds', () => {
     expect(screen.getByText('meter reading').tagName).toBe('STRONG')
   })
 
+  it('draw the stepper and a section as their displays say', () => {
+    const stepped: FormDocument = {
+      format: 1,
+      display: { kind: 'rail' },
+      steps: [
+        {
+          key: 's1',
+          label: 'Contact',
+          items: [
+            {
+              type: 'section',
+              label: 'Address',
+              display: { kind: 'group' },
+              items: [{ type: 'field', key: 'street', kind: 'text', label: 'Street' }],
+            },
+          ],
+        },
+      ],
+    }
+    expect(checkDocument(stepped, catalog)).toEqual([])
+
+    const Form = createDocumentForm(stepped, catalog)
+    const { container } = render(<Form />)
+
+    expect(container.querySelector('[data-slot="stepper"]')?.getAttribute('data-variant')).toBe(
+      'rail',
+    )
+    expect(screen.getByText('Address').getAttribute('data-variant')).toBe('label')
+  })
+
   it('validate answers with the rules their settings give', () => {
     const validator = createValidator(document, catalog)
     const result = validator['~standard'].validate({

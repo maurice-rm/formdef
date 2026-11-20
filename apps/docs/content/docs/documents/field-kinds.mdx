@@ -347,7 +347,17 @@ Next to them it ships two block kinds:
 | `notice` | Notice | [`Notice`](/widgets/notice) | `title` (varies), `body` (required, varies, formatted) |
 | `heading` | Heading | [`Heading`](/widgets/heading) | `text` (required, varies) |
 
+And display kinds for the [stepper](/widgets/stepper) and the [section](/widgets/section):
+
+| Name | Applies to | Gives |
+| --- | --- | --- |
+| `rail` | the form | `variant: 'rail'` |
+| `segments` | the form | `variant: 'segments'` |
+| `compact` | the form | `variant: 'compact'` |
+| `group` | a section | `variant: 'label'`, a section that reads as one question, such as an address |
+
 The file is your project's own, like every file of the shadcn registry. Register each widget under
-the name in the table in `lib/formdef/index.tsx`, and the form components as
-`formComponents: { Notice, Heading }`, or remove the kinds you do not fetch; change the labels, and
-add kinds of your own with `defineFieldKind` and `defineBlockKind`.
+the name in the table in `lib/formdef/index.tsx`, the form components as
+`formComponents: { Notice, Heading }` and the stepper and section under `structure`, or remove the
+kinds you do not fetch; change the labels, and add kinds of your own with `defineFieldKind`,
+`defineBlockKind` and `defineDisplayKind`.
