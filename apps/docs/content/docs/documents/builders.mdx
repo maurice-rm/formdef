@@ -60,6 +60,7 @@ and the `params` an error text names. The text is the project's, keyed by the co
 | `duplicateOption` | an option value used twice in one field | `value` |
 | `unknownKind` | a field, block or display of a kind that is not registered | `kind` |
 | `misplacedDisplay` | a display where its kind does not apply, such as a section's on a row, or the form's in a form without steps | `kind`, `appliesTo` |
+| `misplacedSubmit` | the label of a submit button in a form of steps, whose stepper submits | none |
 | `unknownField` | a condition or placeholder on a field the document does not hold | `field` |
 | `laterField` | a condition or placeholder on a field that comes later, or on the field itself | `field` |
 | `repeatField` | a condition or placeholder outside a repeat on a field inside it, where no entry is meant | `field` |
@@ -77,7 +78,7 @@ and the `params` an error text names. The text is the project's, keyed by the co
 | `settingLimit` | a setting outside its constraints, such as too long or too few options | `setting` and the constraint, such as `minCount` |
 | `missingTranslation` | a translated text that leaves out one of the document's languages | `language` |
 | `unknownLanguage` | a translation into a language the document does not name | `language` |
-| `fixedText` | a placeholder in the label of a step or section, a display's setting, the intro or the texts of a repeat, which name no answers; a repeat's `removeLabel` and `entryLabel` name the entry's number as `{n}` | `field` |
+| `fixedText` | a placeholder in the label of a step or section, a display's setting, the intro, the submit button or the texts of a repeat, which name no answers; a repeat's `removeLabel` and `entryLabel` name the entry's number as `{n}` | `field` |
 | `unknownParam` | a placeholder in a field's own error text that its code has no param for | `param`, `code` |
 | `unknownStep` | a jump to a step the document does not hold | `step` |
 | `backwardJump` | a jump to the step itself or an earlier one | `step` |
@@ -150,7 +151,8 @@ else setDocument(removeNode(document, position))
 ## Steps on and off
 
 `splitIntoSteps` turns a plain form into one with steps: its items become the items of one step,
-and further steps are inserted after it. `dissolveSteps` turns the steps back into sections, each
+and further steps are inserted after it; the label of its submit button is left out, as the stepper
+submits a form of steps. `dissolveSteps` turns the steps back into sections, each
 with the step's label, description and condition. A section of a step now sits one level deeper,
 where `checkDocument` may report it as `tooDeep`. The displays of the form and of its steps, the
 jumps of its steps and the endings only a jump reaches apply to steps only and are left out.

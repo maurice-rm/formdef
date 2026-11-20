@@ -19,6 +19,7 @@ import type { DocumentForm } from './document-form'
 import { endingLayoutOf } from './ending-layout-of'
 import { EndingView } from './ending-view'
 import { StartButton, type StartButtonProps } from './start-button'
+import { SubmitButton, type SubmitButtonProps } from './submit-button'
 import { withIntro } from './with-intro'
 
 /**
@@ -47,7 +48,23 @@ export type DocumentFormOptions = ValidatorOptions & {
    * @defaultValue a plain `<button type="button">`
    */
   startButton?: ComponentType<StartButtonProps>
+  /**
+   * The button that submits a form without steps, rendered after its items when the document
+   * gives it a `submit` label; it receives that `label` and submits the form it sits in.
+   *
+   * @defaultValue a plain `<button type="submit">`
+   */
+  submitButton?: ComponentType<SubmitButtonProps>
 }
+
+// A plain form ends with its submit button; a form of steps submits through its stepper.
+const withSubmit = (
+  config: DocumentConfig,
+  { label, Button }: { label: string | undefined; Button: ComponentType<SubmitButtonProps> },
+): DocumentConfig =>
+  label === undefined
+    ? config
+    : { ...config, layout: [...config.layout, { render: () => createElement(Button, { label }) }] }
 
 type SubmitArgs = Parameters<
   NonNullable<NonNullable<FormProps<DocumentValidator>['options']>['onSubmit']>
@@ -87,7 +104,8 @@ type CreatesForms = {
  * the answers of the fields that show, which is what a server keeps. Once `onSubmit` is done, the
  * form gives way to the document's ending that applies, which takes the focus; without one that
  * applies, the form stays. A document with an intro shows it and its start button first; once
- * started, the form takes the focus.
+ * started, the form takes the focus. A form without steps whose document gives a `submit` label
+ * ends with its submit button.
  *
  * @param document - The document, as {@link readDocument} returns it.
  * @param catalog - The catalog with the kinds the document uses and the registry that renders them.
@@ -101,9 +119,12 @@ type CreatesForms = {
  *   submitted and `onSubmit` is done.
  * @param options.startButton - The button that starts the form after the intro; it receives
  *   `label` and `onStart`.
+ * @param options.submitButton - The button that submits a form without steps; it receives
+ *   `label`.
  * @defaultValue `options.messages`: the English texts; `options.language`: the document's first;
  *   `options.validation`: `{ mode: 'revalidate' }`; `options.showsEnding`: `true`;
- *   `options.startButton`: a plain `<button type="button">`.
+ *   `options.startButton`: a plain `<button type="button">`; `options.submitButton`: a plain
+ *   `<button type="submit">`.
  * @returns The form component.
  * @throws When the document has problems, as {@link checkDocument} reports them.
  *
@@ -121,7 +142,13 @@ export function createDocumentForm(
 ): DocumentForm {
   const schema = createValidator(document, catalog, options)
   const language = languageOf(document, options.language)
-  const config = documentConfig(document, catalog, { schema, language })
+  const config = withSubmit(documentConfig(document, catalog, { schema, language }), {
+    label:
+      document.steps !== undefined || document.submit === undefined
+        ? undefined
+        : resolveFixedText(document.submit, language),
+    Button: options.submitButton ?? SubmitButton,
+  })
   // The registry's `createForm` types a config written in code; a document's is known at runtime.
   const registry = catalog.registry as CreatesForms & BlockRenderer
   const Form = registry.createForm(

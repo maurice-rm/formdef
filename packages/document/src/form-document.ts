@@ -281,6 +281,11 @@ export type FormDocument =
       intro?: Intro
       /** What a person sees once the form is submitted, as {@link Ending} describes. */
       endings?: Ending[]
+      /**
+       * The label of a submit button, which applies to a form without steps only; the stepper
+       * submits a form of steps, and `checkDocument` reports one here.
+       */
+      submit?: Text
       /** The steps, in order. */
       steps: DocumentStep[]
       /** A document with steps holds its items in them. */
@@ -303,6 +308,11 @@ export type FormDocument =
       intro?: Intro
       /** What a person sees once the form is submitted, as {@link Ending} describes. */
       endings?: Ending[]
+      /**
+       * The label of the submit button after the items; without it, the form renders none and
+       * the project places its own.
+       */
+      submit?: Text
       /** The items of a form without steps, in order. */
       items: DocumentItem[]
       /** A document without steps holds no steps. */

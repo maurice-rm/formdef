@@ -1797,3 +1797,27 @@ describe('checkDocument with repeats', () => {
     ])
   })
 })
+
+describe('checkDocument with a submit button', () => {
+  const name: FieldItem = { type: 'field', key: 'f1', kind: 'text', label: 'Name' }
+
+  it('takes the text of the submit button of a form without steps, which names no answer', () => {
+    expect(codesOf({ format: 1, submit: 'Send', items: [name] })).toEqual([])
+    expect(codesOf({ format: 1, submit: 'Send {f1}', items: [name] })).toEqual([
+      'fixedText document.submit',
+    ])
+    expect(
+      codesOf({ format: 1, languages: ['de', 'en'], submit: { de: 'Senden' }, items: [name] }),
+    ).toEqual(['missingTranslation document.submit'])
+  })
+
+  it('reports a submit button in a form of steps, whose stepper submits', () => {
+    const document: FormDocument = {
+      format: 1,
+      submit: 'Send',
+      steps: [{ key: 's1', label: 'Contact', items: [name] }],
+    }
+
+    expect(codesOf(document)).toEqual(['misplacedSubmit document.submit'])
+  })
+})

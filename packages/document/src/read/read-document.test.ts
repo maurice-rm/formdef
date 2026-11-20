@@ -521,6 +521,18 @@ describe('readDocument with languages', () => {
     )
   })
 
+  it('reads the text of the submit button, which checkDocument checks against steps', () => {
+    const withSubmit = {
+      format: 1,
+      languages: ['de', 'en'],
+      submit: { de: 'Senden', en: 'Send' },
+      items: [{ type: 'field', key: 'f1', kind: 'text', label: 'Name' }],
+    }
+
+    expect(readDocument(withSubmit)).toEqual(withSubmit)
+    expect(() => readDocument({ ...withSubmit, submit: 3 })).toThrow('formdef: document.submit:')
+  })
+
   it('reads an intro of blocks and the text of its start button', () => {
     const withIntro = (items: unknown) => ({
       format: 1,

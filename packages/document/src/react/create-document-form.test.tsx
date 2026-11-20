@@ -631,6 +631,12 @@ const StartButton = ({ label, onStart }: { label: string; onStart: () => void })
   </button>
 )
 
+const ProjectSubmit = ({ label }: { label: string }): ReactNode => (
+  <button type="submit" data-project="">
+    {label}
+  </button>
+)
+
 describe('createDocumentForm with an intro', () => {
   const withIntro: FormDocument = {
     format: 1,
@@ -657,6 +663,35 @@ describe('createDocumentForm with an intro', () => {
     const form = screen.getByRole('form', { name: 'Order' })
     expect(screen.queryByRole('complementary', { name: 'Notice' })).toBeNull()
     expect(form.parentElement).toBe(document.activeElement)
+  })
+
+  it('renders the submit button of a form without steps after its items, which submits it', async () => {
+    const onSubmit = vi.fn()
+    const Form = createDocumentForm(
+      { format: 1, submit: 'Send', items: [field('name', 'text', { label: 'Name' })] },
+      catalog,
+    )
+    render(<Form options={{ onSubmit: ({ value }) => onSubmit(value) }} />)
+
+    await type('Name', 'Ada')
+    await click('Send')
+
+    expect(onSubmit).toHaveBeenCalledWith({ name: 'Ada' })
+  })
+
+  it("renders the project's submit button with the document's text, and none without a text", () => {
+    const WithSubmit = createDocumentForm(
+      { format: 1, submit: 'Send', items: [field('name', 'text')] },
+      catalog,
+      { submitButton: ProjectSubmit },
+    )
+    const { unmount } = render(<WithSubmit />)
+    expect(screen.getByRole('button', { name: 'Send' }).dataset.project).toBe('')
+    unmount()
+
+    const Plain = createDocumentForm(plain(field('name', 'text')), catalog)
+    render(<Plain />)
+    expect(screen.queryByRole('button')).toBeNull()
   })
 
   it("renders the project's start button", async () => {

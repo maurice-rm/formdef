@@ -14,9 +14,19 @@ import { READ_LIMITS, type ReadLimits } from './read-limits'
 import { readOnlyKeys } from './read-only-keys'
 import { readShape, type Shape } from './read-shape'
 import { readSteps } from './read-steps'
+import { readTranslatableText } from './read-translatable-text'
 import { withOptional } from './with-optional'
 
-const DOCUMENT_KEYS = ['format', 'languages', 'display', 'intro', 'endings', 'steps', 'items']
+const DOCUMENT_KEYS = [
+  'format',
+  'languages',
+  'display',
+  'intro',
+  'endings',
+  'submit',
+  'steps',
+  'items',
+]
 
 const checkFormat = (value: unknown): void => {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) {
@@ -75,6 +85,12 @@ const readShapeOf = (shape: Shape): FormDocument => {
       shape.endings === undefined
         ? undefined
         : readEndings(shape.endings, `${DOCUMENT_PATH}.endings`),
+    ),
+    ...withOptional(
+      'submit',
+      shape.submit === undefined
+        ? undefined
+        : readTranslatableText(shape.submit, `${DOCUMENT_PATH}.submit`),
     ),
   }
   if (hasSteps) {

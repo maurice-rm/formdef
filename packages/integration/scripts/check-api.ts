@@ -148,6 +148,7 @@ const ENTRIES: readonly Entry[] = [
       'DocumentForm',
       'DocumentFormOptions',
       'StartButtonProps',
+      'SubmitButtonProps',
     ],
   },
 ]

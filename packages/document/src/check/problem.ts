@@ -12,6 +12,7 @@ import type { JsonValue } from '../json-value'
  * - `unknownKind`: a field, block or display of a kind that is not registered;
  * - `misplacedDisplay`: a display where its kind does not apply, such as a section's on a row, or
  *   the form's in a form without steps;
+ * - `misplacedSubmit`: the label of a submit button in a form of steps, whose stepper submits;
  * - `unknownField`: a condition on, or an expression that reads, a field the document does not
  *   hold;
  * - `laterField`: a condition on, or an expression that reads, a field that comes later, or the
@@ -32,8 +33,8 @@ import type { JsonValue } from '../json-value'
  * - `settingLimit`: a setting outside its constraints, such as too long or too few options;
  * - `missingTranslation`: a translated text that leaves out a language of the document;
  * - `unknownLanguage`: a translation into a language the document does not name;
- * - `fixedText`: a placeholder in the label of a step or section, a display's setting, the intro
- *   or the texts of a repeat, which name no answers; those of each entry name its number as `{n}`;
+ * - `fixedText`: a placeholder in the label of a step or section, a display's setting, the intro,
+ *   the submit button or the texts of a repeat, which name no answers; those of each entry name its number as `{n}`;
  * - `unknownParam`: a placeholder in a field's error text that its issue code has no param for;
  * - `unknownStep`: a jump to a step the document does not hold;
  * - `backwardJump`: a jump to the step itself or an earlier one, which could loop;
@@ -55,6 +56,7 @@ export type ProblemCode =
   | 'duplicateOption'
   | 'unknownKind'
   | 'misplacedDisplay'
+  | 'misplacedSubmit'
   | 'unknownField'
   | 'laterField'
   | 'repeatField'

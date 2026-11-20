@@ -259,6 +259,19 @@ const checkItem = (item: DocumentItem, level: Level): void => {
   })
 }
 
+// The stepper submits a form of steps with a button of its own.
+const checkSubmit = (document: FormDocument, walk: CheckWalk): void => {
+  if (document.submit === undefined) {
+    return
+  }
+  const path = `${DOCUMENT_PATH}.submit`
+  if (document.steps !== undefined) {
+    report(walk, { code: 'misplacedSubmit', path })
+    return
+  }
+  checkFixedText(document.submit, { walk, path })
+}
+
 /** Where the steps and endings of a document are, which jumps name. */
 type Targets = { allStepKeys: readonly string[]; endingKeys: ReadonlySet<string> }
 
@@ -407,6 +420,7 @@ export function checkDocument(
   })
   const seenKeys = new Set<string>()
   checkIntro(document.intro, { walk, seenKeys })
+  checkSubmit(document, walk)
   if (document.steps === undefined) {
     checkItems(document.items, {
       at: { walk, path: `${DOCUMENT_PATH}.items` },

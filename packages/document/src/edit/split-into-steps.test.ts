@@ -23,6 +23,12 @@ describe('splitIntoSteps', () => {
     })
   })
 
+  it('leaves out the submit button, which a form of steps submits through its stepper', () => {
+    const plain: FormDocument = { format: 1, submit: 'Send', items: [field('f1')] }
+
+    expect(splitIntoSteps(plain, { key: 's1', label: 'Contact' })).not.toHaveProperty('submit')
+  })
+
   it('refuses a form that has steps already', () => {
     const stepped: FormDocument = { format: 1, steps: [] }
 

@@ -3,7 +3,8 @@ import { failAt } from '../fail-at'
 import type { DocumentStep, FormDocument } from '../form-document'
 
 /**
- * Turns a form without steps into one with steps: its items become the items of one step.
+ * Turns a form without steps into one with steps: its items become the items of one step. The
+ * label of its submit button is left out, as the stepper submits a form of steps.
  *
  * @param document - The document, without steps.
  * @param step - The key and label of the step, and what else it takes, such as a description.
@@ -22,6 +23,6 @@ export function splitIntoSteps(
   if (document.steps !== undefined) {
     failAt(DOCUMENT_PATH, 'the form has steps already.')
   }
-  const { items, steps: _steps, ...head } = document
+  const { items, steps: _steps, submit: _appliesToPlainForms, ...head } = document
   return { ...head, steps: [{ ...step, items }] }
 }

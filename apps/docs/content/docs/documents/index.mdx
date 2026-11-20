@@ -486,9 +486,13 @@ export const Contact = () => (
 - The form starts with each field's empty value and validates with the document's
   [validator](/documents/validation-and-answers), so fields that do not show are not validated.
 - A document with steps renders through the registered `structure.stepper`, such as the
-  [stepper](/widgets/stepper) of the shadcn registry, which submits from the last step. A plain
-  form has no button of its own: the `form` attribute points a button outside it at the form's
-  `id`, as above.
+  [stepper](/widgets/stepper) of the shadcn registry, which submits from the last step.
+- A plain form ends with a submit button when the document gives its label under `submit` at the
+  root, such as `"submit": "Send"`, which may be translated and names no answer. The option
+  `submitButton` renders it with a component of your own, such as the shadcn
+  [submit button](/widgets/submit-button); it receives the `label`. Without `submit`, the form has
+  no button of its own: the `form` attribute points a button outside it at the form's `id`, as
+  above. `checkDocument` reports a `submit` in a form of steps as `misplacedSubmit`.
 - `createDocumentForm` throws when [`checkDocument`](/documents/builders#reading-and-checking)
   reports a problem with the document, and `readDocument` throws when the input is no form
   document, naming the path of the first problem.
