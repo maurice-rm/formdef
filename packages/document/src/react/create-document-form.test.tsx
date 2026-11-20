@@ -7,7 +7,7 @@ import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
-import { createFieldKinds } from '../kinds/create-field-kinds'
+import { createCatalog } from '../kinds/create-catalog'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { setting } from '../kinds/setting'
 import { createDocumentForm } from './create-document-form'
@@ -95,7 +95,7 @@ const registry = createRegistry({
   structure: { stepper: Stepper },
 })
 
-const kinds = createFieldKinds(registry, [
+const fieldKinds = [
   defineFieldKind(registry, { name: 'text', label: 'Text', widget: 'text', valueType: 'text' }),
   defineFieldKind(registry, {
     name: 'measure',
@@ -113,7 +113,8 @@ const kinds = createFieldKinds(registry, [
     settings: { options: setting.options({ label: 'Options' }) },
     props: ({ options }) => ({ options }),
   }),
-])
+]
+const catalog = createCatalog(registry, { fields: fieldKinds })
 
 const field = (key: string, kind: string, extra: Partial<FieldItem> = {}): FieldItem => ({
   type: 'field',
@@ -166,7 +167,7 @@ describe('createDocumentForm without steps', () => {
       plain(
         field('name', 'text', { label: 'Name', description: 'As on the bell', required: true }),
       ),
-      kinds,
+      catalog,
     )
     render(<Form />)
 
@@ -191,7 +192,7 @@ describe('createDocumentForm without steps', () => {
           items: [field('roof', 'text', { label: 'Roof' })],
         },
       ),
-      kinds,
+      catalog,
     )
     render(<Form />)
 
@@ -219,7 +220,7 @@ describe('createDocumentForm without steps', () => {
           },
         }),
       ),
-      kinds,
+      catalog,
     )
     render(<Form />)
 
@@ -240,7 +241,7 @@ describe('createDocumentForm without steps', () => {
         field('name', 'text', { label: 'Name', required: true }),
         field('flats', 'text', { label: 'Flats', visibleWhen: isApartmentBlock }),
       ),
-      kinds,
+      catalog,
       { messages: { required: () => 'Pflichtfeld' } },
     )
     render(<Form aria-label="Order" options={{ onSubmit: ({ value }) => onSubmit(value) }} />)
@@ -262,8 +263,8 @@ describe('createDocumentForm without steps', () => {
 
   it('validates when the validation option says, here on every change', async () => {
     const document = plain(field('name', 'text', { label: 'Name', required: true }))
-    const OnChange = createDocumentForm(document, kinds, { validation: { mode: 'onChange' } })
-    const OnSubmit = createDocumentForm(document, kinds)
+    const OnChange = createDocumentForm(document, catalog, { validation: { mode: 'onChange' } })
+    const OnSubmit = createDocumentForm(document, catalog)
 
     render(<OnChange />)
     await type('Name *', 'Ada')
@@ -278,7 +279,7 @@ describe('createDocumentForm without steps', () => {
   })
 
   it('refuses a document with problems', () => {
-    expect(() => createDocumentForm(plain(field('name', 'signature')), kinds)).toThrow(
+    expect(() => createDocumentForm(plain(field('name', 'signature')), catalog)).toThrow(
       'formdef: document: the document has 1 problem; checkDocument lists it.',
     )
   })
@@ -312,7 +313,7 @@ describe('createDocumentForm with steps', () => {
   }
 
   it('renders the first step in the stepper, with the steps that show and their descriptions', () => {
-    const Form = createDocumentForm(document, kinds)
+    const Form = createDocumentForm(document, catalog)
     render(<Form />)
 
     expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
@@ -324,7 +325,7 @@ describe('createDocumentForm with steps', () => {
   })
 
   it('moves on past a required field that does not show, and adds a step once it shows', async () => {
-    const Form = createDocumentForm(document, kinds)
+    const Form = createDocumentForm(document, catalog)
     render(<Form />)
 
     await choose('House type', 'o1')

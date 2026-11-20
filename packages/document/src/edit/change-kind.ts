@@ -19,7 +19,7 @@ import { updateNode } from './update-node'
  *
  * @example
  * ```ts
- * const textarea = fieldKinds.byName('textarea')
+ * const textarea = catalog.findFieldKind('textarea')
  * if (textarea !== undefined) setDocument(changeKind(document, position, textarea))
  * ```
  */

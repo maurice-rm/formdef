@@ -1,9 +1,9 @@
-import { createFieldKinds, defineFieldKind, rule, setting } from '@formdef/document'
+import { createCatalog, defineFieldKind, rule, setting } from '@formdef/document'
 
 import { registry } from '@/lib/formdef'
 
-// This file is yours. It holds the field kinds a form builder offers and form documents are made
-// of. Each one renders with a widget registered in index.tsx under the name it writes as `widget`:
+// This file is yours. Its catalog holds the field kinds a form builder offers and form documents
+// are made of. Each one renders with a widget registered in index.tsx under the name it writes as `widget`:
 // remove a kind whose widget you do not fetch, change the labels, and add kinds of your own with
 // defineFieldKind. It stays without 'use client', so a server validates answers with it too.
 
@@ -127,15 +127,6 @@ const date = defineFieldKind(registry, {
   rules: ({ earliest, latest }) => [rule.earliest(earliest), rule.latest(latest)],
 })
 
-export const fieldKinds = createFieldKinds(registry, [
-  text,
-  email,
-  longText,
-  decimal,
-  number,
-  checkbox,
-  radio,
-  select,
-  checkboxes,
-  date,
-])
+export const catalog = createCatalog(registry, {
+  fields: [text, email, longText, decimal, number, checkbox, radio, select, checkboxes, date],
+})

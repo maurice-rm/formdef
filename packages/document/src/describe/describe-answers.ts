@@ -2,7 +2,7 @@ import { refuseProblems } from '../check/refuse-problems'
 import type { Answers } from '../evaluate/answers'
 import { evaluate, type ShownField } from '../evaluate/evaluate'
 import type { DocumentItem, FormDocument, JsonValue } from '../form-document'
-import type { FieldKinds } from '../kinds/create-field-kinds'
+import type { Catalog } from '../kinds/create-catalog'
 import { optionOf } from '../kinds/option-of'
 import type { SettingOption } from '../kinds/setting'
 
@@ -151,24 +151,24 @@ const describeItems = (items: readonly DocumentItem[], described: Described): De
  * boolean as yes or a decimal with its unit, is the project's.
  *
  * @param document - The document, as {@link readDocument} returns it.
- * @param kinds - The field kinds the document's fields are of.
+ * @param catalog - The catalog with the kinds the document uses.
  * @param values - The answers, nested by step key in a document with steps, flat without.
  * @returns The description; a step or section with nothing that shows is left out.
  * @throws When the document has problems, as {@link checkDocument} reports them.
  *
  * @example
  * ```ts
- * const result = createValidator(document, fieldKinds)['~standard'].validate(values)
- * if (result.issues === undefined) await sendSummary(describeAnswers(document, fieldKinds, result.value))
+ * const result = createValidator(document, catalog)['~standard'].validate(values)
+ * if (result.issues === undefined) await sendSummary(describeAnswers(document, catalog, result.value))
  * ```
  */
 export function describeAnswers(
   document: FormDocument,
-  kinds: FieldKinds<unknown>,
+  catalog: Catalog<unknown>,
   values: unknown,
 ): AnswerDescription {
-  refuseProblems(document, kinds)
-  const { shown, answers } = evaluate(document, kinds, values)
+  refuseProblems(document, catalog)
+  const { shown, answers } = evaluate(document, catalog, values)
   const described = { shownByKey: new Map(shown.map((entry) => [entry.field.key, entry])), answers }
 
   if (document.steps === undefined) {

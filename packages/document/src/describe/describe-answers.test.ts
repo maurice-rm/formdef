@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { Condition } from '../condition'
 import type { FieldItem, FormDocument } from '../form-document'
-import { createFieldKinds } from '../kinds/create-field-kinds'
+import { createCatalog } from '../kinds/create-catalog'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { setting } from '../kinds/setting'
 import { describeAnswers } from './describe-answers'
@@ -30,7 +30,7 @@ const registry = createRegistry({
   },
 })
 
-const kinds = createFieldKinds(registry, [
+const fieldKinds = [
   defineFieldKind(registry, { name: 'text', label: 'Text', widget: 'text', valueType: 'text' }),
   defineFieldKind(registry, {
     name: 'measure',
@@ -68,7 +68,8 @@ const kinds = createFieldKinds(registry, [
     settings: { options: setting.options({ label: 'Options' }) },
     props: ({ options }) => ({ options }),
   }),
-])
+]
+const catalog = createCatalog(registry, { fields: fieldKinds })
 
 const HOUSE_TYPES = [
   { value: 'o1', label: 'Detached' },
@@ -112,7 +113,7 @@ describe('describeAnswers', () => {
     }
 
     expect(
-      describeAnswers(document, kinds, {
+      describeAnswers(document, catalog, {
         house: 'o2',
         rooms: ['r2', 'r1'],
         flats: 6,
@@ -203,7 +204,7 @@ describe('describeAnswers', () => {
       ],
     }
 
-    const described = describeAnswers(document, kinds, {
+    const described = describeAnswers(document, catalog, {
       building: { house: 'o1', flats: 6, caretaker: 'Ada', name: '  ' },
       block: { floors: 4 },
     })
@@ -232,7 +233,7 @@ describe('describeAnswers', () => {
   it('describes an answer of the wrong type or no option of the field as none', () => {
     const document: FormDocument = { format: 1, items: [house, field('flats', 'count')] }
 
-    expect(describeAnswers(document, kinds, { house: 'o9', flats: 'six' })).toEqual({
+    expect(describeAnswers(document, catalog, { house: 'o9', flats: 'six' })).toEqual({
       items: [
         expect.objectContaining({ key: 'house', answer: undefined }),
         expect.objectContaining({ key: 'flats', answer: undefined }),
@@ -242,7 +243,7 @@ describe('describeAnswers', () => {
 
   it('refuses a document with problems', () => {
     expect(() =>
-      describeAnswers({ format: 1, items: [field('f1', 'signature')] }, kinds, {}),
+      describeAnswers({ format: 1, items: [field('f1', 'signature')] }, catalog, {}),
     ).toThrow('formdef: document: the document has 1 problem; checkDocument lists it.')
   })
 })

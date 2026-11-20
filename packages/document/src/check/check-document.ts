@@ -1,7 +1,7 @@
 import { DOCUMENT_PATH } from '../document-path'
 import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
-import type { FieldKinds } from '../kinds/create-field-kinds'
+import type { Catalog } from '../kinds/create-catalog'
 import { pathTo } from '../path-to'
 import { checkCondition } from './check-condition'
 import { checkSettings } from './check-settings'
@@ -124,20 +124,20 @@ const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
  * any.
  *
  * @param document - The document, as {@link readDocument} returns it.
- * @param kinds - The field kinds the document's fields are of.
+ * @param catalog - The catalog with the kinds the document uses.
  * @returns Every problem found; empty when the document is sound.
  *
  * @example
  * ```ts
- * const problems = checkDocument(document, fieldKinds)
+ * const problems = checkDocument(document, catalog)
  * if (problems.length > 0) showProblems(problems)
  * ```
  */
-export function checkDocument(document: FormDocument, kinds: FieldKinds<unknown>): Problem[] {
+export function checkDocument(document: FormDocument, catalog: Catalog<unknown>): Problem[] {
   const items =
     document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
   const walk: CheckWalk = {
-    kindNamed: (name) => kinds.byName(name),
+    kindNamed: (name) => catalog.findFieldKind(name),
     allFieldKeys: new Set(fieldsOf(items).map((field) => field.key)),
     earlier: new Map(),
     problems: [],

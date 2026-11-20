@@ -124,7 +124,7 @@ const NO_RULES = (): readonly (Rule<never> | undefined)[] => []
  * @typeParam TSettings - The field kind's settings.
  * @param registry - The registry the widget belongs to; the same one renders the documents.
  * @param definition - The field kind.
- * @returns The field kind, to collect with {@link createFieldKinds}.
+ * @returns The field kind, to collect with {@link createCatalog}.
  *
  * @example
  * ```ts

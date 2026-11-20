@@ -3,7 +3,7 @@ import { createDocumentForm } from '@formdef/document/react'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { fieldKinds } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/field-kinds'
 
 vi.mock('@/lib/formdef', () => import('./helpers/full-registry'))
 
@@ -56,11 +56,11 @@ const document: FormDocument = {
 
 describe('the shipped field kinds', () => {
   it('make a sound document of every kind', () => {
-    expect(checkDocument(document, fieldKinds)).toEqual([])
+    expect(checkDocument(document, catalog)).toEqual([])
   })
 
   it('render each field with its widget, and a decimal with its unit', () => {
-    const Form = createDocumentForm(document, fieldKinds)
+    const Form = createDocumentForm(document, catalog)
     render(<Form />)
 
     expect(screen.getByRole('textbox', { name: /Name/ })).toBeDefined()
@@ -79,7 +79,7 @@ describe('the shipped field kinds', () => {
   })
 
   it('validate answers with the rules their settings give', () => {
-    const validator = createValidator(document, fieldKinds)
+    const validator = createValidator(document, catalog)
     const result = validator['~standard'].validate({
       name: 'Ada',
       email: 'ada',

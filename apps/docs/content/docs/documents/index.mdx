@@ -158,9 +158,10 @@ registry:
 npx shadcn@latest add @formdef/field-kinds
 ```
 
-It writes `lib/formdef/field-kinds.ts`, whose field kinds name the widgets `text`, `textarea`,
-`number`, `checkbox`, `radio`, `select`, `checkboxes` and `date`. Register each under that name in
-`lib/formdef/index.tsx`, or remove the field kinds of a widget you do not fetch;
+It writes `lib/formdef/field-kinds.ts`, which exports them as a `catalog`. Its field kinds name the
+widgets `text`, `textarea`, `number`, `checkbox`, `radio`, `select`, `checkboxes` and `date`.
+Register each under that name in `lib/formdef/index.tsx`, or remove the field kinds of a widget you
+do not fetch;
 [Field kinds](/documents/field-kinds#the-shipped-field-kinds) lists them.
 
 </Step>
@@ -180,9 +181,9 @@ declare function send(answers: Record<string, unknown>): Promise<void>
 import { readDocument } from '@formdef/document'
 import { createDocumentForm } from '@formdef/document/react'
 
-import { fieldKinds } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/field-kinds'
 
-const ContactForm = createDocumentForm(readDocument(stored), fieldKinds)
+const ContactForm = createDocumentForm(readDocument(stored), catalog)
 
 export const Contact = () => (
   <>

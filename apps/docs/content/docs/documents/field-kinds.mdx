@@ -23,7 +23,7 @@ const registry = createRegistry({
   widgets: { text: TextField, select: SelectField },
 })
 // ---cut---
-import { createFieldKinds, defineFieldKind, rule, setting } from '@formdef/document'
+import { createCatalog, defineFieldKind, rule, setting } from '@formdef/document'
 
 const area = defineFieldKind(registry, {
   name: 'area',
@@ -50,7 +50,7 @@ const dropdown = defineFieldKind(registry, {
   props: ({ options }) => ({ options }),
 })
 
-export const fieldKinds = createFieldKinds(registry, [area, dropdown])
+export const catalog = createCatalog(registry, { fields: [area, dropdown] })
 ```
 
 - `name` is what a document's `kind` names; `label` is the name a builder lists. A document stores
@@ -67,11 +67,12 @@ export const fieldKinds = createFieldKinds(registry, [area, dropdown])
   description and whether it is required reach the widget on their own, as `label`,
   `description` and `required`, so `props` leaves them out. It is optional unless the widget needs a prop.
 - `rules` builds the [rules](#rules) from the values of the settings.
-- `createFieldKinds` collects the field kinds of one registry. It throws when two share a name or
-  one was defined with another registry.
+- `createCatalog` collects the field kinds of one registry in a **catalog**, which rendering,
+  checking, validating and describing a document take. It throws when two field kinds share a name
+  or one was defined with another registry.
 
 The field kinds file stays without `'use client'`: a server imports it to
-[validate the answers](/documents/validation-and-answers) with the same field kinds.
+[validate the answers](/documents/validation-and-answers) with the same catalog.
 
 ## Settings
 

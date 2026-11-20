@@ -6,7 +6,7 @@ import type { ValueType } from './value-type'
  * A field kind of a form document: what a field of that kind is. It binds a widget of the
  * registry to the props built from the field's settings, the rules that check its value, and the
  * settings a person may change. Built with {@link defineFieldKind}, collected with
- * {@link createFieldKinds}.
+ * {@link createCatalog}.
  *
  * @typeParam TRegistry - The registry the field kind's widget belongs to.
  */

@@ -7,17 +7,17 @@ description: One validator for the form and the server, the issues it reports, i
 
 `createValidator` builds a validator of a document's answers that implements
 [Standard Schema](https://standardschema.dev). `createDocumentForm` uses it as the form's schema,
-and a server builds the same one from the same document and field kinds to check what arrives:
+and a server builds the same one from the same document and catalog to check what arrives:
 
 ```ts
 import { createValidator, readDocument } from '@formdef/document'
-import { fieldKinds } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/field-kinds'
 declare function loadDocument(formId: string): Promise<unknown>
 declare function saveAnswers(answers: Record<string, unknown>): Promise<void>
 // ---cut---
 export const submitAnswers = async (formId: string, values: unknown) => {
   const document = readDocument(await loadDocument(formId))
-  const result = createValidator(document, fieldKinds)['~standard'].validate(values)
+  const result = createValidator(document, catalog)['~standard'].validate(values)
   if (result.issues) return { issues: result.issues }
 
   await saveAnswers(result.value)
@@ -68,7 +68,7 @@ such as a rule of your own you gave none, reads "This value is not valid.":
 import type { FormDocument, Messages } from '@formdef/document'
 import { createValidator } from '@formdef/document'
 import { createDocumentForm } from '@formdef/document/react'
-import { fieldKinds } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/field-kinds'
 declare const document: FormDocument
 // ---cut---
 const messages: Messages = {
@@ -77,8 +77,8 @@ const messages: Messages = {
   postalCode: () => 'Enter five digits.',
 }
 
-const ChecklistForm = createDocumentForm(document, fieldKinds, { messages })
-const validator = createValidator(document, fieldKinds, { messages })
+const ChecklistForm = createDocumentForm(document, catalog, { messages })
+const validator = createValidator(document, catalog, { messages })
 ```
 
 Pass the same messages in both places, so the server's issues read like the form's.
@@ -101,13 +101,13 @@ that show.
 
 ```ts
 import { createValidator, describeAnswers, type FormDocument } from '@formdef/document'
-import { fieldKinds } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/field-kinds'
 declare const document: FormDocument
 declare const values: unknown
 declare function sendSummary(description: ReturnType<typeof describeAnswers>): Promise<void>
 // ---cut---
-const result = createValidator(document, fieldKinds)['~standard'].validate(values)
-if (result.issues === undefined) await sendSummary(describeAnswers(document, fieldKinds, result.value))
+const result = createValidator(document, catalog)['~standard'].validate(values)
+if (result.issues === undefined) await sendSummary(describeAnswers(document, catalog, result.value))
 ```
 
 The description is `{ steps }` for a document with steps, each with its `key`, `label` and `items`,

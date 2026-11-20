@@ -1,7 +1,7 @@
 import { createRegistry, type FieldOf } from '@formdef/core'
 import {
   checkDocument,
-  createFieldKinds,
+  createCatalog,
   createValidator,
   defineFieldKind,
   describeAnswers,
@@ -41,19 +41,19 @@ defineFieldKind(registry, {
   valueType: 'number',
 })
 
-export const fieldKinds = createFieldKinds(registry, [text])
+export const catalog = createCatalog(registry, { fields: [text] })
 
 export const document: FormDocument = readDocument({
   format: 1,
   items: [{ type: 'field', key: 'name', kind: 'text', label: 'Name', required: true }],
 })
 
-export const problems: Problem[] = checkDocument(document, fieldKinds)
+export const problems: Problem[] = checkDocument(document, catalog)
 
 export const isValid: boolean =
-  createValidator(document, fieldKinds)['~standard'].validate({ name: 'Ada' }).issues === undefined
+  createValidator(document, catalog)['~standard'].validate({ name: 'Ada' }).issues === undefined
 
-export const summary: unknown = describeAnswers(document, fieldKinds, { name: 'Ada' })
+export const summary: unknown = describeAnswers(document, catalog, { name: 'Ada' })
 
 export const longer: FormDocument = insertNode(document, [1], {
   type: 'field',
@@ -65,6 +65,6 @@ export const longer: FormDocument = insertNode(document, [1], {
 // @ts-expect-error a document holds either steps or items
 export const both: FormDocument = { format: 1, steps: [], items: [] }
 
-export const Form: DocumentForm = createDocumentForm(document, fieldKinds, {
+export const Form: DocumentForm = createDocumentForm(document, catalog, {
   validation: { mode: 'blurThenChange' },
 })

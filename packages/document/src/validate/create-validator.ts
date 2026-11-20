@@ -5,7 +5,7 @@ import { fitsValueType } from '../evaluate/fits-value-type'
 import { isFilled } from '../evaluate/is-filled'
 import { isMissing } from '../evaluate/is-missing'
 import type { FormDocument, JsonValue } from '../form-document'
-import type { FieldKinds } from '../kinds/create-field-kinds'
+import type { Catalog } from '../kinds/create-catalog'
 import { isChoice } from '../kinds/is-choice'
 import { optionOf } from '../kinds/option-of'
 import { nestValues } from '../nest-values'
@@ -59,7 +59,7 @@ export type DocumentValidator = {
   }
 }
 
-/** What {@link createValidator} takes besides the document and its field kinds. */
+/** What {@link createValidator} takes besides the document and its catalog. */
 export type ValidatorOptions = {
   /**
    * The error texts, by issue code; a code left out keeps its English text, and a code without
@@ -110,7 +110,7 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues =>
  * to the answers.
  *
  * @param document - The document, as {@link readDocument} returns it.
- * @param kinds - The field kinds the document's fields are of.
+ * @param catalog - The catalog with the kinds the document uses.
  * @param options - The error texts.
  * @param options.messages - The error texts, by issue code; a code left out keeps its English
  *   text, and a code without any text gets a general one.
@@ -121,7 +121,7 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues =>
  *
  * @example
  * ```ts
- * const validator = createValidator(document, fieldKinds, { messages: germanMessages })
+ * const validator = createValidator(document, catalog, { messages: germanMessages })
  * const result = validator['~standard'].validate(values)
  * if (result.issues) return { issues: result.issues }
  * await saveAnswers(result.value)
@@ -129,10 +129,10 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues =>
  */
 export function createValidator(
   document: FormDocument,
-  kinds: FieldKinds<unknown>,
+  catalog: Catalog<unknown>,
   options: ValidatorOptions = {},
 ): DocumentValidator {
-  refuseProblems(document, kinds)
+  refuseProblems(document, catalog)
   const messages: Messages = { ...DEFAULT_MESSAGES, ...options.messages }
 
   const issueOf = (shown: ShownField): ValidationIssue | undefined => {
@@ -145,7 +145,7 @@ export function createValidator(
   }
 
   const validate = (values: unknown): ValidationResult => {
-    const { shown } = evaluate(document, kinds, values)
+    const { shown } = evaluate(document, catalog, values)
     const issues = shown.flatMap((field) => issueOf(field) ?? [])
     return issues.length > 0 ? { issues } : { value: answersOf(shown) }
   }

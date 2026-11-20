@@ -2,7 +2,7 @@ import { createRegistry, type FieldOf } from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
-import { createFieldKinds } from './create-field-kinds'
+import { createCatalog } from './create-catalog'
 import { defineFieldKind } from './define-field-kind'
 import { setting } from './setting'
 
@@ -44,13 +44,14 @@ const choice = defineFieldKind(registry, {
   props: ({ options }) => ({ options }),
 })
 
-describe('createFieldKinds', () => {
+describe('createCatalog', () => {
   it('finds a field kind by its name', () => {
-    const kinds = createFieldKinds(registry, [measure, text, choice])
+    const catalog = createCatalog(registry, { fields: [measure, text, choice] })
 
-    expect(kinds.byName('measure')).toBe(measure)
-    expect(kinds.byName('missing')).toBeUndefined()
-    expect(kinds.all.map((kind) => kind.name)).toEqual(['measure', 'text', 'choice'])
+    expect(catalog.registry).toBe(registry)
+    expect(catalog.findFieldKind('measure')).toBe(measure)
+    expect(catalog.findFieldKind('missing')).toBeUndefined()
+    expect(catalog.fields.map((kind) => kind.name)).toEqual(['measure', 'text', 'choice'])
   })
 
   it('refuses two field kinds of the same name', () => {
@@ -61,8 +62,8 @@ describe('createFieldKinds', () => {
       valueType: 'text',
     })
 
-    expect(() => createFieldKinds(registry, [text, again])).toThrow(
-      'formdef: fieldKinds[1].name: the name "text" is used twice.',
+    expect(() => createCatalog(registry, { fields: [text, again] })).toThrow(
+      'formdef: fields[1].name: the name "text" is used twice.',
     )
   })
 
@@ -75,16 +76,16 @@ describe('createFieldKinds', () => {
     })
 
     // @ts-expect-error the compiler refuses it already; this checks the runtime, for untyped code
-    expect(() => createFieldKinds(registry, [text, foreign])).toThrow(
-      'formdef: fieldKinds[1]: the field kind "foreign" was defined with another registry.',
+    expect(() => createCatalog(registry, { fields: [text, foreign] })).toThrow(
+      'formdef: fields[1]: the field kind "foreign" was defined with another registry.',
     )
   })
 
   it('refuses a field kind without a known value type, as untyped code could pass', () => {
     const untyped = { ...text, valueType: 'colour' } as unknown as typeof text
 
-    expect(() => createFieldKinds(registry, [untyped])).toThrow(
-      'formdef: fieldKinds[0].valueType: expected one of text, choice, choices, boolean, number, decimal, date.',
+    expect(() => createCatalog(registry, { fields: [untyped] })).toThrow(
+      'formdef: fields[0].valueType: expected one of text, choice, choices, boolean, number, decimal, date.',
     )
   })
 })

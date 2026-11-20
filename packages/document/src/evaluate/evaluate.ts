@@ -1,7 +1,7 @@
 import type { Condition } from '../condition'
 import type { DocumentItem, FieldItem, FormDocument, JsonValue } from '../form-document'
 import { isPlainObject } from '../is-plain-object'
-import type { FieldKinds } from '../kinds/create-field-kinds'
+import type { Catalog } from '../kinds/create-catalog'
 import type { FieldKind } from '../kinds/field-kind'
 import { kindOf } from '../kinds/kind-of'
 import type { Answer, Answers } from './answers'
@@ -30,7 +30,7 @@ export type Evaluation = {
 }
 
 type EvaluationWalk = {
-  kinds: FieldKinds<unknown>
+  catalog: Catalog<unknown>
   answers: Map<string, Answer>
   shown: ShownField[]
 }
@@ -47,7 +47,7 @@ const isShown = (item: { visibleWhen?: Condition }, walk: EvaluationWalk): boole
   item.visibleWhen === undefined || holds(item.visibleWhen, walk.answers)
 
 const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk): void => {
-  const kind = kindOf(walk.kinds, field)
+  const kind = kindOf(walk.catalog, field)
   const value = container.values[field.key]
 
   walk.shown.push({
@@ -89,10 +89,10 @@ const walkItems = (
  */
 export function evaluate(
   document: FormDocument,
-  kinds: FieldKinds<unknown>,
+  catalog: Catalog<unknown>,
   values: unknown,
 ): Evaluation {
-  const walk: EvaluationWalk = { kinds, answers: new Map(), shown: [] }
+  const walk: EvaluationWalk = { catalog, answers: new Map(), shown: [] }
   const root = objectOf(values)
 
   if (document.steps === undefined) {

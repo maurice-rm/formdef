@@ -17,18 +17,18 @@ There are two checks, for two questions:
   input is no form document, naming the path of the first problem, or when its format is newer
   than this release reads. Use it on everything
   that comes from storage or a request.
-- **`checkDocument` checks the document as a form,** against the field kinds, and returns every
+- **`checkDocument` checks the document as a form,** against the catalog, and returns every
   problem in document order; the list is empty when the document is sound. A builder lists the
   problems while a document is edited. `createDocumentForm`, `createValidator` and
   `describeAnswers` refuse a document that has any.
 
 ```ts
 import { checkDocument, readDocument } from '@formdef/document'
-import { fieldKinds } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/field-kinds'
 declare const stored: unknown
 // ---cut---
 const document = readDocument(stored)
-const problems = checkDocument(document, fieldKinds)
+const problems = checkDocument(document, catalog)
 ```
 
 A problem has a `code`, the `path` it is about, such as `document.steps[0].items[2].settings.unit`,
@@ -74,7 +74,7 @@ second step.
 
 ```ts
 import { checkDocument, createKey, insertNode, updateNode, type FormDocument } from '@formdef/document'
-import { fieldKinds } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/field-kinds'
 declare const document: FormDocument
 // ---cut---
 const withName = insertNode(document, [0], {
@@ -84,7 +84,7 @@ const withName = insertNode(document, [0], {
   label: 'Name',
 })
 const renamed = updateNode(withName, [0], (node) => ({ ...node, label: 'Full name' }))
-const problems = checkDocument(renamed, fieldKinds)
+const problems = checkDocument(renamed, catalog)
 ```
 
 An operation throws when its position finds nothing or a place that cannot hold the node: steps go

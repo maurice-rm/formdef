@@ -13,13 +13,13 @@ checked before it is used, and rendered through the widgets of your registry.
 import { createValidator, readDocument } from '@formdef/document'
 import { createDocumentForm } from '@formdef/document/react'
 
-import { fieldKinds } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/field-kinds'
 
 const document = readDocument(await loadForm(id))
-const ChecklistForm = createDocumentForm(document, fieldKinds)
+const ChecklistForm = createDocumentForm(document, catalog)
 
-// On the server, the same document and field kinds check the answers.
-const result = createValidator(document, fieldKinds)['~standard'].validate(answers)
+// On the server, the same document and catalog check the answers.
+const result = createValidator(document, catalog)['~standard'].validate(answers)
 ```
 
 ## Installation

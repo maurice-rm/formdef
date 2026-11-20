@@ -3,7 +3,7 @@ import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import type { FieldItem, FormDocument } from '../form-document'
-import { createFieldKinds } from '../kinds/create-field-kinds'
+import { createCatalog } from '../kinds/create-catalog'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { setting } from '../kinds/setting'
 import { checkDocument } from './check-document'
@@ -29,7 +29,7 @@ const registry = createRegistry({
   },
 })
 
-const kinds = createFieldKinds(registry, [
+const fieldKinds = [
   defineFieldKind(registry, {
     name: 'text',
     label: 'Text',
@@ -77,7 +77,8 @@ const kinds = createFieldKinds(registry, [
     settings: { options: setting.options({ label: 'Choices' }) },
     props: ({ options }) => ({ options }),
   }),
-])
+]
+const catalog = createCatalog(registry, { fields: fieldKinds })
 
 const OPTIONS = [
   { value: 'o1', label: 'One' },
@@ -98,7 +99,7 @@ const plain = (...items: FieldItem[]): FormDocument => ({
 })
 
 const codesOf = (document: FormDocument) =>
-  checkDocument(document, kinds).map(({ code, path }) => `${code} ${path}`)
+  checkDocument(document, catalog).map(({ code, path }) => `${code} ${path}`)
 
 describe('checkDocument', () => {
   it('finds nothing in a sound document', () => {
@@ -161,7 +162,7 @@ describe('checkDocument', () => {
       ],
     }
 
-    expect(checkDocument(document, kinds)).toEqual([])
+    expect(checkDocument(document, catalog)).toEqual([])
   })
 
   it('reports a field key used twice, and a step key used twice', () => {
@@ -181,7 +182,7 @@ describe('checkDocument', () => {
       ],
     }
 
-    expect(checkDocument(document, kinds)).toEqual([
+    expect(checkDocument(document, catalog)).toEqual([
       { code: 'duplicateKey', path: 'document.steps[1].key', params: { key: 's1' } },
       { code: 'duplicateKey', path: 'document.steps[1].items[0].key', params: { key: 'f1' } },
     ])
@@ -209,7 +210,7 @@ describe('checkDocument', () => {
       ],
     }
 
-    expect(checkDocument(document, kinds)).toEqual([
+    expect(checkDocument(document, catalog)).toEqual([
       { code: 'invalidKey', path: 'document.steps[0].items[0].key', params: { key: 'f.1' } },
       {
         code: 'overlappingKey',
@@ -278,7 +279,7 @@ describe('checkDocument', () => {
       },
     )
 
-    expect(checkDocument(document, kinds)).toEqual([
+    expect(checkDocument(document, catalog)).toEqual([
       {
         code: 'operatorMismatch',
         path: 'document.items[1].visibleWhen.op',

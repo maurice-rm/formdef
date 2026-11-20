@@ -38,7 +38,7 @@
           "target": "@lib/formdef/field-kinds.ts"
         }
       ],
-      "docs": "Fetch it after the setup. It lands in lib/formdef/field-kinds.ts and names the widgets text, textarea, number, checkbox, radio, select, checkboxes and date: register each under that name in index.tsx, or remove its field kinds. Render a form document with createDocumentForm(document, fieldKinds) from @formdef/document/react.",
+      "docs": "Fetch it after the setup. It lands in lib/formdef/field-kinds.ts and names the widgets text, textarea, number, checkbox, radio, select, checkboxes and date: register each under that name in index.tsx, or remove its field kinds. Render a form document with createDocumentForm(document, catalog) from @formdef/document/react.",
       "categories": ["form"]
     },
     {

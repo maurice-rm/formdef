@@ -34,7 +34,7 @@ export type {
   Varying,
 } from './form-document'
 export { FORMAT_VERSION } from './format-version'
-export { createFieldKinds, type FieldKinds } from './kinds/create-field-kinds'
+export { type Catalog, type CatalogOptions, createCatalog } from './kinds/create-catalog'
 export {
   defineFieldKind,
   type FieldKindDefinition,

@@ -1,7 +1,7 @@
 import { DOCUMENT_PATH } from '../document-path'
 import { failAt } from '../fail-at'
 import type { FormDocument } from '../form-document'
-import type { FieldKinds } from '../kinds/create-field-kinds'
+import type { Catalog } from '../kinds/create-catalog'
 import { checkDocument } from './check-document'
 
 /**
@@ -9,8 +9,8 @@ import { checkDocument } from './check-document'
  *
  * @throws When {@link checkDocument} reports any problem, naming how many.
  */
-export function refuseProblems(document: FormDocument, kinds: FieldKinds<unknown>): void {
-  const { length } = checkDocument(document, kinds)
+export function refuseProblems(document: FormDocument, catalog: Catalog<unknown>): void {
+  const { length } = checkDocument(document, catalog)
   if (length === 1) {
     failAt(DOCUMENT_PATH, 'the document has 1 problem; checkDocument lists it.')
   }

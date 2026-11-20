@@ -2,7 +2,7 @@ import type { FormProps, Validation } from '@formdef/core'
 import type { ReactNode } from 'react'
 
 import type { FormDocument } from '../form-document'
-import type { FieldKinds } from '../kinds/create-field-kinds'
+import type { Catalog } from '../kinds/create-catalog'
 import {
   createValidator,
   type DocumentValidator,
@@ -34,7 +34,7 @@ type CreatesForms = {
 }
 
 /**
- * Turns a form document into a form component of the field kinds' registry, through its
+ * Turns a form document into a form component of the catalog's registry, through its
  * `createForm`: a document with steps renders through the registered stepper, one without as a
  * plain form. Each field renders with its field kind's widget, label, description and the props
  * its settings give; conditions, required fields and settings that follow an answer update as the
@@ -44,7 +44,7 @@ type CreatesForms = {
  * the answers of the fields that show, which is what a server keeps.
  *
  * @param document - The document, as {@link readDocument} returns it.
- * @param kinds - The field kinds the document's fields are of, with the registry that renders them.
+ * @param catalog - The catalog with the kinds the document uses and the registry that renders them.
  * @param options - The error texts and when the answers are validated.
  * @param options.messages - The error texts, by issue code; a code left out keeps its English
  *   text, and a code without any text gets a general one.
@@ -56,20 +56,20 @@ type CreatesForms = {
  *
  * @example
  * ```tsx
- * const ChecklistForm = createDocumentForm(document, fieldKinds, { messages: germanMessages })
+ * const ChecklistForm = createDocumentForm(document, catalog, { messages: germanMessages })
  *
  * export const Checklist = () => <ChecklistForm options={{ onSubmit: ({ value }) => send(value) }} />
  * ```
  */
 export function createDocumentForm(
   document: FormDocument,
-  kinds: FieldKinds<unknown>,
+  catalog: Catalog<unknown>,
   options: DocumentFormOptions = {},
 ): DocumentForm {
-  const schema = createValidator(document, kinds, options)
-  const config = documentConfig(document, kinds, schema)
+  const schema = createValidator(document, catalog, options)
+  const config = documentConfig(document, catalog, schema)
   // The registry's `createForm` types a config written in code; a document's is known at runtime.
-  const { createForm } = kinds.registry as CreatesForms
+  const { createForm } = catalog.registry as CreatesForms
 
   return createForm(
     options.validation === undefined ? config : { ...config, validation: options.validation },

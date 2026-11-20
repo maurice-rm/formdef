@@ -8,7 +8,7 @@ import { isRequired } from '../evaluate/is-required'
 import { resolveSettings } from '../evaluate/resolve-settings'
 import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
-import type { FieldKinds } from '../kinds/create-field-kinds'
+import type { Catalog } from '../kinds/create-catalog'
 import { kindOf } from '../kinds/kind-of'
 import { nestValues } from '../nest-values'
 import type { DocumentValidator } from '../validate/create-validator'
@@ -27,7 +27,7 @@ type Level = Pick<DocumentConfig, 'fields' | 'layout'>
 type Parts = Omit<DocumentConfig, 'schema'>
 
 type Build = {
-  kinds: FieldKinds<unknown>
+  catalog: Catalog<unknown>
   answersOf: (values: unknown) => Answers
 }
 
@@ -40,7 +40,7 @@ const visibility = (item: { visibleWhen?: Condition }, build: Build): Entry => {
 }
 
 const fieldEntry = (field: FieldItem, build: Build): Entry => {
-  const kind = kindOf(build.kinds, field)
+  const kind = kindOf(build.catalog, field)
   const props = (values: unknown): Entry => {
     const answers = build.answersOf(values)
     return {
@@ -75,7 +75,7 @@ const emptyValuesOf = (
 ): { path: readonly string[]; value: unknown }[] =>
   fieldsOf(items).map((field) => ({
     path: [...path, field.key],
-    value: emptyValueOf(kindOf(build.kinds, field).valueType),
+    value: emptyValueOf(kindOf(build.catalog, field).valueType),
   }))
 
 const stepEntry = (step: DocumentStep, build: Build): Entry => ({
@@ -106,12 +106,12 @@ const plainConfig = (items: readonly DocumentItem[], build: Build): Parts => ({
  */
 export function documentConfig(
   document: FormDocument,
-  kinds: FieldKinds<unknown>,
+  catalog: Catalog<unknown>,
   schema: DocumentValidator,
 ): DocumentConfig {
   const build: Build = {
-    kinds,
-    answersOf: (values) => evaluate(document, kinds, values).answers,
+    catalog,
+    answersOf: (values) => evaluate(document, catalog, values).answers,
   }
   const parts =
     document.steps === undefined

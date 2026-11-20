@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { Condition } from '../condition'
 import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
-import { createFieldKinds } from '../kinds/create-field-kinds'
+import { createCatalog } from '../kinds/create-catalog'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { rule } from '../kinds/rule'
 import { setting } from '../kinds/setting'
@@ -31,7 +31,7 @@ const registry = createRegistry({
   },
 })
 
-const kinds = createFieldKinds(registry, [
+const fieldKinds = [
   defineFieldKind(registry, {
     name: 'text',
     label: 'Text',
@@ -86,7 +86,8 @@ const kinds = createFieldKinds(registry, [
     settings: { options: setting.options({ label: 'Options' }) },
     props: ({ options }) => ({ options }),
   }),
-])
+]
+const catalog = createCatalog(registry, { fields: fieldKinds })
 
 const HOUSE_TYPES = [
   { value: 'o1', label: 'Detached' },
@@ -107,7 +108,7 @@ const isApartmentBlock: Condition = { field: 'f1', op: 'equals', value: 'o2' }
 const plain = (...items: DocumentItem[]): FormDocument => ({ format: 1, items })
 
 const validate = (document: FormDocument, values: unknown): ValidationResult =>
-  createValidator(document, kinds)['~standard'].validate(values)
+  createValidator(document, catalog)['~standard'].validate(values)
 
 const codesOf = (result: ValidationResult) =>
   (result.issues ?? []).map(({ path, code }) => ({ path, code }))
@@ -252,7 +253,7 @@ describe('createValidator', () => {
       field('f2', 'text', { settings: { maxLength: 3 } }),
       field('f3', 'postcode'),
     )
-    const validator = createValidator(document, kinds, {
+    const validator = createValidator(document, catalog, {
       messages: { required: () => 'Pflichtfeld' },
     })
     const result = validator['~standard'].validate({ f2: 'four', f3: '123' })
@@ -265,7 +266,7 @@ describe('createValidator', () => {
   })
 
   it('refuses a document with problems', () => {
-    expect(() => createValidator(plain(field('f1', 'unknown')), kinds)).toThrow(
+    expect(() => createValidator(plain(field('f1', 'unknown')), catalog)).toThrow(
       'formdef: document: the document has 1 problem; checkDocument lists it.',
     )
   })
