@@ -8,8 +8,8 @@ squash; `main` is always releasable.
 
 ## Changesets
 
-A pull request that changes what `@formdef/core` ships, or what the shadcn registry hands out,
-adds a changeset:
+A pull request that changes what `@formdef/core` or `@formdef/document` ships, or what the shadcn
+registry hands out, adds a changeset:
 
 ```bash
 pnpm changeset
@@ -37,9 +37,9 @@ way a user would, and compiles and builds that project:
 pnpm --filter @formdef/shadcn probe:install
 ```
 
-It builds the registry and `@formdef/core`, serves both from local servers, and fails when a file
-does not land where `components.json` says, when the CLI changes the project’s own `lib/date.ts`, or
-when the project does not compile. It needs the network for the shadcn CLI and its primitives, so
+It builds the registry, `@formdef/core` and `@formdef/document`, serves them from local servers,
+and fails when a file does not land where `components.json` says, when the CLI changes the
+project’s own `lib/date.ts`, or when the project does not compile. It needs the network for the shadcn CLI and its primitives, so
 it runs by hand and not in CI.
 
 ## Versions
@@ -50,8 +50,9 @@ Every push to `main` runs the release workflow. What it does depends on what `ma
   the version, writes the changelog and deletes the changesets. Since the workflow's own token
   opened it, its checks wait until a maintainer selects "Approve workflows to run" on it.
 - **A version not yet on npm,** after the version pull request is merged: it builds and packs
-  `@formdef/core` and publishes it once a maintainer approves the run in the `npm` environment. The
-  package is published through npm's trusted publishing, with provenance and without a stored token;
+  `@formdef/core` and `@formdef/document` and publishes what is new once a maintainer approves the
+  run in the `npm` environment. The packages are published through npm's trusted publishing, with
+  provenance and without a stored token;
   the workflow then tags the release and creates the GitHub release.
 - **Neither:** nothing.
 
@@ -69,10 +70,10 @@ first deploy, and it may be empty.
 
 A push to `main` that changes `apps/docs` or `packages/shadcn` deploys too, so a fix to a widget does
 not wait for a release of the core. It deploys only what npm already serves
-(`.github/deploy/released.sh`): no changeset for `@formdef/core` is waiting, the version of
-`@formdef/core` on `main` is published, and so is every version of `@formdef/core` the registry
-requires. Otherwise the site would document, or the registry import, a core that is not on npm yet;
-the next release deploys it instead.
+(`.github/deploy/released.sh`): no changeset for `@formdef/core` or `@formdef/document` is
+waiting, the versions of both on `main` are published, and so is every version of `@formdef/core`
+the registry requires. Otherwise the site would document, or the registry import, a package that is
+not on npm yet; the next release deploys it instead.
 
 The same build renders the images for GitHub: the README banner, light and dark, at
 `/brand/banner-light.png` and `/brand/banner-dark.png`, and the repository's social preview at

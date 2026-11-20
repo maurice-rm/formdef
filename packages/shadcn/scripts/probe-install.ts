@@ -13,7 +13,7 @@ const run = promisify(execFile)
 const ROOT = join(import.meta.dirname, '../../..')
 const SHADCN_PACKAGE = join(ROOT, 'packages/shadcn')
 const REGISTRY_FILES = join(ROOT, 'apps/docs/public')
-const CORE_PACKAGE = join(ROOT, 'packages/core')
+const PACKAGES = [join(ROOT, 'packages/core'), join(ROOT, 'packages/document')]
 
 const PROJECT = 'app'
 const TEMPLATE = 'vite'
@@ -25,13 +25,13 @@ const OWN_DATE_FILE = 'src/lib/date.ts'
 const OWN_DATE_SOURCE = 'export const today = (): string => new Date().toISOString().slice(0, 10)\n'
 const PROBE_FORM_FILE = 'src/probe-form.tsx'
 const REGISTRY_FILE = 'src/lib/formdef/index.tsx'
-const CORE_TARBALL_PATH = '/core.tgz'
 const OUTPUT_LIMIT = 64 * 1024 * 1024
 const NPM_SETTING = 'npm_'
 
 type RegistryFile = { path: string; target: string }
 type RegistryItem = { name: string; files: RegistryFile[] }
 type Aliases = Record<string, string>
+type PackedPackage = { tarball: Buffer; manifest: { name: string; version: string } }
 
 const REGISTRY_SOURCE = `'use client'
 
@@ -162,18 +162,16 @@ const registryServer = (): Server =>
     response.writeHead(200, { 'content-type': 'application/json' }).end(await readFile(file))
   })
 
-const packumentOf = (
-  manifest: { name: string; version: string },
-  tarball: Buffer,
-  origin: string,
-) => ({
+const tarballPathOf = (name: string): string => `/${name.replace('/', '-')}.tgz`
+
+const packumentOf = ({ manifest, tarball }: PackedPackage, origin: string) => ({
   name: manifest.name,
   'dist-tags': { latest: manifest.version },
   versions: {
     [manifest.version]: {
       ...manifest,
       dist: {
-        tarball: `${origin}${CORE_TARBALL_PATH}`,
+        tarball: `${origin}${tarballPathOf(manifest.name)}`,
         shasum: createHash('sha1').update(tarball).digest('hex'),
         integrity: `sha512-${createHash('sha512').update(tarball).digest('base64')}`,
       },
@@ -181,31 +179,40 @@ const packumentOf = (
   },
 })
 
-// The probe installs the local build of @formdef/core, not the published one; a scoped registry serves it.
-const coreServer = (tarball: Buffer, manifest: { name: string; version: string }): Server => {
+// The probe installs the local builds of the formdef packages, not the published ones; a scoped
+// registry serves them.
+const packageServer = (packages: readonly PackedPackage[]): Server => {
   const server: Server = createServer((request, response) => {
-    if (request.url === CORE_TARBALL_PATH) {
-      response.writeHead(200, { 'content-type': 'application/octet-stream' }).end(tarball)
+    const path = decodeURIComponent(new URL(request.url ?? '/', 'http://x').pathname)
+    const tarball = packages.find(({ manifest }) => tarballPathOf(manifest.name) === path)
+    if (tarball !== undefined) {
+      response.writeHead(200, { 'content-type': 'application/octet-stream' }).end(tarball.tarball)
+      return
+    }
+    const named = packages.find(({ manifest }) => `/${manifest.name}` === path)
+    if (named === undefined) {
+      response.writeHead(404).end()
       return
     }
     const { port } = server.address() as AddressInfo
-    const packument = packumentOf(manifest, tarball, `http://127.0.0.1:${port}`)
+    const packument = packumentOf(named, `http://127.0.0.1:${port}`)
     response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(packument))
   })
 
   return server
 }
 
-const packCore = async (
-  into: string,
-): Promise<{ tarball: Buffer; manifest: { name: string; version: string } }> => {
-  await runIn(CORE_PACKAGE, 'pnpm', ['pack', '--pack-destination', into])
-  const file = (await readdir(into)).find((name) => name.endsWith('.tgz'))
+const packPackage = async (folder: string, into: string): Promise<PackedPackage> => {
+  const destination = await mkdtemp(join(into, 'pack-'))
+  await runIn(folder, 'pnpm', ['pack', '--pack-destination', destination])
+  const file = (await readdir(destination)).find((name) => name.endsWith('.tgz'))
   if (file === undefined) {
-    throw new Error('probe-install: pnpm pack wrote no tarball for @formdef/core.')
+    throw new Error(`probe-install: pnpm pack wrote no tarball for ${folder}.`)
   }
-  const path = join(into, file)
-  const manifest = JSON.parse(await runIn(into, 'tar', ['-xzOf', path, 'package/package.json']))
+  const path = join(destination, file)
+  const manifest = JSON.parse(
+    await runIn(destination, 'tar', ['-xzOf', path, 'package/package.json']),
+  )
 
   return { tarball: await readFile(path), manifest }
 }
@@ -252,11 +259,11 @@ const scaffold = async (folder: string, version: string): Promise<string> => {
 const configure = async (
   project: string,
   registryOrigin: string,
-  coreOrigin: string,
+  packagesOrigin: string,
 ): Promise<Aliases> => {
   await mkdir(dirname(join(project, OWN_DATE_FILE)), { recursive: true })
   await writeFile(join(project, OWN_DATE_FILE), OWN_DATE_SOURCE)
-  await writeFile(join(project, '.npmrc'), `@formdef:registry=${coreOrigin}/\n`)
+  await writeFile(join(project, '.npmrc'), `@formdef:registry=${packagesOrigin}/\n`)
   const componentsJson = JSON.parse(await readFile(join(project, 'components.json'), 'utf8'))
   componentsJson.registries = { '@formdef': `${registryOrigin}/r/{style}/{name}.json` }
   await writeFile(join(project, 'components.json'), JSON.stringify(componentsJson, null, 2))
@@ -286,22 +293,25 @@ const compile = async (project: string): Promise<void> => {
 }
 
 const probe = async (folder: string): Promise<void> => {
-  step('building @formdef/core and the shadcn registry')
+  step('building @formdef/core, @formdef/document and the shadcn registry')
   await runIn(ROOT, 'pnpm', [
     'turbo',
     'run',
     'build',
     '--filter=@formdef/core',
+    '--filter=@formdef/document',
     '--filter=@formdef/shadcn',
   ])
   const items = await readItems()
   const version = await shadcnVersion()
-  const { tarball, manifest } = await packCore(folder)
+  const packed = await Promise.all(
+    PACKAGES.map((packageFolder) => packPackage(packageFolder, folder)),
+  )
   const registry = registryServer()
-  const core = coreServer(tarball, manifest)
+  const packages = packageServer(packed)
   try {
     const project = await scaffold(folder, version)
-    const aliases = await configure(project, await listen(registry), await listen(core))
+    const aliases = await configure(project, await listen(registry), await listen(packages))
     step(`adding ${items.length} items`)
     await runIn(project, 'npx', [
       'shadcn',
@@ -317,7 +327,7 @@ const probe = async (folder: string): Promise<void> => {
     step('every item installed, the project compiles and builds')
   } finally {
     registry.close()
-    core.close()
+    packages.close()
   }
 }
 

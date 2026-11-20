@@ -3,6 +3,9 @@
   "ignoreFiles": ["examples/**"],
   "workspaces": {
     ".": {},
+    "apps/docs": {
+      "ignoreDependencies": ["@formdef/document"]
+    },
     "packages/integration": {
       "entry": [
         "src/consumer.ts",

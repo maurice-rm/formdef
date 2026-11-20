@@ -235,6 +235,9 @@ importers:
       '@formdef/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@formdef/document':
+        specifier: workspace:*
+        version: link:../../packages/document
       '@formdef/shadcn':
         specifier: workspace:*
         version: link:../../packages/shadcn

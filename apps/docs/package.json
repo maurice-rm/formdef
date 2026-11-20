@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@formdef/core": "workspace:*",
+    "@formdef/document": "workspace:*",
     "@formdef/shadcn": "workspace:*",
     "@tanstack/react-form": "catalog:",
     "fumadocs-core": "16.17.8",
