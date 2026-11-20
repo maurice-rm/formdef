@@ -1,9 +1,9 @@
 import type { FieldItem, JsonValue, Varying } from '../form-document'
 import { isVarying } from '../is-varying'
+import { isIsoDate } from '../iso-date'
 import type { FieldKind } from '../kinds/field-kind'
 import type { Setting } from '../kinds/setting'
 import { checkCondition } from './check-condition'
-import { isIsoDate } from './iso-date'
 import { isOption } from './option-values'
 import { report, type Walk } from './walk'
 

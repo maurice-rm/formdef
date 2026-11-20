@@ -1,4 +1,6 @@
+import { numberOf } from '../decimal'
 import type { JsonValue } from '../form-document'
+import { dayOf } from '../iso-date'
 
 /**
  * A fixed check of a field kind on a filled value. It carries a code and the parameters an error
@@ -69,13 +71,6 @@ type Rules = {
 const DECIMAL = /^-?\d+([.,]\d+)?$/
 const INTEGER = /^-?\d+$/
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const DECIMAL_COMMA = ','
-const ISO_DAY_LENGTH = 10
-
-const dayOf = (value: string): string => value.slice(0, ISO_DAY_LENGTH)
-
-const numberOf = (value: number | string): number =>
-  typeof value === 'number' ? value : Number(value.replace(DECIMAL_COMMA, '.'))
 
 const bounded = <TBound, TValue>(
   code: string,

@@ -1,6 +1,6 @@
 import type { Condition } from '../condition'
+import { isIsoDate } from '../iso-date'
 import type { ValueType } from '../kinds/field-kind'
-import { isIsoDate } from './iso-date'
 import { optionValuesOf } from './option-values'
 import { type EarlierField, report, type Walk } from './walk'
 
