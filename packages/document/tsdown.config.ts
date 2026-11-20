@@ -8,7 +8,7 @@ const config: UserConfig = defineConfig({
   sourcemap: true,
   deps: {
     neverBundle: true,
-    onlyImport: ['@formdef/core', 'react'],
+    onlyImport: ['@formdef/core', 'react', 'markdown-to-jsx'],
   },
   exports: {
     devExports: '@formdef/source',

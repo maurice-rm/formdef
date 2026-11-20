@@ -13,9 +13,9 @@ import { setting } from '../kinds/setting'
 import { valueTypes } from '../kinds/value-types'
 import { createDocumentForm } from './create-document-form'
 
-type Option = { value: string; label: string }
+type Option = { value: string; label: string; description?: ReactNode }
 
-type LabelProps = { label: string; description?: string; required?: boolean }
+type LabelProps = { label: string; description?: ReactNode; required?: boolean }
 
 const TextField = ({
   field,
@@ -62,6 +62,10 @@ const ChoiceField = ({
           </option>
         ))}
       </select>
+      {options.map(
+        (option) =>
+          option.description !== undefined && <p key={option.value}>{option.description}</p>,
+      )}
     </div>
   )
 }
@@ -72,12 +76,13 @@ const Stepper = ({
   next,
   isLast,
   children,
-}: StepperProps<{ description?: string }>): ReactNode => (
+}: StepperProps<{ description?: ReactNode }>): ReactNode => (
   <section aria-label="Stepper">
     <ol>
       {steps.map((step) => (
         <li key={step.label} aria-current={step.isCurrent ? 'step' : undefined}>
-          {step.description === undefined ? step.label : `${step.label}: ${step.description}`}
+          {step.label}
+          {step.description !== undefined && <>: {step.description}</>}
         </li>
       ))}
     </ol>
@@ -270,6 +275,31 @@ describe('createDocumentForm without steps', () => {
     expect(screen.getByText('in m² ({approx})')).toBeDefined()
   })
 
+  it('renders the formatting of descriptions, of fields and of options', () => {
+    const Form = createDocumentForm(
+      plain(
+        field('name', 'text', {
+          label: 'Name',
+          description: 'As on the **bell**, see [why](https://example.com/why).',
+        }),
+        field('house', 'choice', {
+          label: 'House',
+          settings: {
+            options: [{ value: 'o1', label: 'Detached', description: 'With a *garden*' }],
+          },
+        }),
+      ),
+      catalog,
+    )
+    render(<Form />)
+
+    expect(screen.getByText('bell').tagName).toBe('STRONG')
+    expect(screen.getByText('garden').tagName).toBe('EM')
+    expect(screen.getByRole('link', { name: 'why' }).getAttribute('href')).toBe(
+      'https://example.com/why',
+    )
+  })
+
   it('renders in the first language without one chosen', () => {
     const translated: FormDocument = {
       format: 1,
@@ -429,6 +459,25 @@ describe('createDocumentForm with steps', () => {
     ])
     expect(screen.getByLabelText('House type')).toBeDefined()
     expect(screen.queryByLabelText('Name *')).toBeNull()
+  })
+
+  it('renders the formatting of a step description, without links', () => {
+    const formatted: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 'building',
+          label: 'Building',
+          description: '**Size** and [age](https://example.com)',
+          items: [houseType],
+        },
+      ],
+    }
+    const Form = createDocumentForm(formatted, catalog)
+    render(<Form />)
+
+    expect(screen.getByText('Size').tagName).toBe('STRONG')
+    expect(screen.queryByRole('link', { name: 'age' })).toBeNull()
   })
 
   it('writes {{ and }} as braces in the label of a step', () => {

@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import type { Condition } from '../condition'
 import type { DocumentValues } from '../document-values'
 import type { Answers } from '../evaluate/answers'
@@ -8,7 +10,10 @@ import { resolveSettings } from '../evaluate/resolve-settings'
 import { resolveVaryingText } from '../evaluate/resolve-varying-text'
 import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
+import { isPlainObject } from '../is-plain-object'
+import type { JsonValue } from '../json-value'
 import type { Catalog } from '../kinds/create-catalog'
+import type { FieldKind } from '../kinds/field-kind'
 import { kindOf } from '../kinds/kind-of'
 import type { ValueType } from '../kinds/value-type'
 import { nestValues } from '../nest-values'
@@ -16,6 +21,7 @@ import { resolveFixedText } from '../resolve-fixed-text'
 import type { Text } from '../text'
 import type { DocumentValidator } from '../validate/create-validator'
 import type { VaryingText } from '../varying-text'
+import { formatText, formatTextWithoutLinks } from './format-text'
 
 type Entry = Readonly<Record<string, unknown>>
 
@@ -45,14 +51,34 @@ const varyingOf = (text: VaryingText, { build, answers }: { build: Build; answer
 const descriptionProps = (
   { description }: { description?: VaryingText | undefined },
   build: Build,
+  format: (markdown: string) => ReactNode,
 ): Entry =>
   description === undefined
     ? {}
     : {
         props: (values: unknown) => ({
-          description: varyingOf(description, { build, answers: build.answersOf(values) }),
+          description: format(varyingOf(description, { build, answers: build.answersOf(values) })),
         }),
       }
+
+const formatOption = (option: unknown): unknown =>
+  isPlainObject(option) && typeof option.description === 'string'
+    ? { ...option, description: formatText(option.description) }
+    : option
+
+// The settings are resolved to strings; the descriptions of options render formatted.
+const withFormattedOptions = (
+  settings: Readonly<Record<string, JsonValue>>,
+  kind: FieldKind<unknown>,
+): Readonly<Record<string, unknown>> =>
+  Object.fromEntries(
+    Object.entries(settings).map(([name, value]) => [
+      name,
+      kind.settings[name]?.type === 'options' && Array.isArray(value)
+        ? value.map(formatOption)
+        : value,
+    ]),
+  )
 
 const visibility = (item: { visibleWhen?: Condition }, build: Build): Entry => {
   const condition = item.visibleWhen
@@ -66,12 +92,13 @@ const fieldEntry = (field: FieldItem, build: Build): Entry => {
   const kind = kindOf(build.catalog, field)
   const props = (values: unknown): Entry => {
     const answers = build.answersOf(values)
+    const settings = resolveSettings(field, kind, { answers, language: build.language })
     return {
-      ...kind.props(resolveSettings(field, kind, { answers, language: build.language })),
+      ...kind.props(withFormattedOptions(settings, kind)),
       label: varyingOf(field.label, { build, answers }),
       ...(field.description === undefined
         ? {}
-        : { description: varyingOf(field.description, { build, answers }) }),
+        : { description: formatText(varyingOf(field.description, { build, answers })) }),
       required: isRequired(field, answers),
     }
   }
@@ -89,7 +116,7 @@ const layoutOf = (items: readonly DocumentItem[], build: Build): unknown[] =>
     return {
       section: textOf(item.label, build),
       layout: layoutOf(item.items, build),
-      ...descriptionProps(item, build),
+      ...descriptionProps(item, build, formatText),
       ...visibility(item, build),
     }
   })
@@ -111,7 +138,7 @@ const emptyValuesOf = (
 const stepEntry = (step: DocumentStep, build: Build): Entry => ({
   step: step.key,
   label: textOf(step.label, build),
-  ...descriptionProps(step, build),
+  ...descriptionProps(step, build, formatTextWithoutLinks),
   ...visibility(step, build),
 })
 

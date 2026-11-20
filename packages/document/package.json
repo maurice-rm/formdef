@@ -91,5 +91,8 @@
       },
       "./package.json": "./package.json"
     }
+  },
+  "dependencies": {
+    "markdown-to-jsx": "^9.10.6"
   }
 }
