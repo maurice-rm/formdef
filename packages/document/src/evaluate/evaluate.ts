@@ -1,6 +1,12 @@
 import { answerItemsOf } from '../answer-items-of'
 import type { Condition } from '../condition'
-import type { ComputedItem, DocumentItem, FieldItem, FormDocument } from '../form-document'
+import type {
+  ComputedItem,
+  DocumentItem,
+  FieldItem,
+  FormDocument,
+  RepeatItem,
+} from '../form-document'
 import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
 import type { Catalog } from '../kinds/create-catalog'
@@ -10,6 +16,7 @@ import { optionsOf } from '../kinds/options-of'
 import type { SettingOption } from '../kinds/setting'
 import type { ValueType } from '../kinds/value-type'
 import { valueTypeNamed } from '../kinds/value-type-named'
+import type { ValuePath } from '../nest-values'
 import type { Answer, Answers } from './answers'
 import { type Computed, compute } from './compute'
 import { holds } from './holds'
@@ -21,29 +28,48 @@ import { resolveSettings } from './resolve-settings'
 export type ShownField = {
   field: FieldItem
   kind: FieldKind<unknown>
-  /** Where the field's value sits: the step key and field key, or the field key alone. */
-  path: readonly string[]
+  /** Where the field's value sits: its step, its repeat and entry, and its key. */
+  path: ValuePath
   value: unknown
   isRequired: boolean
   settings: Readonly<Record<string, JsonValue>>
+  /** The answers as the field reads them where it sits: inside a repeat, those of its entry. */
+  answers: Answers
+  /** How many fields and repeats that show come before it, to keep their issues in order. */
+  order: number
 }
 
 /** A computed value that counts for the values given, with what it came to. */
 type ShownComputed = {
   computed: ComputedItem
   valueType: ValueType
-  /** Where the value sits among the answers: the step key and its key, or its key alone. */
-  path: readonly string[]
+  /** Where the value sits among the answers: its step, its repeat and entry, and its key. */
+  path: ValuePath
   /** What it came to; `undefined` when it is empty. */
   value: Computed | undefined
 }
 
+/** A repeat that shows for the values given, with its entries. */
+export type ShownRepeat = {
+  repeat: RepeatItem
+  /** Where its list of entries sits: its step and its key. */
+  path: ValuePath
+  /** The value it holds, a list of entries when it is one. */
+  value: unknown
+  /** How many entries it holds; 0 when its value is no list. */
+  entries: number
+  /** How many fields and repeats that show come before it, to keep their issues in order. */
+  order: number
+}
+
 /** What a document's values come to: the fields that show, and the answers conditions compare. */
 export type Evaluation = {
-  /** The fields that show, in document order. */
+  /** The fields that show, in document order, those of each entry of a repeat in turn. */
   shown: ShownField[]
   /** The computed values that count, in document order. */
   computed: ShownComputed[]
+  /** The repeats that show, in document order. */
+  repeats: ShownRepeat[]
   /** The keys of the steps that show: by their condition, and not passed over by a jump. */
   shownSteps: Set<string>
   /** The step whose jump ends the form, and the ending it names; `undefined` without one. */
@@ -61,24 +87,36 @@ export type EvaluationInput = {
 type EvaluationWalk = {
   catalog: Catalog<unknown, ValueType>
   language: string | undefined
+  valueTypes: ReadonlyMap<string, ValueType>
   filled: Map<string, Answer>
   answers: Answers
   shown: ShownField[]
   computed: ShownComputed[]
+  repeats: ShownRepeat[]
   shownSteps: Set<string>
   end: Evaluation['end']
 }
 
 type Container = {
   values: Readonly<Record<string, unknown>>
-  path: readonly string[]
+  path: ValuePath
 }
 
 const objectOf = (value: unknown): Readonly<Record<string, unknown>> =>
   isPlainObject(value) ? value : {}
 
+const answersOver = (
+  filled: ReadonlyMap<string, Answer>,
+  valueTypes: ReadonlyMap<string, ValueType>,
+): Answers => ({
+  get: (key) => filled.get(key),
+  valueTypeOf: (key) => valueTypes.get(key),
+})
+
 const isShown = (item: { visibleWhen?: Condition }, walk: EvaluationWalk): boolean =>
   item.visibleWhen === undefined || holds(item.visibleWhen, walk.answers)
+
+const nextOrder = (walk: EvaluationWalk): number => walk.shown.length + walk.repeats.length
 
 const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk): void => {
   const kind = kindOf(walk.catalog, field)
@@ -92,6 +130,8 @@ const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk)
     value,
     isRequired: isRequired(field, walk.answers),
     settings,
+    answers: walk.answers,
+    order: nextOrder(walk),
   })
   if (isFilled(value, kind.valueType)) {
     // The settings of a field that shows are resolved, so their options hold strings.
@@ -150,17 +190,34 @@ const walkItems = (
       walkField(item, container, walk)
     } else if (item.type === 'computed') {
       walkComputed(item, container, walk)
+    } else if (item.type === 'repeat') {
+      walkRepeat(item, container, walk)
     } else {
       walkItems(item.items, container, walk)
     }
   }
 }
 
+// Each entry reads the answers before the repeat and its own; nothing after it reads an entry.
+const walkRepeat = (repeat: RepeatItem, container: Container, walk: EvaluationWalk): void => {
+  const value = container.values[repeat.key]
+  const entries: readonly unknown[] = Array.isArray(value) ? value : []
+  const path = [...container.path, repeat.key]
+  walk.repeats.push({ repeat, path, value, entries: entries.length, order: nextOrder(walk) })
+  entries.forEach((entry, index) => {
+    const filled = new Map(walk.filled)
+    const entryWalk = { ...walk, filled, answers: answersOver(filled, walk.valueTypes) }
+    walkItems(repeat.items, { values: objectOf(entry), path: [...path, index] }, entryWalk)
+  })
+}
+
 /**
  * Evaluates a document for these values, its settings resolved in the language. A field shows
- * when it and every step, section and row around it show; a field that does not show counts as
- * empty in the conditions after it, whatever value it still holds. A step a jump passes over does
- * not show, nor does any step after a jump that ends the form.
+ * when it and every step, section, row and repeat around it show; a field that does not show
+ * counts as empty in the conditions after it, whatever value it still holds. The items of a repeat
+ * are evaluated for each of its entries, reading the answers of that entry and those before the
+ * repeat. A step a jump passes over does not show, nor does any step after a jump that ends the
+ * form.
  *
  * @throws When a field is of a field kind that is not registered.
  */
@@ -171,17 +228,15 @@ export function evaluate(
 ): Evaluation {
   const filled = new Map<string, Answer>()
   const valueTypes = valueTypesOf(document, catalog)
-  const answers: Answers = {
-    get: (key) => filled.get(key),
-    valueTypeOf: (key) => valueTypes.get(key),
-  }
   const walk: EvaluationWalk = {
     catalog,
     language,
+    valueTypes,
     filled,
-    answers,
+    answers: answersOver(filled, valueTypes),
     shown: [],
     computed: [],
+    repeats: [],
     shownSteps: new Set(),
     end: undefined,
   }

@@ -8,7 +8,8 @@ import { FALLBACK_MESSAGE, type Messages } from './messages'
 
 type MessageInput = {
   failure: { code: string; params: Readonly<Record<string, JsonValue>> }
-  field: FieldItem
+  /** The field the issue is about, or the repeat, which has no texts of its own. */
+  item: Pick<FieldItem, 'label' | 'messages'>
   answers: Answers
   language: string | undefined
   messages: Messages
@@ -19,13 +20,13 @@ type MessageInput = {
  * otherwise the project's or the package's text, given the params and label; otherwise a general
  * one.
  */
-export function messageOf({ failure, field, answers, language, messages }: MessageInput): string {
-  const label = resolveVaryingText(field.label, { answers, language })
+export function messageOf({ failure, item, answers, language, messages }: MessageInput): string {
+  const label = resolveVaryingText(item.label, { answers, language })
   const params: Readonly<Record<string, JsonValue>> & { label: string } = {
     ...failure.params,
     label,
   }
-  const own = field.messages?.[failure.code]
+  const own = item.messages?.[failure.code]
   if (own !== undefined) {
     return fillPlaceholders(chooseText(own, { answers, language }), (name) =>
       Object.hasOwn(params, name) ? String(params[name]) : '',

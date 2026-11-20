@@ -30,8 +30,12 @@ problem with the document.
 
 ## What is validated
 
-- **Only what shows.** A field is validated when it and every step, section and row around it show
-  for the answers given.
+- **Only what shows.** A field is validated when it and every step, section, row and repeat around
+  it show for the answers given.
+- **Each entry.** The fields of a [repeat](/documents#repeats) are validated for each of its
+  entries, with the conditions of that entry: `f4` may be required for the first resident and
+  hidden for the second. A repeat with fewer entries than its `min` or more than its `max` fails,
+  and so does one whose value is no list.
 - **Required.** A field left empty fails only when it is required, by `required: true` or by its
   condition. Text of only spaces is empty, and so are no choices. A boolean is filled only when it
   is true, so a required checkbox, such as a consent, has to be ticked.
@@ -43,14 +47,15 @@ problem with the document.
 - **Checks.** Then a filled field fails the first of its [checks](#checks-against-other-answers)
   whose condition does not hold.
 
-Each field reports one issue at most, and the issues come in document order. An issue has the
-`message`, the `path` of the field's value (`['s1', 'f1']` with steps, `['f1']` without), and the
-`code` and `params` its text was made from:
+Each field reports one issue at most, in each entry of a repeat, and the issues come in document
+order. An issue has the `message`, the `path` of the value (`['s1', 'f1']` with steps, `['f1']`
+without, `['s1', 'r1', 0, 'f5']` in the first entry of a repeat), and the `code` and `params` its
+text was made from:
 
 | `code` | Reported when | `params` |
 | --- | --- | --- |
 | `required` | a required field is empty | none |
-| `type` | the value is of the wrong type | `expected`, the value type |
+| `type` | the value is of the wrong type | `expected`, the value type, or `list` for a repeat |
 | `option` | a choice is no option of the field | none |
 | `min`, `max` | a number or decimal is out of bounds | `min`, `max` |
 | `integer`, `decimal` | the value is no whole number, no number | none |
@@ -59,6 +64,7 @@ Each field reports one issue at most, and the issues come in document order. An 
 | `earliest`, `latest` | a date is too early or too late | `earliest`, `latest` |
 | `email` | the text is no email address | none |
 | `check` | a check against other answers fails | none |
+| `minEntries`, `maxEntries` | a repeat has too few or too many entries; its `label` is the repeat's | `min`, `max` |
 | a code of your own | a `rule.custom` fails | its `params` |
 
 ## Checks against other answers
@@ -142,7 +148,8 @@ The form and its validator hand over different things:
 - **`onSubmit` receives the form's values.** They still hold what was entered in a field that no
   longer shows, such as a postal code typed before its checkbox was unticked.
 - **The validator's `value` holds the answers of the fields that show**, nested like the values
-  given, and each [computed value](/documents#computed-values) that counts, worked out again. That
+  given, a repeat's as a list with one object per entry, and each
+  [computed value](/documents#computed-values) that counts, worked out again. That
   is what a server keeps: validate what arrives and save `result.value`, not the values as they
   were sent.
 

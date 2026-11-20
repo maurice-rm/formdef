@@ -33,6 +33,10 @@ export type IssueParams = {
   email: NoParams
   /** A check of the field against other answers that fails, without a message of its own. */
   check: NoParams
+  /** Fewer entries in a repeat than it needs. */
+  minEntries: { min: number }
+  /** More entries in a repeat than it allows. */
+  maxEntries: { max: number }
 }
 
 /** The names of the parameters of each code the package reports, for checking error texts. */
@@ -51,6 +55,8 @@ export const ISSUE_PARAM_NAMES: { readonly [Code in keyof IssueParams]: readonly
   latest: ['latest'],
   email: [],
   check: [],
+  minEntries: ['min'],
+  maxEntries: ['max'],
 }
 
 /** The parameter every error text receives besides its code's: the label of the field. */

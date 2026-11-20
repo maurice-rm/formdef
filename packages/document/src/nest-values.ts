@@ -1,18 +1,40 @@
 import type { DocumentValues } from './document-values'
 
-/** A value with where it sits: the step key and field key, or the field key alone. */
-type PlacedValue = { path: readonly string[]; value: unknown }
+/** Where a value sits: step, field and repeat keys, and the index of a repeat's entry. */
+export type ValuePath = readonly (string | number)[]
 
-/** The values of a document from values placed by path, nested by step key where a path has one. */
+/** A value with where it sits. */
+type PlacedValue = { path: ValuePath; value: unknown }
+
+type Container = Record<string | number, unknown>
+
+const containerFor = (segment: string | number): Container =>
+  (typeof segment === 'number' ? [] : {}) as Container
+
+const placeAt = (target: Container, { path, value }: PlacedValue): void => {
+  const [segment, ...rest] = path
+  if (segment === undefined) {
+    return
+  }
+  const [next] = rest
+  if (next === undefined) {
+    target[segment] = value
+    return
+  }
+  const inner = (target[segment] ?? containerFor(next)) as Container
+  target[segment] = inner
+  placeAt(inner, { path: rest, value })
+}
+
+/**
+ * The values of a document from values placed by path, nested by step key where a path has one,
+ * and into a repeat's entries by their index. A value placed on a path another value runs through
+ * is the container the later ones go into.
+ */
 export function nestValues(placed: readonly PlacedValue[]): DocumentValues {
-  const values: DocumentValues = {}
-  for (const { path, value } of placed) {
-    const [first = '', second] = path
-    if (second === undefined) {
-      values[first] = value
-      continue
-    }
-    values[first] = { ...(values[first] as DocumentValues | undefined), [second]: value }
+  const values: Container = {}
+  for (const entry of placed) {
+    placeAt(values, entry)
   }
   return values
 }

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { Condition } from '../condition'
 import type { Expression } from '../expression'
-import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
+import type { DocumentItem, FieldItem, FormDocument, RepeatItem } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { defineValueType } from '../kinds/define-value-type'
@@ -12,6 +12,7 @@ import { rule } from '../kinds/rule'
 import { setting } from '../kinds/setting'
 import { valueTypes } from '../kinds/value-types'
 import { createValidator, type ValidationResult } from './create-validator'
+import { FALLBACK_MESSAGE as FALLBACK } from './messages'
 
 type Option = { value: string; label: string }
 
@@ -625,5 +626,99 @@ describe('createValidator', () => {
     expect(() => createValidator(plain(field('f1', 'unknown')), catalog)).toThrow(
       'formdef: document: the document has 1 problem; checkDocument lists it.',
     )
+  })
+
+  describe('with repeats', () => {
+    const residents = (extra: Partial<RepeatItem> = {}): RepeatItem => ({
+      type: 'repeat',
+      key: 'r1',
+      label: 'Residents',
+      addLabel: 'Add',
+      removeLabel: 'Remove {n}',
+      items: [
+        field('f2', 'text', { required: true }),
+        field('f3', 'consent'),
+        field('f4', 'date', { required: true, visibleWhen: { field: 'f3', op: 'isTrue' } }),
+        field('f5', 'count'),
+        {
+          type: 'computed',
+          key: 'c1',
+          label: 'Doubled',
+          valueType: 'number',
+          expression: { op: 'multiply', args: [{ field: 'f5' }, { value: 2 }] },
+        },
+      ],
+      ...extra,
+    })
+
+    it("validates each entry with its own conditions, at the entry's path", () => {
+      const result = validate(plain(residents()), {
+        r1: [
+          { f2: 'Ada', f3: true },
+          { f2: '', f3: false, f4: 'not checked' },
+        ],
+      })
+
+      expect(codesOf(result)).toEqual([
+        { path: ['r1', 0, 'f4'], code: 'required' },
+        { path: ['r1', 1, 'f2'], code: 'required' },
+      ])
+    })
+
+    it('returns the answers of each entry, with its computed values, leaving out what is hidden', () => {
+      const result = validate(plain(residents()), {
+        r1: [
+          { f2: 'Ada', f3: true, f4: '2020-01-01', f5: 3 },
+          { f2: 'Max', f3: false, f4: '2019-01-01' },
+        ],
+      })
+
+      expect(result).toEqual({
+        value: {
+          r1: [
+            { f2: 'Ada', f3: true, f4: '2020-01-01', f5: 3, c1: 6 },
+            { f2: 'Max', f3: false },
+          ],
+        },
+      })
+    })
+
+    it('reads a field before the repeat in the conditions of every entry', () => {
+      const document = plain(
+        houseType,
+        residents({ items: [field('f2', 'text', { required: isApartmentBlock })] }),
+      )
+
+      expect(codesOf(validate(document, { f1: 'o2', r1: [{}, { f2: 'Max' }] }))).toEqual([
+        { path: ['r1', 0, 'f2'], code: 'required' },
+      ])
+      expect(validate(document, { f1: 'o1', r1: [{}] })).toEqual({ value: { f1: 'o1', r1: [{}] } })
+    })
+
+    it("reports fewer or more entries than allowed at the repeat's path, before their issues", () => {
+      const document = plain(residents({ min: 1, max: 2 }))
+      const ada = { f2: 'Ada' }
+
+      expect(validate(document, { r1: [] }).issues).toEqual([
+        { path: ['r1'], code: 'minEntries', params: { min: 1 }, message: 'Add at least 1.' },
+      ])
+      expect(codesOf(validate(document, { r1: [ada, ada, {}] }))).toEqual([
+        { path: ['r1'], code: 'maxEntries' },
+        { path: ['r1', 2, 'f2'], code: 'required' },
+      ])
+      expect(codesOf(validate(document, {}))).toEqual([{ path: ['r1'], code: 'minEntries' }])
+    })
+
+    it('reports a value that is no list as of the wrong type', () => {
+      expect(validate(plain(residents()), { r1: 'Ada' }).issues).toEqual([
+        { path: ['r1'], code: 'type', params: { expected: 'list' }, message: FALLBACK },
+      ])
+    })
+
+    it('validates no entry of a repeat that does not show, and leaves it out', () => {
+      const document = plain(houseType, residents({ min: 1, visibleWhen: isApartmentBlock }))
+
+      expect(validate(document, { f1: 'o1', r1: [{ f2: '' }] })).toEqual({ value: { f1: 'o1' } })
+    })
   })
 })

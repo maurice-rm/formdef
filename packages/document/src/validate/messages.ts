@@ -44,4 +44,6 @@ export const DEFAULT_MESSAGES: Messages = {
   latest: ({ latest }) => `Enter a date on or before ${latest}.`,
   email: () => 'Enter an email address.',
   check: () => 'This answer does not fit the other answers.',
+  minEntries: ({ min }) => `Add at least ${min}.`,
+  maxEntries: ({ max }) => `Add at most ${max}.`,
 }
