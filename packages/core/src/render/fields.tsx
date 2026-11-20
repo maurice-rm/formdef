@@ -1,4 +1,4 @@
-import { type ComponentType, type ReactNode, use } from 'react'
+import { type ComponentType, type ReactNode, use, useMemo } from 'react'
 
 import { declaresEmptyValue } from '../widget/declares-empty-value'
 
@@ -219,7 +219,8 @@ const FieldContent = ({
 }
 
 const Entry = ({ parts, form, entry, path, itemPath, extra }: EntryProps): ReactNode => {
-  const split = { ...splitEntry(entry), source: entry }
+  // `Derived` reads again for a new entry, so one entry of the config keeps one split.
+  const split = useMemo(() => ({ ...splitEntry(entry), source: entry }), [entry])
 
   return (
     <Derived form={form} entry={split.own} place={{ path, itemPath }}>

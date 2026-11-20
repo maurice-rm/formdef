@@ -10,8 +10,8 @@ export type Visibility<TValues> = {
    */
   visibleWhen?: (values: TValues, at: EntryPlace) => boolean
   /**
-   * The paths `visibleWhen` and derived props read; only these make them read again, and inside an
-   * array item a change of the item.
+   * The paths `visibleWhen` and derived props read; only these make them read again. One that
+   * reads its array item names the array, such as `contacts`.
    */
   dependsOn?: readonly DeepKeys<TValues>[]
 }

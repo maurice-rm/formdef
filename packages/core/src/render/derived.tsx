@@ -25,8 +25,10 @@ type DerivedProps = {
   children: (props: object | undefined) => ReactNode
 }
 
+/** What was read last, for which entry, where and from which values of its `dependsOn`. */
 type LastRead = {
   entry: DerivedEntry
+  path: string
   dependencies: unknown[]
   selected: unknown
 }
@@ -39,13 +41,14 @@ const VISIBLE = Symbol('visible')
 const propsOf = (props: unknown): object | undefined =>
   typeof props === 'object' && props !== null ? props : undefined
 
+// An item moved by its `itemKey` keeps its entry, but renders at another path.
 const isStale = (
   last: LastRead | undefined,
-  entry: DerivedEntry,
-  dependencies: unknown[],
+  { entry, path, dependencies }: Omit<LastRead, 'selected'>,
 ): boolean =>
   last === undefined ||
   last.entry !== entry ||
+  last.path !== path ||
   dependencies.some((value, index) => !Object.is(value, last.dependencies[index]))
 
 const placeIn = (values: unknown, { path, itemPath }: Place): EntryPlace => ({
@@ -53,19 +56,13 @@ const placeIn = (values: unknown, { path, itemPath }: Place): EntryPlace => ({
   item: itemPath === undefined ? undefined : getBy(values, itemPath),
 })
 
-// An entry inside an array item reads the item, so it reads again when the item changes.
-const dependenciesOf = (values: unknown, dependsOn: readonly string[], place: Place) => [
-  ...dependsOn.map((path) => getBy(values, path)),
-  ...(place.itemPath === undefined ? [] : [getBy(values, place.itemPath)]),
-]
-
 /**
  * Renders an entry from what it reads from the form values. An entry with a condition or derived
  * props subscribes to the values; the selected result alone decides whether it re-renders: whether
  * it is shown for a condition, the values for derived props. Both receive where the entry renders:
  * its path and the value of the innermost array item it belongs to. `dependsOn` narrows when the
- * selector reads again, never what it returns; inside an item, a change of the item reads again
- * too. A hidden entry is never built.
+ * selector reads again, never what it returns; an entry that reads its item names the array in
+ * it. A hidden entry is never built.
  */
 export const Derived = ({ form, entry, place, children }: DerivedProps): ReactNode => {
   const lastRead = useRef<LastRead | undefined>(undefined)
@@ -90,9 +87,10 @@ export const Derived = ({ form, entry, place, children }: DerivedProps): ReactNo
       return selectFrom(values)
     }
 
-    const dependencies = dependenciesOf(values, dependsOn, place)
-    if (isStale(lastRead.current, entry, dependencies)) {
-      lastRead.current = { entry, dependencies, selected: selectFrom(values) }
+    const dependencies = dependsOn.map((path) => getBy(values, path))
+    const read = { entry, path: place.path, dependencies }
+    if (isStale(lastRead.current, read)) {
+      lastRead.current = { ...read, selected: selectFrom(values) }
     }
 
     return lastRead.current?.selected

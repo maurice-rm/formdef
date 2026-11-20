@@ -109,9 +109,9 @@ export const Household = createForm({
 })
 ```
 
-`at.item` is typed `unknown`, so name its type where you read it. Inside an item, a change of the
-item runs the condition and the props function again, whatever `dependsOn` lists. A step's
-condition and props get `at` too, with an empty path and no item.
+`at.item` is typed `unknown`, so name its type where you read it. With [`dependsOn`](#dependson),
+a function that reads its item names the array, such as `household`, so a change in any item runs
+it again. A step's condition and props get `at` too, with an empty path and no item.
 
 ## Derived props
 
@@ -154,8 +154,8 @@ though: TypeScript rejects them on an object you write directly, not on one a fu
 ## dependsOn
 
 `dependsOn` lists the paths a condition or a props function reads, from anywhere in the form:
-`country`, `address.zip`, `contacts[0].name`. The function then runs again only when one of them
-changes, or, inside an array item, when the item does.
+`country`, `address.zip`, `contacts[0].name`, or a whole array such as `contacts`. The function
+then runs again only when one of them changes.
 
 - **Derived props need it.** Their result is the values themselves, so without `dependsOn` the
   widget re-renders on every change anywhere in the form.

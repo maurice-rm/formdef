@@ -251,22 +251,31 @@ describe('an array entry without a frame', () => {
     expect(screen.getByLabelText('Email of Hopper at book[1].email')).toBeDefined()
   })
 
-  it('reads a condition inside an item again when the item changes, whatever its dependsOn', () => {
-    const emailItem = {
+  it('reads a condition inside an item again only when a path in its dependsOn changes', () => {
+    const emailItem = (dependsOn: string[]) => ({
       widget: 'text',
       props: { label: 'Email' },
       visibleWhen: (_values: Address, at: { item: unknown }) =>
         (at.item as Contact).name !== 'Grace',
-      dependsOn: ['tags'],
-    }
-    render(<BookForm fields={bookEntry({ fields: { name: nameItem, email: emailItem } })} />)
-
-    expect(screen.getAllByLabelText('Email')).toHaveLength(1)
-
-    fireEvent.change(screen.getAllByLabelText('Name')[1] as HTMLElement, {
-      target: { value: 'Hopper' },
+      dependsOn,
     })
+    const renameGrace = (): void => {
+      fireEvent.change(screen.getAllByLabelText('Name')[1] as HTMLElement, {
+        target: { value: 'Hopper' },
+      })
+    }
 
+    const { unmount } = render(
+      <BookForm fields={bookEntry({ fields: { name: nameItem, email: emailItem(['tags']) } })} />,
+    )
+    renameGrace()
+    expect(screen.getAllByLabelText('Email')).toHaveLength(1)
+    unmount()
+
+    render(
+      <BookForm fields={bookEntry({ fields: { name: nameItem, email: emailItem(['book']) } })} />,
+    )
+    renameGrace()
     expect(screen.getAllByLabelText('Email')).toHaveLength(2)
   })
 
