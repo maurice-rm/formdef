@@ -1,8 +1,20 @@
 export { checkDocument } from './check/check-document'
 export type { Problem, ProblemCode } from './check/problem'
 export type { Condition, ListOperator, PresenceOperator, ValueOperator } from './condition'
+export { changeKind } from './edit/change-kind'
+export { createKey } from './edit/create-key'
+export { type Dependent, dependentsOf } from './edit/dependents-of'
+export { dissolveSteps } from './edit/dissolve-steps'
+export { insertNode } from './edit/insert-node'
+export { moveNode } from './edit/move-node'
+export type { Position } from './edit/position'
+export { removeNode } from './edit/remove-node'
+export { renameKey } from './edit/rename-key'
+export { splitIntoSteps } from './edit/split-into-steps'
+export { updateNode } from './edit/update-node'
 export type {
   DocumentItem,
+  DocumentNode,
   DocumentStep,
   FieldItem,
   FormDocument,

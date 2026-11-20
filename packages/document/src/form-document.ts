@@ -91,6 +91,9 @@ export type DocumentStep = {
   items: DocumentItem[]
 }
 
+/** One step or item of a form document, as the edit operations take them. */
+export type DocumentNode = DocumentStep | DocumentItem
+
 /**
  * A form described as data: JSON with a format version, for a builder and for forms stored in a
  * database. It holds either steps, filled in one at a time, or the items of a plain form.
