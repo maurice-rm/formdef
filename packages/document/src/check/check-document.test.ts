@@ -1,10 +1,11 @@
-import { createRegistry, type FieldOf } from '@formdef/core'
+import { createRegistry, type FieldOf, type SectionProps, type StepperProps } from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import type { FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineBlockKind } from '../kinds/define-block-kind'
+import { defineDisplayKind } from '../kinds/define-display-kind'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { defineValueType } from '../kinds/define-value-type'
 import { setting } from '../kinds/setting'
@@ -1067,5 +1068,122 @@ describe('checkDocument with blocks', () => {
       'missingSetting document.items[3].settings.body',
       'unknownField document.items[4].visibleWhen.field',
     ])
+  })
+})
+
+const Stepper = (_: StepperProps<{ icon?: string }> & { variant?: 'circles' | 'rail' }) => null
+const Section = (_: SectionProps & { tone?: string }) => null
+
+describe('checkDocument with displays', () => {
+  const withSlots = registry.extendRegistry({ structure: { stepper: Stepper, section: Section } })
+  const rail = defineDisplayKind(withSlots, {
+    name: 'rail',
+    label: 'Rail',
+    appliesTo: 'form',
+    props: () => ({ variant: 'rail' }),
+  })
+  const card = defineDisplayKind(withSlots, {
+    name: 'card',
+    label: 'Card',
+    appliesTo: 'section',
+    settings: { tone: setting.text({ label: 'Tone', required: true }) },
+    props: ({ tone }) => ({ tone }),
+  })
+  const text = defineFieldKind(withSlots, {
+    name: 'text',
+    label: 'Text',
+    widget: 'text',
+    valueType: valueTypes.text,
+  })
+  const withDisplays = createCatalog(withSlots, { fields: [text], displays: [rail, card] })
+  const codesWithDisplays = (document: FormDocument) =>
+    checkDocument(document, withDisplays).map(({ code, path }) => `${code} ${path}`)
+  const name: FieldItem = { type: 'field', key: 'f1', kind: 'text', label: 'Name' }
+
+  it('takes displays of known kinds, each where its kind applies', () => {
+    const document: FormDocument = {
+      format: 1,
+      display: { kind: 'rail' },
+      steps: [
+        {
+          key: 's1',
+          label: 'Contact',
+          items: [
+            {
+              type: 'section',
+              label: 'You',
+              display: { kind: 'card', settings: { tone: 'quiet' } },
+              items: [name],
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(checkDocument(document, withDisplays)).toEqual([])
+  })
+
+  it('reports a display of an unknown kind, and one where its kind does not apply', () => {
+    const document: FormDocument = {
+      format: 1,
+      display: { kind: 'card', settings: { tone: 'quiet' } },
+      steps: [
+        {
+          key: 's1',
+          label: 'Contact',
+          display: { kind: 'rail' },
+          items: [{ type: 'row', display: { kind: 'columns' }, items: [name] }],
+        },
+      ],
+    }
+
+    expect(checkDocument(document, withDisplays)).toEqual([
+      {
+        code: 'misplacedDisplay',
+        path: 'document.display.kind',
+        params: { kind: 'card', appliesTo: 'section' },
+      },
+      {
+        code: 'misplacedDisplay',
+        path: 'document.steps[0].display.kind',
+        params: { kind: 'rail', appliesTo: 'form' },
+      },
+      {
+        code: 'unknownKind',
+        path: 'document.steps[0].items[0].display.kind',
+        params: { kind: 'columns' },
+      },
+    ])
+  })
+
+  it('reports the display of the form in a form without steps', () => {
+    const document: FormDocument = { format: 1, display: { kind: 'rail' }, items: [name] }
+
+    expect(codesWithDisplays(document)).toEqual(['misplacedDisplay document.display.kind'])
+  })
+
+  it('checks the settings of a display, which neither follow nor name an answer', () => {
+    const section = (settings: NonNullable<FieldItem['settings']>): FormDocument => ({
+      format: 1,
+      items: [
+        name,
+        {
+          type: 'section',
+          label: 'You',
+          display: { kind: 'card', settings },
+          items: [{ ...name, key: 'f2' }],
+        },
+      ],
+    })
+
+    expect(codesWithDisplays(section({}))).toEqual([
+      'missingSetting document.items[1].display.settings.tone',
+    ])
+    expect(codesWithDisplays(section({ tone: 'for {f1}' }))).toContain(
+      'fixedText document.items[1].display.settings.tone',
+    )
+    expect(codesWithDisplays(section({ tone: { cases: [], otherwise: 'quiet' } }))).toContain(
+      'notVarying document.items[1].display.settings.tone',
+    )
   })
 })

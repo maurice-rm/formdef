@@ -349,6 +349,42 @@ describe('readDocument with languages', () => {
     ).toThrow('formdef: document.items[0].label: unknown key.')
   })
 
+  it('reads the display of the form, a step, a section and a row', () => {
+    const withDisplays = {
+      format: 1,
+      display: { kind: 'rail' },
+      steps: [
+        {
+          key: 's1',
+          label: 'Contact',
+          display: { kind: 'icon', settings: { icon: 'house' } },
+          items: [
+            {
+              type: 'section',
+              label: 'You',
+              display: { kind: 'card' },
+              items: [
+                {
+                  type: 'row',
+                  display: { kind: 'wide', settings: { gap: 8 } },
+                  items: [{ type: 'field', key: 'f1', kind: 'text', label: 'Name' }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(readDocument(withDisplays)).toEqual(withDisplays)
+    expect(() => readDocument({ ...withDisplays, display: { kind: 'rail', size: 2 } })).toThrow(
+      'formdef: document.display.size: unknown key.',
+    )
+    expect(() => readDocument({ ...withDisplays, display: { settings: {} } })).toThrow(
+      'formdef: document.display.kind: expected text.',
+    )
+  })
+
   it("reads a field's own error texts by issue code", () => {
     const withMessages = {
       format: 1,

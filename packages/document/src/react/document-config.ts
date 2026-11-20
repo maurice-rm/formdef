@@ -12,6 +12,7 @@ import { resolveVaryingText } from '../evaluate/resolve-varying-text'
 import { fieldsOf } from '../fields-of'
 import type {
   BlockItem,
+  Display,
   DocumentItem,
   DocumentStep,
   FieldItem,
@@ -21,6 +22,7 @@ import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
 import { blockKindOf } from '../kinds/block-kind-of'
 import type { Catalog } from '../kinds/create-catalog'
+import { displayKindOf } from '../kinds/display-kind-of'
 import { kindOf } from '../kinds/kind-of'
 import type { Setting } from '../kinds/setting'
 import type { ValueType } from '../kinds/value-type'
@@ -39,6 +41,7 @@ export type DocumentConfig = {
   defaultValues: DocumentValues
   fields: Record<string, Entry>
   layout: unknown[]
+  stepper?: { props: Entry }
 }
 
 type Level = Pick<DocumentConfig, 'fields' | 'layout'>
@@ -58,19 +61,41 @@ const varyingOf = (text: VaryingText, { build, answers }: { build: Build; answer
 const markdownOf = (text: VaryingText, { build, answers }: { build: Build; answers: Answers }) =>
   resolveFormattedText(text, { answers, language: build.language })
 
-// A description that may follow an answer reaches its slot as props of the form's values.
-const descriptionProps = (
-  { description }: { description?: VaryingText | undefined },
+const NO_ANSWERS: Answers = { get: () => undefined, valueTypeOf: () => undefined }
+
+// A display is fixed for the form: `checkDocument` refuses settings that follow or name an answer.
+const displayPropsOf = (display: Display | undefined, build: Build): Entry => {
+  if (display === undefined) {
+    return {}
+  }
+  const kind = displayKindOf(build.catalog, display)
+  const settings = resolveSettings(display, kind, {
+    answers: NO_ANSWERS,
+    language: build.language,
+  })
+  return kind.props(withFormattedTexts(settings, kind))
+}
+
+const hasProps = (props: Entry): boolean => Object.keys(props).length > 0
+
+// A description that may follow an answer reaches its slot as props of the form's values, next to
+// the props of the slot's display.
+const slotProps = (
+  { description, display }: { description?: VaryingText | undefined; display?: Display },
   build: Build,
   format: (markdown: string) => ReactNode,
-): Entry =>
-  description === undefined
-    ? {}
-    : {
-        props: (values: unknown) => ({
-          description: format(markdownOf(description, { build, answers: build.answersOf(values) })),
-        }),
-      }
+): Entry => {
+  const fixed = displayPropsOf(display, build)
+  if (description === undefined) {
+    return hasProps(fixed) ? { props: fixed } : {}
+  }
+  return {
+    props: (values: unknown) => ({
+      ...fixed,
+      description: format(markdownOf(description, { build, answers: build.answersOf(values) })),
+    }),
+  }
+}
 
 const formatOption = (option: unknown): unknown =>
   isPlainObject(option) && typeof option.description === 'string'
@@ -144,12 +169,16 @@ const layoutOf = (items: readonly DocumentItem[], build: Build): unknown[] =>
       return blockEntry(item, build)
     }
     if (item.type === 'row') {
-      return { row: layoutOf(item.items, build), ...visibility(item, build) }
+      return {
+        row: layoutOf(item.items, build),
+        ...slotProps(item, build, formatText),
+        ...visibility(item, build),
+      }
     }
     return {
       section: textOf(item.label, build),
       layout: layoutOf(item.items, build),
-      ...descriptionProps(item, build, formatText),
+      ...slotProps(item, build, formatText),
       ...visibility(item, build),
     }
   })
@@ -171,16 +200,25 @@ const emptyValuesOf = (
 const stepEntry = (step: DocumentStep, build: Build): Entry => ({
   step: step.key,
   label: textOf(step.label, build),
-  ...descriptionProps(step, build, formatTextWithoutLinks),
+  ...slotProps(step, build, formatTextWithoutLinks),
   ...visibility(step, build),
 })
 
-const steppedConfig = (steps: readonly DocumentStep[], build: Build): Parts => ({
+const stepperOf = (display: Display | undefined, build: Build): Pick<Parts, 'stepper'> => {
+  const props = displayPropsOf(display, build)
+  return hasProps(props) ? { stepper: { props } } : {}
+}
+
+const steppedConfig = (
+  { steps, display }: { steps: readonly DocumentStep[]; display?: Display | undefined },
+  build: Build,
+): Parts => ({
   defaultValues: nestValues(
     steps.flatMap((step) => emptyValuesOf(step.items, { build, path: [step.key] })),
   ),
   fields: Object.fromEntries(steps.map((step) => [step.key, levelOf(step.items, build)])),
   layout: steps.map((step) => stepEntry(step, build)),
+  ...stepperOf(display, build),
 })
 
 const plainConfig = (items: readonly DocumentItem[], build: Build): Parts => ({
@@ -207,6 +245,6 @@ export function documentConfig(
   const parts =
     document.steps === undefined
       ? plainConfig(document.items, build)
-      : steppedConfig(document.steps, build)
+      : steppedConfig({ steps: document.steps, display: document.display }, build)
   return { schema, ...parts }
 }

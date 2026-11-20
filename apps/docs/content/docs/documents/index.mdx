@@ -74,6 +74,10 @@ a field may be is decided in code, once: by the project's [field kinds](/documen
   step, section, row or field; without one, it always shows.
 - `settings` holds the values of the field kind's [settings](/documents/field-kinds#settings), by
   name, such as the options of a choice or the unit of a number.
+- `display` says how the form of steps, a step, a section or a row looks: the `kind` of a
+  registered [display kind](/documents/field-kinds#display-kinds) and its `settings`, such as
+  `{ "kind": "rail" }` at the root for a stepper drawn as a rail. Without one, each renders as its
+  slot does.
 
 ### Settings that follow an answer
 

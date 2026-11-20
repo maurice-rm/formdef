@@ -1,5 +1,6 @@
 import { failAt } from '../fail-at'
 import type { BlockKind } from './block-kind'
+import type { DisplayKind } from './display-kind'
 import type { FieldKind } from './field-kind'
 import type { ValueType } from './value-type'
 import { type BuiltInValueType, valueTypes as builtInValueTypes } from './value-types'
@@ -20,10 +21,14 @@ export type Catalog<TRegistry, TValueType extends ValueType = never> = {
   readonly fields: readonly FieldKind<TRegistry>[]
   /** Every block kind, in the order given. */
   readonly blocks: readonly BlockKind<TRegistry>[]
+  /** Every display kind, in the order given. */
+  readonly displays: readonly DisplayKind<TRegistry>[]
   /** The field kind of this name, or `undefined` when there is none. */
   findFieldKind: (name: string) => FieldKind<TRegistry> | undefined
   /** The block kind of this name, or `undefined` when there is none. */
   findBlockKind: (name: string) => BlockKind<TRegistry> | undefined
+  /** The display kind of this name, or `undefined` when there is none. */
+  findDisplayKind: (name: string) => DisplayKind<TRegistry> | undefined
 }
 
 /**
@@ -48,6 +53,12 @@ export type CatalogOptions<TRegistry, TValueType extends ValueType> = {
    * @defaultValue none
    */
   blocks?: readonly BlockKind<TRegistry>[]
+  /**
+   * The display kinds, each built with {@link defineDisplayKind} and the catalog's registry.
+   *
+   * @defaultValue none
+   */
+  displays?: readonly DisplayKind<TRegistry>[]
 }
 
 type Kind<TRegistry> = { readonly registry: TRegistry; readonly name: string }
@@ -55,6 +66,7 @@ type Kind<TRegistry> = { readonly registry: TRegistry; readonly name: string }
 const VALUE_TYPES = 'valueTypes'
 const FIELDS = 'fields'
 const BLOCKS = 'blocks'
+const DISPLAYS = 'displays'
 
 const collectValueTypes = (own: readonly ValueType[]): readonly ValueType[] => {
   const all = [...Object.values(builtInValueTypes), ...own]
@@ -99,10 +111,13 @@ const byNameOf = <TRegistry, TKind extends Kind<TRegistry>>(
  *   registry.
  * @param options.blocks - The block kinds, each built with {@link defineBlockKind} and this
  *   registry.
- * @defaultValue `options.valueTypes` and `options.blocks`: none.
+ * @param options.displays - The display kinds, each built with {@link defineDisplayKind} and this
+ *   registry.
+ * @defaultValue `options.valueTypes`, `options.blocks` and `options.displays`: none.
  * @returns The catalog, which finds each kind by its name.
- * @throws When two value types, two field kinds or two block kinds share a name, a kind was
- *   defined with another registry, or a field kind's value type is not one of the catalog's.
+ * @throws When two value types, two field kinds, two block kinds or two display kinds share a
+ *   name, a kind was defined with another registry, or a field kind's value type is not one of the
+ *   catalog's.
  *
  * @example
  * ```ts
@@ -110,12 +125,13 @@ const byNameOf = <TRegistry, TKind extends Kind<TRegistry>>(
  *   valueTypes: [address],
  *   fields: [text, choice, measure, postalAddress],
  *   blocks: [notice],
+ *   displays: [rail],
  * })
  * ```
  */
 export function createCatalog<TRegistry, TValueType extends ValueType = never>(
   registry: TRegistry,
-  { valueTypes = [], fields, blocks = [] }: CatalogOptions<TRegistry, TValueType>,
+  { valueTypes = [], fields, blocks = [], displays = [] }: CatalogOptions<TRegistry, TValueType>,
 ): Catalog<TRegistry, TValueType> {
   const allValueTypes = collectValueTypes(valueTypes)
   fields.forEach((kind, index) => {
@@ -125,13 +141,16 @@ export function createCatalog<TRegistry, TValueType extends ValueType = never>(
   })
   const fieldsByName = byNameOf(fields, { registry, list: FIELDS, noun: 'field kind' })
   const blocksByName = byNameOf(blocks, { registry, list: BLOCKS, noun: 'block kind' })
+  const displaysByName = byNameOf(displays, { registry, list: DISPLAYS, noun: 'display kind' })
 
   return {
     registry,
     valueTypes: allValueTypes as readonly (BuiltInValueType | TValueType)[],
     fields: [...fields],
     blocks: [...blocks],
+    displays: [...displays],
     findFieldKind: (name) => fieldsByName.get(name),
     findBlockKind: (name) => blocksByName.get(name),
+    findDisplayKind: (name) => displaysByName.get(name),
   }
 }

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import { createCatalog } from './create-catalog'
 import { defineBlockKind } from './define-block-kind'
+import { defineDisplayKind } from './define-display-kind'
 import { defineFieldKind } from './define-field-kind'
 import { defineValueType } from './define-value-type'
 import { setting } from './setting'
@@ -166,6 +167,17 @@ describe('createCatalog', () => {
     expect(() =>
       createCatalog(withNotice, { fields: [], blocks: [foreign as unknown as typeof notice] }),
     ).toThrow('formdef: blocks[0]: the block kind "notice" was defined with another registry.')
+  })
+
+  it('finds a display kind by its name, and refuses two of the same name', () => {
+    const card = defineDisplayKind(registry, { name: 'card', label: 'Card', appliesTo: 'section' })
+    const catalog = createCatalog(registry, { fields: [], displays: [card] })
+
+    expect(catalog.displays).toEqual([card])
+    expect(catalog.findDisplayKind('card')).toBe(card)
+    expect(() => createCatalog(registry, { fields: [], displays: [card, card] })).toThrow(
+      'formdef: displays[1].name: the name "card" is used twice.',
+    )
   })
 
   it('refuses a field kind without a value type, as untyped code could pass', () => {

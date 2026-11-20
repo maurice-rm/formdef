@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 // The other tests run without a DOM, as the root entry runs on a server.
-import { createRegistry, type FieldOf, type StepperProps, useFieldParts } from '@formdef/core'
+import {
+  createRegistry,
+  type FieldOf,
+  type RowProps,
+  type SectionProps,
+  type StepperProps,
+  useFieldParts,
+} from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -9,6 +16,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineBlockKind } from '../kinds/define-block-kind'
+import { defineDisplayKind } from '../kinds/define-display-kind'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { setting } from '../kinds/setting'
 import { valueTypes } from '../kinds/value-types'
@@ -646,5 +654,139 @@ describe('createDocumentForm with steps', () => {
     await click('Next')
     expect(screen.getByRole('alert')).toBeDefined()
     expect(screen.getByLabelText('Flats *')).toBeDefined()
+  })
+})
+
+const ShowingStepper = ({
+  steps,
+  variant = 'circles',
+  children,
+}: StepperProps<{ description?: ReactNode; icon?: string }> & {
+  variant?: 'circles' | 'rail'
+}): ReactNode => (
+  <section aria-label="Stepper" data-variant={variant}>
+    <ol>
+      {steps.map((step) => (
+        <li key={step.label} data-icon={step.icon}>
+          {step.label}
+          {step.description !== undefined && <>: {step.description}</>}
+        </li>
+      ))}
+    </ol>
+    {children}
+  </section>
+)
+
+const FramedSection = ({
+  label,
+  description,
+  tone = 'plain',
+  children,
+}: SectionProps & { description?: ReactNode; tone?: string }): ReactNode => (
+  <fieldset data-tone={tone}>
+    <legend>{label}</legend>
+    {description !== undefined && <p>{description}</p>}
+    {children}
+  </fieldset>
+)
+
+const SpacedRow = ({ children, gap = 'small' }: RowProps & { gap?: string }): ReactNode => (
+  <fieldset aria-label="Row" data-gap={gap}>
+    {children}
+  </fieldset>
+)
+
+describe('createDocumentForm with displays', () => {
+  const displayed = createRegistry({
+    fieldContext,
+    formContext,
+    widgets: { text: TextField },
+    structure: { stepper: ShowingStepper, section: FramedSection, row: SpacedRow },
+  })
+  const text = defineFieldKind(displayed, {
+    name: 'text',
+    label: 'Text',
+    widget: 'text',
+    valueType: valueTypes.text,
+  })
+  const displays = [
+    defineDisplayKind(displayed, {
+      name: 'rail',
+      label: 'Rail',
+      appliesTo: 'form',
+      props: () => ({ variant: 'rail' }),
+    }),
+    defineDisplayKind(displayed, {
+      name: 'icon',
+      label: 'Icon',
+      appliesTo: 'step',
+      settings: { icon: setting.text({ label: 'Icon', required: true }) },
+      props: ({ icon }) => ({ icon }),
+    }),
+    defineDisplayKind(displayed, {
+      name: 'card',
+      label: 'Card',
+      appliesTo: 'section',
+      settings: { tone: setting.text({ label: 'Tone', required: true }) },
+      props: ({ tone }) => ({ tone }),
+    }),
+    defineDisplayKind(displayed, {
+      name: 'wide',
+      label: 'Wide',
+      appliesTo: 'row',
+      props: () => ({ gap: 'large' }),
+    }),
+  ]
+  const withDisplays = createCatalog(displayed, { fields: [text], displays })
+
+  it('gives the stepper, a step, a section and a row the props of their displays', () => {
+    const document: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      display: { kind: 'rail' },
+      steps: [
+        {
+          key: 'contact',
+          label: 'Contact',
+          description: 'How we reach you',
+          display: { kind: 'icon', settings: { icon: 'house' } },
+          items: [
+            {
+              type: 'section',
+              label: 'You',
+              description: 'As on the bell',
+              display: { kind: 'card', settings: { tone: { de: 'ruhig', en: 'quiet' } } },
+              items: [
+                {
+                  type: 'row',
+                  display: { kind: 'wide' },
+                  items: [field('first', 'text', { label: 'First name' })],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    const Form = createDocumentForm(document, withDisplays, { language: 'en' })
+    render(<Form />)
+
+    expect(screen.getByRole('region', { name: 'Stepper' }).dataset.variant).toBe('rail')
+    expect(screen.getByRole('listitem').dataset.icon).toBe('house')
+    expect(screen.getByRole('listitem').textContent).toBe('Contact: How we reach you')
+    expect(screen.getByRole('group', { name: 'You' }).dataset.tone).toBe('quiet')
+    expect(screen.getByText('As on the bell')).toBeDefined()
+    expect(screen.getByRole('group', { name: 'Row' }).dataset.gap).toBe('large')
+  })
+
+  it('renders each slot as it does without a display', () => {
+    const document: FormDocument = {
+      format: 1,
+      steps: [{ key: 'contact', label: 'Contact', items: [field('first', 'text')] }],
+    }
+    const Form = createDocumentForm(document, withDisplays)
+    render(<Form />)
+
+    expect(screen.getByRole('region', { name: 'Stepper' }).dataset.variant).toBe('circles')
   })
 })

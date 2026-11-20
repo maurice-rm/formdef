@@ -24,6 +24,7 @@ export { splitIntoSteps } from './edit/split-into-steps'
 export { updateNode } from './edit/update-node'
 export type {
   BlockItem,
+  Display,
   DocumentItem,
   DocumentNode,
   DocumentStep,
@@ -39,6 +40,7 @@ export type { JsonValue } from './json-value'
 export type { BlockKind } from './kinds/block-kind'
 export { type Catalog, type CatalogOptions, createCatalog } from './kinds/create-catalog'
 export { type BlockKindDefinition, defineBlockKind } from './kinds/define-block-kind'
+export { type DisplayKindDefinition, defineDisplayKind } from './kinds/define-display-kind'
 export {
   defineFieldKind,
   type FieldKindDefinition,
@@ -49,6 +51,7 @@ export {
   type OperatorDefinitions,
   type ValueTypeDefinition,
 } from './kinds/define-value-type'
+export type { DisplayKind, DisplayTarget } from './kinds/display-kind'
 export type { FieldKind } from './kinds/field-kind'
 export type { Operator } from './kinds/operator'
 export { type Rule, rule } from './kinds/rule'

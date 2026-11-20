@@ -3,6 +3,7 @@ import type { BlockItem, DocumentItem, FieldItem, RowItem, SectionItem } from '.
 import { pathTo } from '../path-to'
 import type { VaryingText } from '../varying-text'
 import { readCondition } from './read-condition'
+import { readDisplay } from './read-display'
 import { readList } from './read-list'
 import { readOneOf } from './read-one-of'
 import { readOnlyKeys } from './read-only-keys'
@@ -30,8 +31,8 @@ const FIELD_KEYS = [
   'messages',
 ]
 const BLOCK_KEYS = ['type', 'key', 'kind', 'visibleWhen', 'settings']
-const ROW_KEYS = ['type', 'visibleWhen', 'items']
-const SECTION_KEYS = ['type', 'label', 'description', 'visibleWhen', 'items']
+const ROW_KEYS = ['type', 'visibleWhen', 'display', 'items']
+const SECTION_KEYS = ['type', 'label', 'description', 'visibleWhen', 'display', 'items']
 
 const readRequired = (value: unknown, path: string): boolean | Condition =>
   typeof value === 'boolean' ? value : readCondition(value, path)
@@ -99,7 +100,7 @@ const readRow = (shape: Shape, path: string): RowItem => {
     readRowItem(entry, `${path}.items[${index}]`),
   )
 
-  return { type: 'row', ...readVisibleWhen(shape, path), items }
+  return { type: 'row', ...readVisibleWhen(shape, path), ...readDisplay(shape, path), items }
 }
 
 const readSection = (shape: Shape, path: string): SectionItem => {
@@ -110,6 +111,7 @@ const readSection = (shape: Shape, path: string): SectionItem => {
     label: readTranslatableText(shape.label, `${path}.label`),
     ...withOptional('description', readOptionalText(shape.description, `${path}.description`)),
     ...readVisibleWhen(shape, path),
+    ...readDisplay(shape, path),
     items: readItems(shape.items, `${path}.items`),
   }
 }

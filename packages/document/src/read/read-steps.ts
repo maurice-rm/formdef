@@ -1,4 +1,5 @@
 import type { DocumentStep } from '../form-document'
+import { readDisplay } from './read-display'
 import { readItems } from './read-items'
 import { readList } from './read-list'
 import { readOnlyKeys } from './read-only-keys'
@@ -9,7 +10,7 @@ import { readTranslatableText } from './read-translatable-text'
 import { readVisibleWhen } from './read-visible-when'
 import { withOptional } from './with-optional'
 
-const STEP_KEYS = ['key', 'label', 'description', 'visibleWhen', 'items']
+const STEP_KEYS = ['key', 'label', 'description', 'visibleWhen', 'display', 'items']
 
 const readStep = (value: unknown, path: string): DocumentStep => {
   const shape = readShape(value, path)
@@ -20,6 +21,7 @@ const readStep = (value: unknown, path: string): DocumentStep => {
     label: readTranslatableText(shape.label, `${path}.label`),
     ...withOptional('description', readOptionalText(shape.description, `${path}.description`)),
     ...readVisibleWhen(shape, path),
+    ...readDisplay(shape, path),
     items: readItems(shape.items, `${path}.items`),
   }
 }

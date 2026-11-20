@@ -7,7 +7,9 @@ import type { JsonValue } from '../json-value'
  * - `invalidKey`: a step, field or block key that is empty or holds a dot or a bracket;
  * - `overlappingKey`: a step key that starts with another step's key, such as `s10` after `s1`;
  * - `duplicateOption`: an option value used twice in one field;
- * - `unknownKind`: a field or block of a kind that is not registered;
+ * - `unknownKind`: a field, block or display of a kind that is not registered;
+ * - `misplacedDisplay`: a display where its kind does not apply, such as a section's on a row, or
+ *   the form's in a form without steps;
  * - `unknownField`: a condition on a field the document does not hold;
  * - `laterField`: a condition on a field that comes later, or on the field itself;
  * - `operatorMismatch`: an operator that does not fit the value type of the field compared;
@@ -22,7 +24,8 @@ import type { JsonValue } from '../json-value'
  * - `settingLimit`: a setting outside its constraints, such as too long or too few options;
  * - `missingTranslation`: a translated text that leaves out a language of the document;
  * - `unknownLanguage`: a translation into a language the document does not name;
- * - `fixedText`: a placeholder in the label of a step or section, which names no answers;
+ * - `fixedText`: a placeholder in the label of a step or section or in a display's setting, which
+ *   names no answers;
  * - `unknownParam`: a placeholder in a field's error text that its issue code has no param for.
  *
  * A placeholder on a field that does not exist or comes later is reported as `unknownField` or
@@ -34,6 +37,7 @@ export type ProblemCode =
   | 'overlappingKey'
   | 'duplicateOption'
   | 'unknownKind'
+  | 'misplacedDisplay'
   | 'unknownField'
   | 'laterField'
   | 'operatorMismatch'

@@ -14,10 +14,12 @@ import type { CheckWalk } from './check-walk'
 import { fitsSettingType } from './fits-setting-type'
 import { report } from './report'
 
-/** A field or a block: what holds the settings of a kind. */
+/** A field, a block or a display: what holds the settings of a kind. */
 type Owner = { key: string; settings?: Record<string, JsonValue | Varying> }
 
-type At = { walk: CheckWalk; path: string; name: string; field: Owner }
+type CheckText = (text: Text, at: { walk: CheckWalk; path: string }) => void
+
+type At = { walk: CheckWalk; path: string; name: string; field: Owner; checkTextOf: CheckText }
 
 const reportMismatch = ({ walk, path, name }: At, type: string): void => {
   report(walk, { code: 'settingMismatch', path, params: { setting: name, type } })
@@ -64,7 +66,7 @@ const checkLength = (value: string, setting: Setting<unknown>, at: At): void => 
 }
 
 const checkTextSetting = (value: Text, setting: Setting<unknown>, at: At): void => {
-  checkText(value, at)
+  at.checkTextOf(value, at)
   if (typeof value === 'string') {
     checkLength(value, setting, at)
     return
@@ -127,13 +129,18 @@ const checkSetting = (value: JsonValue | Varying, setting: Setting<unknown>, at:
 }
 
 /**
- * Checks the settings of one field or block against its kind: each known setting in the kind's
- * order, then those the kind does not have.
+ * Checks the settings of one field, block or display against its kind: each known setting in the
+ * kind's order, then those the kind does not have. A text setting is checked with `checkTextOf`,
+ * which a display, whose texts name no answers, sets to {@link checkFixedText}.
  */
 export function checkSettings(
   field: Owner,
   kind: { readonly settings: Readonly<Record<string, Setting<unknown>>> },
-  { walk, path }: { walk: CheckWalk; path: string },
+  {
+    walk,
+    path,
+    checkTextOf = checkText,
+  }: { walk: CheckWalk; path: string; checkTextOf?: CheckText },
 ): void {
   const values = field.settings ?? {}
 
@@ -144,7 +151,7 @@ export function checkSettings(
       report(walk, { code: 'missingSetting', path: settingPath, params: { setting: name } })
     }
     if (value !== undefined) {
-      checkSetting(value, setting, { walk, path: settingPath, name, field })
+      checkSetting(value, setting, { walk, path: settingPath, name, field, checkTextOf })
     }
   }
 

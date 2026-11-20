@@ -44,6 +44,19 @@ describe('dissolveSteps', () => {
     })
   })
 
+  it('leaves out the displays of the form and of its steps, which need steps', () => {
+    const stepped: FormDocument = {
+      format: 1,
+      display: { kind: 'rail' },
+      steps: [{ key: 's1', label: 'Building', display: { kind: 'icon' }, items: [field('f1')] }],
+    }
+
+    expect(dissolveSteps(stepped)).toEqual({
+      format: 1,
+      items: [{ type: 'section', label: 'Building', items: [field('f1')] }],
+    })
+  })
+
   it('refuses a form without steps', () => {
     expect(() => dissolveSteps({ format: 1, items: [] })).toThrow(
       'formdef: document: the form has no steps.',

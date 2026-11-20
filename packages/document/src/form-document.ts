@@ -19,6 +19,17 @@ export type Varying = {
   otherwise: JsonValue
 }
 
+/**
+ * How the form, a step, a section or a row looks: a registered display kind with its settings,
+ * which are fixed for the form.
+ */
+export type Display = {
+  /** The name of the display kind. */
+  kind: string
+  /** The values of the display kind's settings, by setting name. */
+  settings?: Record<string, JsonValue | Varying>
+}
+
 /** A field of a form document: one question, of a registered field kind. */
 export type FieldItem = {
   /** Marks the item as a field. */
@@ -71,6 +82,8 @@ export type RowItem = {
   type: 'row'
   /** The condition under which the row shows; without it, the row always shows. */
   visibleWhen?: Condition
+  /** How the row looks; without it, as the row slot renders it. */
+  display?: Display
   /** The fields and blocks of the row. */
   items: (FieldItem | BlockItem)[]
 }
@@ -88,6 +101,8 @@ export type SectionItem = {
   description?: VaryingText
   /** The condition under which the section shows; without it, the section always shows. */
   visibleWhen?: Condition
+  /** How the section looks; without it, as the section slot renders it. */
+  display?: Display
   /** The items of the section. */
   items: DocumentItem[]
 }
@@ -105,6 +120,8 @@ export type DocumentStep = {
   description?: VaryingText
   /** The condition under which the step shows; without it, the step always shows. */
   visibleWhen?: Condition
+  /** How the step shows in the stepper; without it, as the stepper shows every step. */
+  display?: Display
   /** The items of the step. */
   items: DocumentItem[]
 }
@@ -135,6 +152,8 @@ export type FormDocument =
        * none is chosen. Without it, every text is a string.
        */
       languages?: string[]
+      /** How the whole form looks, given to the stepper; without it, as the stepper renders. */
+      display?: Display
       /** The steps, in order. */
       steps: DocumentStep[]
       /** A document with steps holds its items in them. */
@@ -148,6 +167,11 @@ export type FormDocument =
        * none is chosen. Without it, every text is a string.
        */
       languages?: string[]
+      /**
+       * How the whole form looks, which applies to a form of steps only; `checkDocument` reports
+       * one here.
+       */
+      display?: Display
       /** The items of a form without steps, in order. */
       items: DocumentItem[]
       /** A document without steps holds no steps. */

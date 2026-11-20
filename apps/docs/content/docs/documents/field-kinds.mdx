@@ -199,6 +199,57 @@ const notice = defineBlockKind(registry, {
 })
 ```
 
+## Display kinds
+
+A display says how something of the form looks. A display kind applies to one thing and gives
+props to the structure slot that renders it:
+
+| `appliesTo` | A display of it sits on | Its props go to |
+| --- | --- | --- |
+| `form` | the document's root, in a form of steps | the stepper, under the config's `stepper.props` |
+| `step` | a step | the step, as the stepper reads it per step |
+| `section` | a section | the section slot |
+| `row` | a row | the row slot |
+
+```tsx
+import { createRegistry, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { createCatalog, defineDisplayKind } from '@formdef/document'
+declare const Stepper: (props: StepperProps & { variant?: 'circles' | 'rail' }) => null
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: {},
+  structure: { stepper: Stepper },
+})
+// ---cut---
+const rail = defineDisplayKind(registry, {
+  name: 'rail',
+  label: 'Rail',
+  appliesTo: 'form',
+  props: () => ({ variant: 'rail' }),
+})
+
+export const catalog = createCatalog(registry, { fields: [], displays: [rail] })
+```
+
+```json
+{ "format": 1, "display": { "kind": "rail" }, "steps": [] }
+```
+
+- The compiler checks `props` against the slot registered for what the kind applies to; a registry
+  without that slot takes no props.
+- A display is fixed for the form: its settings may be translated, but none follows an answer or
+  names one. `defineDisplayKind` throws for a setting with `varies: true` or of `options`, `option`
+  or `optionList`, `checkDocument` reports a placeholder as `fixedText`, and a formatted text is no
+  display setting.
+- `checkDocument` reports a display where its kind does not apply as `misplacedDisplay`, such as a
+  section's on a row, or the form's in a form without steps. `dissolveSteps` leaves out the
+  displays of the form and of its steps.
+- A step's or section's `description` reaches the slot next to the display's props and wins over a
+  `description` among them.
+
 ## Settings
 
 A setting is what a person may change on a field, described as data. A builder renders its

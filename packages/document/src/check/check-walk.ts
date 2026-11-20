@@ -1,5 +1,6 @@
 import type { FieldItem } from '../form-document'
 import type { BlockKind } from '../kinds/block-kind'
+import type { DisplayKind } from '../kinds/display-kind'
 import type { FieldKind } from '../kinds/field-kind'
 import type { Problem } from './problem'
 
@@ -15,6 +16,8 @@ export type CheckWalk = {
   kindNamed: (name: string) => FieldKind<unknown> | undefined
   /** The block kind of this name, or `undefined` when none is registered. */
   blockKindNamed: (name: string) => BlockKind<unknown> | undefined
+  /** The display kind of this name, or `undefined` when none is registered. */
+  displayKindNamed: (name: string) => DisplayKind<unknown> | undefined
   /** The languages the document names; `undefined` when its texts are strings. */
   languages: readonly string[] | undefined
   allFieldKeys: ReadonlySet<string>

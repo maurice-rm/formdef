@@ -13,6 +13,7 @@ import { pathTo } from '../path-to'
 import type { Text } from '../text'
 import type { VaryingText } from '../varying-text'
 import { checkCondition } from './check-condition'
+import { checkDisplay } from './check-display'
 import { checkFixedText } from './check-fixed-text'
 import { checkMessages } from './check-messages'
 import { checkSettings } from './check-settings'
@@ -135,6 +136,7 @@ const checkItem = (item: DocumentItem, level: Level): void => {
     checkHeading(item, at)
   }
   checkVisibleWhen(item, at)
+  checkDisplay(item.display, item.type, at)
   if (item.type === 'section' && level.sections + 1 > MOST_SECTION_LEVELS) {
     report(at.walk, { code: 'tooDeep', path: at.path })
   }
@@ -160,6 +162,7 @@ const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
     checkOverlap(step.key, allStepKeys, { walk, path })
     checkHeading(step, { walk, path })
     checkVisibleWhen(step, { walk, path })
+    checkDisplay(step.display, 'step', { walk, path })
     checkItems(step.items, {
       at: { walk, path: `${path}.items` },
       seenKeys: fieldKeys,
@@ -172,8 +175,9 @@ const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
  * Checks a form document as a form, once {@link readDocument} has checked its shape, and reports
  * every problem in document order: keys used twice, conditions on fields that do not exist or come
  * later, operators and compared values that do not fit the field compared, empty steps, sections
- * and rows, sections nested too deep, unknown field and block kinds, and settings that are unknown, missing,
- * of the wrong type or outside their constraints.
+ * and rows, sections nested too deep, unknown field, block and display kinds, displays where their
+ * kind does not apply, and settings that are unknown, missing, of the wrong type or outside their
+ * constraints.
  *
  * A builder lists the problems while a document is edited; rendering refuses a document that has
  * any.
@@ -197,12 +201,17 @@ export function checkDocument(
   const walk: CheckWalk = {
     kindNamed: (name) => catalog.findFieldKind(name),
     blockKindNamed: (name) => catalog.findBlockKind(name),
+    displayKindNamed: (name) => catalog.findDisplayKind(name),
     languages: document.languages,
     allFieldKeys: new Set(fieldsOf(items).map((field) => field.key)),
     earlier: new Map(),
     problems: [],
   }
 
+  checkDisplay(document.display, document.steps === undefined ? undefined : 'form', {
+    walk,
+    path: DOCUMENT_PATH,
+  })
   if (document.steps === undefined) {
     checkItems(document.items, {
       at: { walk, path: `${DOCUMENT_PATH}.items` },
