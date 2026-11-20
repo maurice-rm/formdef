@@ -1,6 +1,15 @@
 export { checkDocument } from './check/check-document'
 export type { Problem, ProblemCode } from './check/problem'
 export type { Condition, ListOperator, PresenceOperator, ValueOperator } from './condition'
+export {
+  type AnswerDescription,
+  type DescribedAnswer,
+  type DescribedField,
+  type DescribedItem,
+  type DescribedSection,
+  type DescribedStep,
+  describeAnswers,
+} from './describe/describe-answers'
 export { changeKind } from './edit/change-kind'
 export { createKey } from './edit/create-key'
 export { type Dependent, dependentsOf } from './edit/dependents-of'

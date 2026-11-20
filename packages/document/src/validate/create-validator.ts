@@ -1,5 +1,5 @@
-import { checkDocument } from '../check/check-document'
-import { optionValuesOf } from '../check/option-values'
+import { optionOf } from '../check/option-values'
+import { refuseProblems } from '../check/refuse-problems'
 import { fitsValueType, isFilled } from '../evaluate/answer-value'
 import { evaluate, type ShownField } from '../evaluate/evaluate'
 import type { FormDocument, JsonValue } from '../form-document'
@@ -73,9 +73,8 @@ type Failure = Pick<ValidationIssue, 'code' | 'params'>
 const VENDOR = 'formdef'
 
 const fitsOptions = ({ field, value }: ShownField): boolean => {
-  const options = optionValuesOf(field)
-  const choices = Array.isArray(value) ? value : [value]
-  return choices.every((choice) => options.has(choice))
+  const choices: unknown[] = Array.isArray(value) ? value : [value]
+  return choices.every((choice) => optionOf(field, choice) !== undefined)
 }
 
 const failureOf = (shown: ShownField): Failure | undefined => {
@@ -105,18 +104,6 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues => {
     else answers[first] = { ...(answers[first] as DocumentValues | undefined), [second]: value }
   }
   return answers
-}
-
-const refuseProblems = (document: FormDocument, kinds: FieldKinds<unknown>): void => {
-  const { length } = checkDocument(document, kinds)
-  if (length === 1) {
-    throw new Error('formdef: document: the document has 1 problem; checkDocument lists it.')
-  }
-  if (length > 1) {
-    throw new Error(
-      `formdef: document: the document has ${length} problems; checkDocument lists them.`,
-    )
-  }
 }
 
 /**

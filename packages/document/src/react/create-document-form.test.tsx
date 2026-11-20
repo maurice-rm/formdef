@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+// The other tests run without a DOM, as the root entry runs on a server.
 import { createRegistry, type FieldOf, type StepperProps, useFieldParts } from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
