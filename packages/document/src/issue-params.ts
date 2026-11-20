@@ -31,6 +31,8 @@ export type IssueParams = {
   latest: { latest: string }
   /** No email address. */
   email: NoParams
+  /** A check of the field against other answers that fails, without a message of its own. */
+  check: NoParams
 }
 
 /** The names of the parameters of each code the package reports, for checking error texts. */
@@ -48,6 +50,7 @@ export const ISSUE_PARAM_NAMES: { readonly [Code in keyof IssueParams]: readonly
   earliest: ['earliest'],
   latest: ['latest'],
   email: [],
+  check: [],
 }
 
 /** The parameter every error text receives besides its code's: the label of the field. */

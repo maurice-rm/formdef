@@ -30,6 +30,17 @@ export type Display = {
   settings?: Record<string, JsonValue | Varying>
 }
 
+/**
+ * A check of a field against other answers: it passes when its condition holds, which may compare
+ * the field itself, such as with `valueFrom`.
+ */
+export type Check = {
+  /** The condition the answer has to meet. */
+  when: Condition
+  /** The error text when it does not; it may name answers as `{key}` and follow an answer. */
+  message?: VaryingText
+}
+
 /** A field of a form document: one question, of a registered field kind. */
 export type FieldItem = {
   /** Marks the item as a field. */
@@ -57,6 +68,11 @@ export type FieldItem = {
    * A text names the issue's params and the field's label as `{min}` or `{label}`.
    */
   messages?: Record<string, VaryingText>
+  /**
+   * Checks against other answers, after the field kind's rules and only for a filled field; the
+   * first that fails is reported with the code `check`.
+   */
+  checks?: Check[]
 }
 
 /**

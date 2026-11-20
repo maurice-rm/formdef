@@ -360,6 +360,73 @@ describe('createValidator', () => {
     expect(validate(document, { f1: 'o1' }).issues?.[0]?.message).toBe('Name the owner.')
   })
 
+  describe('with checks against other answers', () => {
+    const living = field('f1', 'measure', { label: 'Living area' })
+    const heated = (checks: FieldItem['checks']): FieldItem =>
+      field('f2', 'measure', { label: 'Heated area', ...(checks ? { checks } : {}) })
+    const atMostLiving = {
+      when: { field: 'f2', op: 'atMost', valueFrom: 'f1' },
+      message: 'At most the living area of {f1} m².',
+    } as const
+
+    it('reports the first check that fails, after the rules, with its message', () => {
+      const document = plain(
+        living,
+        heated([{ when: { field: 'f2', op: 'atLeast', value: 1 } }, atMostLiving]),
+      )
+
+      expect(validate(document, { f1: '80', f2: '90' }).issues).toEqual([
+        {
+          code: 'check',
+          params: {},
+          path: ['f2'],
+          message: 'At most the living area of 80 m².',
+        },
+      ])
+      expect(validate(document, { f1: '80', f2: '0' }).issues?.[0]?.message).toBe(
+        'This answer does not fit the other answers.',
+      )
+      expect(codesOf(validate(document, { f1: '80', f2: 'x' }))).toEqual([
+        { path: ['f2'], code: 'decimal' },
+      ])
+      expect(validate(document, { f1: '80', f2: '60' })).toEqual({ value: { f1: '80', f2: '60' } })
+    })
+
+    it('skips the checks of an empty field, and a check on an answer not given yet', () => {
+      const document = plain(living, heated([atMostLiving]))
+
+      expect(validate(document, { f1: '80', f2: '' })).toEqual({ value: { f1: '80', f2: '' } })
+      expect(validate(document, { f1: '', f2: '90' })).toEqual({ value: { f1: '', f2: '90' } })
+    })
+
+    it('skips a check that compares another field not answered yet, either way round', () => {
+      const document = plain(
+        living,
+        heated([{ when: { field: 'f1', op: 'atLeast', valueFrom: 'f2' } }]),
+      )
+
+      expect(validate(document, { f1: '', f2: '90' })).toEqual({ value: { f1: '', f2: '90' } })
+      expect(codesOf(validate(document, { f1: '80', f2: '90' }))).toEqual([
+        { path: ['f2'], code: 'check' },
+      ])
+    })
+
+    it("takes the field's own text for a check without a message", () => {
+      const document = plain(
+        living,
+        field('f2', 'measure', {
+          label: 'Heated area',
+          checks: [{ when: atMostLiving.when }],
+          messages: { check: '{label} is too large.' },
+        }),
+      )
+
+      expect(validate(document, { f1: '80', f2: '90' }).issues?.[0]?.message).toBe(
+        'Heated area is too large.',
+      )
+    })
+  })
+
   it('refuses a document with problems', () => {
     expect(() => createValidator(plain(field('f1', 'unknown')), catalog)).toThrow(
       'formdef: document: the document has 1 problem; checkDocument lists it.',

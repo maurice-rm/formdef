@@ -71,6 +71,17 @@ const checkVisibleWhen = (
   }
 }
 
+// A check reads the answer it checks, so its field counts as earlier for its conditions.
+const checkChecks = (field: FieldItem, { walk, path }: At): void => {
+  field.checks?.forEach((check, index) => {
+    const checkPath = `${path}.checks[${index}]`
+    checkCondition(check.when, `${checkPath}.when`, walk)
+    if (check.message !== undefined) {
+      checkVaryingText(check.message, { walk, path: `${checkPath}.message` })
+    }
+  })
+}
+
 const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>): void => {
   if (seenKeys.has(field.key)) {
     report(walk, { code: 'duplicateKey', path: `${path}.key`, params: { key: field.key } })
@@ -94,6 +105,7 @@ const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>)
   checkMessages(field, { walk, path })
 
   walk.earlier.set(field.key, { field, kind })
+  checkChecks(field, { walk, path })
 }
 
 const checkItems = (items: readonly DocumentItem[], level: Level): void => {

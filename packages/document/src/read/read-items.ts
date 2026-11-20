@@ -1,5 +1,12 @@
 import type { Condition } from '../condition'
-import type { BlockItem, DocumentItem, FieldItem, RowItem, SectionItem } from '../form-document'
+import type {
+  BlockItem,
+  Check,
+  DocumentItem,
+  FieldItem,
+  RowItem,
+  SectionItem,
+} from '../form-document'
 import { pathTo } from '../path-to'
 import type { VaryingText } from '../varying-text'
 import { readCondition } from './read-condition'
@@ -29,7 +36,9 @@ const FIELD_KEYS = [
   'visibleWhen',
   'settings',
   'messages',
+  'checks',
 ]
+const CHECK_KEYS = ['when', 'message']
 const BLOCK_KEYS = ['type', 'key', 'kind', 'visibleWhen', 'settings']
 const ROW_KEYS = ['type', 'visibleWhen', 'display', 'items']
 const SECTION_KEYS = ['type', 'label', 'description', 'visibleWhen', 'display', 'items']
@@ -44,6 +53,19 @@ const readMessages = (value: unknown, path: string): Record<string, VaryingText>
       readVaryingText(text, `${path}.${code}`),
     ]),
   )
+
+const readCheck = (value: unknown, path: string): Check => {
+  const shape = readShape(value, path)
+  readOnlyKeys(shape, CHECK_KEYS, path)
+
+  return {
+    when: readCondition(shape.when, `${path}.when`),
+    ...withOptional('message', readOptionalText(shape.message, `${path}.message`)),
+  }
+}
+
+const readChecks = (value: unknown, path: string): Check[] =>
+  readList(value, path).map((entry, index) => readCheck(entry, `${path}[${index}]`))
 
 const readField = (shape: Shape, path: string): FieldItem => {
   readOnlyKeys(shape, FIELD_KEYS, path)
@@ -68,6 +90,10 @@ const readField = (shape: Shape, path: string): FieldItem => {
     ...withOptional(
       'messages',
       shape.messages === undefined ? undefined : readMessages(shape.messages, `${path}.messages`),
+    ),
+    ...withOptional(
+      'checks',
+      shape.checks === undefined ? undefined : readChecks(shape.checks, `${path}.checks`),
     ),
   }
 }

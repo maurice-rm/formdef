@@ -65,6 +65,23 @@ describe('dependentsOf', () => {
     ])
   })
 
+  it('lists the checks of another field, and the placeholders of their messages', () => {
+    const checked: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        field('f2', {
+          checks: [{ when: { field: 'f2', op: 'atMost', valueFrom: 'f1' }, message: 'Max {f1}' }],
+        }),
+      ],
+    }
+
+    expect(dependentsOf(checked, [0])).toEqual([
+      { path: 'document.items[1].checks[0].when', field: 'f1' },
+      { path: 'document.items[1].checks[0].message', field: 'f1' },
+    ])
+  })
+
   it('leaves out the conditions that go with the node', () => {
     expect(dependentsOf(document, [0])).toEqual([
       { path: 'document.steps[1].visibleWhen', field: 'f1' },

@@ -4,6 +4,7 @@ import type { Answers } from '../evaluate/answers'
 import { evaluate, type ShownField } from '../evaluate/evaluate'
 import { isFilled } from '../evaluate/is-filled'
 import { isMissing } from '../evaluate/is-missing'
+import { resolveVaryingText } from '../evaluate/resolve-varying-text'
 import type { FormDocument } from '../form-document'
 import type { JsonValue } from '../json-value'
 import type { Catalog } from '../kinds/create-catalog'
@@ -12,6 +13,7 @@ import { optionsOf } from '../kinds/options-of'
 import type { ValueType } from '../kinds/value-type'
 import { languageOf } from '../language-of'
 import { nestValues } from '../nest-values'
+import { failedCheck } from './failed-check'
 import { messageOf } from './message-of'
 import { DEFAULT_MESSAGES, type Messages } from './messages'
 
@@ -22,6 +24,7 @@ import { DEFAULT_MESSAGES, type Messages } from './messages'
  * - `required`: a required field left empty;
  * - `type`: a value of the wrong type, such as text for a number;
  * - `option`: a choice that is no option of the field;
+ * - `check`: the first of the field's checks against other answers that fails;
  * - otherwise the code of the field kind's first rule the value fails, such as `min`.
  */
 export type ValidationIssue = {
@@ -84,6 +87,7 @@ export type ValidatorOptions = {
 type Failure = Pick<ValidationIssue, 'code' | 'params'>
 
 const VENDOR = 'formdef'
+const CHECK = 'check'
 
 const fitsOptions = ({ field, value }: ShownField): boolean => {
   const choices: unknown[] = Array.isArray(value) ? value : [value]
@@ -120,7 +124,8 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues =>
  * around it show for the answers given. A field left empty fails only when it is required, by
  * `required` or its condition. A filled field fails when its value has the wrong type, is no
  * option of a choice, or fails the first of its field kind's rules, with the settings that apply
- * to the answers.
+ * to the answers; then when the first of its checks fails, with the check's message. A check that
+ * compares two answers, one of them not given yet, is skipped.
  *
  * @param document - The document, as {@link readDocument} returns it.
  * @param catalog - The catalog with the kinds the document uses.
@@ -151,13 +156,31 @@ export function createValidator(
   const messages: Messages = { ...DEFAULT_MESSAGES, ...options.messages }
   const language = languageOf(document, options.language)
 
+  const textOf = (failure: Failure, { shown, answers }: { shown: ShownField; answers: Answers }) =>
+    messageOf({ failure, field: shown.field, answers, language, messages })
+
+  const checkIssueOf = (shown: ShownField, answers: Answers): ValidationIssue | undefined => {
+    if (!isFilled(shown.value, shown.kind.valueType)) {
+      return undefined
+    }
+    const failed = failedCheck(shown.field.checks, answers)
+    if (failed === undefined) {
+      return undefined
+    }
+    const failure: Failure = { code: CHECK, params: {} }
+    const message =
+      failed.message === undefined
+        ? textOf(failure, { shown, answers })
+        : resolveVaryingText(failed.message, { answers, language })
+    return { message, path: shown.path, ...failure }
+  }
+
   const issueOf = (shown: ShownField, answers: Answers): ValidationIssue | undefined => {
     const failure = failureOf(shown)
     if (failure === undefined) {
-      return undefined
+      return checkIssueOf(shown, answers)
     }
-    const message = messageOf({ failure, field: shown.field, answers, language, messages })
-    return { message, path: shown.path, ...failure }
+    return { message: textOf(failure, { shown, answers }), path: shown.path, ...failure }
   }
 
   const validate = (values: unknown): ValidationResult => {

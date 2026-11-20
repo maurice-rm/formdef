@@ -24,6 +24,7 @@ export { splitIntoSteps } from './edit/split-into-steps'
 export { updateNode } from './edit/update-node'
 export type {
   BlockItem,
+  Check,
   Display,
   DocumentItem,
   DocumentNode,

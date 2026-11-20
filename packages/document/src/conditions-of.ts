@@ -72,7 +72,21 @@ const ownConditions = (node: DocumentNode, path: string): Placed[] => {
   const messages = Object.entries(node.messages ?? {}).flatMap(([code, text]) =>
     casesOf(text, `${path}.messages.${code}`),
   )
-  return [...own, ...required, ...textCases(node, path), ...settingCases(node, path), ...messages]
+  const checks = (node.checks ?? []).flatMap((check, index) => {
+    const checkPath = `${path}.checks[${index}]`
+    return [
+      { condition: check.when, path: `${checkPath}.when` },
+      ...casesOf(check.message, `${checkPath}.message`),
+    ]
+  })
+  return [
+    ...own,
+    ...required,
+    ...textCases(node, path),
+    ...settingCases(node, path),
+    ...messages,
+    ...checks,
+  ]
 }
 
 /**

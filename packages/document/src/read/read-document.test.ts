@@ -209,6 +209,22 @@ describe('readDocument', () => {
     )
   })
 
+  it("reads a field's checks, each a condition with an optional message", () => {
+    const withChecks = (checks: unknown) => ({
+      format: 1,
+      items: [{ type: 'field', key: 'f1', kind: 'count', label: 'Rooms', checks }],
+    })
+    const checks = [
+      { when: { field: 'f1', op: 'atLeast', value: 1 }, message: 'At least one.' },
+      { when: { field: 'f1', op: 'atMost', value: 9 } },
+    ]
+
+    expect(readDocument(withChecks(checks))).toEqual(withChecks(checks))
+    expect(() => readDocument(withChecks([{ when: checks[0]?.when, text: 'x' }]))).toThrow(
+      'formdef: document.items[0].checks[0].text: unknown key.',
+    )
+  })
+
   it('refuses a comparison without an operator', () => {
     const broken = {
       format: 1,

@@ -40,6 +40,8 @@ problem with the document.
 - **Option.** A choice fails when it is no option of the field.
 - **Rules.** Otherwise the value fails the first of its field kind's [rules](/documents/field-kinds#rules)
   it does not pass, with the settings that apply to these answers.
+- **Checks.** Then a filled field fails the first of its [checks](#checks-against-other-answers)
+  whose condition does not hold.
 
 Each field reports one issue at most, and the issues come in document order. An issue has the
 `message`, the `path` of the field's value (`['s1', 'f1']` with steps, `['f1']` without), and the
@@ -56,7 +58,40 @@ Each field reports one issue at most, and the issues come in document order. An 
 | `minCount`, `maxCount` | too few or too many choices | `minCount`, `maxCount` |
 | `earliest`, `latest` | a date is too early or too late | `earliest`, `latest` |
 | `email` | the text is no email address | none |
+| `check` | a check against other answers fails | none |
 | a code of your own | a `rule.custom` fails | its `params` |
+
+## Checks against other answers
+
+A field may carry `checks`: each a condition the answer has to meet, and the text when it does not.
+The condition may compare the field itself, with a fixed value or with an earlier answer through
+[`valueFrom`](/documents#comparing-with-another-answer):
+
+```json
+{
+  "type": "field",
+  "key": "f2",
+  "kind": "decimal",
+  "label": "Heated area",
+  "checks": [
+    {
+      "when": { "field": "f2", "op": "atMost", "valueFrom": "f1" },
+      "message": "At most the living area of {f1} m²."
+    }
+  ]
+}
+```
+
+- Checks run after the field kind's rules, only for a filled field that shows, and the first that
+  fails is reported with the code `check`.
+- A check that compares two answers through `valueFrom`, either way round, is skipped while one of
+  them is not given: there is nothing to compare yet. A check with a fixed value always runs, so
+  `{ "field": "f1", "op": "isFilled" }` on `f2` asks for `f1` once `f2` is filled.
+- `message` is a text like any other: translated, following answers, and naming answers as `{key}`.
+  Without it, the field's own text for `check` applies, then the one from `messages`.
+- A check's condition names the field itself or earlier fields; `checkDocument` reports others as
+  `unknownField` or `laterField`, and `renameKey` and `dependentsOf` treat checks like every
+  condition.
 
 ## Error texts
 

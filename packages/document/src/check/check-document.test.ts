@@ -447,6 +447,31 @@ describe('checkDocument', () => {
     expect(checkDocument(document, catalog)).toEqual([])
   })
 
+  it('checks the checks of a field, which may compare the field itself', () => {
+    const document = plain(
+      { type: 'field', key: 'f1', kind: 'count', label: 'Rooms' },
+      {
+        type: 'field',
+        key: 'f2',
+        kind: 'count',
+        label: 'Heated rooms',
+        checks: [
+          { when: { field: 'f2', op: 'atMost', valueFrom: 'f1' }, message: 'At most {f1}.' },
+          { when: { field: 'f3', op: 'isFilled' }, message: 'See {f3} and {f9}.' },
+          { when: { field: 'f2', op: 'resembles' } },
+        ],
+      },
+      { type: 'field', key: 'f3', kind: 'count', label: 'Later' },
+    )
+
+    expect(codesOf(document)).toEqual([
+      'laterField document.items[1].checks[1].when.field',
+      'laterField document.items[1].checks[1].message',
+      'unknownField document.items[1].checks[1].message',
+      'operatorMismatch document.items[1].checks[2].when.op',
+    ])
+  })
+
   it('reports a comparison with a missing or later answer, or one that does not compare so', () => {
     const document = plain(
       choiceField,

@@ -43,4 +43,5 @@ export const DEFAULT_MESSAGES: Messages = {
   earliest: ({ earliest }) => `Enter a date on or after ${earliest}.`,
   latest: ({ latest }) => `Enter a date on or before ${latest}.`,
   email: () => 'Enter an email address.',
+  check: () => 'This answer does not fit the other answers.',
 }
