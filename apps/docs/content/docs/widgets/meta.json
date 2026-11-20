@@ -23,6 +23,8 @@
     "array-frame",
     "stepper",
     "---Form---",
-    "submit-button"
+    "submit-button",
+    "notice",
+    "heading"
   ]
 }

@@ -49,7 +49,9 @@ import { ComboboxField } from '@/components/formdef/combobox-field'
 import { DateField } from '@/components/formdef/date-field'
 import { DateRangeField } from '@/components/formdef/date-range-field'
 import { DateTimeField } from '@/components/formdef/date-time-field'
+import { Heading } from '@/components/formdef/heading'
 import { MultiComboboxField } from '@/components/formdef/multi-combobox-field'
+import { Notice } from '@/components/formdef/notice'
 import { NumberField } from '@/components/formdef/number-field'
 import { PasswordField } from '@/components/formdef/password-field'
 import { RadioField } from '@/components/formdef/radio-field'
@@ -84,7 +86,7 @@ export const registry = createRegistry({
     dateTime: DateTimeField,
     tags: TagsField,
   },
-  formComponents: { SubmitButton },
+  formComponents: { SubmitButton, Notice, Heading },
   structure: { body: FieldGroup, section: Section, row: Row, arrayFrame: ArrayFrame },
 })
 

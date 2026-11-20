@@ -51,6 +51,13 @@ const document: FormDocument = {
       label: 'Built',
       settings: { latest: '2026-01-01' },
     },
+    { type: 'block', key: 'b1', kind: 'heading', settings: { text: 'Heating' } },
+    {
+      type: 'block',
+      key: 'b2',
+      kind: 'notice',
+      settings: { title: 'Before you start', body: 'Have the **meter reading** at hand.' },
+    },
   ],
 }
 
@@ -76,6 +83,17 @@ describe('the shipped field kinds', () => {
     expect(screen.getByRole('textbox', { name: 'Notes' }).tagName).toBe('TEXTAREA')
     expect(screen.getByRole('combobox', { name: 'Roof' })).toBeDefined()
     expect(screen.getByRole('button', { name: /Built/ })).toBeDefined()
+  })
+
+  it('render a heading and a notice with its title and formatted text', () => {
+    const Form = createDocumentForm(document, catalog)
+    render(<Form />)
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Heating' })).toBeDefined()
+    expect(screen.getByRole('note').textContent).toBe(
+      'Before you startHave the meter reading at hand.',
+    )
+    expect(screen.getByText('meter reading').tagName).toBe('STRONG')
   })
 
   it('validate answers with the rules their settings give', () => {

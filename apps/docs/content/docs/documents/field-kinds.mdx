@@ -289,6 +289,14 @@ The shadcn registry ships field kinds for its widgets, in `lib/formdef/field-kin
 | `checkboxes` | Multiple choice | [`checkboxes`](/widgets/checkbox-group-field) | `choices` | `options`, `minCount`, `maxCount` | `minCount`, `maxCount` |
 | `date` | Date | [`date`](/widgets/date-field) | `date` | `earliest`, `latest` | `earliest`, `latest` |
 
+Next to them it ships two block kinds:
+
+| Name | Label | Form component | Settings |
+| --- | --- | --- | --- |
+| `notice` | Notice | [`Notice`](/widgets/notice) | `title` (varies), `body` (required, varies, formatted) |
+| `heading` | Heading | [`Heading`](/widgets/heading) | `text` (required, varies) |
+
 The file is your project's own, like every file of the shadcn registry. Register each widget under
-the name in the table in `lib/formdef/index.tsx`, or remove the field kinds whose widget you do not
-fetch; change the labels, and add field kinds of your own with `defineFieldKind`.
+the name in the table in `lib/formdef/index.tsx`, and the form components as
+`formComponents: { Notice, Heading }`, or remove the kinds you do not fetch; change the labels, and
+add kinds of your own with `defineFieldKind` and `defineBlockKind`.

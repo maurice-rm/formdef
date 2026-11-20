@@ -1,11 +1,19 @@
-import { createCatalog, defineFieldKind, rule, setting, valueTypes } from '@formdef/document'
+import {
+  createCatalog,
+  defineBlockKind,
+  defineFieldKind,
+  rule,
+  setting,
+  valueTypes,
+} from '@formdef/document'
 
 import { registry } from '@/lib/formdef'
 
 // This file is yours. Its catalog holds the field kinds a form builder offers and form documents
 // are made of. Each one renders with a widget registered in index.tsx under the name it writes as `widget`:
 // remove a kind whose widget you do not fetch, change the labels, and add kinds of your own with
-// defineFieldKind. It stays without 'use client', so a server validates answers with it too.
+// defineFieldKind. The block kinds at the end render with the form components Notice and Heading,
+// registered under formComponents. It stays without 'use client', so a server validates answers with it too.
 
 const options = setting.options({ label: 'Options', minCount: 1 })
 const placeholder = setting.text({ label: 'Placeholder' })
@@ -127,6 +135,26 @@ const date = defineFieldKind(registry, {
   rules: ({ earliest, latest }) => [rule.earliest(earliest), rule.latest(latest)],
 })
 
+const notice = defineBlockKind(registry, {
+  name: 'notice',
+  label: 'Notice',
+  component: 'Notice',
+  settings: {
+    title: setting.text({ label: 'Title', varies: true }),
+    body: setting.text({ label: 'Text', required: true, varies: true, formatted: true }),
+  },
+  props: ({ title, body }) => ({ title, children: body }),
+})
+
+const heading = defineBlockKind(registry, {
+  name: 'heading',
+  label: 'Heading',
+  component: 'Heading',
+  settings: { text: setting.text({ label: 'Text', required: true, varies: true }) },
+  props: ({ text }) => ({ children: text }),
+})
+
 export const catalog = createCatalog(registry, {
   fields: [text, email, longText, decimal, number, checkbox, radio, select, checkboxes, date],
+  blocks: [notice, heading],
 })
