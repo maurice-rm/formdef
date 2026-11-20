@@ -8,6 +8,7 @@ import type {
   FormDocument,
 } from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
+import { optionValuesOf } from '../kinds/option-values-of'
 import type { ValueType } from '../kinds/value-type'
 import { pathTo } from '../path-to'
 import type { Text } from '../text'
@@ -104,7 +105,11 @@ const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>)
   }
   checkMessages(field, { walk, path })
 
-  walk.earlier.set(field.key, { field, kind })
+  walk.earlier.set(field.key, {
+    key: field.key,
+    valueType: kind?.valueType,
+    optionValues: optionValuesOf(field),
+  })
   checkChecks(field, { walk, path })
 }
 

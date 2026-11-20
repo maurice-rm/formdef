@@ -1,7 +1,6 @@
 import type { Comparison, Condition } from '../condition'
 import type { JsonValue } from '../json-value'
 import { operatorOf } from '../kinds/operator-of'
-import { optionValuesOf } from '../kinds/option-values-of'
 import type { Setting } from '../kinds/setting'
 import { checkOptionValues } from './check-option-values'
 import type { CheckWalk, EarlierField } from './check-walk'
@@ -27,8 +26,7 @@ const checkComparedValue = (
     return
   }
   if (type === 'option' || type === 'optionList') {
-    const options = optionValuesOf(earlier.field)
-    checkOptionValues(value, { field: earlier.field.key, options }, at)
+    checkOptionValues(value, { field: earlier.key, options: earlier.optionValues }, at)
   }
 }
 
@@ -51,14 +49,15 @@ const checkValueFrom = (
 ): void => {
   const at = { walk, path: `${path}.valueFrom` }
   const other = otherFieldOf(valueFrom, at)
-  if (other?.kind === undefined) {
+  const valueType = other?.valueType
+  if (valueType === undefined) {
     return
   }
   if (compares === undefined) {
     reportMismatch(at, NOTHING)
     return
   }
-  if (other.kind.valueType.comparesAs?.type !== compares.type) {
+  if (valueType.comparesAs?.type !== compares.type) {
     reportMismatch(at, compares.type)
   }
 }
@@ -100,11 +99,10 @@ const checkComparison = (comparison: Comparison, path: string, walk: CheckWalk):
     report(walk, { code: 'laterField', path: `${path}.field`, params: { field } })
     return
   }
-  if (earlier.kind === undefined) {
+  const { valueType } = earlier
+  if (valueType === undefined) {
     return
   }
-
-  const { valueType } = earlier.kind
   const operator = operatorOf(valueType, op)
   if (operator === undefined) {
     report(walk, {

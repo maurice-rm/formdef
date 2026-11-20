@@ -1,13 +1,17 @@
-import type { FieldItem } from '../form-document'
 import type { BlockKind } from '../kinds/block-kind'
 import type { DisplayKind } from '../kinds/display-kind'
 import type { FieldKind } from '../kinds/field-kind'
+import type { ValueType } from '../kinds/value-type'
 import type { Problem } from './problem'
 
-/** A field already passed in document order, which later conditions may compare. */
+/** An answer already passed in document order, which later conditions may compare. */
 export type EarlierField = {
-  field: FieldItem
-  kind: FieldKind<unknown> | undefined
+  /** The key the answer sits under. */
+  key: string
+  /** The value type of the answer; `undefined` when its kind is not registered. */
+  valueType: ValueType | undefined
+  /** The values of the options the answer chooses among. */
+  optionValues: ReadonlySet<string>
 }
 
 /** What a check of one document carries along while it walks the document in order. */
