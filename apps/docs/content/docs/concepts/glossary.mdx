@@ -35,6 +35,11 @@ formdef uses one word per concept, in the code, in error messages and here.
 | **base** | The primitive library that shadcn components are built on; for formdef's widgets, Base UI. |
 | **validator key** | A key of `validators`: `onChange`, `onBlurAsync` and the others. |
 | **error is due** | The moment a widget shows a field's error: the field is invalid, and it was edited and left, the form was submitted, or the step it is shown in was submitted. |
+| **form document** | A form described as data: JSON with a format version that holds steps or items, read with `readDocument`. See [Form documents](/documents). |
+| **field kind** | What a field of a form document may be: a widget, its value type, its settings, the props they give and its rules. Defined with `defineFieldKind`. |
+| **setting** | A value of a field in a form document that a person may change, such as a unit, declared by its field kind with `setting.*`. |
+| **condition** | In a form document, a comparison of one earlier field, or several combined with `all` or `any`. It decides whether a step, section, row or field shows, whether a field is required, and which case of a setting applies. |
+| **rule** | A fixed check of a field kind on a filled value, built with `rule.*`. It carries a code and the params its error text names. |
 | **one call, own shell, plain TanStack** | The three [ways in](/concepts/ways-in). |
 
 Two words keep a second meaning where TanStack owns it: `fields` as the prop of a field group and

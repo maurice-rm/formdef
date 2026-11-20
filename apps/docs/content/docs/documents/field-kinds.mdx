@@ -1,0 +1,164 @@
+---
+title: Field kinds
+description: What a field of a form document may be, defined once in code, and the field kinds the shadcn registry ships.
+---
+
+A field of a form document names its `kind`. The **field kind**, defined in code, says what that
+is: the widget that renders it, the kind of answer it gives, the settings a person may change on
+it in a builder, the widget props those settings give, and the rules that check its answer.
+Nothing types a document's fields, so the compiler checks the props and rules against the widget
+here, once.
+
+## Defining a field kind
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { SelectField } from '@/components/formdef/select-field'
+import { TextField } from '@/components/formdef/text-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField, select: SelectField },
+})
+// ---cut---
+import { createFieldKinds, defineFieldKind, rule, setting } from '@formdef/document'
+
+const area = defineFieldKind(registry, {
+  name: 'area',
+  label: 'Area',
+  widget: 'text',
+  valueType: 'decimal',
+  settings: {
+    unit: setting.text({ label: 'Unit', required: true, varies: true }),
+    min: setting.number({ label: 'Smallest value' }),
+  },
+  props: ({ unit }) => ({
+    inputMode: 'decimal',
+    addons: [{ id: 'unit', content: unit, align: 'inline-end' }],
+  }),
+  rules: ({ min }) => [rule.decimal(), rule.min(min)],
+})
+
+const dropdown = defineFieldKind(registry, {
+  name: 'dropdown',
+  label: 'Dropdown',
+  widget: 'select',
+  valueType: 'choice',
+  settings: { options: setting.options({ label: 'Options', minCount: 2 }) },
+  props: ({ options }) => ({ options }),
+})
+
+export const fieldKinds = createFieldKinds(registry, [area, dropdown])
+```
+
+- `name` is what a document's `kind` names; `label` is the name a builder lists. A document stores
+  the name, so a field kind keeps it once documents use it.
+- `widget` names a widget of the registry. The same registry renders the documents.
+- `valueType` is the kind of answer: `text`, `choice`, `choices`, `boolean`, `number`, `decimal`
+  or `date`. It has to fit the widget's value: a `string` widget serves `text`, `choice`,
+  `decimal` (written as text, such as `120,5`) and `date` (an ISO string), a `string[]` widget
+  `choices`. The value type decides the operators a [condition](/documents#conditions) may compare
+  the field with and how its answer is described.
+- A `choice` or `choices` field kind reads its options from a setting named `options`; without one,
+  these value types do not compile.
+- `props` builds the widget's props from the values of the settings. The field's label, hint and
+  whether it is required reach the widget on their own, as `label`, `description` and `required`,
+  so `props` leaves them out. It is optional unless the widget needs a prop.
+- `rules` builds the [rules](#rules) from the values of the settings.
+- `createFieldKinds` collects the field kinds of one registry. It throws when two share a name or
+  one was defined with another registry.
+
+The field kinds file stays without `'use client'`: a server imports it to
+[validate the answers](/documents/validation-and-answers) with the same field kinds.
+
+## Settings
+
+A setting is what a person may change on a field, described as data. A builder renders its
+settings panel from a field kind's `settings`, and `checkDocument` checks a document's values
+against them.
+
+| Setting | Holds | Constraint |
+| --- | --- | --- |
+| `setting.text` | a line of text, such as a unit or a placeholder | `maxLength` |
+| `setting.number` | a number, such as a bound | `integer` |
+| `setting.boolean` | a switch, such as whether a text has several lines | none |
+| `setting.options` | the choices of a choice field, each a `value` the builder generates and a `label` | `minCount` |
+| `setting.date` | a date as an ISO string, such as the earliest date allowed | none |
+
+- Every setting takes a `label` and a `hint` for the settings panel.
+- `text`, `number` and `date` take `required`: a document has to set it, and `props` and `rules`
+  receive its value without `undefined`. `options` is always required; a `boolean` may be left out.
+- `text`, `number` and `date` take `varies`: the setting may then
+  [follow an answer](/documents#settings-that-follow-an-answer) through `cases` and `otherwise`.
+
+## Rules
+
+A rule is a fixed check of a field kind on a filled value. Whether a field is filled at all is
+`required`'s concern, not a rule's.
+
+| Rule | Checks | For |
+| --- | --- | --- |
+| `rule.min(min)`, `rule.max(max)` | at least, at most the bound | numbers and decimals |
+| `rule.integer()` | a whole number | numbers and decimals |
+| `rule.decimal()` | a number written with a comma or a dot, such as `120,5` | decimals |
+| `rule.maxLength(maxLength)` | at most so many characters | text |
+| `rule.minCount(minCount)`, `rule.maxCount(maxCount)` | at least, at most so many choices | choices |
+| `rule.earliest(earliest)`, `rule.latest(latest)` | on or after, on or before the date, by day | dates |
+| `rule.email()` | the shape of an email address | text |
+| `rule.custom({ code, params, passes })` | a check of the project's own | any |
+
+A rule whose bound is not set comes back as `undefined` and is left out, so an optional setting
+passes straight through: `rules: ({ min }) => [rule.min(min)]`. A field reports the first rule its
+value fails.
+
+Each rule carries a `code` and the `params` its error text names, such as `{ min: 10 }`; the text
+comes from the [messages](/documents/validation-and-answers#error-texts). A rule of your own
+names a code of its own:
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { defineFieldKind, rule } from '@formdef/document'
+import { TextField } from '@/components/formdef/text-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+const POSTAL_CODE = /^\d{5}$/
+
+const postalCode = defineFieldKind(registry, {
+  name: 'postalCode',
+  label: 'Postal code',
+  widget: 'text',
+  valueType: 'text',
+  rules: () => [
+    rule.custom({ code: 'postalCode', passes: (value: string) => POSTAL_CODE.test(value) }),
+  ],
+})
+```
+
+## The shipped field kinds
+
+```npm
+npx shadcn@latest add @formdef/field-kinds
+```
+
+The shadcn registry ships field kinds for its widgets, in `lib/formdef/field-kinds.ts`:
+
+| Name | Label | Widget | Value type | Settings | Rules |
+| --- | --- | --- | --- | --- | --- |
+| `text` | Short text | [`text`](/widgets/text-field) | `text` | `placeholder`, `maxLength` | `maxLength` |
+| `email` | Email address | [`text`](/widgets/text-field) | `text` | `placeholder` | `email` |
+| `longText` | Long text | [`textarea`](/widgets/textarea-field) | `text` | `placeholder`, `maxLength` | `maxLength` |
+| `decimal` | Number with unit | [`text`](/widgets/text-field) | `decimal` | `unit` (varies), `min`, `max` | `decimal`, `min`, `max` |
+| `number` | Whole number | [`number`](/widgets/number-field) | `number` | `min`, `max` | `integer`, `min`, `max` |
+| `checkbox` | Checkbox | [`checkbox`](/widgets/checkbox-field) | `boolean` | none | none |
+| `radio` | Single choice | [`radio`](/widgets/radio-field) | `choice` | `options` | none |
+| `select` | Dropdown | [`select`](/widgets/select-field) | `choice` | `options`, `placeholder` | none |
+| `checkboxes` | Multiple choice | [`checkboxes`](/widgets/checkbox-group-field) | `choices` | `options`, `minCount`, `maxCount` | `minCount`, `maxCount` |
+| `date` | Date | [`date`](/widgets/date-field) | `date` | `earliest`, `latest` | `earliest`, `latest` |
+
+The file is your project's own, like every file of the shadcn registry. Register each widget under
+the name in the table in `lib/formdef/index.tsx`, or remove the field kinds whose widget you do not
+fetch; change the labels, and add field kinds of your own with `defineFieldKind`.

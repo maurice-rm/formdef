@@ -1,0 +1,155 @@
+---
+title: Validation and answers
+description: One validator for the form and the server, the issues it reports, its error texts, and the answers it keeps.
+---
+
+## One validator, in the form and on the server
+
+`createValidator` builds a validator of a document's answers that implements
+[Standard Schema](https://standardschema.dev). `createDocumentForm` uses it as the form's schema,
+and a server builds the same one from the same document and field kinds to check what arrives:
+
+```ts
+import { createValidator, readDocument } from '@formdef/document'
+import { fieldKinds } from '@/lib/formdef/field-kinds'
+declare function loadDocument(formId: string): Promise<unknown>
+declare function saveAnswers(answers: Record<string, unknown>): Promise<void>
+// ---cut---
+export const submitAnswers = async (formId: string, values: unknown) => {
+  const document = readDocument(await loadDocument(formId))
+  const result = createValidator(document, fieldKinds)['~standard'].validate(values)
+  if (result.issues) return { issues: result.issues }
+
+  await saveAnswers(result.value)
+  return { issues: [] }
+}
+```
+
+`createValidator` throws when [`checkDocument`](/documents/builders#reading-and-checking) reports a
+problem with the document.
+
+## What is validated
+
+- **Only what shows.** A field is validated when it and every step, section and row around it show
+  for the answers given.
+- **Required.** A field left empty fails only when it is required, by `required: true` or by its
+  condition. Text of only spaces is empty, and so are no choices. A boolean is filled only when it
+  is true, so a required checkbox, such as a consent, has to be ticked.
+- **Type.** A filled field fails when its value is of the wrong type for its value type, such as
+  text for a number.
+- **Option.** A choice fails when it is no option of the field.
+- **Rules.** Otherwise the value fails the first of its field kind's [rules](/documents/field-kinds#rules)
+  it does not pass, with the settings that apply to these answers.
+
+Each field reports one issue at most, and the issues come in document order. An issue has the
+`message`, the `path` of the field's value (`['s1', 'f1']` with steps, `['f1']` without), and the
+`code` and `params` its text was made from:
+
+| `code` | Reported when | `params` |
+| --- | --- | --- |
+| `required` | a required field is empty | none |
+| `type` | the value is of the wrong type | `expected`, the value type |
+| `option` | a choice is no option of the field | none |
+| `min`, `max` | a number or decimal is out of bounds | `min`, `max` |
+| `integer`, `decimal` | the value is no whole number, no number | none |
+| `maxLength` | a text is too long | `maxLength` |
+| `minCount`, `maxCount` | too few or too many choices | `minCount`, `maxCount` |
+| `earliest`, `latest` | a date is too early or too late | `earliest`, `latest` |
+| `email` | the text is no email address | none |
+| a code of your own | a `rule.custom` fails | its `params` |
+
+## Error texts
+
+The validator's texts are English. `messages` replaces them by code: each takes the issue's
+`params` and returns the text. A code left out keeps its English text, and a code without any text,
+such as a rule of your own you gave none, reads "This value is not valid.":
+
+```tsx
+import type { FormDocument, Messages } from '@formdef/document'
+import { createValidator } from '@formdef/document'
+import { createDocumentForm } from '@formdef/document/react'
+import { fieldKinds } from '@/lib/formdef/field-kinds'
+declare const document: FormDocument
+// ---cut---
+const messages: Messages = {
+  required: () => 'Please answer this question.',
+  min: ({ min }) => `Enter ${String(min)} or more.`,
+  postalCode: () => 'Enter five digits.',
+}
+
+const ChecklistForm = createDocumentForm(document, fieldKinds, { messages })
+const validator = createValidator(document, fieldKinds, { messages })
+```
+
+Pass the same messages in both places, so the server's issues read like the form's.
+
+## Values and answers
+
+The form and its validator hand over different things:
+
+- **`onSubmit` receives the form's values.** They still hold what was entered in a field that no
+  longer shows, such as a postal code typed before its checkbox was unticked.
+- **The validator's `value` holds the answers of the fields that show**, nested like the values
+  given. That is what a server keeps: validate what arrives and save `result.value`, not the values
+  as they were sent.
+
+## Describing answers
+
+`describeAnswers` turns the answers into what an email, a PDF or a summary page shows: each field
+that shows, with its question and its answer, in document order, within the steps and sections
+that show.
+
+```ts
+import { createValidator, describeAnswers, type FormDocument } from '@formdef/document'
+import { fieldKinds } from '@/lib/formdef/field-kinds'
+declare const document: FormDocument
+declare const values: unknown
+declare function sendSummary(description: ReturnType<typeof describeAnswers>): Promise<void>
+// ---cut---
+const result = createValidator(document, fieldKinds)['~standard'].validate(values)
+if (result.issues === undefined) await sendSummary(describeAnswers(document, fieldKinds, result.value))
+```
+
+The description is `{ steps }` for a document with steps, each with its `key`, `label` and `items`,
+and `{ items }` without. An item is a section, with its `label` and `items`, or a field:
+
+| Member | Holds |
+| --- | --- |
+| `key`, `label` | the field's key and question |
+| `kind` | the name of its field kind, to format the answer by |
+| `settings` | its settings for these answers, such as the unit that applies |
+| `answer` | the answer, or `undefined` when the field was left empty, holds a value of the wrong type or no option of the field |
+
+The answer carries its `valueType`: `text`, `decimal` and `date` the `value` as entered, `number`
+the number, `boolean` `true` (an unticked checkbox has no answer), `choice` the chosen option's
+`value` and `label`, and `choices` the chosen options as `values`. The fields of a row stand one
+after another, and a step or section with nothing that shows is left out.
+
+Formatting is the project's, such as a boolean as yes or a decimal with its unit:
+
+```ts
+import type { DescribedField } from '@formdef/document'
+// ---cut---
+const NO_ANSWER = '–'
+
+const formatAnswer = ({ answer, settings }: DescribedField): string => {
+  if (answer === undefined) return NO_ANSWER
+
+  switch (answer.valueType) {
+    case 'boolean':
+      return 'Yes'
+    case 'number':
+      return String(answer.value)
+    case 'choice':
+      return answer.label
+    case 'choices':
+      return answer.values.map((option) => option.label).join(', ')
+    case 'decimal':
+      return typeof settings.unit === 'string' ? `${answer.value} ${settings.unit}` : answer.value
+    default:
+      return answer.value
+  }
+}
+```
+
+`describeAnswers` throws when `checkDocument` reports a problem with the document.
