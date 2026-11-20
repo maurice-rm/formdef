@@ -308,6 +308,58 @@ describe('createValidator', () => {
     ])
   })
 
+  it("takes the field's own text before the project's, filling the issue's params and label", () => {
+    const document: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      items: [
+        field('f1', 'measure', {
+          label: { de: 'Fläche', en: 'Area' },
+          required: true,
+          settings: { min: 10 },
+          messages: {
+            required: { de: 'Bitte {label} angeben.', en: 'Please give the {label}.' },
+            min: 'At least {min} for {label}, {{sic}}.',
+          },
+        }),
+        field('f2', 'text', { label: 'Name', required: true }),
+      ],
+    }
+    const validate = (values: unknown, language: string) =>
+      createValidator(document, catalog, {
+        language,
+        messages: { required: ({ label }) => `${label} is missing.` },
+      })['~standard'].validate(values)
+
+    expect(validate({}, 'en').issues?.map(({ message }) => message)).toEqual([
+      'Please give the Area.',
+      'Name is missing.',
+    ])
+    expect(validate({}, 'de').issues?.[0]?.message).toBe('Bitte Fläche angeben.')
+    expect(validate({ f1: '5', f2: 'Ada' }, 'en').issues?.[0]).toMatchObject({
+      message: 'At least 10 for Area, {sic}.',
+      params: { min: 10 },
+    })
+  })
+
+  it("takes a field's text that follows an answer", () => {
+    const document = plain(
+      houseType,
+      field('f2', 'text', {
+        required: true,
+        messages: {
+          required: {
+            cases: [{ when: isApartmentBlock, value: 'Name the caretaker.' }],
+            otherwise: 'Name the owner.',
+          },
+        },
+      }),
+    )
+
+    expect(validate(document, { f1: 'o2' }).issues?.[0]?.message).toBe('Name the caretaker.')
+    expect(validate(document, { f1: 'o1' }).issues?.[0]?.message).toBe('Name the owner.')
+  })
+
   it('refuses a document with problems', () => {
     expect(() => createValidator(plain(field('f1', 'unknown')), catalog)).toThrow(
       'formdef: document: the document has 1 problem; checkDocument lists it.',

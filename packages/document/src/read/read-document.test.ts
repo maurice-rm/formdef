@@ -320,6 +320,32 @@ describe('readDocument with languages', () => {
     ).toThrow('formdef: document.items[0].label: this text does not follow answers.')
   })
 
+  it("reads a field's own error texts by issue code", () => {
+    const withMessages = {
+      format: 1,
+      items: [
+        {
+          type: 'field',
+          key: 'f1',
+          kind: 'text',
+          label: 'Name',
+          messages: {
+            required: 'Please give your name.',
+            maxLength: { de: 'Zu lang', en: 'Too long' },
+          },
+        },
+      ],
+    }
+
+    expect(readDocument(withMessages)).toEqual(withMessages)
+    expect(() =>
+      readDocument({
+        format: 1,
+        items: [{ type: 'field', key: 'f1', kind: 'text', label: 'Name', messages: { min: 3 } }],
+      }),
+    ).toThrow('formdef: document.items[0].messages.min: expected text.')
+  })
+
   it('refuses a language code that is none', () => {
     expect(() => readDocument({ format: 1, languages: ['German'], items: [] })).toThrow(
       'formdef: document.languages[0]: expected a language code, such as "de" or "de-CH".',

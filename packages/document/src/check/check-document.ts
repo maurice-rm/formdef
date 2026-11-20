@@ -8,6 +8,7 @@ import type { Text } from '../text'
 import type { VaryingText } from '../varying-text'
 import { checkCondition } from './check-condition'
 import { checkFixedText } from './check-fixed-text'
+import { checkMessages } from './check-messages'
 import { checkSettings } from './check-settings'
 import { checkVaryingText } from './check-varying-text'
 import type { CheckWalk } from './check-walk'
@@ -83,6 +84,7 @@ const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>)
   if (kind !== undefined) {
     checkSettings(field, kind, { walk, path })
   }
+  checkMessages(field, { walk, path })
 
   walk.earlier.set(field.key, { field, kind })
 }

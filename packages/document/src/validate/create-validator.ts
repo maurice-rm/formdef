@@ -1,5 +1,6 @@
 import { refuseProblems } from '../check/refuse-problems'
 import type { DocumentValues } from '../document-values'
+import type { Answers } from '../evaluate/answers'
 import { evaluate, type ShownField } from '../evaluate/evaluate'
 import { isFilled } from '../evaluate/is-filled'
 import { isMissing } from '../evaluate/is-missing'
@@ -11,7 +12,8 @@ import { optionsOf } from '../kinds/options-of'
 import type { ValueType } from '../kinds/value-type'
 import { languageOf } from '../language-of'
 import { nestValues } from '../nest-values'
-import { DEFAULT_MESSAGES, FALLBACK_MESSAGE, type Messages } from './messages'
+import { messageOf } from './message-of'
+import { DEFAULT_MESSAGES, type Messages } from './messages'
 
 /**
  * What is wrong with one answer, as Standard Schema reports it, with the code and parameters its
@@ -123,7 +125,8 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues =>
  * @param document - The document, as {@link readDocument} returns it.
  * @param catalog - The catalog with the kinds the document uses.
  * @param options - The error texts and the language.
- * @param options.messages - The error texts, by issue code; a code left out keeps its English
+ * @param options.messages - The error texts, by issue code, each given the issue's params and the
+ *   field's label; a field's own text in the document wins, a code left out keeps its English
  *   text, and a code without any text gets a general one.
  * @param options.language - The language the document's texts are used in.
  * @defaultValue `options.messages`: the English texts; `options.language`: the document's first.
@@ -148,18 +151,18 @@ export function createValidator(
   const messages: Messages = { ...DEFAULT_MESSAGES, ...options.messages }
   const language = languageOf(document, options.language)
 
-  const issueOf = (shown: ShownField): ValidationIssue | undefined => {
+  const issueOf = (shown: ShownField, answers: Answers): ValidationIssue | undefined => {
     const failure = failureOf(shown)
     if (failure === undefined) {
       return undefined
     }
-    const message = messages[failure.code]?.(failure.params) ?? FALLBACK_MESSAGE
+    const message = messageOf({ failure, field: shown.field, answers, language, messages })
     return { message, path: shown.path, ...failure }
   }
 
   const validate = (values: unknown): ValidationResult => {
-    const { shown } = evaluate(document, catalog, { values, language })
-    const issues = shown.flatMap((field) => issueOf(field) ?? [])
+    const { shown, answers } = evaluate(document, catalog, { values, language })
+    const issues = shown.flatMap((field) => issueOf(field, answers) ?? [])
     return issues.length > 0 ? { issues } : { value: answersOf(shown) }
   }
 

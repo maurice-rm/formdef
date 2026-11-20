@@ -33,6 +33,7 @@ export type {
   Varying,
 } from './form-document'
 export { FORMAT_VERSION } from './format-version'
+export type { IssueParams } from './issue-params'
 export type { JsonValue } from './json-value'
 export { type Catalog, type CatalogOptions, createCatalog } from './kinds/create-catalog'
 export {

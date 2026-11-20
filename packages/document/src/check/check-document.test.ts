@@ -913,6 +913,50 @@ describe('checkDocument with languages', () => {
     ])
   })
 
+  it("checks a field's own error texts: translations, conditions and the params they name", () => {
+    const document: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      items: [
+        { type: 'field', key: 'f0', kind: 'text', label: 'Name' },
+        {
+          type: 'field',
+          key: 'f1',
+          kind: 'measure',
+          label: 'Area',
+          settings: { unit: 'm²' },
+          messages: {
+            required: { de: 'Bitte {label}.' },
+            min: 'At least {min}, not {max}.',
+            postcode: 'Five digits, {anything}.',
+            maxLength: {
+              cases: [{ when: { field: 'f9', op: 'isFilled' }, value: 'Short' }],
+              otherwise: 'At most {maxLength}.',
+            },
+          },
+        },
+      ],
+    }
+
+    expect(checkDocument(document, catalog)).toEqual([
+      {
+        code: 'missingTranslation',
+        path: 'document.items[1].messages.required',
+        params: { language: 'en' },
+      },
+      {
+        code: 'unknownParam',
+        path: 'document.items[1].messages.min',
+        params: { param: 'max', code: 'min' },
+      },
+      {
+        code: 'unknownField',
+        path: 'document.items[1].messages.maxLength.cases[0].when.field',
+        params: { field: 'f9' },
+      },
+    ])
+  })
+
   it('refuses an option whose label is empty in a language', () => {
     const document: FormDocument = {
       format: 1,

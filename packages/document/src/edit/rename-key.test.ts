@@ -128,6 +128,31 @@ describe('renameKey', () => {
     expect(renamed.match(/\{name\}/g)).toHaveLength(6)
   })
 
+  it("renames the field in the conditions of a field's own error texts, not its params", () => {
+    const texts: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        field('f2', {
+          messages: {
+            required: { cases: [{ when: isBlock, value: '{f1}' }], otherwise: 'B' },
+          },
+        }),
+      ],
+    }
+
+    expect(renameKey(texts, 'f1', 'house').items?.[1]).toEqual(
+      field('f2', {
+        messages: {
+          required: {
+            cases: [{ when: { ...isBlock, field: 'house' }, value: '{f1}' }],
+            otherwise: 'B',
+          },
+        },
+      }),
+    )
+  })
+
   it("leaves an option's value as it is, since it is a key and no text", () => {
     const options: FormDocument = {
       format: 1,

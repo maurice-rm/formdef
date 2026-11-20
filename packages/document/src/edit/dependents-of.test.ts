@@ -86,6 +86,22 @@ describe('dependentsOf', () => {
     ])
   })
 
+  it("lists the conditions of a field's own error texts", () => {
+    const texts: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        field('f2', {
+          messages: { required: { cases: [{ when: isBlock, value: 'A' }], otherwise: 'B' } },
+        }),
+      ],
+    }
+
+    expect(dependentsOf(texts, [0])).toEqual([
+      { path: 'document.items[1].messages.required.cases[0].when', field: 'f1' },
+    ])
+  })
+
   it('lists the texts and settings whose placeholders name a field', () => {
     const texts: FormDocument = {
       format: 1,

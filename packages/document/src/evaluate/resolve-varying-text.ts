@@ -1,9 +1,7 @@
 import { fillPlaceholders } from '../fill-placeholders'
-import { isFollowing } from '../is-following'
-import { resolveText } from '../resolve-text'
 import type { VaryingText } from '../varying-text'
 import type { Answers } from './answers'
-import { valueFor } from './value-for'
+import { chooseText } from './choose-text'
 
 /**
  * A text that may follow an answer and name answers, for these answers and in a language: first
@@ -12,8 +10,7 @@ import { valueFor } from './value-for'
  */
 export function resolveVaryingText(
   text: VaryingText,
-  { answers, language }: { answers: Answers; language: string | undefined },
+  context: { answers: Answers; language: string | undefined },
 ): string {
-  const translated = resolveText(isFollowing(text) ? valueFor(text, answers) : text, language)
-  return fillPlaceholders(translated, (key) => answers.get(key)?.text ?? '')
+  return fillPlaceholders(chooseText(text, context), (key) => context.answers.get(key)?.text ?? '')
 }

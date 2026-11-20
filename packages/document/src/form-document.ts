@@ -41,6 +41,11 @@ export type FieldItem = {
   visibleWhen?: Condition
   /** The values of the field kind's settings, by setting name. */
   settings?: Record<string, JsonValue | Varying>
+  /**
+   * The field's own error texts, by issue code, such as `required`; they win over the project's.
+   * A text names the issue's params and the field's label as `{min}` or `{label}`.
+   */
+  messages?: Record<string, VaryingText>
 }
 
 /** Fields side by side, as far as the space allows. */

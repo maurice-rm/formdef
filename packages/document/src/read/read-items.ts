@@ -5,6 +5,7 @@ import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
 import { looksVarying } from '../looks-varying'
 import { pathTo } from '../path-to'
+import type { VaryingText } from '../varying-text'
 import { readCondition } from './read-condition'
 import { readJson } from './read-json'
 import { readList } from './read-list'
@@ -30,6 +31,7 @@ const FIELD_KEYS = [
   'required',
   'visibleWhen',
   'settings',
+  'messages',
 ]
 const ROW_KEYS = ['type', 'visibleWhen', 'items']
 const SECTION_KEYS = ['type', 'label', 'description', 'visibleWhen', 'items']
@@ -66,6 +68,14 @@ const readSettings = (value: unknown, path: string): Record<string, JsonValue | 
     ]),
   )
 
+const readMessages = (value: unknown, path: string): Record<string, VaryingText> =>
+  Object.fromEntries(
+    Object.entries(readShape(value, path)).map(([code, text]) => [
+      code,
+      readVaryingText(text, `${path}.${code}`),
+    ]),
+  )
+
 const readField = (shape: Shape, path: string): FieldItem => {
   readOnlyKeys(shape, FIELD_KEYS, path)
 
@@ -85,6 +95,10 @@ const readField = (shape: Shape, path: string): FieldItem => {
     ...withOptional(
       'settings',
       shape.settings === undefined ? undefined : readSettings(shape.settings, `${path}.settings`),
+    ),
+    ...withOptional(
+      'messages',
+      shape.messages === undefined ? undefined : readMessages(shape.messages, `${path}.messages`),
     ),
   }
 }

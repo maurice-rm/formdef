@@ -62,11 +62,14 @@ const ownConditions = (node: DocumentNode, path: string): Placed[] => {
     typeof node.required === 'object'
       ? [{ condition: node.required, path: pathTo.required(path) }]
       : []
-  return [...own, ...required, ...textCases(node, path), ...settingCases(node, path)]
+  const messages = Object.entries(node.messages ?? {}).flatMap(([code, text]) =>
+    casesOf(text, `${path}.messages.${code}`),
+  )
+  return [...own, ...required, ...textCases(node, path), ...settingCases(node, path), ...messages]
 }
 
 /**
- * Every condition of a document, in document order: visibility, required, texts that follow an
+ * Every condition of a document, in document order: visibility, required, texts and error texts that follow an
  * answer, and settings that follow an answer with the texts of their options.
  */
 export function conditionsOf(document: FormDocument): PlacedCondition[] {

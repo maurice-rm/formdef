@@ -183,8 +183,9 @@ passes straight through: `rules: ({ min }) => [rule.min(min)]`. A field reports 
 value fails.
 
 Each rule carries a `code` and the `params` its error text names, such as `{ min: 10 }`; the text
-comes from the [messages](/documents/validation-and-answers#error-texts). A rule of your own
-names a code of its own:
+comes from the [messages](/documents/validation-and-answers#error-texts), which receive the
+field's `label` besides, so a rule's own params take other names. A rule of your own names a code
+of its own:
 
 ```tsx
 import { createRegistry } from '@formdef/core'

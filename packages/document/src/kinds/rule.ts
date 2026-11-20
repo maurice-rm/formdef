@@ -23,7 +23,8 @@ type CustomRule<TValue> = {
   /** Names the check, for the error text. */
   code: string
   /**
-   * What the error text names.
+   * What the error text names; `label` is reserved for the field's label, which every error text
+   * receives.
    *
    * @defaultValue `{}`
    */

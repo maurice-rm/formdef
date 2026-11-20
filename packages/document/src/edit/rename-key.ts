@@ -63,6 +63,13 @@ const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
           ]),
         ),
       }),
+  ...(field.messages === undefined
+    ? {}
+    : {
+        messages: Object.fromEntries(
+          Object.entries(field.messages).map(([code, text]) => [code, renameInCases(text, rename)]),
+        ),
+      }),
 })
 
 const renamePlaceholdersIn = <TNode extends DocumentNode>(node: TNode, rename: Rename): TNode => {
