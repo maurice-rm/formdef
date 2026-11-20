@@ -147,14 +147,40 @@ export type SectionItem = {
 export type DocumentItem = FieldItem | BlockItem | ComputedItem | RowItem | SectionItem
 
 /**
- * A jump forward from a step: when the person moves on and its condition holds, the steps up to
- * the one it names do not show.
+ * A jump from a step, when the person moves on and its condition holds: forward to a later step,
+ * so the steps up to it do not show, or to an ending, so the form is submitted and the steps after
+ * it do not show.
  */
-export type Jump = {
-  /** The condition, on the answers of the step and those before it. */
-  when: Condition
-  /** The key of a later step the form goes on with. */
-  step: string
+export type Jump =
+  | {
+      /** The condition, on the answers of the step and those before it. */
+      when: Condition
+      /** The key of a later step the form goes on with. */
+      step: string
+      /** A jump goes to a step or ends the form, not both. */
+      end?: never
+    }
+  | {
+      /** The condition, on the answers of the step and those before it. */
+      when: Condition
+      /** The key of the ending the form ends with. */
+      end: string
+      /** A jump goes to a step or ends the form, not both. */
+      step?: never
+    }
+
+/**
+ * What a person sees once the form is submitted: blocks whose texts may name answers. An ending a
+ * jump names applies only through its jump. Of the others, the first whose condition holds
+ * applies; one without a condition is the fallback and comes last among them.
+ */
+export type Ending = {
+  /** The ending's key, which a jump that ends the form names. */
+  key: string
+  /** The condition under which the ending applies; without it, it is the fallback. */
+  when?: Condition
+  /** The blocks the ending shows. */
+  items: BlockItem[]
 }
 
 /** One step of a form document filled in one at a time. */
@@ -206,6 +232,8 @@ export type FormDocument =
       languages?: string[]
       /** How the whole form looks, given to the stepper; without it, as the stepper renders. */
       display?: Display
+      /** What a person sees once the form is submitted, as {@link Ending} describes. */
+      endings?: Ending[]
       /** The steps, in order. */
       steps: DocumentStep[]
       /** A document with steps holds its items in them. */
@@ -224,6 +252,8 @@ export type FormDocument =
        * one here.
        */
       display?: Display
+      /** What a person sees once the form is submitted, as {@link Ending} describes. */
+      endings?: Ending[]
       /** The items of a form without steps, in order. */
       items: DocumentItem[]
       /** A document without steps holds no steps. */

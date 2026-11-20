@@ -8,6 +8,7 @@ import type {
   FormDocument,
   Jump,
 } from '../form-document'
+import { jumpEndingsOf } from '../jump-endings-of'
 import type { Catalog } from '../kinds/create-catalog'
 import { optionValuesOf } from '../kinds/option-values-of'
 import type { ValueType } from '../kinds/value-type'
@@ -173,31 +174,81 @@ const checkItem = (item: DocumentItem, level: Level): void => {
   })
 }
 
-// A jump applies once the person moves on, so its condition reads the step's own answers too.
-type StepOrder = { at: At; laterSteps: readonly string[]; allStepKeys: readonly string[] }
+/** Where the steps and endings of a document are, which jumps name. */
+type Targets = { allStepKeys: readonly string[]; endingKeys: ReadonlySet<string> }
 
-const checkJumps = (
-  jumps: readonly Jump[] | undefined,
-  { at, laterSteps, allStepKeys }: StepOrder,
-): void => {
-  jumps?.forEach((jump, index) => {
-    const jumpPath = `${at.path}.next[${index}]`
-    checkCondition(jump.when, `${jumpPath}.when`, at.walk)
-    if (laterSteps.includes(jump.step)) {
-      return
+type StepOrder = Targets & { at: At; laterSteps: readonly string[] }
+
+const checkJumpTarget = (jump: Jump, { at, laterSteps, allStepKeys, endingKeys }: StepOrder) => {
+  if (jump.end !== undefined) {
+    if (!endingKeys.has(jump.end)) {
+      report(at.walk, {
+        code: 'unknownEnding',
+        path: `${at.path}.end`,
+        params: { ending: jump.end },
+      })
     }
-    report(at.walk, {
-      code: allStepKeys.includes(jump.step) ? 'backwardJump' : 'unknownStep',
-      path: `${jumpPath}.step`,
-      params: { step: jump.step },
+    return
+  }
+  if (laterSteps.includes(jump.step)) {
+    return
+  }
+  report(at.walk, {
+    code: allStepKeys.includes(jump.step) ? 'backwardJump' : 'unknownStep',
+    path: `${at.path}.step`,
+    params: { step: jump.step },
+  })
+}
+
+// A jump applies once the person moves on, so its condition reads the step's own answers too.
+const checkJumps = (jumps: readonly Jump[] | undefined, order: StepOrder): void => {
+  jumps?.forEach((jump, index) => {
+    const jumpPath = `${order.at.path}.next[${index}]`
+    checkCondition(jump.when, `${jumpPath}.when`, order.at.walk)
+    checkJumpTarget(jump, { ...order, at: { ...order.at, path: jumpPath } })
+  })
+}
+
+// Endings show once every answer is given, so their conditions and texts may name any of them.
+// An ending a jump names applies only through it, so only the others take their turn in order.
+const checkEndings = (
+  document: FormDocument,
+  { walk, seenKeys }: { walk: CheckWalk; seenKeys: Set<string> },
+): void => {
+  const endings = document.endings ?? []
+  const jumpEndings = jumpEndingsOf(document)
+  const lastInOrder = endings.reduce(
+    (last, ending, index) => (jumpEndings.has(ending.key) ? last : index),
+    -1,
+  )
+  const endingKeys = new Set<string>()
+  endings.forEach((ending, index) => {
+    const path = pathTo.entry(DOCUMENT_PATH, 'endings', index)
+    if (endingKeys.has(ending.key)) {
+      report(walk, { code: 'duplicateKey', path: `${path}.key`, params: { key: ending.key } })
+    }
+    endingKeys.add(ending.key)
+    checkKey(ending.key, { walk, path })
+    if (ending.when === undefined && !jumpEndings.has(ending.key) && index < lastInOrder) {
+      report(walk, { code: 'fallbackNotLast', path })
+    }
+    if (ending.when !== undefined) {
+      checkCondition(ending.when, `${path}.when`, walk)
+    }
+    ending.items.forEach((block, blockIndex) => {
+      checkBlock(block, { walk, path: `${path}.items[${blockIndex}]` }, seenKeys)
     })
   })
 }
 
-const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
+type StepWalk = { walk: CheckWalk; seenKeys: Set<string>; endingKeys: ReadonlySet<string> }
+
+const checkSteps = (
+  steps: readonly DocumentStep[],
+  { walk, seenKeys, endingKeys }: StepWalk,
+): void => {
   const allStepKeys = steps.map((step) => step.key)
   const stepKeys = new Set<string>()
-  const fieldKeys = new Set<string>()
 
   steps.forEach((step, index) => {
     const path = pathTo.entry(DOCUMENT_PATH, 'steps', index)
@@ -212,13 +263,14 @@ const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
     checkDisplay(step.display, 'step', { walk, path })
     checkItems(step.items, {
       at: { walk, path: `${path}.items` },
-      seenKeys: fieldKeys,
+      seenKeys,
       sections: 0,
     })
     checkJumps(step.next, {
       at: { walk, path },
       laterSteps: allStepKeys.slice(index + 1),
       allStepKeys,
+      endingKeys,
     })
   })
 }
@@ -265,15 +317,18 @@ export function checkDocument(
     walk,
     path: DOCUMENT_PATH,
   })
+  const seenKeys = new Set<string>()
   if (document.steps === undefined) {
     checkItems(document.items, {
       at: { walk, path: `${DOCUMENT_PATH}.items` },
-      seenKeys: new Set(),
+      seenKeys,
       sections: 0,
     })
   } else {
-    checkSteps(document.steps, walk)
+    const endingKeys = new Set((document.endings ?? []).map((ending) => ending.key))
+    checkSteps(document.steps, { walk, seenKeys, endingKeys })
   }
+  checkEndings(document, { walk, seenKeys })
 
   return walk.problems
 }

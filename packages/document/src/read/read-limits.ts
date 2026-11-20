@@ -10,7 +10,8 @@ export type ReadLimits = {
    */
   depth: number
   /**
-   * The most items of the whole document, counting those inside rows and sections.
+   * The most items of the whole document, counting those inside rows and sections and the blocks
+   * of its endings.
    *
    * @defaultValue `2000`
    */

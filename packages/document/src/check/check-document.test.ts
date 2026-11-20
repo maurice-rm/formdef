@@ -1233,6 +1233,82 @@ describe('checkDocument with jumps', () => {
   })
 })
 
+describe('checkDocument with endings', () => {
+  const withNotice = registry.extendRegistry({ formComponents: { notice: Notice } })
+  const withEndings = createCatalog(withNotice, {
+    fields: [
+      defineFieldKind(withNotice, {
+        name: 'yesNo',
+        label: 'Yes or no',
+        widget: 'check',
+        valueType: valueTypes.boolean,
+      }),
+    ],
+    blocks: [
+      defineBlockKind(withNotice, {
+        name: 'notice',
+        label: 'Notice',
+        component: 'notice',
+        settings: { body: setting.text({ label: 'Text', required: true }) },
+        props: ({ body }) => ({ children: body }),
+      }),
+    ],
+  })
+  const owned: FieldItem = { type: 'field', key: 'f1', kind: 'yesNo', label: 'Owned' }
+  const notice = (key: string, body: string) =>
+    ({ type: 'block', key, kind: 'notice', settings: { body } }) as const
+
+  it('takes endings whose conditions and texts name any answer, and a jump to one', () => {
+    const document: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'House',
+          items: [owned],
+          next: [{ when: { field: 'f1', op: 'isFalse' }, end: 'e1' }],
+        },
+      ],
+      endings: [
+        { key: 'e1', items: [notice('b1', 'Not owned: {f1}')] },
+        { key: 'e2', when: { field: 'f1', op: 'isTrue' }, items: [notice('b2', 'Owned.')] },
+        { key: 'e3', items: [notice('b3', 'Thanks.')] },
+      ],
+    }
+
+    expect(checkDocument(document, withEndings)).toEqual([])
+  })
+
+  it('reports a jump to a missing ending, a fallback not last, and the problems of its blocks', () => {
+    const document: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'House',
+          items: [owned],
+          next: [{ when: { field: 'f1', op: 'isFalse' }, end: 'e9' }],
+        },
+      ],
+      endings: [
+        { key: 'e1', items: [notice('b1', 'Thanks.')] },
+        { key: 'e1', when: { field: 'f9', op: 'isTrue' }, items: [notice('f1', 'Hi {f9}')] },
+      ],
+    }
+
+    const codes = checkDocument(document, withEndings).map(({ code, path }) => `${code} ${path}`)
+
+    expect(codes).toEqual([
+      'unknownEnding document.steps[0].next[0].end',
+      'fallbackNotLast document.endings[0]',
+      'duplicateKey document.endings[1].key',
+      'unknownField document.endings[1].when.field',
+      'duplicateKey document.endings[1].items[0].key',
+      'unknownField document.endings[1].items[0].settings.body',
+    ])
+  })
+})
+
 describe('checkDocument with displays', () => {
   const withSlots = registry.extendRegistry({ structure: { stepper: Stepper, section: Section } })
   const rail = defineDisplayKind(withSlots, {

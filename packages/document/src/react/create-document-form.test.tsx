@@ -644,6 +644,31 @@ describe('createDocumentForm with steps', () => {
     ])
   })
 
+  it('submits from a step whose jump ends the form, and leaves the steps after it out', async () => {
+    const ending: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 'building',
+          label: 'Building',
+          items: [houseType],
+          next: [{ when: isApartmentBlock, end: 'later' }],
+        },
+        { key: 'contact', label: 'Contact', items: [field('name', 'text', { label: 'Name' })] },
+      ],
+      endings: [{ key: 'later', items: [] }],
+    }
+    const Form = createDocumentForm(ending, catalog)
+    render(<Form />)
+
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDefined()
+
+    await choose('House type', 'o2')
+
+    expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Building'])
+    expect(screen.getByRole('button', { name: 'Submit' })).toBeDefined()
+  })
+
   it('renders the formatting of a step description, without links', () => {
     const formatted: FormDocument = {
       format: 1,

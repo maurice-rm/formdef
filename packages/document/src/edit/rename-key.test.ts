@@ -146,6 +146,39 @@ describe('renameKey', () => {
     ])
   })
 
+  it('renames an ending a jump names, and fields in endings', () => {
+    const ending: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'House',
+          items: [field('f1')],
+          next: [{ when: { field: 'f1', op: 'isEmpty' }, end: 'e1' }],
+        },
+      ],
+      endings: [
+        {
+          key: 'e1',
+          when: { field: 'f1', op: 'isFilled' },
+          items: [{ type: 'block', key: 'b1', kind: 'notice', settings: { body: 'Hi {f1}' } }],
+        },
+      ],
+    }
+    const renamed = renameKey(renameKey(ending, 'e1', 'notOwned'), 'f1', 'owner')
+
+    expect(renamed.steps?.[0]?.next).toEqual([
+      { when: { field: 'owner', op: 'isEmpty' }, end: 'notOwned' },
+    ])
+    expect(renamed.endings).toEqual([
+      {
+        key: 'notOwned',
+        when: { field: 'owner', op: 'isFilled' },
+        items: [{ type: 'block', key: 'b1', kind: 'notice', settings: { body: 'Hi {owner}' } }],
+      },
+    ])
+  })
+
   it('renames the field a comparison compares with', () => {
     const compared: FormDocument = {
       format: 1,

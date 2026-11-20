@@ -1,4 +1,6 @@
+import { failAt } from '../fail-at'
 import type { DocumentStep, Jump } from '../form-document'
+import { hasKey } from './has-key'
 import { readCondition } from './read-condition'
 import { readDisplay } from './read-display'
 import { readItems } from './read-items'
@@ -12,15 +14,18 @@ import { readVisibleWhen } from './read-visible-when'
 import { withOptional } from './with-optional'
 
 const STEP_KEYS = ['key', 'label', 'description', 'visibleWhen', 'display', 'next', 'items']
-const JUMP_KEYS = ['when', 'step']
+const JUMP_KEYS = ['when', 'step', 'end']
 
 const readJump = (value: unknown, path: string): Jump => {
   const shape = readShape(value, path)
   readOnlyKeys(shape, JUMP_KEYS, path)
-  return {
-    when: readCondition(shape.when, `${path}.when`),
-    step: readText(shape.step, `${path}.step`),
+  if (hasKey(shape, 'step') && hasKey(shape, 'end')) {
+    failAt(path, 'expected either step or end, not both.')
   }
+  const when = readCondition(shape.when, `${path}.when`)
+  return hasKey(shape, 'end')
+    ? { when, end: readText(shape.end, `${path}.end`) }
+    : { when, step: readText(shape.step, `${path}.step`) }
 }
 
 const readJumps = (value: unknown, path: string): Jump[] =>

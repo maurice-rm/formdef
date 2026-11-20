@@ -12,6 +12,7 @@ export {
   type DescribeOptions,
   describeAnswers,
 } from './describe/describe-answers'
+export { type EndingOptions, endingOf } from './describe/ending-of'
 export type { DocumentValues } from './document-values'
 export { changeKind } from './edit/change-kind'
 export { createKey } from './edit/create-key'
@@ -32,6 +33,7 @@ export type {
   DocumentItem,
   DocumentNode,
   DocumentStep,
+  Ending,
   FieldItem,
   FormDocument,
   Jump,

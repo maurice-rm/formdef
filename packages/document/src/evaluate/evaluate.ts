@@ -46,6 +46,8 @@ export type Evaluation = {
   computed: ShownComputed[]
   /** The keys of the steps that show: by their condition, and not passed over by a jump. */
   shownSteps: Set<string>
+  /** The step whose jump ends the form, and the ending it names; `undefined` without one. */
+  end: { step: string; ending: string } | undefined
   answers: Answers
 }
 
@@ -64,6 +66,7 @@ type EvaluationWalk = {
   shown: ShownField[]
   computed: ShownComputed[]
   shownSteps: Set<string>
+  end: Evaluation['end']
 }
 
 type Container = {
@@ -157,7 +160,7 @@ const walkItems = (
  * Evaluates a document for these values, its settings resolved in the language. A field shows
  * when it and every step, section and row around it show; a field that does not show counts as
  * empty in the conditions after it, whatever value it still holds. A step a jump passes over does
- * not show.
+ * not show, nor does any step after a jump that ends the form.
  *
  * @throws When a field is of a field kind that is not registered.
  */
@@ -180,6 +183,7 @@ export function evaluate(
     shown: [],
     computed: [],
     shownSteps: new Set(),
+    end: undefined,
   }
   const root = objectOf(values)
 
@@ -198,7 +202,12 @@ export function evaluate(
     }
     walkItems(step.items, { values: objectOf(root[step.key]), path: [step.key] }, walk)
     walk.shownSteps.add(step.key)
-    jumpTarget = step.next?.find((jump) => holds(jump.when, walk.answers))?.step
+    const jump = step.next?.find((entry) => holds(entry.when, walk.answers))
+    if (jump?.end !== undefined) {
+      walk.end = { step: step.key, ending: jump.end }
+      return walk
+    }
+    jumpTarget = jump?.step
   }
   return walk
 }

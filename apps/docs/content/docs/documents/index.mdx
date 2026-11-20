@@ -261,6 +261,32 @@ holds goes on with the step it names, and the steps in between do not show.
 - It goes forward only, so the form cannot loop. `checkDocument` reports a jump to a step the
   document does not hold as `unknownStep`, and one to the step itself or an earlier one as
   `backwardJump`.
+- `{ "when": …, "end": "e1" }` ends the form instead: moving on from the step submits it with the
+  answers so far, the steps after it do not show, and the [ending](#endings) `e1` applies.
+
+## Endings
+
+A document may name what a person sees once the form is submitted, under `endings` at the root:
+each a `key`, an optional `when` and blocks, whose texts may name any answer.
+
+```json
+{
+  "endings": [
+    { "key": "e1", "items": [{ "type": "block", "key": "b1", "kind": "notice", "settings": { "body": "We only plan heat pumps for houses you own." } }] },
+    { "key": "e2", "when": { "field": "f8", "op": "isTrue" }, "items": [{ "type": "block", "key": "b2", "kind": "notice", "settings": { "body": "You qualify for funding, {f1}." } }] },
+    { "key": "e3", "items": [{ "type": "block", "key": "b3", "kind": "notice", "settings": { "body": "Thank you." } }] }
+  ]
+}
+```
+
+- A jump that ends the form applies its ending. Otherwise the first ending whose `when` holds
+  applies, and one without `when` is the fallback. An ending a jump names, such as `e1` above,
+  applies only through its jump, never in this order.
+- `endingOf(document, catalog, { values })` tells which ending applies, so a server and a
+  confirmation email agree with the page.
+- `checkDocument` reports a jump to an ending the document does not hold as `unknownEnding`, and a
+  fallback before the last ending taken in order as `fallbackNotLast`. Block keys share the keys of
+  fields.
 
 ## Computed values
 

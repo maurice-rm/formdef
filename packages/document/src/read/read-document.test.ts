@@ -459,6 +459,36 @@ describe('readDocument with languages', () => {
     )
   })
 
+  it('reads endings of blocks, and a jump that ends the form', () => {
+    const ending = (items: unknown) => ({
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'House',
+          next: [{ when: { field: 'f1', op: 'isFalse' }, end: 'e1' }],
+          items: [{ type: 'field', key: 'f1', kind: 'check', label: 'Owned' }],
+        },
+      ],
+      endings: [
+        { key: 'e1', items },
+        { key: 'e2', when: { field: 'f1', op: 'isTrue' }, items },
+      ],
+    })
+    const blocks = [{ type: 'block', key: 'b1', kind: 'notice', settings: { body: 'Thanks.' } }]
+
+    expect(readDocument(ending(blocks))).toEqual(ending(blocks))
+    expect(() =>
+      readDocument(ending([{ type: 'field', key: 'f9', kind: 'text', label: 'x' }])),
+    ).toThrow('formdef: document.endings[0].items[0].type: expected one of block.')
+    expect(() =>
+      readDocument({
+        ...ending(blocks),
+        steps: [{ key: 's1', label: 'x', items: [], next: [{ when: {}, step: 's2', end: 'e1' }] }],
+      }),
+    ).toThrow('formdef: document.steps[0].next[0]: expected either step or end, not both.')
+  })
+
   it('reads the display of the form, a step, a section and a row', () => {
     const withDisplays = {
       format: 1,

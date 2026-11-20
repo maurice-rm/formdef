@@ -1,4 +1,6 @@
 import type { Condition } from './condition'
+import { DOCUMENT_PATH } from './document-path'
+import { ENDING_POSITION } from './ending-position'
 import type { Expression } from './expression'
 import type { DocumentNode, FormDocument, Varying } from './form-document'
 import { isField } from './is-field'
@@ -123,11 +125,20 @@ const ownConditions = (node: DocumentNode, path: string): Placed[] => {
 }
 
 /**
- * Every condition of a document, in document order: visibility, required, texts and error texts that follow an
+ * Every condition of a document, in document order, those of its endings last: visibility, required, texts and error texts that follow an
  * answer, and settings that follow an answer with the texts of their options.
  */
 export function conditionsOf(document: FormDocument): PlacedCondition[] {
-  return nodesOf(document).flatMap(({ node, position, path }) =>
+  const ofNodes = nodesOf(document).flatMap(({ node, position, path }) =>
     ownConditions(node, path).map((entry) => ({ ...entry, position })),
   )
+  const ofEndings = (document.endings ?? []).flatMap((ending, index) => {
+    const path = pathTo.entry(DOCUMENT_PATH, 'endings', index)
+    const own = ending.when === undefined ? [] : [{ condition: ending.when, path: `${path}.when` }]
+    const ofBlocks = ending.items.flatMap((block, blockIndex) =>
+      ownConditions(block, `${path}.items[${blockIndex}]`),
+    )
+    return [...own, ...ofBlocks].map((entry) => ({ ...entry, position: ENDING_POSITION }))
+  })
+  return [...ofNodes, ...ofEndings]
 }

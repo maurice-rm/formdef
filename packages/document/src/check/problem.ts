@@ -33,6 +33,8 @@ import type { JsonValue } from '../json-value'
  * - `unknownParam`: a placeholder in a field's error text that its issue code has no param for;
  * - `unknownStep`: a jump to a step the document does not hold;
  * - `backwardJump`: a jump to the step itself or an earlier one, which could loop;
+ * - `unknownEnding`: a jump that ends the form with an ending the document does not hold;
+ * - `fallbackNotLast`: an ending without a condition before the last, which hides those after it;
  * - `unknownOperation`: an operation of an expression the package does not know;
  * - `operandMismatch`: an operand of the wrong kind or number, such as text to `add`, or an
  *   answer that is no number, text or date;
@@ -67,6 +69,8 @@ export type ProblemCode =
   | 'unknownParam'
   | 'unknownStep'
   | 'backwardJump'
+  | 'unknownEnding'
+  | 'fallbackNotLast'
   | 'unknownOperation'
   | 'operandMismatch'
   | 'resultMismatch'

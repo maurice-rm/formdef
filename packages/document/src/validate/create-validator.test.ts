@@ -384,6 +384,26 @@ describe('createValidator', () => {
     ])
   })
 
+  it('validates no step after a jump that ends the form', () => {
+    const document: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'House',
+          items: [field('rented', 'consent')],
+          next: [{ when: { field: 'rented', op: 'isTrue' }, end: 'e1' }],
+        },
+        { key: 's2', label: 'Contact', items: [field('name', 'text', { required: true })] },
+      ],
+      endings: [{ key: 'e1', items: [] }],
+    }
+
+    expect(validate(document, { s1: { rented: true } })).toEqual({
+      value: { s1: { rented: true } },
+    })
+  })
+
   it('goes on after a jump target its own condition hides', () => {
     const document: FormDocument = {
       format: 1,

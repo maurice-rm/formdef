@@ -205,12 +205,16 @@ const emptyValuesOf = (
     value: kindOf(build.catalog, field).valueType.emptyValue,
   }))
 
-// A step shows by its condition and the jumps before it, which the evaluation follows.
+// A step shows by its condition and the jumps before it, and submits on a jump that ends the form,
+// which the evaluation follows.
 const stepEntry = (step: DocumentStep, build: Build): Entry => ({
   step: step.key,
   label: textOf(step.label, build),
   ...slotProps(step, build, formatTextWithoutLinks),
   visibleWhen: (values: unknown) => build.evaluationOf(values).shownSteps.has(step.key),
+  ...(step.next?.some((jump) => jump.end !== undefined)
+    ? { submitsWhen: (values: unknown) => build.evaluationOf(values).end?.step === step.key }
+    : {}),
 })
 
 const stepperOf = (display: Display | undefined, build: Build): Pick<Parts, 'stepper'> => {

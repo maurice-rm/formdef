@@ -1,6 +1,15 @@
 import type { Condition } from '../condition'
 import type { Expression } from '../expression'
-import type { ComputedItem, DocumentNode, FieldItem, FormDocument, Varying } from '../form-document'
+import type {
+  BlockItem,
+  ComputedItem,
+  DocumentNode,
+  Ending,
+  FieldItem,
+  FormDocument,
+  Jump,
+  Varying,
+} from '../form-document'
 import { isField } from '../is-field'
 import { isLeaf } from '../is-leaf'
 import { isPlainObject } from '../is-plain-object'
@@ -123,6 +132,21 @@ const renamePlaceholdersIn = <TNode extends DocumentNode>(node: TNode, rename: R
   return { ...node, ...Object.fromEntries(renamed) }
 }
 
+const renamedKey = (key: string, rename: Rename): string => (key === rename.from ? rename.to : key)
+
+const renameInJump = (jump: Jump, rename: Rename): Jump => {
+  const when = renameIn(jump.when, rename)
+  return jump.end === undefined
+    ? { when, step: renamedKey(jump.step, rename) }
+    : { when, end: renamedKey(jump.end, rename) }
+}
+
+const renameInEnding = (ending: Ending, rename: Rename): Ending => ({
+  key: renamedKey(ending.key, rename),
+  ...(ending.when === undefined ? {} : { when: renameIn(ending.when, rename) }),
+  items: ending.items.map((block) => renameInNode(block, rename) as BlockItem),
+})
+
 const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
   const visibility =
     node.visibleWhen === undefined ? {} : { visibleWhen: renameIn(node.visibleWhen, rename) }
@@ -143,10 +167,7 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
   const jumps =
     isStep(node) && node.next !== undefined
       ? {
-          next: node.next.map((jump) => ({
-            when: renameIn(jump.when, rename),
-            step: jump.step === rename.from ? rename.to : jump.step,
-          })),
+          next: node.next.map((jump) => renameInJump(jump, rename)),
         }
       : {}
   const renamed = renamePlaceholdersIn(
@@ -157,9 +178,9 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
 }
 
 /**
- * Renames the key of a step, field, block or computed value in a form document, and the field in
- * every condition, expression and placeholder that names it, leaving the document given as it was. A step and a field that share the key are both
- * renamed. A key that is taken already, or not a plain name, {@link checkDocument} reports
+ * Renames the key of a step, field, block, computed value or ending in a form document, and the key
+ * in every condition, expression, jump and placeholder that names it, endings included, leaving the
+ * document given as it was. Keys of different kinds that are the same are all renamed. A key that is taken already, or not a plain name, {@link checkDocument} reports
  * afterwards.
  *
  * @param document - The document.
@@ -174,13 +195,19 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
  */
 export function renameKey(document: FormDocument, from: string, to: string): FormDocument {
   const rename = { from, to }
+  const endings =
+    document.endings === undefined
+      ? {}
+      : { endings: document.endings.map((ending) => renameInEnding(ending, rename)) }
   return document.steps === undefined
     ? {
         ...document,
+        ...endings,
         items: document.items.map((item) => renameInNode(item, rename) as typeof item),
       }
     : {
         ...document,
+        ...endings,
         steps: document.steps.map((step) => renameInNode(step, rename) as typeof step),
       }
 }

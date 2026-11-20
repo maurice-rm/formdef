@@ -6,6 +6,7 @@ import { checkCounts } from './check-counts'
 import { checkInput } from './check-input'
 import { hasKey } from './has-key'
 import { readDisplay } from './read-display'
+import { readEndings } from './read-endings'
 import { readItems } from './read-items'
 import { readLanguages } from './read-languages'
 import { READ_LIMITS, type ReadLimits } from './read-limits'
@@ -14,7 +15,7 @@ import { readShape, type Shape } from './read-shape'
 import { readSteps } from './read-steps'
 import { withOptional } from './with-optional'
 
-const DOCUMENT_KEYS = ['format', 'languages', 'display', 'steps', 'items']
+const DOCUMENT_KEYS = ['format', 'languages', 'display', 'endings', 'steps', 'items']
 
 const checkFormat = (value: unknown): void => {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) {
@@ -64,6 +65,12 @@ const readShapeOf = (shape: Shape): FormDocument => {
         : readLanguages(shape.languages, `${DOCUMENT_PATH}.languages`),
     ),
     ...readDisplay(shape, DOCUMENT_PATH),
+    ...withOptional(
+      'endings',
+      shape.endings === undefined
+        ? undefined
+        : readEndings(shape.endings, `${DOCUMENT_PATH}.endings`),
+    ),
   }
   if (hasSteps) {
     return { ...head, steps: readSteps(shape.steps, `${DOCUMENT_PATH}.steps`) }

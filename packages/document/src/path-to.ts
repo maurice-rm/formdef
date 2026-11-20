@@ -1,6 +1,6 @@
 type PathTo = {
   /** The step or item at an index of a list, such as `document.steps[0]`. */
-  entry: (path: string, list: 'steps' | 'items', index: number) => string
+  entry: (path: string, list: 'steps' | 'items' | 'endings', index: number) => string
   /** The visibility condition of a step or item. */
   visibleWhen: (path: string) => string
   /** The required condition of a field. */

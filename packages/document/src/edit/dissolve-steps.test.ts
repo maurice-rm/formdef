@@ -65,6 +65,26 @@ describe('dissolveSteps', () => {
     })
   })
 
+  it('leaves out the endings only a jump reaches, and keeps the others', () => {
+    const stepped: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'Building',
+          next: [{ when: { field: 'f1', op: 'isEmpty' }, end: 'e1' }],
+          items: [field('f1')],
+        },
+      ],
+      endings: [
+        { key: 'e1', items: [] },
+        { key: 'e2', items: [] },
+      ],
+    }
+
+    expect(dissolveSteps(stepped).endings).toEqual([{ key: 'e2', items: [] }])
+  })
+
   it('refuses a form without steps', () => {
     expect(() => dissolveSteps({ format: 1, items: [] })).toThrow(
       'formdef: document: the form has no steps.',

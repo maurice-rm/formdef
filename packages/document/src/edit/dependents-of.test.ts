@@ -106,6 +106,25 @@ describe('dependentsOf', () => {
     ])
   })
 
+  it('lists the conditions and texts of endings that name a field', () => {
+    const ending: FormDocument = {
+      format: 1,
+      items: [field('f1')],
+      endings: [
+        {
+          key: 'e1',
+          when: { field: 'f1', op: 'isFilled' },
+          items: [{ type: 'block', key: 'b1', kind: 'notice', settings: { body: 'Hi {f1}' } }],
+        },
+      ],
+    }
+
+    expect(dependentsOf(ending, [0])).toEqual([
+      { path: 'document.endings[0].when', field: 'f1' },
+      { path: 'document.endings[0].items[0].settings.body', field: 'f1' },
+    ])
+  })
+
   it('leaves out the conditions that go with the node', () => {
     expect(dependentsOf(document, [0])).toEqual([
       { path: 'document.steps[1].visibleWhen', field: 'f1' },

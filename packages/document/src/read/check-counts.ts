@@ -20,12 +20,18 @@ const placedIn = (items: readonly DocumentItem[], path: string): PlacedItem[] =>
     return [{ item, path: itemPath }, ...inner]
   })
 
-const itemsOf = (document: FormDocument): PlacedItem[] =>
-  document.steps === undefined
-    ? placedIn(document.items, DOCUMENT_PATH)
-    : document.steps.flatMap((step, index) =>
-        placedIn(step.items, pathTo.entry(DOCUMENT_PATH, 'steps', index)),
-      )
+const itemsOf = (document: FormDocument): PlacedItem[] => {
+  const ofEndings = (document.endings ?? []).flatMap((ending, index) =>
+    placedIn(ending.items, pathTo.entry(DOCUMENT_PATH, 'endings', index)),
+  )
+  const ofForm =
+    document.steps === undefined
+      ? placedIn(document.items, DOCUMENT_PATH)
+      : document.steps.flatMap((step, index) =>
+          placedIn(step.items, pathTo.entry(DOCUMENT_PATH, 'steps', index)),
+        )
+  return [...ofForm, ...ofEndings]
+}
 
 const comparisonsIn = (condition: Condition): number => {
   if ('all' in condition) {
