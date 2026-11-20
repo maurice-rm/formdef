@@ -8,11 +8,11 @@ import type {
   SectionItem,
   Varying,
 } from '../form-document'
+import { looksVarying } from '../is-varying'
 import { readCondition } from './read-condition'
 import {
   failAt,
   hasKey,
-  isShape,
   readJson,
   readList,
   readOneOf,
@@ -71,11 +71,8 @@ const readVarying = (shape: Record<string, unknown>, path: string): Varying => {
   return { cases, otherwise: readJson(shape.otherwise, `${path}.otherwise`) }
 }
 
-const isVarying = (value: unknown): value is Record<string, unknown> =>
-  isShape(value) && hasKey(value, 'cases')
-
 const readSetting = (value: unknown, path: string): JsonValue | Varying =>
-  isVarying(value) ? readVarying(value, path) : readJson(value, path)
+  looksVarying(value) ? readVarying(value, path) : readJson(value, path)
 
 const readSettings = (value: unknown, path: string): Record<string, JsonValue | Varying> =>
   Object.fromEntries(

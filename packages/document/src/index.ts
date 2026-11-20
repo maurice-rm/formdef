@@ -1,3 +1,5 @@
+export { checkDocument } from './check/check-document'
+export type { Problem, ProblemCode } from './check/problem'
 export type { Condition, ListOperator, PresenceOperator, ValueOperator } from './condition'
 export type {
   DocumentItem,

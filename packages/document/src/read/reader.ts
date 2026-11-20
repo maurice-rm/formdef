@@ -1,4 +1,5 @@
 import type { JsonValue } from '../form-document'
+import { isPlainObject } from '../is-plain-object'
 
 type Shape = Record<string, unknown>
 
@@ -8,8 +9,7 @@ export const failAt = (path: string, problem: string): never => {
 
 const fail = failAt
 
-export const isShape = (value: unknown): value is Shape =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
+const isShape = isPlainObject
 
 export const readShape = (value: unknown, path: string): Shape =>
   isShape(value) ? value : fail(path, 'expected an object.')
