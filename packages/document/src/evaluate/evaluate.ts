@@ -31,8 +31,16 @@ export type Evaluation = {
   answers: Answers
 }
 
+/** The values a document is evaluated for, and the language its texts are resolved in. */
+export type EvaluationInput = {
+  values: unknown
+  /** The language, as {@link languageOf} chose it; `undefined` for a document of strings. */
+  language: string | undefined
+}
+
 type EvaluationWalk = {
   catalog: Catalog<unknown, ValueType>
+  language: string | undefined
   filled: Map<string, Answer>
   answers: Answers
   shown: ShownField[]
@@ -59,7 +67,7 @@ const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk)
     path: [...container.path, field.key],
     value,
     isRequired: isRequired(field, walk.answers),
-    settings: resolveSettings(field, walk.answers),
+    settings: resolveSettings(field, kind, { answers: walk.answers, language: walk.language }),
   })
   if (isFilled(value, kind.valueType)) {
     walk.filled.set(field.key, { value, valueType: kind.valueType })
@@ -98,16 +106,16 @@ const walkItems = (
 }
 
 /**
- * Evaluates a document for these values. A field shows when it and every step, section and row
- * around it show; a field that does not show counts as empty in the conditions after it, whatever
- * value it still holds.
+ * Evaluates a document for these values, its settings resolved in the language. A field shows
+ * when it and every step, section and row around it show; a field that does not show counts as
+ * empty in the conditions after it, whatever value it still holds.
  *
  * @throws When a field is of a field kind that is not registered.
  */
 export function evaluate(
   document: FormDocument,
   catalog: Catalog<unknown, ValueType>,
-  values: unknown,
+  { values, language }: EvaluationInput,
 ): Evaluation {
   const filled = new Map<string, Answer>()
   const valueTypes = valueTypesOf(document, catalog)
@@ -115,7 +123,7 @@ export function evaluate(
     get: (key) => filled.get(key),
     valueTypeOf: (key) => valueTypes.get(key),
   }
-  const walk: EvaluationWalk = { catalog, filled, answers, shown: [] }
+  const walk: EvaluationWalk = { catalog, language, filled, answers, shown: [] }
   const root = objectOf(values)
 
   if (document.steps === undefined) {

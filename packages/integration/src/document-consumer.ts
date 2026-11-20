@@ -75,7 +75,13 @@ export const problems: Problem[] = checkDocument(document, catalog)
 export const isValid: boolean =
   createValidator(document, catalog)['~standard'].validate({ name: 'Ada' }).issues === undefined
 
-export const summary: unknown = describeAnswers(document, catalog, { name: 'Ada' })
+export const summary: unknown = describeAnswers(document, catalog, { values: { name: 'Ada' } })
+
+export const translated: FormDocument = readDocument({
+  format: 1,
+  languages: ['de', 'en'],
+  items: [{ type: 'field', key: 'name', kind: 'text', label: { de: 'Name', en: 'Name' } }],
+})
 
 export const longer: FormDocument = insertNode(document, [1], {
   type: 'field',

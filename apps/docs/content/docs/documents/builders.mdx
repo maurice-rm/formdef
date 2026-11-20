@@ -71,6 +71,8 @@ and the `params` an error text names. The text is the project's, keyed by the co
 | `settingMismatch` | a setting of the wrong type | `setting`, `type` |
 | `notVarying` | a setting that follows an answer, which its field kind does not allow | `setting` |
 | `settingLimit` | a setting outside its constraints, such as too long or too few options | `setting` and the constraint, such as `minCount` |
+| `missingTranslation` | a translated text that leaves out one of the document's languages | `language` |
+| `unknownLanguage` | a translation into a language the document does not name | `language` |
 
 ## Positions
 
@@ -134,9 +136,8 @@ else setDocument(removeNode(document, position))
 
 `splitIntoSteps` turns a plain form into one with steps: its items become the items of one step,
 and further steps are inserted after it. `dissolveSteps` turns the steps back into sections, each
-with the step's label and condition. A step's description has no place in a section and is
-dropped, and a section of a step now sits one level deeper, where `checkDocument` may report it as
-`tooDeep`.
+with the step's label, description and condition. A section of a step now sits one level deeper,
+where `checkDocument` may report it as `tooDeep`.
 
 ```ts
 import { createKey, dissolveSteps, insertNode, splitIntoSteps, type FormDocument } from '@formdef/document'

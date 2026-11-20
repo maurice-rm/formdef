@@ -13,6 +13,7 @@ import { readOnlyKeys } from './read-only-keys'
 import { readOptionalText } from './read-optional-text'
 import { readShape, type Shape } from './read-shape'
 import { readText } from './read-text'
+import { readTranslatableText } from './read-translatable-text'
 import { readVisibleWhen } from './read-visible-when'
 import { withOptional } from './with-optional'
 
@@ -29,7 +30,7 @@ const FIELD_KEYS = [
   'settings',
 ]
 const ROW_KEYS = ['type', 'visibleWhen', 'items']
-const SECTION_KEYS = ['type', 'label', 'visibleWhen', 'items']
+const SECTION_KEYS = ['type', 'label', 'description', 'visibleWhen', 'items']
 const VARYING_KEYS = ['cases', 'otherwise']
 const CASE_KEYS = ['when', 'value']
 
@@ -76,7 +77,7 @@ const readField = (shape: Shape, path: string): FieldItem => {
     type: 'field',
     key: readText(shape.key, `${path}.key`),
     kind: readText(shape.kind, `${path}.kind`),
-    label: readText(shape.label, `${path}.label`),
+    label: readTranslatableText(shape.label, `${path}.label`),
     ...withOptional('description', readOptionalText(shape.description, `${path}.description`)),
     ...withOptional(
       'required',
@@ -115,7 +116,8 @@ const readSection = (shape: Shape, path: string): SectionItem => {
 
   return {
     type: 'section',
-    label: readText(shape.label, `${path}.label`),
+    label: readTranslatableText(shape.label, `${path}.label`),
+    ...withOptional('description', readOptionalText(shape.description, `${path}.description`)),
     ...readVisibleWhen(shape, path),
     items: readItems(shape.items, `${path}.items`),
   }

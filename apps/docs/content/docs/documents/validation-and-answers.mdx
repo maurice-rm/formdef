@@ -107,7 +107,9 @@ declare const values: unknown
 declare function sendSummary(description: ReturnType<typeof describeAnswers>): Promise<void>
 // ---cut---
 const result = createValidator(document, catalog)['~standard'].validate(values)
-if (result.issues === undefined) await sendSummary(describeAnswers(document, catalog, result.value))
+if (result.issues === undefined) {
+  await sendSummary(describeAnswers(document, catalog, { values: result.value, language: 'de' }))
+}
 ```
 
 The description is `{ steps }` for a document with steps, each with its `key`, `label` and `items`,

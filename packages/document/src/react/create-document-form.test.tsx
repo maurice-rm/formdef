@@ -181,6 +181,50 @@ describe('createDocumentForm without steps', () => {
     expect(screen.getByText('As on the bell')).toBeDefined()
   })
 
+  it('renders labels, descriptions, options and text settings in the language chosen', () => {
+    const translated: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      items: [
+        field('house', 'choice', {
+          label: { de: 'Haustyp', en: 'House type' },
+          settings: {
+            options: [
+              { value: 'o1', label: { de: 'Einfamilienhaus', en: 'Detached' } },
+              { value: 'o2', label: 'Bungalow' },
+            ],
+          },
+        }),
+        field('area', 'measure', {
+          label: { de: 'Fläche', en: 'Area' },
+          description: { de: 'Beheizt', en: 'Heated' },
+          settings: { unit: { de: 'Quadratmeter', en: 'square metres' } },
+        }),
+      ],
+    }
+    const Form = createDocumentForm(translated, catalog, { language: 'en' })
+    render(<Form />)
+
+    expect(screen.getByLabelText('House type')).toBeDefined()
+    expect(screen.getByRole('option', { name: 'Detached' })).toBeDefined()
+    expect(screen.getByRole('option', { name: 'Bungalow' })).toBeDefined()
+    expect(screen.getByLabelText('Area')).toBeDefined()
+    expect(screen.getByText('Heated')).toBeDefined()
+    expect(screen.getByText('in square metres')).toBeDefined()
+  })
+
+  it('renders in the first language without one chosen', () => {
+    const translated: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      items: [field('name', 'text', { label: { de: 'Name', en: 'Full name' } })],
+    }
+    const Form = createDocumentForm(translated, catalog)
+    render(<Form />)
+
+    expect(screen.getByLabelText('Name')).toBeDefined()
+  })
+
   it('shows fields, rows and sections as the answers meet their conditions', async () => {
     const Form = createDocumentForm(
       plain(

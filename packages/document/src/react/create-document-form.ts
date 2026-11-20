@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import type { FormDocument } from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
 import type { ValueType } from '../kinds/value-type'
+import { languageOf } from '../language-of'
 import {
   createValidator,
   type DocumentValidator,
@@ -46,12 +47,14 @@ type CreatesForms = {
  *
  * @param document - The document, as {@link readDocument} returns it.
  * @param catalog - The catalog with the kinds the document uses and the registry that renders them.
- * @param options - The error texts and when the answers are validated.
+ * @param options - The error texts, the language and when the answers are validated.
  * @param options.messages - The error texts, by issue code; a code left out keeps its English
  *   text, and a code without any text gets a general one.
+ * @param options.language - The language the form shows its texts in; a language the document
+ *   does not name gives its first.
  * @param options.validation - When the answers are validated, as a form config's `validation`.
- * @defaultValue `options.messages`: the English texts; `options.validation`:
- *   `{ mode: 'revalidate' }`.
+ * @defaultValue `options.messages`: the English texts; `options.language`: the document's first;
+ *   `options.validation`: `{ mode: 'revalidate' }`.
  * @returns The form component.
  * @throws When the document has problems, as {@link checkDocument} reports them.
  *
@@ -68,7 +71,8 @@ export function createDocumentForm(
   options: DocumentFormOptions = {},
 ): DocumentForm {
   const schema = createValidator(document, catalog, options)
-  const config = documentConfig(document, catalog, schema)
+  const language = languageOf(document, options.language)
+  const config = documentConfig(document, catalog, { schema, language })
   // The registry's `createForm` types a config written in code; a document's is known at runtime.
   const { createForm } = catalog.registry as CreatesForms
 

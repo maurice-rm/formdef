@@ -39,6 +39,7 @@ formdef uses one word per concept, in the code, in error messages and here.
 | **field kind** | What a field of a form document may be: a widget, its value type, its settings, the props they give and its rules. Defined with `defineFieldKind`. |
 | **catalog** | Every kind a project offers for form documents, for one registry, collected with `createCatalog`; rendering, checking, validating and describing a document take it. |
 | **setting** | A value of a field in a form document that a person may change, such as a unit, declared by its field kind with `setting.*`. |
+| **text** | A text of a form document, such as a label: a string for every language, or its translations into the document's `languages`. |
 | **item (form document)** | One field, row or section of a form document, under `items`; not an element of an array. |
 | **document path** | Where a place sits in a form document, such as `document.steps[0].items[2].visibleWhen`, as problems and errors name it; not the path of a field. |
 | **value type** | The kind of answer a field kind gives: one of the built-in `valueTypes`, `text`, `choice`, `choices`, `boolean`, `number`, `decimal` and `date`, or a project's own, defined with `defineValueType` and held by the catalog. |

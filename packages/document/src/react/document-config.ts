@@ -11,6 +11,8 @@ import type { Catalog } from '../kinds/create-catalog'
 import { kindOf } from '../kinds/kind-of'
 import type { ValueType } from '../kinds/value-type'
 import { nestValues } from '../nest-values'
+import { resolveText } from '../resolve-text'
+import type { Text } from '../text'
 import type { DocumentValidator } from '../validate/create-validator'
 
 type Entry = Readonly<Record<string, unknown>>
@@ -28,8 +30,17 @@ type Parts = Omit<DocumentConfig, 'schema'>
 
 type Build = {
   catalog: Catalog<unknown, ValueType>
+  language: string | undefined
   answersOf: (values: unknown) => Answers
 }
+
+const textOf = (text: Text, build: Build): string => resolveText(text, build.language)
+
+const descriptionOf = (
+  { description }: { description?: Text },
+  build: Build,
+): { description?: string } =>
+  description === undefined ? {} : { description: textOf(description, build) }
 
 const visibility = (item: { visibleWhen?: Condition }, build: Build): Entry => {
   const condition = item.visibleWhen
@@ -44,9 +55,9 @@ const fieldEntry = (field: FieldItem, build: Build): Entry => {
   const props = (values: unknown): Entry => {
     const answers = build.answersOf(values)
     return {
-      ...kind.props(resolveSettings(field, answers)),
-      label: field.label,
-      ...(field.description === undefined ? {} : { description: field.description }),
+      ...kind.props(resolveSettings(field, kind, { answers, language: build.language })),
+      label: textOf(field.label, build),
+      ...descriptionOf(field, build),
       required: isRequired(field, answers),
     }
   }
@@ -61,7 +72,13 @@ const layoutOf = (items: readonly DocumentItem[], build: Build): unknown[] =>
     if (item.type === 'row') {
       return { row: layoutOf(item.items, build), ...visibility(item, build) }
     }
-    return { section: item.label, layout: layoutOf(item.items, build), ...visibility(item, build) }
+    const description = descriptionOf(item, build)
+    return {
+      section: textOf(item.label, build),
+      layout: layoutOf(item.items, build),
+      ...(description.description === undefined ? {} : { props: description }),
+      ...visibility(item, build),
+    }
   })
 
 const levelOf = (items: readonly DocumentItem[], build: Build): Level => ({
@@ -78,12 +95,15 @@ const emptyValuesOf = (
     value: kindOf(build.catalog, field).valueType.emptyValue,
   }))
 
-const stepEntry = (step: DocumentStep, build: Build): Entry => ({
-  step: step.key,
-  label: step.label,
-  ...(step.description === undefined ? {} : { props: { description: step.description } }),
-  ...visibility(step, build),
-})
+const stepEntry = (step: DocumentStep, build: Build): Entry => {
+  const description = descriptionOf(step, build)
+  return {
+    step: step.key,
+    label: textOf(step.label, build),
+    ...(description.description === undefined ? {} : { props: description }),
+    ...visibility(step, build),
+  }
+}
 
 const steppedConfig = (steps: readonly DocumentStep[], build: Build): Parts => ({
   defaultValues: nestValues(
@@ -102,16 +122,17 @@ const plainConfig = (items: readonly DocumentItem[], build: Build): Parts => ({
  * Builds the form config of a document: a field entry per field, with its field kind's widget
  * and the props its settings give for the answers, a layout of its rows and sections, steps when
  * it has steps, and each field's empty value as its default. Conditions are read from the answers
- * as the validator reads them.
+ * as the validator reads them. Its texts are in the language given, as {@link languageOf} chose it.
  */
 export function documentConfig(
   document: FormDocument,
   catalog: Catalog<unknown, ValueType>,
-  schema: DocumentValidator,
+  { schema, language }: { schema: DocumentValidator; language: string | undefined },
 ): DocumentConfig {
   const build: Build = {
     catalog,
-    answersOf: (values) => evaluate(document, catalog, values).answers,
+    language,
+    answersOf: (values) => evaluate(document, catalog, { values, language }).answers,
   }
   const parts =
     document.steps === undefined

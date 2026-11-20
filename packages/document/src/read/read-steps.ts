@@ -5,6 +5,7 @@ import { readOnlyKeys } from './read-only-keys'
 import { readOptionalText } from './read-optional-text'
 import { readShape } from './read-shape'
 import { readText } from './read-text'
+import { readTranslatableText } from './read-translatable-text'
 import { readVisibleWhen } from './read-visible-when'
 import { withOptional } from './with-optional'
 
@@ -16,7 +17,7 @@ const readStep = (value: unknown, path: string): DocumentStep => {
 
   return {
     key: readText(shape.key, `${path}.key`),
-    label: readText(shape.label, `${path}.label`),
+    label: readTranslatableText(shape.label, `${path}.label`),
     ...withOptional('description', readOptionalText(shape.description, `${path}.description`)),
     ...readVisibleWhen(shape, path),
     items: readItems(shape.items, `${path}.items`),

@@ -9,6 +9,7 @@ import type { Catalog } from '../kinds/create-catalog'
 import { optionOf } from '../kinds/option-of'
 import { optionsOf } from '../kinds/options-of'
 import type { ValueType } from '../kinds/value-type'
+import { languageOf } from '../language-of'
 import { nestValues } from '../nest-values'
 import { DEFAULT_MESSAGES, FALLBACK_MESSAGE, type Messages } from './messages'
 
@@ -69,6 +70,13 @@ export type ValidatorOptions = {
    * @defaultValue English texts
    */
   messages?: Messages
+  /**
+   * The language the document's texts are used in, such as the settings its rules receive; a
+   * language the document does not name gives its first.
+   *
+   * @defaultValue the document's first language
+   */
+  language?: string
 }
 
 type Failure = Pick<ValidationIssue, 'code' | 'params'>
@@ -77,7 +85,7 @@ const VENDOR = 'formdef'
 
 const fitsOptions = ({ field, value }: ShownField): boolean => {
   const choices: unknown[] = Array.isArray(value) ? value : [value]
-  const options = optionsOf(field)
+  const options = optionsOf(field.settings)
   return choices.every((choice) => optionOf(options, choice) !== undefined)
 }
 
@@ -114,10 +122,11 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues =>
  *
  * @param document - The document, as {@link readDocument} returns it.
  * @param catalog - The catalog with the kinds the document uses.
- * @param options - The error texts.
+ * @param options - The error texts and the language.
  * @param options.messages - The error texts, by issue code; a code left out keeps its English
  *   text, and a code without any text gets a general one.
- * @defaultValue `options.messages`: the English texts.
+ * @param options.language - The language the document's texts are used in.
+ * @defaultValue `options.messages`: the English texts; `options.language`: the document's first.
  * @returns The validator; it returns the answers of the fields that show, nested like the values
  *   given, or every issue in document order.
  * @throws When the document has problems, as {@link checkDocument} reports them.
@@ -137,6 +146,7 @@ export function createValidator(
 ): DocumentValidator {
   refuseProblems(document, catalog)
   const messages: Messages = { ...DEFAULT_MESSAGES, ...options.messages }
+  const language = languageOf(document, options.language)
 
   const issueOf = (shown: ShownField): ValidationIssue | undefined => {
     const failure = failureOf(shown)
@@ -148,7 +158,7 @@ export function createValidator(
   }
 
   const validate = (values: unknown): ValidationResult => {
-    const { shown } = evaluate(document, catalog, values)
+    const { shown } = evaluate(document, catalog, { values, language })
     const issues = shown.flatMap((field) => issueOf(field) ?? [])
     return issues.length > 0 ? { issues } : { value: answersOf(shown) }
   }

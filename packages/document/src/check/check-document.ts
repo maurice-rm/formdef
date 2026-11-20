@@ -4,8 +4,10 @@ import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../for
 import type { Catalog } from '../kinds/create-catalog'
 import type { ValueType } from '../kinds/value-type'
 import { pathTo } from '../path-to'
+import type { Text } from '../text'
 import { checkCondition } from './check-condition'
 import { checkSettings } from './check-settings'
+import { checkText } from './check-text'
 import type { CheckWalk } from './check-walk'
 import type { Problem } from './problem'
 import { report } from './report'
@@ -35,6 +37,16 @@ const checkOverlap = (key: string, stepKeys: readonly string[], { walk, path }: 
   report(walk, { code: 'overlappingKey', path: `${path}.key`, params: { key, start } })
 }
 
+const checkTexts = (
+  { label, description }: { label: Text; description?: Text },
+  { walk, path }: At,
+): void => {
+  checkText(label, { walk, path: `${path}.label` })
+  if (description !== undefined) {
+    checkText(description, { walk, path: `${path}.description` })
+  }
+}
+
 const checkVisibleWhen = (
   item: { visibleWhen?: DocumentItem['visibleWhen'] },
   { walk, path }: At,
@@ -50,6 +62,7 @@ const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>)
   }
   seenKeys.add(field.key)
   checkKey(field.key, { walk, path })
+  checkTexts(field, { walk, path })
 
   const kind = walk.kindNamed(field.kind)
   if (kind === undefined) {
@@ -81,6 +94,9 @@ const checkItem = (item: DocumentItem, level: Level): void => {
     checkField(item, at, seenKeys)
     return
   }
+  if (item.type === 'section') {
+    checkTexts(item, at)
+  }
   checkVisibleWhen(item, at)
   if (item.type === 'section' && level.sections + 1 > MOST_SECTION_LEVELS) {
     report(at.walk, { code: 'tooDeep', path: at.path })
@@ -105,6 +121,7 @@ const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
     stepKeys.add(step.key)
     checkKey(step.key, { walk, path })
     checkOverlap(step.key, allStepKeys, { walk, path })
+    checkTexts(step, { walk, path })
     checkVisibleWhen(step, { walk, path })
     checkItems(step.items, {
       at: { walk, path: `${path}.items` },
@@ -142,6 +159,7 @@ export function checkDocument(
     document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
   const walk: CheckWalk = {
     kindNamed: (name) => catalog.findFieldKind(name),
+    languages: document.languages,
     allFieldKeys: new Set(fieldsOf(items).map((field) => field.key)),
     earlier: new Map(),
     problems: [],

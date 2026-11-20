@@ -19,7 +19,9 @@ import type { JsonValue } from '../json-value'
  * - `missingSetting`: a required setting left out;
  * - `settingMismatch`: a setting of the wrong type;
  * - `notVarying`: a setting that follows an answer, which its field kind does not allow;
- * - `settingLimit`: a setting outside its constraints, such as too long or too few options.
+ * - `settingLimit`: a setting outside its constraints, such as too long or too few options;
+ * - `missingTranslation`: a translated text that leaves out a language of the document;
+ * - `unknownLanguage`: a translation into a language the document does not name.
  */
 export type ProblemCode =
   | 'duplicateKey'
@@ -39,6 +41,8 @@ export type ProblemCode =
   | 'settingMismatch'
   | 'notVarying'
   | 'settingLimit'
+  | 'missingTranslation'
+  | 'unknownLanguage'
 
 /**
  * One problem {@link checkDocument} found in a form document: what it is about, where, and what an

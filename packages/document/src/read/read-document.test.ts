@@ -251,6 +251,63 @@ describe('readDocument', () => {
   })
 })
 
+describe('readDocument with languages', () => {
+  it('reads the languages and texts as strings or their translations', () => {
+    const translated = {
+      format: 1,
+      languages: ['de', 'en'],
+      steps: [
+        {
+          key: 's1',
+          label: { de: 'Gebäude', en: 'Building' },
+          description: 'Bau',
+          items: [
+            {
+              type: 'section',
+              label: { de: 'Dämmung', en: 'Insulation' },
+              description: { de: 'Wände', en: 'Walls' },
+              items: [
+                {
+                  type: 'field',
+                  key: 'f1',
+                  kind: 'text',
+                  label: { de: 'Name', en: 'Name' },
+                  description: { de: 'Wie an der Klingel', en: 'As on the bell' },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(readDocument(translated)).toEqual(translated)
+  })
+
+  it('refuses a language code that is none', () => {
+    expect(() => readDocument({ format: 1, languages: ['German'], items: [] })).toThrow(
+      'formdef: document.languages[0]: expected a language code, such as "de" or "de-CH".',
+    )
+    expect(() =>
+      readDocument({
+        format: 1,
+        items: [{ type: 'field', key: 'f1', kind: 'text', label: { German: 'Name' } }],
+      }),
+    ).toThrow(
+      'formdef: document.items[0].label.German: expected a language code, such as "de" or "de-CH".',
+    )
+  })
+
+  it('refuses a language listed twice, and translations without any', () => {
+    expect(() => readDocument({ format: 1, languages: ['de', 'de'], items: [] })).toThrow(
+      'formdef: document.languages[1]: the language "de" is listed twice.',
+    )
+    expect(() =>
+      readDocument({ format: 1, items: [{ type: 'field', key: 'f1', kind: 'text', label: {} }] }),
+    ).toThrow('formdef: document.items[0].label: expected text or its translations.')
+  })
+})
+
 const fieldOf = (key: string, extra: Record<string, unknown> = {}) => ({
   type: 'field',
   key,

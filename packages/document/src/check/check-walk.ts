@@ -12,6 +12,8 @@ export type EarlierField = {
 export type CheckWalk = {
   /** The field kind of this name, or `undefined` when none is registered. */
   kindNamed: (name: string) => FieldKind<unknown> | undefined
+  /** The languages the document names; `undefined` when its texts are strings. */
+  languages: readonly string[] | undefined
   allFieldKeys: ReadonlySet<string>
   earlier: Map<string, EarlierField>
   problems: Problem[]

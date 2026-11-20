@@ -33,14 +33,16 @@ declare const document: FormDocument
 describe('describeAnswers', () => {
   it('narrows a built-in answer by its value type', () => {
     const catalog = createCatalog(registry, { fields: [text] })
-    const description = describeAnswers(document, catalog, {})
+    const description = describeAnswers(document, catalog, { values: {} })
     const answer = 'items' in description ? description.items[0] : undefined
 
     if (answer?.type === 'field' && answer.answer?.valueType === 'number') {
       expectTypeOf(answer.answer.value).toEqualTypeOf<number>()
     }
     if (answer?.type === 'field' && answer.answer?.valueType === 'choices') {
-      expectTypeOf(answer.answer.values).toEqualTypeOf<{ value: string; label: string }[]>()
+      expectTypeOf(answer.answer.values).toEqualTypeOf<
+        { value: string; label: string; description?: string }[]
+      >()
     }
     if (answer?.type === 'field') {
       expectTypeOf(answer.answer).toEqualTypeOf<DescribedAnswer | undefined>()
@@ -49,7 +51,7 @@ describe('describeAnswers', () => {
 
   it("narrows an answer of a project's value type to the shape it describes", () => {
     const catalog = createCatalog(registry, { valueTypes: [postalCode], fields: [text] })
-    const description = describeAnswers(document, catalog, {})
+    const description = describeAnswers(document, catalog, { values: {} })
     const answer = 'items' in description ? description.items[0] : undefined
 
     if (answer?.type === 'field' && answer.answer?.valueType === 'postalCode') {
@@ -62,7 +64,7 @@ describe('describeAnswers', () => {
 
   it('knows no answer of a value type the catalog does not hold', () => {
     const catalog = createCatalog(registry, { fields: [text] })
-    const description = describeAnswers(document, catalog, {})
+    const description = describeAnswers(document, catalog, { values: {} })
     const answer = 'items' in description ? description.items[0] : undefined
 
     if (answer?.type === 'field') {

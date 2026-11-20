@@ -703,3 +703,155 @@ describe('checkDocument', () => {
     ])
   })
 })
+
+describe('checkDocument with languages', () => {
+  it('takes texts translated into every language, and strings for all of them', () => {
+    const document: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      items: [
+        {
+          type: 'section',
+          label: { de: 'Bau', en: 'Building' },
+          description: 'kWh',
+          items: [
+            {
+              type: 'field',
+              key: 'f1',
+              kind: 'choice',
+              label: { de: 'Haustyp', en: 'House type' },
+              settings: {
+                options: [
+                  { value: 'o1', label: { de: 'Einfamilienhaus', en: 'Detached' } },
+                  { value: 'o2', label: 'Bungalow', description: { de: 'Flach', en: 'Flat' } },
+                ],
+              },
+            },
+            {
+              type: 'field',
+              key: 'f2',
+              kind: 'measure',
+              label: 'Fläche',
+              settings: { unit: { de: 'Quadratmeter', en: 'm²' } },
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(checkDocument(document, catalog)).toEqual([])
+  })
+
+  it('reports a translation left out, in every text position', () => {
+    const document: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      steps: [
+        {
+          key: 's1',
+          label: { de: 'Gebäude' },
+          description: { de: 'Größe' },
+          items: [
+            {
+              type: 'section',
+              label: { en: 'Building' },
+              items: [
+                {
+                  type: 'field',
+                  key: 'f1',
+                  kind: 'choice',
+                  label: { de: 'Haustyp', en: 'House type' },
+                  description: { en: 'Pick one' },
+                  settings: {
+                    options: [
+                      { value: 'o1', label: { de: 'Eins' } },
+                      { value: 'o2', label: 'Two', description: { en: 'Second' } },
+                    ],
+                  },
+                },
+                {
+                  type: 'field',
+                  key: 'f2',
+                  kind: 'measure',
+                  label: 'Area',
+                  settings: {
+                    unit: {
+                      cases: [{ when: { field: 'f1', op: 'isFilled' }, value: { de: 'm²' } }],
+                      otherwise: 'm²',
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(codesOf(document)).toEqual([
+      'missingTranslation document.steps[0].label',
+      'missingTranslation document.steps[0].description',
+      'missingTranslation document.steps[0].items[0].label',
+      'missingTranslation document.steps[0].items[0].items[0].description',
+      'missingTranslation document.steps[0].items[0].items[0].settings.options[0].label',
+      'missingTranslation document.steps[0].items[0].items[0].settings.options[1].description',
+      'missingTranslation document.steps[0].items[0].items[1].settings.unit.cases[0].value',
+    ])
+    expect(checkDocument(document, catalog)[0]?.params).toEqual({ language: 'en' })
+  })
+
+  it('reports a language the document does not name, and translations without languages', () => {
+    const named: FormDocument = {
+      format: 1,
+      languages: ['de'],
+      items: [{ type: 'field', key: 'f1', kind: 'text', label: { de: 'Name', fr: 'Nom' } }],
+    }
+    const unnamed: FormDocument = {
+      format: 1,
+      items: [{ type: 'field', key: 'f1', kind: 'text', label: { de: 'Name' } }],
+    }
+
+    expect(checkDocument(named, catalog)).toEqual([
+      { code: 'unknownLanguage', path: 'document.items[0].label.fr', params: { language: 'fr' } },
+    ])
+    expect(codesOf(unnamed)).toEqual(['unknownLanguage document.items[0].label.de'])
+  })
+
+  it('refuses an option whose label is empty in a language', () => {
+    const document: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      items: [
+        {
+          ...choiceField,
+          settings: {
+            options: [
+              { value: 'o1', label: { de: '', en: 'One' } },
+              { value: 'o2', label: 'Two' },
+            ],
+          },
+        },
+      ],
+    }
+
+    expect(codesOf(document)).toEqual(['settingMismatch document.items[0].settings.options'])
+  })
+
+  it('keeps each translation of a text setting within its most characters', () => {
+    const document: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      items: [
+        {
+          type: 'field',
+          key: 'f1',
+          kind: 'text',
+          label: 'Name',
+          settings: { placeholder: { de: 'Vor- und Nachname', en: 'Name' } },
+        },
+      ],
+    }
+
+    expect(codesOf(document)).toEqual(['settingLimit document.items[0].settings.placeholder.de'])
+  })
+})

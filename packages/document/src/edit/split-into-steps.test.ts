@@ -15,6 +15,14 @@ describe('splitIntoSteps', () => {
     })
   })
 
+  it("keeps the document's languages", () => {
+    const plain: FormDocument = { format: 1, languages: ['de'], items: [field('f1')] }
+
+    expect(splitIntoSteps(plain, { key: 's1', label: { de: 'Kontakt' } })).toMatchObject({
+      languages: ['de'],
+    })
+  })
+
   it('refuses a form that has steps already', () => {
     const stepped: FormDocument = { format: 1, steps: [] }
 

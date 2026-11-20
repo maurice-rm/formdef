@@ -8,6 +8,7 @@ export {
   type DescribedItem,
   type DescribedSection,
   type DescribedStep,
+  type DescribeOptions,
   describeAnswers,
 } from './describe/describe-answers'
 export type { DocumentValues } from './document-values'
@@ -53,6 +54,7 @@ export { valueTypes } from './kinds/value-types'
 export type { Position } from './position'
 export { type ReadOptions, readDocument } from './read/read-document'
 export type { ReadLimits } from './read/read-limits'
+export type { Text } from './text'
 export {
   createValidator,
   type DocumentValidator,

@@ -6,7 +6,17 @@ import { dissolveSteps } from './dissolve-steps'
 const field = (key: string): FieldItem => ({ type: 'field', key, kind: 'text', label: key })
 
 describe('dissolveSteps', () => {
-  it('turns each step into a section with its label and condition', () => {
+  it("keeps the document's languages", () => {
+    const stepped: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      steps: [{ key: 's1', label: { de: 'Bau', en: 'Building' }, items: [field('f1')] }],
+    }
+
+    expect(dissolveSteps(stepped)).toMatchObject({ languages: ['de', 'en'] })
+  })
+
+  it('turns each step into a section with its label, description and condition', () => {
     const stepped: FormDocument = {
       format: 1,
       steps: [
@@ -23,7 +33,7 @@ describe('dissolveSteps', () => {
     expect(dissolveSteps(stepped)).toEqual({
       format: 1,
       items: [
-        { type: 'section', label: 'Building', items: [field('f1')] },
+        { type: 'section', label: 'Building', description: 'Size', items: [field('f1')] },
         {
           type: 'section',
           label: 'Flats',

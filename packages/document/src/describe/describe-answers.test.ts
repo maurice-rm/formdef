@@ -121,11 +121,7 @@ describe('describeAnswers', () => {
 
     expect(
       describeAnswers(document, catalog, {
-        house: 'o2',
-        rooms: ['r2', 'r1'],
-        flats: 6,
-        area: '120,5',
-        consent: false,
+        values: { house: 'o2', rooms: ['r2', 'r1'], flats: 6, area: '120,5', consent: false },
       }),
     ).toEqual({
       items: [
@@ -212,8 +208,10 @@ describe('describeAnswers', () => {
     }
 
     const described = describeAnswers(document, catalog, {
-      building: { house: 'o1', flats: 6, caretaker: 'Ada', name: '  ' },
-      block: { floors: 4 },
+      values: {
+        building: { house: 'o1', flats: 6, caretaker: 'Ada', name: '  ' },
+        block: { floors: 4 },
+      },
     })
 
     expect(described).toEqual({
@@ -240,7 +238,7 @@ describe('describeAnswers', () => {
   it('describes an answer of the wrong type or no option of the field as none', () => {
     const document: FormDocument = { format: 1, items: [house, field('flats', 'count')] }
 
-    expect(describeAnswers(document, catalog, { house: 'o9', flats: 'six' })).toEqual({
+    expect(describeAnswers(document, catalog, { values: { house: 'o9', flats: 'six' } })).toEqual({
       items: [
         expect.objectContaining({ key: 'house', answer: undefined }),
         expect.objectContaining({ key: 'flats', answer: undefined }),
@@ -272,7 +270,9 @@ describe('describeAnswers', () => {
       items: [field('home', 'postal'), field('work', 'postal')],
     }
 
-    expect(describeAnswers(document, withPostalCode, { home: '53111', work: '531' })).toEqual({
+    expect(
+      describeAnswers(document, withPostalCode, { values: { home: '53111', work: '531' } }),
+    ).toEqual({
       items: [
         expect.objectContaining({
           key: 'home',
@@ -303,14 +303,74 @@ describe('describeAnswers', () => {
     })
     const document: FormDocument = { format: 1, items: [field('f1', 'tagged')] }
 
-    expect(describeAnswers(document, withTagged, { f1: 'x' })).toEqual({
+    expect(describeAnswers(document, withTagged, { values: { f1: 'x' } })).toEqual({
       items: [expect.objectContaining({ answer: { valueType: 'tagged', value: 'x' } })],
     })
   })
 
   it('refuses a document with problems', () => {
     expect(() =>
-      describeAnswers({ format: 1, items: [field('f1', 'signature')] }, catalog, {}),
+      describeAnswers({ format: 1, items: [field('f1', 'signature')] }, catalog, { values: {} }),
     ).toThrow('formdef: document: the document has 1 problem; checkDocument lists it.')
+  })
+
+  it('describes the questions, sections and options in the language chosen', () => {
+    const translated: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      steps: [
+        {
+          key: 's1',
+          label: { de: 'Gebäude', en: 'Building' },
+          items: [
+            {
+              type: 'section',
+              label: { de: 'Haus', en: 'House' },
+              items: [
+                field('house', 'choice', {
+                  label: { de: 'Haustyp', en: 'House type' },
+                  settings: {
+                    options: [
+                      { value: 'o1', label: { de: 'Einfamilienhaus', en: 'Detached' } },
+                      { value: 'o2', label: 'Bungalow' },
+                    ],
+                  },
+                }),
+                field('area', 'measure', {
+                  label: 'Area',
+                  settings: { unit: { de: 'Quadratmeter', en: 'square metres' } },
+                }),
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    const values = { s1: { house: 'o1', area: '120' } }
+
+    expect(describeAnswers(translated, catalog, { values, language: 'en' })).toEqual({
+      steps: [
+        {
+          key: 's1',
+          label: 'Building',
+          items: [
+            {
+              type: 'section',
+              label: 'House',
+              items: [
+                expect.objectContaining({
+                  label: 'House type',
+                  answer: { valueType: 'choice', value: 'o1', label: 'Detached' },
+                }),
+                expect.objectContaining({ label: 'Area', settings: { unit: 'square metres' } }),
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    expect(describeAnswers(translated, catalog, { values, language: 'fr' })).toMatchObject({
+      steps: [{ label: 'Gebäude' }],
+    })
   })
 })

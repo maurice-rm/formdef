@@ -2,11 +2,14 @@ import type { FieldItem, Varying } from '../form-document'
 import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
 import type { FieldKind } from '../kinds/field-kind'
+import type { DocumentOption } from '../kinds/is-option'
 import { optionValuesOf } from '../kinds/option-values-of'
-import type { Setting, SettingOption } from '../kinds/setting'
+import type { Setting } from '../kinds/setting'
 import { pathTo } from '../path-to'
+import type { Text } from '../text'
 import { checkCondition } from './check-condition'
 import { checkOptionValues } from './check-option-values'
+import { checkText } from './check-text'
 import type { CheckWalk } from './check-walk'
 import { fitsSettingType } from './fits-setting-type'
 import { report } from './report'
@@ -17,17 +20,26 @@ const reportMismatch = ({ walk, path, name }: At, type: string): void => {
   report(walk, { code: 'settingMismatch', path, params: { setting: name, type } })
 }
 
-const checkOptions = (value: SettingOption[], setting: Setting<unknown>, at: At): void => {
+const checkOptionTexts = (option: DocumentOption, { walk, path }: At): void => {
+  checkText(option.label, { walk, path: `${path}.label` })
+  if (option.description !== undefined) {
+    checkText(option.description, { walk, path: `${path}.description` })
+  }
+}
+
+const checkOptions = (value: DocumentOption[], setting: Setting<unknown>, at: At): void => {
   const seen = new Set<string>()
   value.forEach((option, index) => {
+    const optionPath = `${at.path}[${index}]`
     if (seen.has(option.value)) {
       report(at.walk, {
         code: 'duplicateOption',
-        path: `${at.path}[${index}].value`,
+        path: `${optionPath}.value`,
         params: { value: option.value },
       })
     }
     seen.add(option.value)
+    checkOptionTexts(option, { ...at, path: optionPath })
   })
   if (setting.minCount !== undefined && value.length < setting.minCount) {
     report(at.walk, {
@@ -38,13 +50,24 @@ const checkOptions = (value: SettingOption[], setting: Setting<unknown>, at: At)
   }
 }
 
-const checkText = (value: string, setting: Setting<unknown>, at: At): void => {
+const checkLength = (value: string, setting: Setting<unknown>, at: At): void => {
   if (setting.maxLength !== undefined && value.length > setting.maxLength) {
     report(at.walk, {
       code: 'settingLimit',
       path: at.path,
       params: { setting: at.name, maxLength: setting.maxLength },
     })
+  }
+}
+
+const checkTextSetting = (value: Text, setting: Setting<unknown>, at: At): void => {
+  checkText(value, at)
+  if (typeof value === 'string') {
+    checkLength(value, setting, at)
+    return
+  }
+  for (const [language, translation] of Object.entries(value)) {
+    checkLength(translation, setting, { ...at, path: `${at.path}.${language}` })
   }
 }
 
@@ -66,13 +89,13 @@ const checkValue = (value: JsonValue, setting: Setting<unknown>, at: At): void =
   }
   switch (setting.type) {
     case 'text':
-      checkText(value as string, setting, at)
+      checkTextSetting(value as Text, setting, at)
       return
     case 'number':
       checkNumber(value as number, setting, at)
       return
     case 'options':
-      checkOptions(value as SettingOption[], setting, at)
+      checkOptions(value as DocumentOption[], setting, at)
       return
     case 'option':
     case 'optionList':

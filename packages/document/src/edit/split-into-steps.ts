@@ -7,7 +7,7 @@ import type { DocumentStep, FormDocument } from '../form-document'
  *
  * @param document - The document, without steps.
  * @param step - The key and label of the step, and what else it takes, such as a description.
- * @returns The document with one step.
+ * @returns The document with one step, in the same languages.
  * @throws When the document has steps already.
  *
  * @example
@@ -22,5 +22,6 @@ export function splitIntoSteps(
   if (document.steps !== undefined) {
     failAt(DOCUMENT_PATH, 'the form has steps already.')
   }
-  return { format: document.format, steps: [{ ...step, items: document.items }] }
+  const { items, steps: _steps, ...head } = document
+  return { ...head, steps: [{ ...step, items }] }
 }

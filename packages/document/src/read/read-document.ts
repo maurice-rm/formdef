@@ -6,12 +6,14 @@ import { checkCounts } from './check-counts'
 import { checkInput } from './check-input'
 import { hasKey } from './has-key'
 import { readItems } from './read-items'
+import { readLanguages } from './read-languages'
 import { READ_LIMITS, type ReadLimits } from './read-limits'
 import { readOnlyKeys } from './read-only-keys'
 import { readShape, type Shape } from './read-shape'
 import { readSteps } from './read-steps'
+import { withOptional } from './with-optional'
 
-const DOCUMENT_KEYS = ['format', 'steps', 'items']
+const DOCUMENT_KEYS = ['format', 'languages', 'steps', 'items']
 
 const checkFormat = (value: unknown): void => {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) {
@@ -52,11 +54,20 @@ const readShapeOf = (shape: Shape): FormDocument => {
   if (hasSteps && hasItems) {
     failAt(DOCUMENT_PATH, 'expected either steps or items, not both.')
   }
+  const head = {
+    format: FORMAT_VERSION,
+    ...withOptional(
+      'languages',
+      shape.languages === undefined
+        ? undefined
+        : readLanguages(shape.languages, `${DOCUMENT_PATH}.languages`),
+    ),
+  }
   if (hasSteps) {
-    return { format: FORMAT_VERSION, steps: readSteps(shape.steps, `${DOCUMENT_PATH}.steps`) }
+    return { ...head, steps: readSteps(shape.steps, `${DOCUMENT_PATH}.steps`) }
   }
   if (hasItems) {
-    return { format: FORMAT_VERSION, items: readItems(shape.items, `${DOCUMENT_PATH}.items`) }
+    return { ...head, items: readItems(shape.items, `${DOCUMENT_PATH}.items`) }
   }
 
   return failAt(DOCUMENT_PATH, 'expected either steps or items.')

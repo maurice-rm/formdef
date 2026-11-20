@@ -4,12 +4,11 @@ import type { FormDocument, SectionItem } from '../form-document'
 
 /**
  * Turns a form with steps into one without: each step becomes a section with the step's label,
- * its condition and its items. A step's description has no place in a section and is dropped; a
- * section of a step now sits one level deeper, and one nested too deep {@link checkDocument}
- * reports.
+ * description, condition and items. A section of a step now sits one level deeper, and one nested
+ * too deep {@link checkDocument} reports.
  *
  * @param document - The document, with steps.
- * @returns The document without steps.
+ * @returns The document without steps, in the same languages.
  * @throws When the document has no steps.
  *
  * @example
@@ -18,14 +17,16 @@ import type { FormDocument, SectionItem } from '../form-document'
  * ```
  */
 export function dissolveSteps(document: FormDocument): FormDocument {
-  const steps = document.steps ?? failAt(DOCUMENT_PATH, 'the form has no steps.')
+  const { steps: given, items: _items, ...head } = document
+  const steps = given ?? failAt(DOCUMENT_PATH, 'the form has no steps.')
   const items = steps.map(
-    ({ label, visibleWhen, items: stepItems }): SectionItem => ({
+    ({ label, description, visibleWhen, items: stepItems }): SectionItem => ({
       type: 'section',
       label,
+      ...(description === undefined ? {} : { description }),
       ...(visibleWhen === undefined ? {} : { visibleWhen }),
       items: stepItems,
     }),
   )
-  return { format: document.format, items }
+  return { ...head, items }
 }
