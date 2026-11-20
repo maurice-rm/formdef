@@ -5,6 +5,7 @@ import { isOption } from '../kinds/is-option'
 import type { Setting, SettingType } from '../kinds/setting'
 import type { Text } from '../text'
 import type { Answers } from './answers'
+import { resolveFormattedText } from './resolve-formatted-text'
 import { resolveVaryingText } from './resolve-varying-text'
 import { valueFor } from './value-for'
 
@@ -18,7 +19,9 @@ const resolveOption = (option: JsonValue, context: Context): JsonValue => {
   return {
     value,
     label: resolveVaryingText(label, context),
-    ...(description === undefined ? {} : { description: resolveVaryingText(description, context) }),
+    ...(description === undefined
+      ? {}
+      : { description: resolveFormattedText(description, context) }),
   }
 }
 
@@ -39,7 +42,8 @@ const resolveTexts = (
 /**
  * The settings of a field or block for these answers, in a language: a setting that follows an
  * answer takes its case's value, a text setting takes its translation, and the texts of options
- * their case and translation.
+ * their case and translation. The description of an option is formatted, so its answers are
+ * escaped.
  */
 export function resolveSettings(
   owner: Pick<FieldItem, 'settings'>,

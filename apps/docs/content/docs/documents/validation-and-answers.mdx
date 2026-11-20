@@ -136,7 +136,7 @@ and `{ items }` without. An item is a section, with its `label` and `items`, or 
 | --- | --- |
 | `key`, `label` | the field's key and question |
 | `kind` | the name of its field kind, to format the answer by |
-| `settings` | its settings for these answers, such as the unit that applies |
+| `settings` | its settings for these answers, such as the unit that applies; the description of an option stays Markdown, with the answers it names escaped |
 | `answer` | the answer, or `undefined` when the field was left empty, holds a value of the wrong type or no option of the field |
 
 The answer carries its `valueType`: `text`, `decimal` and `date` the `value` as entered, `number`

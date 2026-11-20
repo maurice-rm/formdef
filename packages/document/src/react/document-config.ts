@@ -6,6 +6,7 @@ import type { Answers } from '../evaluate/answers'
 import { evaluate } from '../evaluate/evaluate'
 import { holds } from '../evaluate/holds'
 import { isRequired } from '../evaluate/is-required'
+import { resolveFormattedText } from '../evaluate/resolve-formatted-text'
 import { resolveSettings } from '../evaluate/resolve-settings'
 import { resolveVaryingText } from '../evaluate/resolve-varying-text'
 import { fieldsOf } from '../fields-of'
@@ -54,6 +55,9 @@ const textOf = (text: Text, build: Build): string => resolveFixedText(text, buil
 const varyingOf = (text: VaryingText, { build, answers }: { build: Build; answers: Answers }) =>
   resolveVaryingText(text, { answers, language: build.language })
 
+const markdownOf = (text: VaryingText, { build, answers }: { build: Build; answers: Answers }) =>
+  resolveFormattedText(text, { answers, language: build.language })
+
 // A description that may follow an answer reaches its slot as props of the form's values.
 const descriptionProps = (
   { description }: { description?: VaryingText | undefined },
@@ -64,7 +68,7 @@ const descriptionProps = (
     ? {}
     : {
         props: (values: unknown) => ({
-          description: format(varyingOf(description, { build, answers: build.answersOf(values) })),
+          description: format(markdownOf(description, { build, answers: build.answersOf(values) })),
         }),
       }
 
@@ -105,7 +109,7 @@ const fieldEntry = (field: FieldItem, build: Build): Entry => {
       label: varyingOf(field.label, { build, answers }),
       ...(field.description === undefined
         ? {}
-        : { description: formatText(varyingOf(field.description, { build, answers })) }),
+        : { description: formatText(markdownOf(field.description, { build, answers })) }),
       required: isRequired(field, answers),
     }
   }

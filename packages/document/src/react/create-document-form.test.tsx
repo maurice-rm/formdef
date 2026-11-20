@@ -314,6 +314,45 @@ describe('createDocumentForm without steps', () => {
     )
   })
 
+  it('fills placeholders in formatted texts with answers as typed, never as formatting', async () => {
+    const Form = createDocumentForm(
+      plain(
+        field('name', 'text', { label: 'Name' }),
+        field('note', 'text', { label: 'Note', description: 'From {name}, **checked**.' }),
+        field('house', 'choice', {
+          label: 'House',
+          settings: { options: [{ value: 'o1', label: 'Detached', description: 'Of {name}' }] },
+        }),
+      ),
+      catalog,
+    )
+    render(<Form />)
+
+    await type('Name', '[Ada](https://example.com) *x*')
+
+    expect(screen.queryByRole('link')).toBeNull()
+    expect(
+      screen.getByText('From [Ada](https://example.com) *x*, ', { exact: false }),
+    ).toBeDefined()
+    expect(screen.getByText('Of [Ada](https://example.com) *x*')).toBeDefined()
+    expect(screen.getByText('checked').tagName).toBe('STRONG')
+  })
+
+  it('fills an indented answer into a formatted text as text, not as code', async () => {
+    const Form = createDocumentForm(
+      plain(
+        field('name', 'text', { label: 'Name' }),
+        field('note', 'text', { label: 'Note', description: '{name}' }),
+      ),
+      catalog,
+    )
+    render(<Form />)
+
+    await type('Name', '    a.b')
+
+    expect(screen.getByText('a.b')).toBeDefined()
+  })
+
   it('renders in the first language without one chosen', () => {
     const translated: FormDocument = {
       format: 1,
