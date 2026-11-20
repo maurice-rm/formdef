@@ -87,6 +87,8 @@ const ENTRIES: readonly Entry[] = [
       'Position',
       'Problem',
       'ProblemCode',
+      'ReadLimits',
+      'ReadOptions',
       'readDocument',
       'removeNode',
       'renameKey',

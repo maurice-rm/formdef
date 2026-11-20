@@ -17,6 +17,9 @@ There are two checks, for two questions:
   input is no form document, naming the path of the first problem, or when its format is newer
   than this release reads. Use it on everything
   that comes from storage or a request.
+- **`readDocument` keeps the document within limits,** so a document built to be huge cannot take
+  a server down, and refuses the keys `__proto__`, `constructor` and `prototype` anywhere. Its error
+  names the limit exceeded; `limits` changes one.
 - **`checkDocument` checks the document as a form,** against the catalog, and returns every
   problem in document order; the list is empty when the document is sound. A builder lists the
   problems while a document is edited. `createDocumentForm`, `createValidator` and
@@ -29,6 +32,21 @@ declare const stored: unknown
 // ---cut---
 const document = readDocument(stored)
 const problems = checkDocument(document, catalog)
+```
+
+| Limit | Holds at most | Default |
+| --- | --- | --- |
+| `depth` | levels of nesting of objects and lists, the document being the first | `32` |
+| `items` | items of the whole document, counting those inside rows and sections | `2000` |
+| `conditions` | comparisons in all conditions together | `2000` |
+| `options` | options of one field | `1000` |
+| `textLength` | characters of one text, such as a label or a setting | `20000` |
+
+```ts
+import { readDocument } from '@formdef/document'
+declare const stored: unknown
+// ---cut---
+const document = readDocument(stored, { limits: { items: 500, textLength: 5000 } })
 ```
 
 A problem has a `code`, the `path` it is about, such as `document.steps[0].items[2].settings.unit`,

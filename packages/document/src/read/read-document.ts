@@ -2,10 +2,13 @@ import { DOCUMENT_PATH } from '../document-path'
 import { failAt } from '../fail-at'
 import type { FormDocument } from '../form-document'
 import { FORMAT_VERSION } from '../format-version'
+import { checkCounts } from './check-counts'
+import { checkInput } from './check-input'
 import { hasKey } from './has-key'
 import { readItems } from './read-items'
+import { READ_LIMITS, type ReadLimits } from './read-limits'
 import { readOnlyKeys } from './read-only-keys'
-import { readShape } from './read-shape'
+import { readShape, type Shape } from './read-shape'
 import { readSteps } from './read-steps'
 
 const DOCUMENT_KEYS = ['format', 'steps', 'items']
@@ -22,25 +25,25 @@ const checkFormat = (value: unknown): void => {
   }
 }
 
-/**
- * Reads a form document from storage, a request or a builder, and checks its shape: every key and
- * every value where the format expects it, and nothing the format does not know.
- *
- * It checks the shape only. Whether the document makes sense as a form, such as unique keys or
- * conditions on fields that exist, is a separate check.
- *
- * @param input - The parsed JSON, of unknown shape.
- * @returns A copy of the document in the current format; the input is not changed.
- * @throws When the input is not a form document, naming the path of the first problem, or when its
- *   format is newer than this release reads.
- *
- * @example
- * ```ts
- * const document = readDocument(JSON.parse(row.document))
- * ```
- */
-export function readDocument(input: unknown): FormDocument {
-  const shape = readShape(input, DOCUMENT_PATH)
+/** What {@link readDocument} takes besides the input. */
+export type ReadOptions = {
+  /**
+   * The limits the document has to keep within; a limit left out keeps its default.
+   *
+   * @defaultValue depth 32, items 2000, conditions 2000, options 1000, textLength 20000
+   */
+  limits?: { [Name in keyof ReadLimits]?: ReadLimits[Name] | undefined }
+}
+
+const limitsOf = (given: ReadOptions['limits'] = {}): ReadLimits => {
+  const limits = { ...READ_LIMITS }
+  for (const name of Object.keys(READ_LIMITS) as (keyof ReadLimits)[]) {
+    limits[name] = given[name] ?? READ_LIMITS[name]
+  }
+  return limits
+}
+
+const readShapeOf = (shape: Shape): FormDocument => {
   readOnlyKeys(shape, DOCUMENT_KEYS, DOCUMENT_PATH)
   checkFormat(shape.format)
   const hasSteps = hasKey(shape, 'steps')
@@ -57,4 +60,37 @@ export function readDocument(input: unknown): FormDocument {
   }
 
   return failAt(DOCUMENT_PATH, 'expected either steps or items.')
+}
+
+/**
+ * Reads a form document from storage, a request or a builder, and checks its shape: every key and
+ * every value where the format expects it, and nothing the format does not know. It keeps the
+ * document within limits on its nesting, its number of items, comparisons and options, and the
+ * length of its texts, refuses the keys `__proto__`, `constructor` and `prototype` anywhere, and
+ * builds the document it returns from fresh objects.
+ *
+ * It checks the shape only. Whether the document makes sense as a form, such as unique keys or
+ * conditions on fields that exist, is a separate check.
+ *
+ * @param input - The parsed JSON, of unknown shape.
+ * @param options - The limits.
+ * @param options.limits - The limits the document has to keep within; a limit left out keeps its
+ *   default.
+ * @defaultValue `options.limits`: depth 32, items 2000, conditions 2000, options 1000, textLength
+ *   20000.
+ * @returns A copy of the document in the current format; the input is not changed.
+ * @throws When the input is not a form document, naming the path of the first problem; when it is
+ *   beyond a limit, naming the limit; or when its format is newer than this release reads.
+ *
+ * @example
+ * ```ts
+ * const document = readDocument(JSON.parse(row.document), { limits: { items: 500 } })
+ * ```
+ */
+export function readDocument(input: unknown, options: ReadOptions = {}): FormDocument {
+  const limits = limitsOf(options.limits)
+  checkInput(input, { limits, path: DOCUMENT_PATH })
+  const document = readShapeOf(readShape(input, DOCUMENT_PATH))
+  checkCounts(document, limits)
+  return document
 }

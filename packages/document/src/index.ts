@@ -51,7 +51,8 @@ export { type Setting, type SettingOption, type SettingType, setting } from './k
 export type { ValueType } from './kinds/value-type'
 export { valueTypes } from './kinds/value-types'
 export type { Position } from './position'
-export { readDocument } from './read/read-document'
+export { type ReadOptions, readDocument } from './read/read-document'
+export type { ReadLimits } from './read/read-limits'
 export {
   createValidator,
   type DocumentValidator,

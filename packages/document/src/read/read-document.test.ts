@@ -250,3 +250,124 @@ describe('readDocument', () => {
     )
   })
 })
+
+const fieldOf = (key: string, extra: Record<string, unknown> = {}) => ({
+  type: 'field',
+  key,
+  kind: 'text',
+  label: 'Name',
+  ...extra,
+})
+
+const nested = (levels: number): unknown => (levels === 0 ? 'deep' : { inner: nested(levels - 1) })
+
+describe('readDocument within its limits', () => {
+  it('refuses a document nested deeper than its limit', () => {
+    const deep = { format: 1, items: [fieldOf('f1', { settings: { unit: 'kWh' } })] }
+
+    expect(() => readDocument(deep, { limits: { depth: 3 } })).toThrow(
+      'formdef: document.items[0].settings: nested more than 3 levels deep (limit depth).',
+    )
+  })
+
+  it('refuses a setting nested beyond the default depth of 32', () => {
+    const deep = { format: 1, items: [fieldOf('f1', { settings: { unit: nested(40) } })] }
+
+    expect(() => readDocument(deep)).toThrow(/nested more than 32 levels deep \(limit depth\)\.$/)
+  })
+
+  it('refuses a text longer than its limit', () => {
+    const long = { format: 1, items: [fieldOf('f1', { label: 'Living area' })] }
+
+    expect(() => readDocument(long, { limits: { textLength: 5 } })).toThrow(
+      'formdef: document.items[0].label: longer than 5 characters (limit textLength).',
+    )
+    expect(() =>
+      readDocument({ format: 1, items: [fieldOf('f1', { label: 'x'.repeat(20_001) })] }),
+    ).toThrow(/longer than 20000 characters/)
+  })
+
+  it('refuses more items than its limit, counting those inside rows and sections', () => {
+    const many = {
+      format: 1,
+      items: [fieldOf('f1'), { type: 'row', items: [fieldOf('f2')] }],
+    }
+
+    expect(readDocument(many, { limits: { items: 3 } })).toBeDefined()
+    expect(() => readDocument(many, { limits: { items: 2 } })).toThrow(
+      'formdef: document: more than 2 items (limit items).',
+    )
+  })
+
+  it('refuses more comparisons than its limit, in every condition of the document', () => {
+    const conditioned = {
+      format: 1,
+      items: [
+        fieldOf('f1'),
+        fieldOf('f2', {
+          visibleWhen: { field: 'f1', op: 'isFilled' },
+          required: { any: [{ field: 'f1', op: 'isEmpty' }] },
+        }),
+      ],
+    }
+
+    expect(readDocument(conditioned, { limits: { conditions: 2 } })).toBeDefined()
+    expect(() => readDocument(conditioned, { limits: { conditions: 1 } })).toThrow(
+      'formdef: document: more than 1 comparisons in conditions (limit conditions).',
+    )
+  })
+
+  it('refuses a field with more options than its limit', () => {
+    const options = [
+      { value: 'o1', label: 'One' },
+      { value: 'o2', label: 'Two' },
+    ]
+    const choice = { format: 1, items: [fieldOf('f1', { settings: { options } })] }
+
+    expect(() => readDocument(choice, { limits: { options: 1 } })).toThrow(
+      'formdef: document.items[0].settings.options: more than 1 options (limit options).',
+    )
+  })
+
+  it('refuses more options than its limit in each value of options that follow an answer', () => {
+    const options = [
+      { value: 'o1', label: 'One' },
+      { value: 'o2', label: 'Two' },
+    ]
+    const varying = {
+      format: 1,
+      items: [
+        fieldOf('f0'),
+        fieldOf('f1', {
+          settings: {
+            options: {
+              cases: [{ when: { field: 'f0', op: 'isFilled' }, value: [] }],
+              otherwise: options,
+            },
+          },
+        }),
+      ],
+    }
+
+    expect(() => readDocument(varying, { limits: { options: 1 } })).toThrow(
+      'formdef: document.items[1].settings.options.otherwise: more than 1 options (limit options).',
+    )
+  })
+
+  it('keeps the default of a limit given as undefined', () => {
+    const deep = { format: 1, items: [fieldOf('f1', { settings: { unit: nested(40) } })] }
+
+    expect(() => readDocument(deep, { limits: { depth: undefined } })).toThrow(/limit depth/)
+  })
+
+  it.each(['__proto__', 'constructor', 'prototype'])('refuses the key %s anywhere', (key) => {
+    const polluting = JSON.parse(
+      `{ "format": 1, "items": [{ "type": "field", "key": "f1", "kind": "text", "label": "Name", "settings": { "${key}": { "polluted": true } } }] }`,
+    )
+
+    expect(() => readDocument(polluting)).toThrow(
+      `formdef: document.items[0].settings.${key}: the key "${key}" is not allowed.`,
+    )
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined()
+  })
+})
