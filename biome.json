@@ -145,6 +145,26 @@
       }
     },
     {
+      "includes": ["packages/document/src/**", "!packages/document/src/react/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./react", "./react/**", "../react", "../react/**"],
+                    "message": "formdef: the root entry of @formdef/document runs on a server; it imports nothing from react/"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["packages/core/src/config/**"],
       "linter": {
         "rules": {

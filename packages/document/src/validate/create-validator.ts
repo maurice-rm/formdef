@@ -52,6 +52,8 @@ export type DocumentValidator = {
     readonly vendor: string
     /** Checks the answers of the document. */
     readonly validate: (values: unknown) => ValidationResult
+    /** The type of the answers, for inference only; never set at runtime. */
+    readonly types?: { readonly input: DocumentValues; readonly output: DocumentValues } | undefined
   }
 }
 

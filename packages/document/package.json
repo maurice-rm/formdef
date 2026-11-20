@@ -52,9 +52,14 @@
     "@formdef/core": "workspace:*",
     "@formdef/tsconfig": "workspace:*",
     "@tanstack/react-form": "catalog:",
+    "@testing-library/dom": "catalog:",
+    "@testing-library/react": "catalog:",
     "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "jsdom": "catalog:",
     "publint": "0.3.25",
     "react": "catalog:",
+    "react-dom": "catalog:",
     "tsdown": "0.23.2",
     "typescript": "catalog:",
     "vitest": "catalog:"
@@ -68,6 +73,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./react": {
+      "@formdef/source": "./src/react/index.ts",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -75,6 +85,10 @@
       ".": {
         "import": "./dist/index.js",
         "require": "./dist/index.cjs"
+      },
+      "./react": {
+        "import": "./dist/react.js",
+        "require": "./dist/react.cjs"
       },
       "./package.json": "./package.json"
     }
