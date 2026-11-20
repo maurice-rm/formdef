@@ -116,6 +116,8 @@ const PlainContent = ({
   return Body === undefined ? content : <Body>{content}</Body>
 }
 
+const REQUIRED_PATHS_TOPIC = 'requiredPaths'
+
 const isAsyncValidation = (validation: unknown): boolean =>
   typeof validation === 'object' && validation !== null && 'async' in validation
     ? validation.async === true
@@ -129,7 +131,7 @@ const requiredPathsOf = (binding: FormBinding, config: ConfigInput): ReadonlySet
     widgets: binding.parts.widgets,
   })
   if ('problem' in result) {
-    warnOnce(config, result.problem)
+    warnOnce(config, REQUIRED_PATHS_TOPIC, result.problem)
 
     return new Set()
   }

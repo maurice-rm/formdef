@@ -1067,6 +1067,39 @@ describe('createForm with steps, errors and focus', () => {
     )
   })
 
+  it('warns about a hidden step with errors even after warning that its key starts another', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: schema.extend({ heatingExtra: z.object({ note: z.string() }) }),
+        defaultValues: { ...DEFAULT_VALUES, contact: { name: 'Ada' }, heatingExtra: { note: '' } },
+        fields: {
+          ...FIELDS,
+          heatingExtra: { fields: { note: { widget: 'text', props: { label: 'Note' } } } },
+        },
+        layout: [
+          STEPS[0],
+          STEPS[1],
+          { ...STEPS[2], visibleWhen: () => false },
+          { step: 'heatingExtra', label: 'Extra' },
+        ],
+      }),
+    )
+    render(<Checklist />)
+
+    await click('Next')
+    await click('Next')
+    await click('Submit')
+
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the step "heating" starts the root key "heatingExtra"; its form group would count the fields of "heatingExtra" as its own.',
+    )
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the form fails to submit through errors in the hidden step "heating": heating.kind. What a condition hides must accept every value it can hold.',
+    )
+  })
+
   it('warns once when a step key starts another root key, whose fields its group would count', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const Checklist = createForm(

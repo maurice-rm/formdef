@@ -83,6 +83,7 @@ type LayoutKindProps = {
 const ARRAY_MODE = 'array'
 
 const DROPPED_EXTRA = 'passes extra props to an item that has no single widget to receive them'
+const DROPPED_EXTRA_TOPIC = 'droppedExtra'
 
 const renderNothing = (): ReactNode => null
 
@@ -110,7 +111,11 @@ const Item = ({ parts, form, entry, path, index, extra }: ItemProps): ReactNode 
   const item = own.item as object
   const reachesWidget = extra !== undefined && takesExtra(item)
   if (extra !== undefined && !reachesWidget) {
-    warnOnce(entry, `formdef: the array frame of "${path}" ${DROPPED_EXTRA}; they are dropped.`)
+    warnOnce(
+      entry,
+      DROPPED_EXTRA_TOPIC,
+      `formdef: the array frame of "${path}" ${DROPPED_EXTRA}; they are dropped.`,
+    )
   }
   const itemPath = childPath(path, index)
 

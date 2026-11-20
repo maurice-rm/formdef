@@ -84,6 +84,10 @@ const NO_STEPPER = 'formdef: the form has steps, but no structure.stepper is reg
 
 const HIDDEN_VALUES_RULE = 'What a condition hides must accept every value it can hold.'
 
+const WIDER_KEY_TOPIC = 'widerKey'
+const UNRENDERED_ERRORS_TOPIC = 'unrenderedErrors'
+const HIDDEN_STEP_TOPIC = 'hiddenStep'
+
 const isUnder = (path: string, key: string): boolean =>
   path === key || path.startsWith(`${key}.`) || path.startsWith(`${key}[`)
 
@@ -194,6 +198,7 @@ const warnAboutWiderKeys = (steps: RootSteps, fields: FieldsProps['fields']): vo
     if (wider !== undefined) {
       warnOnce(
         step,
+        WIDER_KEY_TOPIC,
         `formdef: the step "${step.step}" starts the root key "${wider}"; its form group would count the fields of "${wider}" as its own.`,
       )
     }
@@ -208,6 +213,7 @@ const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): 
   if (erring.length === 0 && holdsOwnError(form, key)) {
     warnOnce(
       owner,
+      UNRENDERED_ERRORS_TOPIC,
       `formdef: the step "${key}" is held back by an error on the step itself, which no field shows. A rule across the fields of a step puts its path on one of them.`,
     )
     return
@@ -218,12 +224,11 @@ const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): 
 
   warnOnce(
     owner,
+    UNRENDERED_ERRORS_TOPIC,
     `formdef: the step "${key}" is held back by errors on fields it does not render: ${erring.join(', ')}. ${HIDDEN_VALUES_RULE}`,
   )
 }
 
-// A step is hidden by its condition or left out after a step that submits; its entry is a stable
-// owner the other warnings do not use.
 type SubmitState = { fieldMeta: StepFormState['fieldMeta']; shownKeys: ReadonlySet<string> }
 
 const warnAboutHiddenSteps = (steps: RootSteps, { fieldMeta, shownKeys }: SubmitState): void => {
@@ -232,6 +237,7 @@ const warnAboutHiddenSteps = (steps: RootSteps, { fieldMeta, shownKeys }: Submit
     if (erring.length > 0 && !shownKeys.has(step.step)) {
       warnOnce(
         step,
+        HIDDEN_STEP_TOPIC,
         `formdef: the form fails to submit through errors in the hidden step "${step.step}": ${erring.join(', ')}. ${HIDDEN_VALUES_RULE}`,
       )
     }
