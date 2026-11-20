@@ -52,7 +52,13 @@ export {
 export type { FieldKind } from './kinds/field-kind'
 export type { Operator } from './kinds/operator'
 export { type Rule, rule } from './kinds/rule'
-export { type Setting, type SettingOption, type SettingType, setting } from './kinds/setting'
+export {
+  type FormattedSetting,
+  type Setting,
+  type SettingOption,
+  type SettingType,
+  setting,
+} from './kinds/setting'
 export type { ValueType } from './kinds/value-type'
 export { valueTypes } from './kinds/value-types'
 export type { Position } from './position'

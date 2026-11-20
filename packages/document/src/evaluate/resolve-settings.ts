@@ -2,7 +2,7 @@ import type { FieldItem } from '../form-document'
 import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
 import { isOption } from '../kinds/is-option'
-import type { Setting, SettingType } from '../kinds/setting'
+import type { Setting } from '../kinds/setting'
 import type { Text } from '../text'
 import type { Answers } from './answers'
 import { resolveFormattedText } from './resolve-formatted-text'
@@ -28,12 +28,13 @@ const resolveOption = (option: JsonValue, context: Context): JsonValue => {
 // `checkDocument` has checked each value against its setting's type before it is resolved.
 const resolveTexts = (
   value: JsonValue,
-  { type, context }: { type: SettingType | undefined; context: Context },
+  { setting, context }: { setting: Setting<unknown> | undefined; context: Context },
 ): JsonValue => {
-  if (type === 'text') {
-    return resolveVaryingText(value as Text, context)
+  if (setting?.type === 'text') {
+    const resolve = setting.formatted === true ? resolveFormattedText : resolveVaryingText
+    return resolve(value as Text, context)
   }
-  if (type === 'options' && Array.isArray(value)) {
+  if (setting?.type === 'options' && Array.isArray(value)) {
     return value.map((option) => resolveOption(option, context))
   }
   return value
@@ -42,8 +43,8 @@ const resolveTexts = (
 /**
  * The settings of a field or block for these answers, in a language: a setting that follows an
  * answer takes its case's value, a text setting takes its translation, and the texts of options
- * their case and translation. The description of an option is formatted, so its answers are
- * escaped.
+ * their case and translation. A formatted text setting and the description of an option are
+ * Markdown, so their answers are escaped.
  */
 export function resolveSettings(
   owner: Pick<FieldItem, 'settings'>,
@@ -53,7 +54,7 @@ export function resolveSettings(
   return Object.fromEntries(
     Object.entries(owner.settings ?? {}).map(([name, value]) => {
       const plain = isVarying(value) ? valueFor(value, context.answers) : value
-      return [name, resolveTexts(plain, { type: kind.settings[name]?.type, context })]
+      return [name, resolveTexts(plain, { setting: kind.settings[name], context })]
     }),
   )
 }

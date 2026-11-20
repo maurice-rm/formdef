@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 declare const SETTING_VALUE: unique symbol
 
 /** What every setting takes. */
@@ -59,6 +61,8 @@ export type Setting<TValue> = {
   varies: boolean
   /** For text: the most characters. */
   maxLength?: number
+  /** For text: whether it is written in limited Markdown and renders formatted. */
+  formatted?: boolean
   /** For a number: whether it is a whole number. */
   integer?: boolean
   /** For options: the fewest options. */
@@ -85,14 +89,29 @@ type Filled<TValue, TRequired extends boolean> = TRequired extends true
   ? TValue
   : TValue | undefined
 
+/**
+ * A text setting written in limited Markdown, which only a block kind takes; its `props` receive
+ * it rendered.
+ *
+ * @typeParam TRequired - Whether the setting must be set; without, its value may be `undefined`.
+ */
+export type FormattedSetting<TRequired extends boolean = boolean> = Setting<
+  Filled<ReactNode, TRequired>
+> & {
+  /** Marks the setting as formatted. */
+  formatted: true
+}
+
 /** The settings {@link setting} builds. */
 type Settings = {
   /**
-   * A line of text, such as a unit or a placeholder.
+   * A line of text, such as a unit or a placeholder, or, formatted, a text in limited Markdown,
+   * such as the body of a notice.
    *
    * @typeParam TRequired - Whether the setting must be set; without, its value may be `undefined`.
+   * @typeParam TFormatted - Whether the text is formatted; only a block kind takes one.
    */
-  text: <TRequired extends boolean = false>(
+  text: <TRequired extends boolean = false, TFormatted extends boolean = false>(
     options: ValueSettingOptions<TRequired> & {
       /**
        * The most characters.
@@ -100,8 +119,15 @@ type Settings = {
        * @defaultValue no limit
        */
       maxLength?: number
+      /**
+       * Whether the text is written in limited Markdown, as descriptions are, and renders
+       * formatted; its answers show as typed. Only a block kind takes a formatted text.
+       *
+       * @defaultValue `false`
+       */
+      formatted?: TFormatted
     },
-  ) => Setting<Filled<string, TRequired>>
+  ) => TFormatted extends true ? FormattedSetting<TRequired> : Setting<Filled<string, TRequired>>
   /**
    * A number, such as a bound.
    *
@@ -183,7 +209,7 @@ const createSetting = <TValue>(
  * ```
  */
 export const setting: Settings = {
-  text: (options) => createSetting('text', options),
+  text: (options) => createSetting('text', options) as never,
   number: (options) => createSetting('number', options),
   boolean: (options) => createSetting('boolean', options),
   options: (options) => createSetting('options', { ...options, required: true }),

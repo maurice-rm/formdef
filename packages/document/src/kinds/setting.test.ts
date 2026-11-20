@@ -19,6 +19,16 @@ describe('setting', () => {
     })
   })
 
+  it('marks a text setting written in limited Markdown as formatted', () => {
+    expect(setting.text({ label: 'Text', formatted: true })).toEqual({
+      type: 'text',
+      label: 'Text',
+      required: false,
+      varies: false,
+      formatted: true,
+    })
+  })
+
   it('defaults to optional and not varying', () => {
     expect(setting.boolean({ label: 'Several lines' })).toEqual({
       type: 'boolean',

@@ -172,6 +172,32 @@ export const catalog = createCatalog(registry, { fields: [], blocks: [notice] })
 - Its settings work as a field kind's do: they may follow an answer, take placeholders and be
   translated. A block has no value, rules or `required`.
 - A block's key shares the keys of fields: `renameKey` and `dependentsOf` treat it like a field.
+- `setting.text({ formatted: true })` takes a text in limited Markdown, as descriptions do, and
+  `props` receives it rendered, as a `ReactNode`; the answers its placeholders name show as typed.
+  Only a block kind takes a formatted text, since a widget renders its own texts.
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { defineBlockKind, setting } from '@formdef/document'
+import type { ReactNode } from 'react'
+declare const Notice: (props: { children: ReactNode }) => null
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: {},
+  formComponents: { notice: Notice },
+})
+// ---cut---
+const notice = defineBlockKind(registry, {
+  name: 'notice',
+  label: 'Notice',
+  component: 'notice',
+  settings: { body: setting.text({ label: 'Text', required: true, formatted: true }) },
+  props: ({ body }) => ({ children: body }),
+})
+```
 
 ## Settings
 
@@ -181,7 +207,7 @@ against them.
 
 | Setting | Holds | Constraint |
 | --- | --- | --- |
-| `setting.text` | a line of text, such as a unit or a placeholder | `maxLength` |
+| `setting.text` | a line of text, such as a unit or a placeholder, or, `formatted`, a text in limited Markdown for a block | `maxLength` |
 | `setting.number` | a number, such as a bound | `integer` |
 | `setting.boolean` | a switch, such as whether a text has several lines | none |
 | `setting.options` | the choices of a choice field, each a `value` the builder generates, a `label` and an optional `description` | `minCount` |

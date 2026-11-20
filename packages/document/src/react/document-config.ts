@@ -77,17 +77,26 @@ const formatOption = (option: unknown): unknown =>
     ? { ...option, description: formatText(option.description) }
     : option
 
-// The settings are resolved to strings; the descriptions of options render formatted.
-const withFormattedOptions = (
+const formatSetting = (value: JsonValue, setting: Setting<unknown> | undefined): unknown => {
+  if (setting?.formatted === true && typeof value === 'string') {
+    return formatText(value)
+  }
+  if (setting?.type === 'options' && Array.isArray(value)) {
+    return value.map(formatOption)
+  }
+  return value
+}
+
+// The settings are resolved to strings; formatted texts and the descriptions of options render
+// formatted.
+const withFormattedTexts = (
   settings: Readonly<Record<string, JsonValue>>,
   kind: { readonly settings: Readonly<Record<string, Setting<unknown>>> },
 ): Readonly<Record<string, unknown>> =>
   Object.fromEntries(
     Object.entries(settings).map(([name, value]) => [
       name,
-      kind.settings[name]?.type === 'options' && Array.isArray(value)
-        ? value.map(formatOption)
-        : value,
+      formatSetting(value, kind.settings[name]),
     ]),
   )
 
@@ -105,7 +114,7 @@ const fieldEntry = (field: FieldItem, build: Build): Entry => {
     const answers = build.answersOf(values)
     const settings = resolveSettings(field, kind, { answers, language: build.language })
     return {
-      ...kind.props(withFormattedOptions(settings, kind)),
+      ...kind.props(withFormattedTexts(settings, kind)),
       label: varyingOf(field.label, { build, answers }),
       ...(field.description === undefined
         ? {}
@@ -121,7 +130,7 @@ const blockEntry = (block: BlockItem, build: Build): Entry => {
   const props = (values: unknown): Entry => {
     const answers = build.answersOf(values)
     const settings = resolveSettings(block, kind, { answers, language: build.language })
-    return kind.props(withFormattedOptions(settings, kind))
+    return kind.props(withFormattedTexts(settings, kind))
   }
   return { component: kind.component, props, ...visibility(block, build) }
 }

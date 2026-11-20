@@ -82,6 +82,7 @@ const ENTRIES: readonly Entry[] = [
       'FieldKind',
       'FieldKindDefinition',
       'FORMAT_VERSION',
+      'FormattedSetting',
       'FormDocument',
       'insertNode',
       'IssueParams',

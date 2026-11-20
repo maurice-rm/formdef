@@ -115,6 +115,14 @@ const notice = defineBlockKind(registry, {
   props: ({ body }) => ({ children: body }),
 })
 
+const callout = defineBlockKind(registry, {
+  name: 'callout',
+  label: 'Callout',
+  component: 'notice',
+  settings: { body: setting.text({ label: 'Text', required: true, formatted: true }) },
+  props: ({ body }) => ({ children: body }),
+})
+
 const fieldKinds = [
   defineFieldKind(registry, {
     name: 'text',
@@ -139,7 +147,7 @@ const fieldKinds = [
     props: ({ options }) => ({ options }),
   }),
 ]
-const catalog = createCatalog(registry, { fields: fieldKinds, blocks: [notice] })
+const catalog = createCatalog(registry, { fields: fieldKinds, blocks: [notice, callout] })
 
 const field = (key: string, kind: string, extra: Partial<FieldItem> = {}): FieldItem => ({
   type: 'field',
@@ -502,6 +510,28 @@ describe('createDocumentForm with blocks', () => {
 
     expect(screen.getByRole('complementary', { name: 'Notice' }).textContent).toBe(
       'Hello Ada, in the Apartment block.',
+    )
+  })
+
+  it('renders the formatting of a formatted text setting, with answers as typed', async () => {
+    const Form = createDocumentForm(
+      plain(field('name', 'text', { label: 'Name' }), {
+        type: 'block',
+        key: 'b1',
+        kind: 'callout',
+        settings: { body: 'Hello {name}, see [why](https://example.com/why).' },
+      }),
+      catalog,
+    )
+    render(<Form />)
+
+    await type('Name', '**Ada**')
+
+    expect(screen.getByRole('link', { name: 'why' }).getAttribute('href')).toBe(
+      'https://example.com/why',
+    )
+    expect(screen.getByRole('complementary', { name: 'Notice' }).textContent).toBe(
+      'Hello **Ada**, see why.',
     )
   })
 })

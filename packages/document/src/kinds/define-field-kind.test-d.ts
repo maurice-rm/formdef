@@ -73,6 +73,17 @@ describe('defineFieldKind', () => {
     })
   })
 
+  it('rejects a formatted text setting, which only block kinds take', () => {
+    defineFieldKind(registry, {
+      name: 'note',
+      label: 'Note',
+      widget: 'text',
+      valueType: valueTypes.text,
+      // @ts-expect-error a field kind takes no formatted text setting
+      settings: { hint: setting.text({ label: 'Hint', formatted: true }) },
+    })
+  })
+
   it('passes options as a list of value and label', () => {
     defineFieldKind(registry, {
       name: 'choice',

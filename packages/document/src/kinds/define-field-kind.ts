@@ -48,6 +48,13 @@ type HasItsOptions<TValueType, TSettings> = TValueType extends { readsOptions: t
     : false
   : true
 
+// A widget renders its own texts, so a field kind takes no formatted text setting.
+type PlainSettingsPart<TSettings> = true extends {
+  [Name in keyof TSettings]: TSettings[Name] extends { formatted: true } ? true : false
+}[keyof TSettings]
+  ? { settings: never }
+  : unknown
+
 type ValueTypePart<TWidget, TSettings, TValueType> =
   ServesWidget<TValueType, ValueOf<TWidget>> extends true
     ? HasItsOptions<TValueType, TSettings> extends true
@@ -98,7 +105,8 @@ export type FieldKindDefinition<
    */
   valueType: TValueType
   /**
-   * The settings a person may change on a field of this kind.
+   * The settings a person may change on a field of this kind; a formatted text is for block kinds
+   * only.
    *
    * @defaultValue none
    */
@@ -113,7 +121,8 @@ export type FieldKindDefinition<
     settings: SettingValues<TSettings>,
   ) => (Rule<NonNullable<ValueOf<TWidgets[TName]>>> | undefined)[]
 } & PropsPart<TWidgets[TName], TSettings> &
-  ValueTypePart<TWidgets[TName], TSettings, TValueType>
+  ValueTypePart<TWidgets[TName], TSettings, TValueType> &
+  PlainSettingsPart<TSettings>
 
 const NO_PROPS = (): Readonly<Record<string, unknown>> => ({})
 const NO_RULES = (): readonly (Rule<never> | undefined)[] => []
