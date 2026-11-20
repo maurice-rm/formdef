@@ -123,6 +123,7 @@ second step.
 | `insertNode(document, position, node)` | Inserts a step or item. The last index is its place among its siblings; one past the last appends. |
 | `removeNode(document, position)` | Removes a step or item with everything inside it. |
 | `moveNode(document, from, to)` | Moves a step or item. `to` is counted in the document after the node was taken out, as a drag and drop list reports it. |
+| `duplicateNode(document, position)` | Puts a copy of a step or item right after it, its labels as they are. Every key inside the copy is new, and what inside the copy names a field of it names the copy's; what names a field outside it stays. |
 | `updateNode(document, position, update)` | Replaces a step or item with what `update` returns, such as the field with a new label. |
 | `changeKind(document, position, kind)` | Gives a field another field kind. It keeps the settings the new kind has, by name, and drops the others. |
 | `renameKey(document, from, to)` | Renames a step, field or block key, and the field in every condition and placeholder that names it. |

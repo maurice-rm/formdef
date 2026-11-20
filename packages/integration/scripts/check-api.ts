@@ -91,6 +91,7 @@ const ENTRIES: readonly Entry[] = [
       'DocumentStep',
       'DocumentValidator',
       'DocumentValues',
+      'duplicateNode',
       'Ending',
       'EndingOptions',
       'endingOf',
