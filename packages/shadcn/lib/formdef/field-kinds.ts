@@ -21,6 +21,12 @@ const options = setting.options({ label: 'Options', minCount: 1 })
 const placeholder = setting.text({ label: 'Placeholder' })
 const maxLength = setting.number({ label: 'Most characters', integer: true })
 
+const HEADING_LEVELS = [2, 3, 4, 5, 6] as const
+
+// A level outside the headings a page may hold leaves the Heading at its own level.
+const headingLevelOf = (level: number | undefined): (typeof HEADING_LEVELS)[number] | undefined =>
+  HEADING_LEVELS.find((each) => each === level)
+
 const text = defineFieldKind(registry, {
   name: 'text',
   label: 'Short text',
@@ -152,8 +158,15 @@ const heading = defineBlockKind(registry, {
   name: 'heading',
   label: 'Heading',
   component: 'Heading',
-  settings: { text: setting.text({ label: 'Text', required: true, varies: true }) },
-  props: ({ text }) => ({ children: text }),
+  settings: {
+    text: setting.text({ label: 'Text', required: true, varies: true }),
+    level: setting.number({
+      label: 'Level',
+      description: 'From 2, right below the page title, to 6; 3 sits below a step.',
+      integer: true,
+    }),
+  },
+  props: ({ text, level }) => ({ children: text, level: headingLevelOf(level) }),
 })
 
 const rail = defineDisplayKind(registry, {

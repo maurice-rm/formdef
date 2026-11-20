@@ -52,6 +52,7 @@ const document: FormDocument = {
       settings: { latest: '2026-01-01' },
     },
     { type: 'block', key: 'b1', kind: 'heading', settings: { text: 'Heating' } },
+    { type: 'block', key: 'b3', kind: 'heading', settings: { text: 'Contact', level: 2 } },
     {
       type: 'block',
       key: 'b2',
@@ -90,6 +91,7 @@ describe('the shipped field kinds', () => {
     render(<Form />)
 
     expect(screen.getByRole('heading', { level: 3, name: 'Heating' })).toBeDefined()
+    expect(screen.getByRole('heading', { level: 2, name: 'Contact' })).toBeDefined()
     expect(screen.getByRole('note').textContent).toBe(
       'Before you startHave the meter reading at hand.',
     )
