@@ -73,6 +73,9 @@ describe('the shipped field kinds', () => {
     expect(screen.getByRole('checkbox', { name: 'I agree' })).toBeDefined()
     expect(screen.getByRole('radiogroup', { name: 'House type' })).toBeDefined()
     expect(screen.getAllByRole('checkbox', { name: 'Apartment block' })).toHaveLength(1)
+    expect(screen.getByRole('textbox', { name: 'Notes' }).tagName).toBe('TEXTAREA')
+    expect(screen.getByRole('combobox', { name: 'Roof' })).toBeDefined()
+    expect(screen.getByRole('button', { name: /Built/ })).toBeDefined()
   })
 
   it('validate answers with the rules their settings give', () => {

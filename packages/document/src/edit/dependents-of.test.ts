@@ -60,4 +60,10 @@ describe('dependentsOf', () => {
     ])
     expect(dependentsOf(document, [1])).toEqual([])
   })
+
+  it('refuses a position that holds nothing', () => {
+    expect(() => dependentsOf(document, [2])).toThrow(
+      'formdef: position [2]: there is nothing here.',
+    )
+  })
 })

@@ -111,6 +111,15 @@ describe('readDocument', () => {
     )
   })
 
+  it.each([0, 1.5, '1', -1])(
+    'refuses the format %j, which is no whole number of 1 or more',
+    (format) => {
+      expect(() => readDocument({ ...PLAIN, format })).toThrow(
+        'formdef: document.format: expected a whole number of 1 or more.',
+      )
+    },
+  )
+
   it('refuses a document with both steps and items', () => {
     expect(() => readDocument({ ...PLAIN, steps: [] })).toThrow(
       'formdef: document: expected either steps or items, not both.',

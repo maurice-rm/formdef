@@ -259,6 +259,29 @@ describe('createDocumentForm without steps', () => {
     await submit()
     expect(onSubmit).toHaveBeenCalledWith({ house: 'o1', name: 'Ada', flats: '' })
   })
+
+  it('validates when the validation option says, here on every change', async () => {
+    const document = plain(field('name', 'text', { label: 'Name', required: true }))
+    const OnChange = createDocumentForm(document, kinds, { validation: { mode: 'onChange' } })
+    const OnSubmit = createDocumentForm(document, kinds)
+
+    render(<OnChange />)
+    await type('Name *', 'Ada')
+    await type('Name *', '')
+    expect(screen.getByRole('alert').textContent).toBe('This field is required.')
+
+    cleanup()
+    render(<OnSubmit />)
+    await type('Name *', 'Ada')
+    await type('Name *', '')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('refuses a document with problems', () => {
+    expect(() => createDocumentForm(plain(field('name', 'signature')), kinds)).toThrow(
+      'formdef: document: the document has 1 problem; checkDocument lists it.',
+    )
+  })
 })
 
 describe('createDocumentForm with steps', () => {
