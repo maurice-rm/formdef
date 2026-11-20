@@ -28,13 +28,17 @@ describe('setting', () => {
     })
   })
 
-  it('keeps a hint and the constraints a builder enforces', () => {
+  it('keeps a description and the constraints a builder enforces', () => {
     expect(
-      setting.text({ label: 'Placeholder', hint: 'Shown inside the empty field', maxLength: 80 }),
+      setting.text({
+        label: 'Placeholder',
+        description: 'Shown inside the empty field',
+        maxLength: 80,
+      }),
     ).toEqual({
       type: 'text',
       label: 'Placeholder',
-      hint: 'Shown inside the empty field',
+      description: 'Shown inside the empty field',
       required: false,
       varies: false,
       maxLength: 80,

@@ -41,7 +41,7 @@ export type ProblemCode =
   | 'settingLimit'
 
 /**
- * One problem `checkDocument` found in a form document: what it is about, where, and what an
+ * One problem {@link checkDocument} found in a form document: what it is about, where, and what an
  * error text names. The text itself comes from the project, keyed by the code.
  */
 export type Problem = {

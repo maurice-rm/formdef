@@ -161,9 +161,11 @@ afterEach(() => {
 })
 
 describe('createDocumentForm without steps', () => {
-  it('renders each field with its label, hint and whether it is required', () => {
+  it('renders each field with its label, description and whether it is required', () => {
     const Form = createDocumentForm(
-      plain(field('name', 'text', { label: 'Name', hint: 'As on the bell', required: true })),
+      plain(
+        field('name', 'text', { label: 'Name', description: 'As on the bell', required: true }),
+      ),
       kinds,
     )
     render(<Form />)

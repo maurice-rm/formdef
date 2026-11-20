@@ -13,7 +13,7 @@ const KEY_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
  * const field = { type: 'field', key: createKey('f'), kind: 'text', label: 'Name' }
  * ```
  */
-export const createKey = (prefix: string): string => {
+export function createKey(prefix: string): string {
   const random = crypto.getRandomValues(new Uint8Array(KEY_LENGTH))
   return prefix + Array.from(random, (byte) => KEY_ALPHABET[byte % KEY_ALPHABET.length]).join('')
 }

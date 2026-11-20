@@ -1,4 +1,4 @@
-import type { ValueType } from '../kinds/field-kind'
+import type { ValueType } from '../kinds/value-type'
 
 const EMPTY_VALUES: Record<ValueType, unknown> = {
   text: '',
@@ -11,7 +11,9 @@ const EMPTY_VALUES: Record<ValueType, unknown> = {
 }
 
 /**
- * The value a field of this value type starts with, which `isFilled` reads as no answer: the
- * empty value the shadcn widgets declare for these types.
+ * The value a field of this value type starts with, which {@link isFilled} reads as no answer:
+ * the empty value the shadcn widgets declare for these types.
  */
-export const emptyValueOf = (valueType: ValueType): unknown => EMPTY_VALUES[valueType]
+export function emptyValueOf(valueType: ValueType): unknown {
+  return EMPTY_VALUES[valueType]
+}

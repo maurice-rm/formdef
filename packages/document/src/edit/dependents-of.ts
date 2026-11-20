@@ -3,18 +3,18 @@ import type { FieldItem, FormDocument } from '../form-document'
 import { conditionsOf } from './conditions-of'
 import { fieldsNamed } from './fields-named'
 import { isField } from './is-field'
+import { nodeAt } from './node-at'
 import type { Position } from './position'
-import { nodeAt } from './tree'
 
-/** A condition that names a field of a node, as `dependentsOf` lists it. */
+/** A condition that names a field of a node, as {@link dependentsOf} lists it. */
 export type Dependent = {
-  /** Where the condition sits, as `checkDocument` names paths. */
+  /** Where the condition sits, as {@link checkDocument} names paths. */
   path: string
   /** The key of the field it names. */
   field: string
 }
 
-const isWithin = (position: readonly number[], ancestor: readonly number[]): boolean =>
+const isWithin = (position: Position, ancestor: Position): boolean =>
   ancestor.every((index, depth) => position[depth] === index)
 
 /**
@@ -26,7 +26,7 @@ const isWithin = (position: readonly number[], ancestor: readonly number[]): boo
  * @param document - The document.
  * @param position - Where the node sits.
  * @returns The conditions that depend on the node's fields; empty when none do.
- * @throws Error when no node sits at the position.
+ * @throws When no node sits at the position.
  *
  * @example
  * ```ts
@@ -34,7 +34,7 @@ const isWithin = (position: readonly number[], ancestor: readonly number[]): boo
  * if (dependents.length > 0) askBeforeRemoving(dependents)
  * ```
  */
-export const dependentsOf = (document: FormDocument, position: Position): Dependent[] => {
+export function dependentsOf(document: FormDocument, position: Position): Dependent[] {
   const node = nodeAt(document, position)
   const fields: FieldItem[] = isField(node) ? [node] : fieldsOf(node.items)
   const keys = new Set(fields.map((field) => field.key))

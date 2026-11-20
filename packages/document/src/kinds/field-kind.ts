@@ -1,27 +1,12 @@
 import type { Rule } from './rule'
 import type { Setting } from './setting'
-
-/**
- * What kind of answer a field kind gives, which decides the operators a condition may compare it
- * with and how an answer is described: text, one choice of its options, several choices, a
- * boolean, a number, a decimal written as text, or a date as an ISO string.
- */
-export type ValueType = (typeof VALUE_TYPES)[number]
-
-export const VALUE_TYPES: readonly [
-  'text',
-  'choice',
-  'choices',
-  'boolean',
-  'number',
-  'decimal',
-  'date',
-] = ['text', 'choice', 'choices', 'boolean', 'number', 'decimal', 'date']
+import type { ValueType } from './value-type'
 
 /**
  * A field kind of a form document: what a field of that kind is. It binds a widget of the
  * registry to the props built from the field's settings, the rules that check its value, and the
- * settings a person may change. Built with `defineFieldKind`, collected with `createFieldKinds`.
+ * settings a person may change. Built with {@link defineFieldKind}, collected with
+ * {@link createFieldKinds}.
  *
  * @typeParam TRegistry - The registry the field kind's widget belongs to.
  */
@@ -39,7 +24,7 @@ export type FieldKind<TRegistry> = {
   /** The settings a person may change on a field of this kind, by name. */
   readonly settings: Readonly<Record<string, Setting<unknown>>>
   /** The widget props for a field with these settings. */
-  props(settings: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>>
+  props: (settings: Readonly<Record<string, unknown>>) => Readonly<Record<string, unknown>>
   /** The rules for a field with these settings; a rule not set is `undefined`. */
-  rules(settings: Readonly<Record<string, unknown>>): readonly (Rule<never> | undefined)[]
+  rules: (settings: Readonly<Record<string, unknown>>) => readonly (Rule<never> | undefined)[]
 }

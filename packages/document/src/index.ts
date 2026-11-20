@@ -40,11 +40,12 @@ export {
   type FieldKindDefinition,
   type SettingValues,
 } from './kinds/define-field-kind'
-export type { FieldKind, ValueType } from './kinds/field-kind'
+export type { FieldKind } from './kinds/field-kind'
 export { type Rule, rule } from './kinds/rule'
 export { type Setting, type SettingOption, type SettingType, setting } from './kinds/setting'
+export type { ValueType } from './kinds/value-type'
 export type { ListOperator, PresenceOperator, ValueOperator } from './operators'
-export { readDocument } from './read-document'
+export { readDocument } from './read/read-document'
 export {
   createValidator,
   type DocumentValidator,

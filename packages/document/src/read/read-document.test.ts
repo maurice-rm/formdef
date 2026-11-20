@@ -41,7 +41,7 @@ const STEPPED = {
               key: 'f4',
               kind: 'count',
               label: 'Residents',
-              hint: 'Everyone living there',
+              description: 'Everyone living there',
             },
           ],
         },
@@ -177,7 +177,7 @@ describe('readDocument', () => {
     }
 
     expect(() => readDocument(broken)).toThrow(
-      'formdef: document.items[0].visibleWhen.op: unknown operator resembles.',
+      'formdef: document.items[0].visibleWhen.op: unknown operator "resembles".',
     )
   })
 

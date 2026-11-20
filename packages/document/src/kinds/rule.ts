@@ -1,6 +1,6 @@
-import { numberOf } from '../decimal'
+import { dayOf } from '../day-of'
 import type { JsonValue } from '../form-document'
-import { dayOf } from '../iso-date'
+import { numberOf } from '../number-of'
 
 /**
  * A fixed check of a field kind on a filled value. It carries a code and the parameters an error

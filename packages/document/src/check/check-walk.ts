@@ -1,6 +1,6 @@
 import type { FieldItem } from '../form-document'
 import type { FieldKind } from '../kinds/field-kind'
-import type { Problem, ProblemCode } from './problem'
+import type { Problem } from './problem'
 
 /** A field already passed in document order, which later conditions may compare. */
 export type EarlierField = {
@@ -9,16 +9,10 @@ export type EarlierField = {
 }
 
 /** What a check of one document carries along while it walks the document in order. */
-export type Walk = {
-  kindOf: (name: string) => FieldKind<unknown> | undefined
+export type CheckWalk = {
+  /** The field kind of this name, or `undefined` when none is registered. */
+  kindNamed: (name: string) => FieldKind<unknown> | undefined
   allFieldKeys: ReadonlySet<string>
   earlier: Map<string, EarlierField>
   problems: Problem[]
-}
-
-export const report = (
-  walk: Walk,
-  problem: { code: ProblemCode; path: string; params?: Problem['params'] },
-): void => {
-  walk.problems.push({ ...problem, params: problem.params ?? {} })
 }

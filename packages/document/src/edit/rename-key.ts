@@ -7,8 +7,12 @@ import { isStep } from './is-step'
 type Rename = { from: string; to: string }
 
 const renameIn = (condition: Condition, rename: Rename): Condition => {
-  if ('all' in condition) return { all: condition.all.map((entry) => renameIn(entry, rename)) }
-  if ('any' in condition) return { any: condition.any.map((entry) => renameIn(entry, rename)) }
+  if ('all' in condition) {
+    return { all: condition.all.map((entry) => renameIn(entry, rename)) }
+  }
+  if ('any' in condition) {
+    return { any: condition.any.map((entry) => renameIn(entry, rename)) }
+  }
   return condition.field === rename.from ? { ...condition, field: rename.to } : condition
 }
 
@@ -50,7 +54,8 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
 /**
  * Renames the key of a step or field in a form document, and the field in every condition that
  * names it, leaving the document given as it was. A step and a field that share the key are both
- * renamed. A key that is taken already, or not a plain name, `checkDocument` reports afterwards.
+ * renamed. A key that is taken already, or not a plain name, {@link checkDocument} reports
+ * afterwards.
  *
  * @param document - The document.
  * @param from - The key now.
@@ -62,7 +67,7 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
  * const next = renameKey(document, 'f1', 'houseType')
  * ```
  */
-export const renameKey = (document: FormDocument, from: string, to: string): FormDocument => {
+export function renameKey(document: FormDocument, from: string, to: string): FormDocument {
   const rename = { from, to }
   return document.steps === undefined
     ? {

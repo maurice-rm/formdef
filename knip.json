@@ -25,7 +25,7 @@
     },
     "packages/document": {
       "vitest": {
-        "entry": ["src/**/*.test.ts", "src/**/*.test-d.ts"]
+        "entry": ["src/**/*.test.{ts,tsx}", "src/**/*.test-d.{ts,tsx}"]
       }
     },
     "packages/shadcn": {

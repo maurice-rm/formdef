@@ -35,12 +35,12 @@ export type FieldItem = {
   kind: string
   /** The question shown above the control. */
   label: string
-  /** A hint between the question and the control. */
-  hint?: string
+  /** A description between the question and the control. */
+  description?: string
   /**
    * Whether the field must be filled in: always, never, or under a condition.
    *
-   * @defaultValue false
+   * @defaultValue `false`
    */
   required?: boolean | Condition
   /** The condition under which the field shows; without it, the field always shows. */
@@ -98,7 +98,7 @@ export type DocumentNode = DocumentStep | DocumentItem
  * A form described as data: JSON with a format version, for a builder and for forms stored in a
  * database. It holds either steps, filled in one at a time, or the items of a plain form.
  *
- * A document from storage or from a request is read with `readDocument`, which checks its shape.
+ * A document from storage or from a request is read with {@link readDocument}, which checks its shape.
  *
  * @example
  * ```ts

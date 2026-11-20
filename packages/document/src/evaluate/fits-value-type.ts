@@ -1,5 +1,6 @@
-import { dayOf, isIsoDate } from '../iso-date'
-import type { ValueType } from '../kinds/field-kind'
+import { dayOf } from '../day-of'
+import { isIsoDate } from '../is-iso-date'
+import type { ValueType } from '../kinds/value-type'
 
 // An ISO time after the day: hours and minutes, optional seconds and fraction, optional offset.
 const ISO_TIME = /^T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?(Z|[+-]([01]\d|2[0-3]):[0-5]\d)?$/
@@ -7,7 +8,9 @@ const ISO_TIME = /^T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?(Z|[+-]([01]\d|2[0
 const isText = (value: unknown): value is string => typeof value === 'string'
 
 const isDate = (value: unknown): boolean => {
-  if (!isText(value)) return false
+  if (!isText(value)) {
+    return false
+  }
   const time = value.slice(dayOf(value).length)
   return isIsoDate(dayOf(value)) && (time === '' || ISO_TIME.test(time))
 }
@@ -23,5 +26,6 @@ const FITS: Record<ValueType, (value: unknown) => boolean> = {
 }
 
 /** Whether a value has the type of answer a value type stands for, such as text for a decimal. */
-export const fitsValueType = (value: unknown, valueType: ValueType): boolean =>
-  FITS[valueType](value)
+export function fitsValueType(value: unknown, valueType: ValueType): boolean {
+  return FITS[valueType](value)
+}

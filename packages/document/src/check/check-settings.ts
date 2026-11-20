@@ -1,22 +1,23 @@
-import { pathTo } from '../document-path'
 import type { FieldItem, JsonValue, Varying } from '../form-document'
+import { isIsoDate } from '../is-iso-date'
 import { isVarying } from '../is-varying'
-import { isIsoDate } from '../iso-date'
 import type { FieldKind } from '../kinds/field-kind'
+import { isOption } from '../kinds/is-option'
 import type { Setting } from '../kinds/setting'
+import { pathTo } from '../path-to'
 import { checkCondition } from './check-condition'
-import { isOption } from './option-values'
-import { report, type Walk } from './walk'
+import type { CheckWalk } from './check-walk'
+import { report } from './report'
 
-type At = { walk: Walk; path: string; name: string }
+type At = { walk: CheckWalk; path: string; name: string }
 
-const mismatch = ({ walk, path, name }: At, type: string): void => {
+const reportMismatch = ({ walk, path, name }: At, type: string): void => {
   report(walk, { code: 'settingMismatch', path, params: { setting: name, type } })
 }
 
-const checkOptions = (value: JsonValue, descriptor: Setting<unknown>, at: At): void => {
+const checkOptions = (value: JsonValue, setting: Setting<unknown>, at: At): void => {
   if (!Array.isArray(value) || !value.every(isOption)) {
-    mismatch(at, 'options')
+    reportMismatch(at, 'options')
     return
   }
   const seen = new Set<string>()
@@ -30,35 +31,35 @@ const checkOptions = (value: JsonValue, descriptor: Setting<unknown>, at: At): v
     }
     seen.add(option.value)
   })
-  if (descriptor.minCount !== undefined && value.length < descriptor.minCount) {
+  if (setting.minCount !== undefined && value.length < setting.minCount) {
     report(at.walk, {
       code: 'settingLimit',
       path: at.path,
-      params: { setting: at.name, minCount: descriptor.minCount },
+      params: { setting: at.name, minCount: setting.minCount },
     })
   }
 }
 
-const checkText = (value: JsonValue, descriptor: Setting<unknown>, at: At): void => {
+const checkText = (value: JsonValue, setting: Setting<unknown>, at: At): void => {
   if (typeof value !== 'string') {
-    mismatch(at, 'text')
+    reportMismatch(at, 'text')
     return
   }
-  if (descriptor.maxLength !== undefined && value.length > descriptor.maxLength) {
+  if (setting.maxLength !== undefined && value.length > setting.maxLength) {
     report(at.walk, {
       code: 'settingLimit',
       path: at.path,
-      params: { setting: at.name, maxLength: descriptor.maxLength },
+      params: { setting: at.name, maxLength: setting.maxLength },
     })
   }
 }
 
-const checkNumber = (value: JsonValue, descriptor: Setting<unknown>, at: At): void => {
+const checkNumber = (value: JsonValue, setting: Setting<unknown>, at: At): void => {
   if (typeof value !== 'number') {
-    mismatch(at, 'number')
+    reportMismatch(at, 'number')
     return
   }
-  if (descriptor.integer === true && !Number.isInteger(value)) {
+  if (setting.integer === true && !Number.isInteger(value)) {
     report(at.walk, {
       code: 'settingLimit',
       path: at.path,
@@ -67,59 +68,65 @@ const checkNumber = (value: JsonValue, descriptor: Setting<unknown>, at: At): vo
   }
 }
 
-const checkValue = (value: JsonValue, descriptor: Setting<unknown>, at: At): void => {
-  switch (descriptor.type) {
+const checkValue = (value: JsonValue, setting: Setting<unknown>, at: At): void => {
+  switch (setting.type) {
     case 'text':
-      checkText(value, descriptor, at)
+      checkText(value, setting, at)
       return
     case 'number':
-      checkNumber(value, descriptor, at)
+      checkNumber(value, setting, at)
       return
     case 'boolean':
-      if (typeof value !== 'boolean') mismatch(at, 'boolean')
+      if (typeof value !== 'boolean') {
+        reportMismatch(at, 'boolean')
+      }
       return
     case 'date':
-      if (!isIsoDate(value)) mismatch(at, 'date')
+      if (!isIsoDate(value)) {
+        reportMismatch(at, 'date')
+      }
       return
     case 'options':
-      checkOptions(value, descriptor, at)
+      checkOptions(value, setting, at)
   }
 }
 
-const checkSetting = (value: JsonValue | Varying, descriptor: Setting<unknown>, at: At): void => {
+const checkSetting = (value: JsonValue | Varying, setting: Setting<unknown>, at: At): void => {
   if (!isVarying(value)) {
-    checkValue(value, descriptor, at)
+    checkValue(value, setting, at)
     return
   }
-  if (!descriptor.varies) {
+  if (!setting.varies) {
     report(at.walk, { code: 'notVarying', path: at.path, params: { setting: at.name } })
     return
   }
   value.cases.forEach((entry, index) => {
     checkCondition(entry.when, pathTo.caseWhen(at.path, index), at.walk)
-    checkValue(entry.value, descriptor, { ...at, path: `${pathTo.case(at.path, index)}.value` })
+    checkValue(entry.value, setting, { ...at, path: `${pathTo.case(at.path, index)}.value` })
   })
-  checkValue(value.otherwise, descriptor, { ...at, path: `${at.path}.otherwise` })
+  checkValue(value.otherwise, setting, { ...at, path: `${at.path}.otherwise` })
 }
 
 /**
  * Checks the settings of one field against its field kind: each known setting in the kind's
  * order, then those the kind does not have.
  */
-export const checkSettings = (
+export function checkSettings(
   field: FieldItem,
   kind: FieldKind<unknown>,
-  { walk, path }: { walk: Walk; path: string },
-): void => {
+  { walk, path }: { walk: CheckWalk; path: string },
+): void {
   const values = field.settings ?? {}
 
-  for (const [name, descriptor] of Object.entries(kind.settings)) {
+  for (const [name, setting] of Object.entries(kind.settings)) {
     const settingPath = pathTo.setting(path, name)
     const value = values[name]
-    if (value === undefined && descriptor.required) {
+    if (value === undefined && setting.required) {
       report(walk, { code: 'missingSetting', path: settingPath, params: { setting: name } })
     }
-    if (value !== undefined) checkSetting(value, descriptor, { walk, path: settingPath, name })
+    if (value !== undefined) {
+      checkSetting(value, setting, { walk, path: settingPath, name })
+    }
   }
 
   for (const name of Object.keys(values)) {

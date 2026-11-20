@@ -6,9 +6,9 @@ import type { FieldKind } from './field-kind'
 /**
  * The field kind of a field.
  *
- * @throws Error when the field kind is not registered.
+ * @throws When the field kind is not registered.
  */
-export const kindOf = (kinds: FieldKinds<unknown>, field: FieldItem): FieldKind<unknown> => {
+export function kindOf(kinds: FieldKinds<unknown>, field: FieldItem): FieldKind<unknown> {
   const kind = kinds.byName(field.kind)
-  return kind ?? failAt(`${field.key}.kind`, `the field kind ${field.kind} is not registered.`)
+  return kind ?? failAt(`${field.key}.kind`, `the field kind "${field.kind}" is not registered.`)
 }

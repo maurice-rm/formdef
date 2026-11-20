@@ -13,7 +13,6 @@ export type ValueOperator = (typeof VALUE_OPERATORS)[number]
 /** The operators of a condition that compare a field with a list of option values. */
 export type ListOperator = (typeof LIST_OPERATORS)[number]
 
-/** Every operator of a condition. */
 export type Operator = PresenceOperator | ValueOperator | ListOperator
 
 export const PRESENCE_OPERATORS: readonly ['isFilled', 'isEmpty', 'isTrue', 'isFalse'] = [

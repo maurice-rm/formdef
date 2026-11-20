@@ -1,28 +1,36 @@
-import { DOCUMENT_PATH, pathTo } from '../document-path'
+import { DOCUMENT_PATH } from '../document-path'
 import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
 import type { FieldKinds } from '../kinds/create-field-kinds'
+import { pathTo } from '../path-to'
 import { checkCondition } from './check-condition'
 import { checkSettings } from './check-settings'
+import type { CheckWalk } from './check-walk'
 import type { Problem } from './problem'
-import { report, type Walk } from './walk'
+import { report } from './report'
+
+type At = { walk: CheckWalk; path: string }
+
+type Level = { at: At; seenKeys: Set<string>; sections: number }
 
 const MOST_SECTION_LEVELS = 2
-
-type At = { walk: Walk; path: string }
 
 // A key becomes a path in the form's values, where a dot or a bracket would nest it.
 const PLAIN_KEY = /^[^.[\]]+$/
 
 const checkKey = (key: string, { walk, path }: At): void => {
-  if (PLAIN_KEY.test(key)) return
+  if (PLAIN_KEY.test(key)) {
+    return
+  }
   report(walk, { code: 'invalidKey', path: `${path}.key`, params: { key } })
 }
 
 // TanStack's form group of a step counts every field whose path starts with the step's key.
 const checkOverlap = (key: string, stepKeys: readonly string[], { walk, path }: At): void => {
   const start = stepKeys.find((other) => other !== '' && other !== key && key.startsWith(other))
-  if (start === undefined) return
+  if (start === undefined) {
+    return
+  }
   report(walk, { code: 'overlappingKey', path: `${path}.key`, params: { key, start } })
 }
 
@@ -42,7 +50,7 @@ const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>)
   seenKeys.add(field.key)
   checkKey(field.key, { walk, path })
 
-  const kind = walk.kindOf(field.kind)
+  const kind = walk.kindNamed(field.kind)
   if (kind === undefined) {
     report(walk, { code: 'unknownKind', path: `${path}.kind`, params: { kind: field.kind } })
   }
@@ -50,15 +58,17 @@ const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>)
   if (typeof field.required === 'object') {
     checkCondition(field.required, pathTo.required(path), walk)
   }
-  if (kind !== undefined) checkSettings(field, kind, { walk, path })
+  if (kind !== undefined) {
+    checkSettings(field, kind, { walk, path })
+  }
 
   walk.earlier.set(field.key, { field, kind })
 }
 
-type Level = { at: At; seenKeys: Set<string>; sections: number }
-
 const checkItems = (items: readonly DocumentItem[], level: Level): void => {
-  if (items.length === 0) report(level.at.walk, { code: 'empty', path: level.at.path })
+  if (items.length === 0) {
+    report(level.at.walk, { code: 'empty', path: level.at.path })
+  }
   items.forEach((item, index) => {
     checkItem(item, { ...level, at: { ...level.at, path: `${level.at.path}[${index}]` } })
   })
@@ -81,7 +91,7 @@ const checkItem = (item: DocumentItem, level: Level): void => {
   })
 }
 
-const checkSteps = (steps: readonly DocumentStep[], walk: Walk): void => {
+const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
   const allStepKeys = steps.map((step) => step.key)
   const stepKeys = new Set<string>()
   const fieldKeys = new Set<string>()
@@ -104,8 +114,8 @@ const checkSteps = (steps: readonly DocumentStep[], walk: Walk): void => {
 }
 
 /**
- * Checks a form document as a form, once `readDocument` has checked its shape, and reports every
- * problem in document order: keys used twice, conditions on fields that do not exist or come
+ * Checks a form document as a form, once {@link readDocument} has checked its shape, and reports
+ * every problem in document order: keys used twice, conditions on fields that do not exist or come
  * later, operators and compared values that do not fit the field compared, empty steps, sections
  * and rows, sections nested too deep, unknown field kinds, and settings that are unknown, missing,
  * of the wrong type or outside their constraints.
@@ -113,7 +123,7 @@ const checkSteps = (steps: readonly DocumentStep[], walk: Walk): void => {
  * A builder lists the problems while a document is edited; rendering refuses a document that has
  * any.
  *
- * @param document - The document, as `readDocument` returns it.
+ * @param document - The document, as {@link readDocument} returns it.
  * @param kinds - The field kinds the document's fields are of.
  * @returns Every problem found; empty when the document is sound.
  *
@@ -123,11 +133,11 @@ const checkSteps = (steps: readonly DocumentStep[], walk: Walk): void => {
  * if (problems.length > 0) showProblems(problems)
  * ```
  */
-export const checkDocument = (document: FormDocument, kinds: FieldKinds<unknown>): Problem[] => {
+export function checkDocument(document: FormDocument, kinds: FieldKinds<unknown>): Problem[] {
   const items =
     document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
-  const walk: Walk = {
-    kindOf: (name) => kinds.byName(name),
+  const walk: CheckWalk = {
+    kindNamed: (name) => kinds.byName(name),
     allFieldKeys: new Set(fieldsOf(items).map((field) => field.key)),
     earlier: new Map(),
     problems: [],

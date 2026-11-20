@@ -1,6 +1,5 @@
-import { optionOf } from '../check/option-values'
 import { refuseProblems } from '../check/refuse-problems'
-import { type DocumentValues, nestValues } from '../document-values'
+import type { DocumentValues } from '../document-values'
 import { evaluate, type ShownField } from '../evaluate/evaluate'
 import { fitsValueType } from '../evaluate/fits-value-type'
 import { isFilled } from '../evaluate/is-filled'
@@ -8,6 +7,8 @@ import { isMissing } from '../evaluate/is-missing'
 import type { FormDocument, JsonValue } from '../form-document'
 import type { FieldKinds } from '../kinds/create-field-kinds'
 import { isChoice } from '../kinds/is-choice'
+import { optionOf } from '../kinds/option-of'
+import { nestValues } from '../nest-values'
 import { DEFAULT_MESSAGES, FALLBACK_MESSAGE, type Messages } from './messages'
 
 /**
@@ -58,7 +59,7 @@ export type DocumentValidator = {
   }
 }
 
-/** What `createValidator` takes besides the document and its field kinds. */
+/** What {@link createValidator} takes besides the document and its field kinds. */
 export type ValidatorOptions = {
   /**
    * The error texts, by issue code; a code left out keeps its English text, and a code without
@@ -108,12 +109,15 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues =>
  * option of a choice, or fails the first of its field kind's rules, with the settings that apply
  * to the answers.
  *
- * @param document - The document, as `readDocument` returns it.
+ * @param document - The document, as {@link readDocument} returns it.
  * @param kinds - The field kinds the document's fields are of.
  * @param options - The error texts.
+ * @param options.messages - The error texts, by issue code; a code left out keeps its English
+ *   text, and a code without any text gets a general one.
+ * @defaultValue `options.messages`: the English texts.
  * @returns The validator; it returns the answers of the fields that show, nested like the values
  *   given, or every issue in document order.
- * @throws Error when the document has problems, as `checkDocument` reports them.
+ * @throws When the document has problems, as {@link checkDocument} reports them.
  *
  * @example
  * ```ts
@@ -123,17 +127,19 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues =>
  * await saveAnswers(result.value)
  * ```
  */
-export const createValidator = (
+export function createValidator(
   document: FormDocument,
   kinds: FieldKinds<unknown>,
   options: ValidatorOptions = {},
-): DocumentValidator => {
+): DocumentValidator {
   refuseProblems(document, kinds)
   const messages: Messages = { ...DEFAULT_MESSAGES, ...options.messages }
 
   const issueOf = (shown: ShownField): ValidationIssue | undefined => {
     const failure = failureOf(shown)
-    if (failure === undefined) return undefined
+    if (failure === undefined) {
+      return undefined
+    }
     const message = messages[failure.code]?.(failure.params) ?? FALLBACK_MESSAGE
     return { message, path: shown.path, ...failure }
   }

@@ -63,9 +63,9 @@ export const fieldKinds = createFieldKinds(registry, [area, dropdown])
   the field with and how its answer is described.
 - A `choice` or `choices` field kind reads its options from a setting named `options`; without one,
   these value types do not compile.
-- `props` builds the widget's props from the values of the settings. The field's label, hint and
-  whether it is required reach the widget on their own, as `label`, `description` and `required`,
-  so `props` leaves them out. It is optional unless the widget needs a prop.
+- `props` builds the widget's props from the values of the settings. The field's label,
+  description and whether it is required reach the widget on their own, as `label`,
+  `description` and `required`, so `props` leaves them out. It is optional unless the widget needs a prop.
 - `rules` builds the [rules](#rules) from the values of the settings.
 - `createFieldKinds` collects the field kinds of one registry. It throws when two share a name or
   one was defined with another registry.
@@ -87,7 +87,7 @@ against them.
 | `setting.options` | the choices of a choice field, each a `value` the builder generates and a `label` | `minCount` |
 | `setting.date` | a date as an ISO string, such as the earliest date allowed | none |
 
-- Every setting takes a `label` and a `hint` for the settings panel.
+- Every setting takes a `label` and a `description` for the settings panel.
 - `text`, `number` and `date` take `required`: a document has to set it, and `props` and `rules`
   receive its value without `undefined`. `options` is always required; a `boolean` may be left out.
 - `text`, `number` and `date` take `varies`: the setting may then

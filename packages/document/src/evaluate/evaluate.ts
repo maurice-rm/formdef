@@ -22,7 +22,14 @@ export type ShownField = {
   settings: Readonly<Record<string, JsonValue>>
 }
 
-type Walk = {
+/** What a document's values come to: the fields that show, and the answers conditions compare. */
+export type Evaluation = {
+  /** The fields that show, in document order. */
+  shown: ShownField[]
+  answers: Answers
+}
+
+type EvaluationWalk = {
   kinds: FieldKinds<unknown>
   answers: Map<string, Answer>
   shown: ShownField[]
@@ -36,10 +43,10 @@ type Container = {
 const objectOf = (value: unknown): Readonly<Record<string, unknown>> =>
   isPlainObject(value) ? value : {}
 
-const isShown = (item: { visibleWhen?: Condition }, walk: Walk): boolean =>
+const isShown = (item: { visibleWhen?: Condition }, walk: EvaluationWalk): boolean =>
   item.visibleWhen === undefined || holds(item.visibleWhen, walk.answers)
 
-const walkField = (field: FieldItem, container: Container, walk: Walk): void => {
+const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk): void => {
   const kind = kindOf(walk.kinds, field)
   const value = container.values[field.key]
 
@@ -56,19 +63,21 @@ const walkField = (field: FieldItem, container: Container, walk: Walk): void => 
   }
 }
 
-const walkItems = (items: readonly DocumentItem[], container: Container, walk: Walk): void => {
+const walkItems = (
+  items: readonly DocumentItem[],
+  container: Container,
+  walk: EvaluationWalk,
+): void => {
   for (const item of items) {
-    if (!isShown(item, walk)) continue
-    if (item.type === 'field') walkField(item, container, walk)
-    else walkItems(item.items, container, walk)
+    if (!isShown(item, walk)) {
+      continue
+    }
+    if (item.type === 'field') {
+      walkField(item, container, walk)
+    } else {
+      walkItems(item.items, container, walk)
+    }
   }
-}
-
-/** What a document's values come to: the fields that show, and the answers conditions compare. */
-export type Evaluation = {
-  /** The fields that show, in document order. */
-  shown: ShownField[]
-  answers: Answers
 }
 
 /**
@@ -76,14 +85,14 @@ export type Evaluation = {
  * around it show; a field that does not show counts as empty in the conditions after it, whatever
  * value it still holds.
  *
- * @throws Error when a field is of a field kind that is not registered.
+ * @throws When a field is of a field kind that is not registered.
  */
-export const evaluate = (
+export function evaluate(
   document: FormDocument,
   kinds: FieldKinds<unknown>,
   values: unknown,
-): Evaluation => {
-  const walk: Walk = { kinds, answers: new Map(), shown: [] }
+): Evaluation {
+  const walk: EvaluationWalk = { kinds, answers: new Map(), shown: [] }
   const root = objectOf(values)
 
   if (document.steps === undefined) {
@@ -91,7 +100,9 @@ export const evaluate = (
     return walk
   }
   for (const step of document.steps) {
-    if (!isShown(step, walk)) continue
+    if (!isShown(step, walk)) {
+      continue
+    }
     walkItems(step.items, { values: objectOf(root[step.key]), path: [step.key] }, walk)
   }
   return walk

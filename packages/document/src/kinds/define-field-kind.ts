@@ -1,10 +1,11 @@
 import type { Registry, ValueOf } from '@formdef/core'
 import type { ComponentType } from 'react'
 
-import type { FieldKind, ValueType } from './field-kind'
+import type { FieldKind } from './field-kind'
 import type { ChoiceValueType } from './is-choice'
 import type { Rule } from './rule'
 import type { Setting, SettingOption } from './setting'
+import type { ValueType } from './value-type'
 
 // biome-ignore lint/suspicious/noExplicitAny: a registry of any widgets, form components and slots.
 type AnyRegistry = Registry<any, any, any>
@@ -70,7 +71,7 @@ type PropsPart<TWidget, TSettings> =
       }
 
 /**
- * What `defineFieldKind` takes.
+ * What {@link defineFieldKind} takes.
  *
  * @typeParam TWidgets - The widgets of the registry.
  * @typeParam TName - The name of the widget that renders the field kind.
@@ -123,7 +124,7 @@ const NO_RULES = (): readonly (Rule<never> | undefined)[] => []
  * @typeParam TSettings - The field kind's settings.
  * @param registry - The registry the widget belongs to; the same one renders the documents.
  * @param definition - The field kind.
- * @returns The field kind, to collect with `createFieldKinds`.
+ * @returns The field kind, to collect with {@link createFieldKinds}.
  *
  * @example
  * ```ts
@@ -138,14 +139,14 @@ const NO_RULES = (): readonly (Rule<never> | undefined)[] => []
  * })
  * ```
  */
-export const defineFieldKind = <
+export function defineFieldKind<
   TRegistry extends AnyRegistry,
   TName extends keyof WidgetsOf<TRegistry> & string,
   TSettings extends Settings = Record<never, never>,
 >(
   registry: TRegistry,
   definition: FieldKindDefinition<WidgetsOf<TRegistry>, TName, TSettings>,
-): FieldKind<TRegistry> => {
+): FieldKind<TRegistry> {
   const { name, label, widget, valueType, settings, rules } = definition
   const props = (definition as { props?: FieldKind<TRegistry>['props'] }).props
 

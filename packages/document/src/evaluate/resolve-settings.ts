@@ -9,13 +9,14 @@ const valueFor = (varying: Varying, answers: Answers): JsonValue => {
 }
 
 /** A field's settings for these answers: a setting that follows an answer takes its case's value. */
-export const resolveSettings = (
+export function resolveSettings(
   field: FieldItem,
   answers: Answers,
-): Readonly<Record<string, JsonValue>> =>
-  Object.fromEntries(
+): Readonly<Record<string, JsonValue>> {
+  return Object.fromEntries(
     Object.entries(field.settings ?? {}).map(([name, value]) => [
       name,
       isVarying(value) ? valueFor(value, answers) : value,
     ]),
   )
+}

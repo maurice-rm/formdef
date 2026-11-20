@@ -1,9 +1,12 @@
-import { DOCUMENT_PATH } from './document-path'
-import { failAt } from './fail-at'
-import type { FormDocument } from './form-document'
-import { FORMAT_VERSION } from './format-version'
-import { readItems, readSteps } from './read/read-items'
-import { hasKey, readOnlyKeys, readShape } from './read/reader'
+import { DOCUMENT_PATH } from '../document-path'
+import { failAt } from '../fail-at'
+import type { FormDocument } from '../form-document'
+import { FORMAT_VERSION } from '../format-version'
+import { hasKey } from './has-key'
+import { readItems } from './read-items'
+import { readOnlyKeys } from './read-only-keys'
+import { readShape } from './read-shape'
+import { readSteps } from './read-steps'
 
 const DOCUMENT_KEYS = ['format', 'steps', 'items']
 
@@ -29,22 +32,24 @@ const checkFormat = (value: unknown): void => {
  *
  * @param input - The parsed JSON, of unknown shape.
  * @returns A copy of the document in the current format; the input is not changed.
- * @throws Error when the input is not a form document, naming the path of the first problem, or
- *   when its format is newer than this release reads.
+ * @throws When the input is not a form document, naming the path of the first problem, or when its
+ *   format is newer than this release reads.
  *
  * @example
  * ```ts
  * const document = readDocument(JSON.parse(row.document))
  * ```
  */
-export const readDocument = (input: unknown): FormDocument => {
+export function readDocument(input: unknown): FormDocument {
   const shape = readShape(input, DOCUMENT_PATH)
   readOnlyKeys(shape, DOCUMENT_KEYS, DOCUMENT_PATH)
   checkFormat(shape.format)
   const hasSteps = hasKey(shape, 'steps')
   const hasItems = hasKey(shape, 'items')
 
-  if (hasSteps && hasItems) failAt(DOCUMENT_PATH, 'expected either steps or items, not both.')
+  if (hasSteps && hasItems) {
+    failAt(DOCUMENT_PATH, 'expected either steps or items, not both.')
+  }
   if (hasSteps) {
     return { format: FORMAT_VERSION, steps: readSteps(shape.steps, `${DOCUMENT_PATH}.steps`) }
   }

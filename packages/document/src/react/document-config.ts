@@ -1,5 +1,5 @@
 import type { Condition } from '../condition'
-import { type DocumentValues, nestValues } from '../document-values'
+import type { DocumentValues } from '../document-values'
 import type { Answers } from '../evaluate/answers'
 import { emptyValueOf } from '../evaluate/empty-value-of'
 import { evaluate } from '../evaluate/evaluate'
@@ -10,6 +10,7 @@ import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
 import type { FieldKinds } from '../kinds/create-field-kinds'
 import { kindOf } from '../kinds/kind-of'
+import { nestValues } from '../nest-values'
 import type { DocumentValidator } from '../validate/create-validator'
 
 type Entry = Readonly<Record<string, unknown>>
@@ -32,7 +33,9 @@ type Build = {
 
 const visibility = (item: { visibleWhen?: Condition }, build: Build): Entry => {
   const condition = item.visibleWhen
-  if (condition === undefined) return {}
+  if (condition === undefined) {
+    return {}
+  }
   return { visibleWhen: (values: unknown) => holds(condition, build.answersOf(values)) }
 }
 
@@ -43,7 +46,7 @@ const fieldEntry = (field: FieldItem, build: Build): Entry => {
     return {
       ...kind.props(resolveSettings(field, answers)),
       label: field.label,
-      ...(field.hint === undefined ? {} : { description: field.hint }),
+      ...(field.description === undefined ? {} : { description: field.description }),
       required: isRequired(field, answers),
     }
   }
@@ -52,8 +55,12 @@ const fieldEntry = (field: FieldItem, build: Build): Entry => {
 
 const layoutOf = (items: readonly DocumentItem[], build: Build): unknown[] =>
   items.map((item) => {
-    if (item.type === 'field') return item.key
-    if (item.type === 'row') return { row: layoutOf(item.items, build), ...visibility(item, build) }
+    if (item.type === 'field') {
+      return item.key
+    }
+    if (item.type === 'row') {
+      return { row: layoutOf(item.items, build), ...visibility(item, build) }
+    }
     return { section: item.label, layout: layoutOf(item.items, build), ...visibility(item, build) }
   })
 
@@ -97,11 +104,11 @@ const plainConfig = (items: readonly DocumentItem[], build: Build): Parts => ({
  * it has steps, and each field's empty value as its default. Conditions are read from the answers
  * as the validator reads them.
  */
-export const documentConfig = (
+export function documentConfig(
   document: FormDocument,
   kinds: FieldKinds<unknown>,
   schema: DocumentValidator,
-): DocumentConfig => {
+): DocumentConfig {
   const build: Build = {
     kinds,
     answersOf: (values) => evaluate(document, kinds, values).answers,

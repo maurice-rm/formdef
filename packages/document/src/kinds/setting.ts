@@ -5,11 +5,11 @@ type SettingOptions = {
   /** The setting's name in a builder's settings panel. */
   label: string
   /**
-   * A hint under the name.
+   * A description under the name.
    *
    * @defaultValue none
    */
-  hint?: string
+  description?: string
 }
 
 /** What a setting that may be left empty or follow an answer takes. */
@@ -17,13 +17,13 @@ type ValueSettingOptions<TRequired extends boolean> = SettingOptions & {
   /**
    * Whether the setting must be set.
    *
-   * @defaultValue false
+   * @defaultValue `false`
    */
   required?: TRequired
   /**
    * Whether the setting may follow an answer, through `cases` and `otherwise` in the document.
    *
-   * @defaultValue false
+   * @defaultValue `false`
    */
   varies?: boolean
 }
@@ -43,8 +43,8 @@ export type Setting<TValue> = {
   type: SettingType
   /** The setting's name in a builder's settings panel. */
   label: string
-  /** A hint under the name. */
-  hint?: string
+  /** A description under the name. */
+  description?: string
   /** Whether the setting must be set. */
   required: boolean
   /** Whether the setting may follow an answer. */
@@ -72,7 +72,7 @@ type Filled<TValue, TRequired extends boolean> = TRequired extends true
   ? TValue
   : TValue | undefined
 
-/** The settings `setting` builds. */
+/** The settings {@link setting} builds. */
 type Settings = {
   /**
    * A line of text, such as a unit or a placeholder.
@@ -99,7 +99,7 @@ type Settings = {
       /**
        * Whether only whole numbers are allowed.
        *
-       * @defaultValue false
+       * @defaultValue `false`
        */
       integer?: boolean
     },
@@ -130,7 +130,7 @@ type Settings = {
   ) => Setting<Filled<string, TRequired>>
 }
 
-const describe = <TValue>(
+const createSetting = <TValue>(
   type: SettingType,
   {
     required = false,
@@ -152,9 +152,9 @@ const describe = <TValue>(
  * ```
  */
 export const setting: Settings = {
-  text: (options) => describe('text', options),
-  number: (options) => describe('number', options),
-  boolean: (options) => describe('boolean', options),
-  options: (options) => describe('options', { ...options, required: true }),
-  date: (options) => describe('date', options),
+  text: (options) => createSetting('text', options),
+  number: (options) => createSetting('number', options),
+  boolean: (options) => createSetting('boolean', options),
+  options: (options) => createSetting('options', { ...options, required: true }),
+  date: (options) => createSetting('date', options),
 }

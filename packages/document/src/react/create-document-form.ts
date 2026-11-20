@@ -16,7 +16,10 @@ import { type DocumentConfig, documentConfig } from './document-config'
  */
 export type DocumentForm = (props: FormProps<DocumentValidator>) => ReactNode
 
-/** What `createDocumentForm` takes besides the document: what `createValidator` takes, and more. */
+/**
+ * What {@link createDocumentForm} takes besides the document: what {@link createValidator} takes,
+ * and more.
+ */
 export type DocumentFormOptions = ValidatorOptions & {
   /**
    * When the answers are validated, as a form config's `validation`.
@@ -33,18 +36,23 @@ type CreatesForms = {
 /**
  * Turns a form document into a form component of the field kinds' registry, through its
  * `createForm`: a document with steps renders through the registered stepper, one without as a
- * plain form. Each field renders with its field kind's widget, label, hint and the props its
- * settings give; conditions, required fields and settings that follow an answer update as the
- * answers change. The form validates with `createValidator`, so fields that do not show are not
- * validated, and starts with each field's empty value. `onSubmit` receives the form's values,
+ * plain form. Each field renders with its field kind's widget, label, description and the props
+ * its settings give; conditions, required fields and settings that follow an answer update as the
+ * answers change. The form validates with {@link createValidator}, so fields that do not show are
+ * not validated, and starts with each field's empty value. `onSubmit` receives the form's values,
  * which still hold what was entered in fields that no longer show; the validator's `value` holds
  * the answers of the fields that show, which is what a server keeps.
  *
- * @param document - The document, as `readDocument` returns it.
+ * @param document - The document, as {@link readDocument} returns it.
  * @param kinds - The field kinds the document's fields are of, with the registry that renders them.
  * @param options - The error texts and when the answers are validated.
+ * @param options.messages - The error texts, by issue code; a code left out keeps its English
+ *   text, and a code without any text gets a general one.
+ * @param options.validation - When the answers are validated, as a form config's `validation`.
+ * @defaultValue `options.messages`: the English texts; `options.validation`:
+ *   `{ mode: 'revalidate' }`.
  * @returns The form component.
- * @throws Error when the document has problems, as `checkDocument` reports them.
+ * @throws When the document has problems, as {@link checkDocument} reports them.
  *
  * @example
  * ```tsx
@@ -53,11 +61,11 @@ type CreatesForms = {
  * export const Checklist = () => <ChecklistForm options={{ onSubmit: ({ value }) => send(value) }} />
  * ```
  */
-export const createDocumentForm = (
+export function createDocumentForm(
   document: FormDocument,
   kinds: FieldKinds<unknown>,
   options: DocumentFormOptions = {},
-): DocumentForm => {
+): DocumentForm {
   const schema = createValidator(document, kinds, options)
   const config = documentConfig(document, kinds, schema)
   // The registry's `createForm` types a config written in code; a document's is known at runtime.

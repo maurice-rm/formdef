@@ -1,6 +1,6 @@
 import type { Comparison, Condition } from '../condition'
-import { numberOf } from '../decimal'
-import { dayOf } from '../iso-date'
+import { dayOf } from '../day-of'
+import { numberOf } from '../number-of'
 import type { Answer, Answers } from './answers'
 
 type Comparable = number | string
@@ -13,8 +13,12 @@ const isAtLeast: Order = (answer, compared) => answer >= compared
 
 const comparableOf = (value: unknown, { valueType }: Answer): Comparable => {
   const plain = value as Comparable
-  if (valueType === 'decimal') return numberOf(plain)
-  if (valueType === 'date') return dayOf(String(plain))
+  if (valueType === 'decimal') {
+    return numberOf(plain)
+  }
+  if (valueType === 'date') {
+    return dayOf(String(plain))
+  }
   return plain
 }
 
@@ -71,8 +75,12 @@ const holdsComparison = (comparison: Comparison, answer: Answer | undefined): bo
  * Whether a condition holds for these answers. A field without an answer is empty: it equals
  * nothing and comes in no order, so only the negated operators hold for it.
  */
-export const holds = (condition: Condition, answers: Answers): boolean => {
-  if ('all' in condition) return condition.all.every((entry) => holds(entry, answers))
-  if ('any' in condition) return condition.any.some((entry) => holds(entry, answers))
+export function holds(condition: Condition, answers: Answers): boolean {
+  if ('all' in condition) {
+    return condition.all.every((entry) => holds(entry, answers))
+  }
+  if ('any' in condition) {
+    return condition.any.some((entry) => holds(entry, answers))
+  }
   return holdsComparison(condition, answers.get(condition.field))
 }

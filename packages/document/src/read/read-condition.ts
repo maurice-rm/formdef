@@ -1,15 +1,13 @@
 import type { Condition } from '../condition'
 import { failAt } from '../fail-at'
 import { LIST_OPERATORS, PRESENCE_OPERATORS, VALUE_OPERATORS } from '../operators'
-import {
-  hasKey,
-  readList,
-  readOnlyKeys,
-  readShape,
-  readText,
-  readTextList,
-  readTextOrNumber,
-} from './reader'
+import { hasKey } from './has-key'
+import { readList } from './read-list'
+import { readOnlyKeys } from './read-only-keys'
+import { readShape, type Shape } from './read-shape'
+import { readText } from './read-text'
+import { readTextList } from './read-text-list'
+import { readTextOrNumber } from './read-text-or-number'
 
 const COMPARISON_KEYS = ['field', 'op', 'value']
 
@@ -21,7 +19,7 @@ const isOperatorOf = <TOperator extends string>(
   op: string,
 ): op is TOperator => operators.includes(op as TOperator)
 
-const readComparison = (shape: Record<string, unknown>, path: string): Condition => {
+const readComparison = (shape: Shape, path: string): Condition => {
   readOnlyKeys(shape, COMPARISON_KEYS, path)
   const field = readText(shape.field, `${path}.field`)
   const op = readText(shape.op, `${path}.op`)
@@ -37,10 +35,10 @@ const readComparison = (shape: Record<string, unknown>, path: string): Condition
     return { field, op, value: readTextList(shape.value, `${path}.value`) }
   }
 
-  return failAt(`${path}.op`, `unknown operator ${op}.`)
+  return failAt(`${path}.op`, `unknown operator "${op}".`)
 }
 
-export const readCondition = (value: unknown, path: string): Condition => {
+export function readCondition(value: unknown, path: string): Condition {
   const shape = readShape(value, path)
 
   if (hasKey(shape, 'all')) {

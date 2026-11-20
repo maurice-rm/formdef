@@ -1,10 +1,13 @@
 import type { Comparison, Condition } from '../condition'
-import { isIsoDate } from '../iso-date'
-import type { ValueType } from '../kinds/field-kind'
+import { isIsoDate } from '../is-iso-date'
 import { isChoice } from '../kinds/is-choice'
+import { optionValuesOf } from '../kinds/option-values-of'
+import type { ValueType } from '../kinds/value-type'
 import type { Operator } from '../operators'
-import { optionValuesOf } from './option-values'
-import { type EarlierField, report, type Walk } from './walk'
+import type { CheckWalk, EarlierField } from './check-walk'
+import { report } from './report'
+
+type At = { walk: CheckWalk; path: string }
 
 const FILL_OPERATORS: readonly Operator[] = ['isFilled', 'isEmpty']
 const NUMBER_OPERATORS: readonly Operator[] = [
@@ -30,29 +33,38 @@ const OPERATORS: Record<ValueType, readonly Operator[]> = {
 const checkOption = (
   value: unknown,
   { options, field }: { options: ReadonlySet<string>; field: string },
-  { walk, path }: { walk: Walk; path: string },
+  { walk, path }: At,
 ): void => {
-  if (typeof value === 'string' && options.has(value)) return
+  if (typeof value === 'string' && options.has(value)) {
+    return
+  }
   report(walk, { code: 'unknownOption', path, params: { field, value: String(value) } })
 }
 
-const checkComparedValue = (
-  comparison: Comparison,
+const checkComparedOptions = (
+  comparison: Extract<Comparison, { value: unknown }>,
   earlier: EarlierField,
-  { walk, path }: { walk: Walk; path: string },
+  { walk, path }: At,
 ): void => {
-  if (!('value' in comparison) || earlier.kind === undefined) return
+  const options = { options: optionValuesOf(earlier.field), field: comparison.field }
+  if (!Array.isArray(comparison.value)) {
+    checkOption(comparison.value, options, { walk, path: `${path}.value` })
+    return
+  }
+  comparison.value.forEach((entry, index) => {
+    checkOption(entry, options, { walk, path: `${path}.value[${index}]` })
+  })
+}
+
+const checkComparedValue = (comparison: Comparison, earlier: EarlierField, at: At): void => {
+  if (!('value' in comparison) || earlier.kind === undefined) {
+    return
+  }
   const { valueType } = earlier.kind
+  const { walk, path } = at
 
   if (isChoice(valueType)) {
-    const options = { options: optionValuesOf(earlier.field), field: comparison.field }
-    if (Array.isArray(comparison.value)) {
-      comparison.value.forEach((entry, index) => {
-        checkOption(entry, options, { walk, path: `${path}.value[${index}]` })
-      })
-      return
-    }
-    checkOption(comparison.value, options, { walk, path: `${path}.value` })
+    checkComparedOptions(comparison, earlier, at)
     return
   }
   if ((valueType === 'number' || valueType === 'decimal') && typeof comparison.value !== 'number') {
@@ -64,7 +76,7 @@ const checkComparedValue = (
   }
 }
 
-const checkComparison = (comparison: Comparison, path: string, walk: Walk): void => {
+const checkComparison = (comparison: Comparison, path: string, walk: CheckWalk): void => {
   const { field, op } = comparison
   if (!walk.allFieldKeys.has(field)) {
     report(walk, { code: 'unknownField', path: `${path}.field`, params: { field } })
@@ -75,7 +87,9 @@ const checkComparison = (comparison: Comparison, path: string, walk: Walk): void
     report(walk, { code: 'laterField', path: `${path}.field`, params: { field } })
     return
   }
-  if (earlier.kind === undefined) return
+  if (earlier.kind === undefined) {
+    return
+  }
 
   const { valueType } = earlier.kind
   if (!OPERATORS[valueType].includes(op)) {
@@ -89,7 +103,7 @@ const checkComparison = (comparison: Comparison, path: string, walk: Walk): void
  * Checks one condition against the fields before it: that the field exists and comes earlier,
  * that the operator fits its value type, and that the compared value is one it can hold.
  */
-export const checkCondition = (condition: Condition, path: string, walk: Walk): void => {
+export function checkCondition(condition: Condition, path: string, walk: CheckWalk): void {
   if ('all' in condition) {
     condition.all.forEach((entry, index) => {
       checkCondition(entry, `${path}.all[${index}]`, walk)

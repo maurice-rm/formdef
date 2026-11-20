@@ -1,4 +1,4 @@
-import type { ValueType } from '../kinds/field-kind'
+import type { ValueType } from '../kinds/value-type'
 
 /** A filled answer of a field that shows, with the value type of its field kind. */
 export type Answer = {

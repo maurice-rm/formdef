@@ -1,9 +1,9 @@
-import { optionOf } from '../check/option-values'
 import { refuseProblems } from '../check/refuse-problems'
 import type { Answers } from '../evaluate/answers'
 import { evaluate, type ShownField } from '../evaluate/evaluate'
 import type { DocumentItem, FormDocument, JsonValue } from '../form-document'
 import type { FieldKinds } from '../kinds/create-field-kinds'
+import { optionOf } from '../kinds/option-of'
 import type { SettingOption } from '../kinds/setting'
 
 /** A filled answer, by the value type of its field kind. */
@@ -80,7 +80,15 @@ export type DescribedStep = {
 }
 
 /** The answers of a document, described: by step in a document with steps, by item without. */
-export type AnswerDescription = { steps: DescribedStep[] } | { items: DescribedItem[] }
+export type AnswerDescription =
+  | {
+      /** The steps that show, in document order, each with what shows in it. */
+      steps: DescribedStep[]
+    }
+  | {
+      /** What shows in a document without steps, in document order. */
+      items: DescribedItem[]
+    }
 
 type Described = {
   shownByKey: ReadonlyMap<string, ShownField>
@@ -89,7 +97,9 @@ type Described = {
 
 const describeAnswer = (shown: ShownField, answers: Answers): DescribedAnswer | undefined => {
   const answer = answers.get(shown.field.key)
-  if (answer === undefined) return undefined
+  if (answer === undefined) {
+    return undefined
+  }
   const { value, valueType } = answer
 
   switch (valueType) {
@@ -127,7 +137,9 @@ const describeItems = (items: readonly DocumentItem[], described: Described): De
       return shown === undefined ? [] : [describeField(shown, described.answers)]
     }
     const inner = describeItems(item.items, described)
-    if (item.type === 'row' || inner.length === 0) return inner
+    if (item.type === 'row' || inner.length === 0) {
+      return inner
+    }
     return [{ type: 'section', label: item.label, items: inner }]
   })
 
@@ -138,11 +150,11 @@ const describeItems = (items: readonly DocumentItem[], described: Described): De
  * the answers the validator returned, such as for an email or a PDF; formatting them, such as a
  * boolean as yes or a decimal with its unit, is the project's.
  *
- * @param document - The document, as `readDocument` returns it.
+ * @param document - The document, as {@link readDocument} returns it.
  * @param kinds - The field kinds the document's fields are of.
  * @param values - The answers, nested by step key in a document with steps, flat without.
  * @returns The description; a step or section with nothing that shows is left out.
- * @throws Error when the document has problems, as `checkDocument` reports them.
+ * @throws When the document has problems, as {@link checkDocument} reports them.
  *
  * @example
  * ```ts
@@ -150,16 +162,18 @@ const describeItems = (items: readonly DocumentItem[], described: Described): De
  * if (result.issues === undefined) await sendSummary(describeAnswers(document, fieldKinds, result.value))
  * ```
  */
-export const describeAnswers = (
+export function describeAnswers(
   document: FormDocument,
   kinds: FieldKinds<unknown>,
   values: unknown,
-): AnswerDescription => {
+): AnswerDescription {
   refuseProblems(document, kinds)
   const { shown, answers } = evaluate(document, kinds, values)
   const described = { shownByKey: new Map(shown.map((entry) => [entry.field.key, entry])), answers }
 
-  if (document.steps === undefined) return { items: describeItems(document.items, described) }
+  if (document.steps === undefined) {
+    return { items: describeItems(document.items, described) }
+  }
   return {
     steps: document.steps.flatMap((step) => {
       const items = describeItems(step.items, described)
