@@ -1,7 +1,7 @@
 import { checkDocument } from '../check/check-document'
 import { optionValuesOf } from '../check/option-values'
 import { fitsValueType, isFilled } from '../evaluate/answer-value'
-import { type ShownField, shownFieldsOf } from '../evaluate/shown-fields'
+import { evaluate, type ShownField } from '../evaluate/evaluate'
 import type { FormDocument, JsonValue } from '../form-document'
 import type { FieldKinds } from '../kinds/create-field-kinds'
 import { DEFAULT_MESSAGES, FALLBACK_MESSAGE, type Messages } from './messages'
@@ -158,7 +158,7 @@ export const createValidator = (
   }
 
   const validate = (values: unknown): ValidationResult => {
-    const shown = shownFieldsOf(document, kinds, values)
+    const { shown } = evaluate(document, kinds, values)
     const issues = shown.flatMap((field) => issueOf(field) ?? [])
     return issues.length > 0 ? { issues } : { value: answersOf(shown) }
   }

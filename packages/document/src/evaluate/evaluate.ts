@@ -3,9 +3,11 @@ import type { DocumentItem, FieldItem, FormDocument, JsonValue } from '../form-d
 import { isPlainObject } from '../is-plain-object'
 import type { FieldKinds } from '../kinds/create-field-kinds'
 import type { FieldKind } from '../kinds/field-kind'
+import { kindOf } from '../kinds/kind-of'
 import { fitsValueType, isFilled } from './answer-value'
-import type { Answer } from './answers'
+import type { Answer, Answers } from './answers'
 import { holds } from './holds'
+import { isRequired } from './is-required'
 import { resolveSettings } from './resolve-settings'
 
 /** A field that shows for the values given, with what its answer is checked against. */
@@ -36,14 +38,8 @@ const objectOf = (value: unknown): Readonly<Record<string, unknown>> =>
 const isShown = (item: { visibleWhen?: Condition }, walk: Walk): boolean =>
   item.visibleWhen === undefined || holds(item.visibleWhen, walk.answers)
 
-const isRequired = (field: FieldItem, walk: Walk): boolean =>
-  typeof field.required === 'object' ? holds(field.required, walk.answers) : field.required === true
-
 const walkField = (field: FieldItem, container: Container, walk: Walk): void => {
-  const kind = walk.kinds.byName(field.kind)
-  if (kind === undefined) {
-    throw new Error(`formdef: ${field.key}.kind: the field kind ${field.kind} is not registered.`)
-  }
+  const kind = kindOf(walk.kinds, field)
   const value = container.values[field.key]
 
   walk.shown.push({
@@ -51,7 +47,7 @@ const walkField = (field: FieldItem, container: Container, walk: Walk): void => 
     kind,
     path: [...container.path, field.key],
     value,
-    isRequired: isRequired(field, walk),
+    isRequired: isRequired(field, walk.answers),
     settings: resolveSettings(field, walk.answers),
   })
   if (isFilled(value, kind.valueType) && fitsValueType(value, kind.valueType)) {
@@ -67,28 +63,35 @@ const walkItems = (items: readonly DocumentItem[], container: Container, walk: W
   }
 }
 
+/** What a document's values come to: the fields that show, and the answers conditions compare. */
+export type Evaluation = {
+  /** The fields that show, in document order. */
+  shown: ShownField[]
+  answers: Answers
+}
+
 /**
- * The fields that show for these values, in document order. A field shows when it and every
- * step, section and row around it show; a field that does not show counts as empty in the
- * conditions after it, whatever value it still holds.
+ * Evaluates a document for these values. A field shows when it and every step, section and row
+ * around it show; a field that does not show counts as empty in the conditions after it, whatever
+ * value it still holds.
  *
  * @throws Error when a field is of a field kind that is not registered.
  */
-export const shownFieldsOf = (
+export const evaluate = (
   document: FormDocument,
   kinds: FieldKinds<unknown>,
   values: unknown,
-): ShownField[] => {
+): Evaluation => {
   const walk: Walk = { kinds, answers: new Map(), shown: [] }
   const root = objectOf(values)
 
   if (document.steps === undefined) {
     walkItems(document.items, { values: root, path: [] }, walk)
-    return walk.shown
+    return walk
   }
   for (const step of document.steps) {
     if (!isShown(step, walk)) continue
     walkItems(step.items, { values: objectOf(root[step.key]), path: [step.key] }, walk)
   }
-  return walk.shown
+  return walk
 }

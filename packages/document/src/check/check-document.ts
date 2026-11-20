@@ -1,3 +1,4 @@
+import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
 import type { FieldKinds } from '../kinds/create-field-kinds'
 import { checkCondition } from './check-condition'
@@ -9,9 +10,6 @@ const ROOT = 'document'
 const MOST_SECTION_LEVELS = 2
 
 type At = { walk: Walk; path: string }
-
-const fieldsOf = (items: readonly DocumentItem[]): FieldItem[] =>
-  items.flatMap((item) => (item.type === 'field' ? [item] : fieldsOf(item.items)))
 
 const checkVisibleWhen = (
   item: { visibleWhen?: DocumentItem['visibleWhen'] },
