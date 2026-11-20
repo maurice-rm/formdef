@@ -1,6 +1,6 @@
 export { checkDocument } from './check/check-document'
 export type { Problem, ProblemCode } from './check/problem'
-export type { Condition, ListOperator, PresenceOperator, ValueOperator } from './condition'
+export type { Condition } from './condition'
 export {
   type AnswerDescription,
   type DescribedAnswer,
@@ -10,6 +10,7 @@ export {
   type DescribedStep,
   describeAnswers,
 } from './describe/describe-answers'
+export type { DocumentValues } from './document-values'
 export { changeKind } from './edit/change-kind'
 export { createKey } from './edit/create-key'
 export { type Dependent, dependentsOf } from './edit/dependents-of'
@@ -42,12 +43,13 @@ export {
 export type { FieldKind, ValueType } from './kinds/field-kind'
 export { type Rule, rule } from './kinds/rule'
 export { type Setting, type SettingOption, type SettingType, setting } from './kinds/setting'
+export type { ListOperator, PresenceOperator, ValueOperator } from './operators'
 export { readDocument } from './read-document'
 export {
   createValidator,
   type DocumentValidator,
-  type DocumentValues,
   type ValidationIssue,
   type ValidationResult,
+  type ValidatorOptions,
 } from './validate/create-validator'
 export type { Messages } from './validate/messages'

@@ -2,8 +2,9 @@ import { fieldsOf } from '../fields-of'
 import type { FieldItem, FormDocument } from '../form-document'
 import { conditionsOf } from './conditions-of'
 import { fieldsNamed } from './fields-named'
+import { isField } from './is-field'
 import type { Position } from './position'
-import { isStep, nodeAt } from './tree'
+import { nodeAt } from './tree'
 
 /** A condition that names a field of a node, as `dependentsOf` lists it. */
 export type Dependent = {
@@ -35,7 +36,7 @@ const isWithin = (position: readonly number[], ancestor: readonly number[]): boo
  */
 export const dependentsOf = (document: FormDocument, position: Position): Dependent[] => {
   const node = nodeAt(document, position)
-  const fields: FieldItem[] = isStep(node) || node.type !== 'field' ? fieldsOf(node.items) : [node]
+  const fields: FieldItem[] = isField(node) ? [node] : fieldsOf(node.items)
   const keys = new Set(fields.map((field) => field.key))
 
   return conditionsOf(document)

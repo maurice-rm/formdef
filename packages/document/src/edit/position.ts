@@ -1,3 +1,5 @@
+import { failAt } from '../fail-at'
+
 /**
  * Where a step or item sits in a form document: the index at each level, from the root down. In a
  * document with steps the first index is the step's, in one without it is the item's; `[1, 0, 2]`
@@ -6,5 +8,11 @@
  */
 export type Position = readonly number[]
 
-/** A position as an error names it, such as `position [1, 0]`. */
-export const describePosition = (position: Position): string => `position [${position.join(', ')}]`
+/**
+ * Throws the error of an edit operation at a position, such as `formdef: position [1, 0]: …`.
+ *
+ * @throws Error always.
+ */
+export function failAtPosition(position: Position, problem: string): never {
+  return failAt(`position [${position.join(', ')}]`, problem)
+}

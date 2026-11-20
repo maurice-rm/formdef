@@ -1,3 +1,4 @@
+import { DOCUMENT_PATH, pathTo } from '../document-path'
 import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
 import type { FieldKinds } from '../kinds/create-field-kinds'
@@ -6,7 +7,6 @@ import { checkSettings } from './check-settings'
 import type { Problem } from './problem'
 import { report, type Walk } from './walk'
 
-const ROOT = 'document'
 const MOST_SECTION_LEVELS = 2
 
 type At = { walk: Walk; path: string }
@@ -30,7 +30,9 @@ const checkVisibleWhen = (
   item: { visibleWhen?: DocumentItem['visibleWhen'] },
   { walk, path }: At,
 ): void => {
-  if (item.visibleWhen !== undefined) checkCondition(item.visibleWhen, `${path}.visibleWhen`, walk)
+  if (item.visibleWhen !== undefined) {
+    checkCondition(item.visibleWhen, pathTo.visibleWhen(path), walk)
+  }
 }
 
 const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>): void => {
@@ -45,7 +47,9 @@ const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>)
     report(walk, { code: 'unknownKind', path: `${path}.kind`, params: { kind: field.kind } })
   }
   checkVisibleWhen(field, { walk, path })
-  if (typeof field.required === 'object') checkCondition(field.required, `${path}.required`, walk)
+  if (typeof field.required === 'object') {
+    checkCondition(field.required, pathTo.required(path), walk)
+  }
   if (kind !== undefined) checkSettings(field, kind, { walk, path })
 
   walk.earlier.set(field.key, { field, kind })
@@ -83,7 +87,7 @@ const checkSteps = (steps: readonly DocumentStep[], walk: Walk): void => {
   const fieldKeys = new Set<string>()
 
   steps.forEach((step, index) => {
-    const path = `${ROOT}.steps[${index}]`
+    const path = pathTo.entry(DOCUMENT_PATH, 'steps', index)
     if (stepKeys.has(step.key)) {
       report(walk, { code: 'duplicateKey', path: `${path}.key`, params: { key: step.key } })
     }
@@ -131,7 +135,7 @@ export const checkDocument = (document: FormDocument, kinds: FieldKinds<unknown>
 
   if (document.steps === undefined) {
     checkItems(document.items, {
-      at: { walk, path: `${ROOT}.items` },
+      at: { walk, path: `${DOCUMENT_PATH}.items` },
       seenKeys: new Set(),
       sections: 0,
     })

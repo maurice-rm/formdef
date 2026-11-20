@@ -1,6 +1,7 @@
 import type { DocumentNode, FormDocument } from '../form-document'
 import type { Position } from './position'
-import { failAt, fitsInto, splice, splitPosition, updateChildren } from './tree'
+import { failAtPosition } from './position'
+import { refuseMisfit, splice, splitPosition, updateChildren } from './tree'
 
 /**
  * Inserts a step or item into a form document, leaving the document given as it was. The last
@@ -27,9 +28,9 @@ export const insertNode = (
   const target = splitPosition(position)
   return updateChildren(document, target, (children, parent) => {
     if (target.index < 0 || target.index > children.length) {
-      return failAt(position, 'there is no such place.')
+      return failAtPosition(position, 'there is no such place.')
     }
-    fitsInto(parent, node, position)
+    refuseMisfit(parent, node, position)
     return splice(children, { index: target.index, removed: 0 }, node)
   })
 }

@@ -1,9 +1,8 @@
-import type { Condition } from '../condition'
+import type { Comparison, Condition } from '../condition'
 import { numberOf } from '../decimal'
 import { dayOf } from '../iso-date'
 import type { Answer, Answers } from './answers'
 
-type Comparison = Extract<Condition, { field: string }>
 type Comparable = number | string
 type Order = (answer: Comparable, compared: Comparable) => boolean
 

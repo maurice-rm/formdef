@@ -1,7 +1,8 @@
 import type { Condition } from '../condition'
 import type { DocumentNode, FieldItem, FormDocument, JsonValue, Varying } from '../form-document'
 import { isVarying } from '../is-varying'
-import { isStep } from './tree'
+import { isField } from './is-field'
+import { isStep } from './is-step'
 
 type Rename = { from: string; to: string }
 
@@ -37,7 +38,7 @@ const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
 const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
   const visibility =
     node.visibleWhen === undefined ? {} : { visibleWhen: renameIn(node.visibleWhen, rename) }
-  if (!isStep(node) && node.type === 'field') {
+  if (isField(node)) {
     const field = { ...renameInField(node, rename), ...visibility }
     return field.key === rename.from ? { ...field, key: rename.to } : field
   }

@@ -1,3 +1,4 @@
+import { failAt } from '../fail-at'
 import { type FieldKind, VALUE_TYPES } from './field-kind'
 
 /**
@@ -39,19 +40,14 @@ export const createFieldKinds = <TRegistry>(
   const byName = new Map<string, FieldKind<TRegistry>>()
 
   kinds.forEach((kind, index) => {
+    const path = `${ROOT}[${index}]`
     if (kind.registry !== registry) {
-      throw new Error(
-        `formdef: ${ROOT}[${index}]: the field kind ${kind.name} was defined with another registry.`,
-      )
+      failAt(path, `the field kind ${kind.name} was defined with another registry.`)
     }
     if (!VALUE_TYPES.includes(kind.valueType)) {
-      throw new Error(
-        `formdef: ${ROOT}[${index}].valueType: expected one of ${VALUE_TYPES.join(', ')}.`,
-      )
+      failAt(`${path}.valueType`, `expected one of ${VALUE_TYPES.join(', ')}.`)
     }
-    if (byName.has(kind.name)) {
-      throw new Error(`formdef: ${ROOT}[${index}].name: the name ${kind.name} is used twice.`)
-    }
+    if (byName.has(kind.name)) failAt(`${path}.name`, `the name ${kind.name} is used twice.`)
     byName.set(kind.name, kind)
   })
 

@@ -1,13 +1,14 @@
 import { optionOf } from '../check/option-values'
 import { refuseProblems } from '../check/refuse-problems'
-import { fitsValueType, isFilled } from '../evaluate/answer-value'
+import { type DocumentValues, nestValues } from '../document-values'
 import { evaluate, type ShownField } from '../evaluate/evaluate'
+import { fitsValueType } from '../evaluate/fits-value-type'
+import { isFilled } from '../evaluate/is-filled'
+import { isMissing } from '../evaluate/is-missing'
 import type { FormDocument, JsonValue } from '../form-document'
 import type { FieldKinds } from '../kinds/create-field-kinds'
+import { isChoice } from '../kinds/is-choice'
 import { DEFAULT_MESSAGES, FALLBACK_MESSAGE, type Messages } from './messages'
-
-/** The answers of a form document: nested by step key in a document with steps, flat without. */
-export type DocumentValues = Record<string, unknown>
 
 /**
  * What is wrong with one answer, as Standard Schema reports it, with the code and parameters its
@@ -57,8 +58,8 @@ export type DocumentValidator = {
   }
 }
 
-/** What `createValidator` takes besides the document. */
-type ValidatorOptions = {
+/** What `createValidator` takes besides the document and its field kinds. */
+export type ValidatorOptions = {
   /**
    * The error texts, by issue code; a code left out keeps its English text, and a code without
    * any text gets a general one.
@@ -79,14 +80,13 @@ const fitsOptions = ({ field, value }: ShownField): boolean => {
 
 const failureOf = (shown: ShownField): Failure | undefined => {
   const { kind, value } = shown
-  const isMissing = value === undefined || value === null
-  if (!isMissing && !fitsValueType(value, kind.valueType)) {
+  if (!isMissing(value) && !fitsValueType(value, kind.valueType)) {
     return { code: 'type', params: { expected: kind.valueType } }
   }
   if (!isFilled(value, kind.valueType)) {
     return shown.isRequired ? { code: 'required', params: {} } : undefined
   }
-  if ((kind.valueType === 'choice' || kind.valueType === 'choices') && !fitsOptions(shown)) {
+  if (isChoice(kind.valueType) && !fitsOptions(shown)) {
     return { code: 'option', params: {} }
   }
   const failed = kind
@@ -95,16 +95,8 @@ const failureOf = (shown: ShownField): Failure | undefined => {
   return failed === undefined ? undefined : { code: failed.code, params: failed.params }
 }
 
-const answersOf = (shown: readonly ShownField[]): DocumentValues => {
-  const answers: DocumentValues = {}
-  for (const { path, value } of shown) {
-    if (value === undefined) continue
-    const [first = '', second] = path
-    if (second === undefined) answers[first] = value
-    else answers[first] = { ...(answers[first] as DocumentValues | undefined), [second]: value }
-  }
-  return answers
-}
+const answersOf = (shown: readonly ShownField[]): DocumentValues =>
+  nestValues(shown.filter(({ value }) => value !== undefined))
 
 /**
  * Builds a validator of a form document's answers, implementing Standard Schema v1: the same

@@ -1,5 +1,7 @@
 import type { Condition } from '../condition'
+import { type DocumentValues, nestValues } from '../document-values'
 import type { Answers } from '../evaluate/answers'
+import { emptyValueOf } from '../evaluate/empty-value-of'
 import { evaluate } from '../evaluate/evaluate'
 import { holds } from '../evaluate/holds'
 import { isRequired } from '../evaluate/is-required'
@@ -7,11 +9,9 @@ import { resolveSettings } from '../evaluate/resolve-settings'
 import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
 import type { FieldKinds } from '../kinds/create-field-kinds'
-import type { ValueType } from '../kinds/field-kind'
 import { kindOf } from '../kinds/kind-of'
-import type { DocumentValidator, DocumentValues } from '../validate/create-validator'
+import type { DocumentValidator } from '../validate/create-validator'
 
-type Values = unknown
 type Entry = Readonly<Record<string, unknown>>
 
 /** A form config for a registry's `createForm`, built from a document. */
@@ -22,30 +22,23 @@ export type DocumentConfig = {
   layout: unknown[]
 }
 
+type Level = Pick<DocumentConfig, 'fields' | 'layout'>
+type Parts = Omit<DocumentConfig, 'schema'>
+
 type Build = {
   kinds: FieldKinds<unknown>
-  answersOf: (values: Values) => Answers
-}
-
-const EMPTY_VALUES: Record<ValueType, unknown> = {
-  text: '',
-  choice: '',
-  decimal: '',
-  date: '',
-  choices: [],
-  boolean: false,
-  number: undefined,
+  answersOf: (values: unknown) => Answers
 }
 
 const visibility = (item: { visibleWhen?: Condition }, build: Build): Entry => {
   const condition = item.visibleWhen
   if (condition === undefined) return {}
-  return { visibleWhen: (values: Values) => holds(condition, build.answersOf(values)) }
+  return { visibleWhen: (values: unknown) => holds(condition, build.answersOf(values)) }
 }
 
 const fieldEntry = (field: FieldItem, build: Build): Entry => {
   const kind = kindOf(build.kinds, field)
-  const props = (values: Values): Entry => {
+  const props = (values: unknown): Entry => {
     const answers = build.answersOf(values)
     return {
       ...kind.props(resolveSettings(field, answers)),
@@ -64,15 +57,19 @@ const layoutOf = (items: readonly DocumentItem[], build: Build): unknown[] =>
     return { section: item.label, layout: layoutOf(item.items, build), ...visibility(item, build) }
   })
 
-const levelOf = (items: readonly DocumentItem[], build: Build) => ({
+const levelOf = (items: readonly DocumentItem[], build: Build): Level => ({
   fields: Object.fromEntries(fieldsOf(items).map((field) => [field.key, fieldEntry(field, build)])),
   layout: layoutOf(items, build),
 })
 
-const emptyValuesOf = (items: readonly DocumentItem[], build: Build): DocumentValues =>
-  Object.fromEntries(
-    fieldsOf(items).map((field) => [field.key, EMPTY_VALUES[kindOf(build.kinds, field).valueType]]),
-  )
+const emptyValuesOf = (
+  items: readonly DocumentItem[],
+  { build, path }: { build: Build; path: readonly string[] },
+): { path: readonly string[]; value: unknown }[] =>
+  fieldsOf(items).map((field) => ({
+    path: [...path, field.key],
+    value: emptyValueOf(kindOf(build.kinds, field).valueType),
+  }))
 
 const stepEntry = (step: DocumentStep, build: Build): Entry => ({
   step: step.key,
@@ -81,16 +78,16 @@ const stepEntry = (step: DocumentStep, build: Build): Entry => ({
   ...visibility(step, build),
 })
 
-const steppedConfig = (steps: readonly DocumentStep[], build: Build) => ({
-  defaultValues: Object.fromEntries(
-    steps.map((step) => [step.key, emptyValuesOf(step.items, build)]),
+const steppedConfig = (steps: readonly DocumentStep[], build: Build): Parts => ({
+  defaultValues: nestValues(
+    steps.flatMap((step) => emptyValuesOf(step.items, { build, path: [step.key] })),
   ),
   fields: Object.fromEntries(steps.map((step) => [step.key, levelOf(step.items, build)])),
   layout: steps.map((step) => stepEntry(step, build)),
 })
 
-const plainConfig = (items: readonly DocumentItem[], build: Build) => ({
-  defaultValues: emptyValuesOf(items, build),
+const plainConfig = (items: readonly DocumentItem[], build: Build): Parts => ({
+  defaultValues: nestValues(emptyValuesOf(items, { build, path: [] })),
   ...levelOf(items, build),
 })
 

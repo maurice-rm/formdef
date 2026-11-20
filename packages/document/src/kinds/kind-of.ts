@@ -1,3 +1,4 @@
+import { failAt } from '../fail-at'
 import type { FieldItem } from '../form-document'
 import type { FieldKinds } from './create-field-kinds'
 import type { FieldKind } from './field-kind'
@@ -9,8 +10,5 @@ import type { FieldKind } from './field-kind'
  */
 export const kindOf = (kinds: FieldKinds<unknown>, field: FieldItem): FieldKind<unknown> => {
   const kind = kinds.byName(field.kind)
-  if (kind === undefined) {
-    throw new Error(`formdef: ${field.key}.kind: the field kind ${field.kind} is not registered.`)
-  }
-  return kind
+  return kind ?? failAt(`${field.key}.kind`, `the field kind ${field.kind} is not registered.`)
 }

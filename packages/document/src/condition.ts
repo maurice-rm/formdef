@@ -1,29 +1,4 @@
-/**
- * The operators of a condition that compare a field with nothing: whether it holds a value, or
- * whether a boolean field is true or false.
- */
-export type PresenceOperator = 'isFilled' | 'isEmpty' | 'isTrue' | 'isFalse'
-
-/**
- * The operators of a condition that compare a field with one value: an option's value, a number,
- * or a date as an ISO string.
- */
-export type ValueOperator =
-  | 'equals'
-  | 'notEquals'
-  | 'lessThan'
-  | 'atMost'
-  | 'greaterThan'
-  | 'atLeast'
-  | 'before'
-  | 'onOrBefore'
-  | 'after'
-  | 'onOrAfter'
-  | 'includes'
-  | 'excludes'
-
-/** The operators of a condition that compare a field with a list of option values. */
-export type ListOperator = 'in' | 'notIn'
+import type { ListOperator, PresenceOperator, ValueOperator } from './operators'
 
 /**
  * A condition of a form document: a comparison of one field, or several conditions combined.
@@ -70,3 +45,6 @@ export type Condition =
       /** Holds when at least one of these conditions holds. */
       any: Condition[]
     }
+
+/** A condition that compares one field, rather than combining conditions. */
+export type Comparison = Extract<Condition, { field: string }>

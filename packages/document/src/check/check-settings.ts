@@ -1,3 +1,4 @@
+import { pathTo } from '../document-path'
 import type { FieldItem, JsonValue, Varying } from '../form-document'
 import { isVarying } from '../is-varying'
 import { isIsoDate } from '../iso-date'
@@ -95,9 +96,8 @@ const checkSetting = (value: JsonValue | Varying, descriptor: Setting<unknown>, 
     return
   }
   value.cases.forEach((entry, index) => {
-    const casePath = `${at.path}.cases[${index}]`
-    checkCondition(entry.when, `${casePath}.when`, at.walk)
-    checkValue(entry.value, descriptor, { ...at, path: `${casePath}.value` })
+    checkCondition(entry.when, pathTo.caseWhen(at.path, index), at.walk)
+    checkValue(entry.value, descriptor, { ...at, path: `${pathTo.case(at.path, index)}.value` })
   })
   checkValue(value.otherwise, descriptor, { ...at, path: `${at.path}.otherwise` })
 }
@@ -114,22 +114,19 @@ export const checkSettings = (
   const values = field.settings ?? {}
 
   for (const [name, descriptor] of Object.entries(kind.settings)) {
-    const settingPath = `${path}.settings.${name}`
+    const settingPath = pathTo.setting(path, name)
     const value = values[name]
-    if (value === undefined) {
-      if (descriptor.required) {
-        report(walk, { code: 'missingSetting', path: settingPath, params: { setting: name } })
-      }
-      continue
+    if (value === undefined && descriptor.required) {
+      report(walk, { code: 'missingSetting', path: settingPath, params: { setting: name } })
     }
-    checkSetting(value, descriptor, { walk, path: settingPath, name })
+    if (value !== undefined) checkSetting(value, descriptor, { walk, path: settingPath, name })
   }
 
   for (const name of Object.keys(values)) {
     if (!Object.hasOwn(kind.settings, name)) {
       report(walk, {
         code: 'unknownSetting',
-        path: `${path}.settings.${name}`,
+        path: pathTo.setting(path, name),
         params: { setting: name },
       })
     }

@@ -1,6 +1,7 @@
-import type { Condition, ListOperator, PresenceOperator, ValueOperator } from '../condition'
+import type { Condition } from '../condition'
+import { failAt } from '../fail-at'
+import { LIST_OPERATORS, PRESENCE_OPERATORS, VALUE_OPERATORS } from '../operators'
 import {
-  failAt,
   hasKey,
   readList,
   readOnlyKeys,
@@ -9,25 +10,6 @@ import {
   readTextList,
   readTextOrNumber,
 } from './reader'
-
-const PRESENCE_OPERATORS: readonly PresenceOperator[] = ['isFilled', 'isEmpty', 'isTrue', 'isFalse']
-
-const VALUE_OPERATORS: readonly ValueOperator[] = [
-  'equals',
-  'notEquals',
-  'lessThan',
-  'atMost',
-  'greaterThan',
-  'atLeast',
-  'before',
-  'onOrBefore',
-  'after',
-  'onOrAfter',
-  'includes',
-  'excludes',
-]
-
-const LIST_OPERATORS: readonly ListOperator[] = ['in', 'notIn']
 
 const COMPARISON_KEYS = ['field', 'op', 'value']
 

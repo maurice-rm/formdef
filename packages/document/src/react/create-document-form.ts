@@ -3,8 +3,11 @@ import type { ReactNode } from 'react'
 
 import type { FormDocument } from '../form-document'
 import type { FieldKinds } from '../kinds/create-field-kinds'
-import { createValidator, type DocumentValidator } from '../validate/create-validator'
-import type { Messages } from '../validate/messages'
+import {
+  createValidator,
+  type DocumentValidator,
+  type ValidatorOptions,
+} from '../validate/create-validator'
 import { type DocumentConfig, documentConfig } from './document-config'
 
 /**
@@ -13,14 +16,8 @@ import { type DocumentConfig, documentConfig } from './document-config'
  */
 export type DocumentForm = (props: FormProps<DocumentValidator>) => ReactNode
 
-/** What `createDocumentForm` takes besides the document. */
-export type DocumentFormOptions = {
-  /**
-   * The error texts, by issue code, as `createValidator` takes them.
-   *
-   * @defaultValue English texts
-   */
-  messages?: Messages
+/** What `createDocumentForm` takes besides the document: what `createValidator` takes, and more. */
+export type DocumentFormOptions = ValidatorOptions & {
   /**
    * When the answers are validated, as a form config's `validation`.
    *

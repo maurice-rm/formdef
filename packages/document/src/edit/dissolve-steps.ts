@@ -1,3 +1,5 @@
+import { DOCUMENT_PATH } from '../document-path'
+import { failAt } from '../fail-at'
 import type { FormDocument, SectionItem } from '../form-document'
 
 /**
@@ -15,10 +17,8 @@ import type { FormDocument, SectionItem } from '../form-document'
  * ```
  */
 export const dissolveSteps = (document: FormDocument): FormDocument => {
-  if (document.steps === undefined) {
-    throw new Error('formdef: document: the form has no steps.')
-  }
-  const items = document.steps.map(
+  const steps = document.steps ?? failAt(DOCUMENT_PATH, 'the form has no steps.')
+  const items = steps.map(
     ({ label, visibleWhen, items: stepItems }): SectionItem => ({
       type: 'section',
       label,

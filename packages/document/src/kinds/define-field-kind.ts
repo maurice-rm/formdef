@@ -2,6 +2,7 @@ import type { Registry, ValueOf } from '@formdef/core'
 import type { ComponentType } from 'react'
 
 import type { FieldKind, ValueType } from './field-kind'
+import type { ChoiceValueType } from './is-choice'
 import type { Rule } from './rule'
 import type { Setting, SettingOption } from './setting'
 
@@ -29,8 +30,6 @@ type Settings = Readonly<Record<string, Setting<unknown>>>
 export type SettingValues<TSettings> = {
   [Name in keyof TSettings]: TSettings[Name] extends Setting<infer TValue> ? TValue : never
 }
-
-type ChoiceValueType = 'choice' | 'choices'
 
 // The value types a widget's value can carry; a widget without a value type carries every one.
 type ValueTypesFor<TValue> = unknown extends TValue

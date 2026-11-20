@@ -1,4 +1,6 @@
 import type { Condition } from '../condition'
+import { pathTo } from '../document-path'
+import { failAt } from '../fail-at'
 import type {
   DocumentItem,
   DocumentStep,
@@ -11,7 +13,6 @@ import type {
 import { looksVarying } from '../is-varying'
 import { readCondition } from './read-condition'
 import {
-  failAt,
   hasKey,
   readJson,
   readList,
@@ -45,7 +46,7 @@ const readVisibleWhen = (
     'visibleWhen',
     shape.visibleWhen === undefined
       ? undefined
-      : readCondition(shape.visibleWhen, `${path}.visibleWhen`),
+      : readCondition(shape.visibleWhen, pathTo.visibleWhen(path)),
   )
 
 const readRequired = (value: unknown, path: string): boolean | Condition =>
@@ -64,7 +65,7 @@ const readCase = (value: unknown, path: string): Varying['cases'][number] => {
 const readVarying = (shape: Record<string, unknown>, path: string): Varying => {
   readOnlyKeys(shape, VARYING_KEYS, path)
   const cases = readList(shape.cases, `${path}.cases`).map((entry, index) =>
-    readCase(entry, `${path}.cases[${index}]`),
+    readCase(entry, pathTo.case(path, index)),
   )
   if (!hasKey(shape, 'otherwise')) failAt(`${path}.otherwise`, 'expected a value.')
 
@@ -93,7 +94,9 @@ const readField = (shape: Record<string, unknown>, path: string): FieldItem => {
     ...withOptional('hint', readOptionalText(shape.hint, `${path}.hint`)),
     ...withOptional(
       'required',
-      shape.required === undefined ? undefined : readRequired(shape.required, `${path}.required`),
+      shape.required === undefined
+        ? undefined
+        : readRequired(shape.required, pathTo.required(path)),
     ),
     ...readVisibleWhen(shape, path),
     ...withOptional(

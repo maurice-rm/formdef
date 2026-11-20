@@ -1,6 +1,6 @@
 import type { DocumentNode, FormDocument } from '../form-document'
 import type { Position } from './position'
-import { fitsInto, nodeAt, splice, splitPosition, updateChildren } from './tree'
+import { nodeAt, refuseMisfit, splice, splitPosition, updateChildren } from './tree'
 
 /**
  * Replaces a step or item of a form document with what `update` returns, such as the field with
@@ -25,7 +25,7 @@ export const updateNode = (
   const replacement = update(nodeAt(document, position))
   const target = splitPosition(position)
   return updateChildren(document, target, (children, parent) => {
-    fitsInto(parent, replacement, position)
+    refuseMisfit(parent, replacement, position)
     return splice(children, { index: target.index, removed: 1 }, replacement)
   })
 }

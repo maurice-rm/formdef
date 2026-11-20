@@ -1,21 +1,30 @@
-import type { Condition } from '../condition'
+import type { Comparison, Condition } from '../condition'
 import { isIsoDate } from '../iso-date'
 import type { ValueType } from '../kinds/field-kind'
+import { isChoice } from '../kinds/is-choice'
+import type { Operator } from '../operators'
 import { optionValuesOf } from './option-values'
 import { type EarlierField, report, type Walk } from './walk'
 
-type Comparison = Extract<Condition, { field: string }>
+const FILL_OPERATORS: readonly Operator[] = ['isFilled', 'isEmpty']
+const NUMBER_OPERATORS: readonly Operator[] = [
+  'equals',
+  'notEquals',
+  'lessThan',
+  'atMost',
+  'greaterThan',
+  'atLeast',
+  ...FILL_OPERATORS,
+]
 
-const PRESENCE = ['isFilled', 'isEmpty'] as const
-
-const OPERATORS: Record<ValueType, readonly string[]> = {
-  text: PRESENCE,
-  choice: ['equals', 'notEquals', 'in', 'notIn', ...PRESENCE],
-  choices: ['includes', 'excludes', ...PRESENCE],
-  boolean: ['isTrue', 'isFalse', ...PRESENCE],
-  number: ['equals', 'notEquals', 'lessThan', 'atMost', 'greaterThan', 'atLeast', ...PRESENCE],
-  decimal: ['equals', 'notEquals', 'lessThan', 'atMost', 'greaterThan', 'atLeast', ...PRESENCE],
-  date: ['equals', 'before', 'onOrBefore', 'after', 'onOrAfter', ...PRESENCE],
+const OPERATORS: Record<ValueType, readonly Operator[]> = {
+  text: FILL_OPERATORS,
+  choice: ['equals', 'notEquals', 'in', 'notIn', ...FILL_OPERATORS],
+  choices: ['includes', 'excludes', ...FILL_OPERATORS],
+  boolean: ['isTrue', 'isFalse', ...FILL_OPERATORS],
+  number: NUMBER_OPERATORS,
+  decimal: NUMBER_OPERATORS,
+  date: ['equals', 'before', 'onOrBefore', 'after', 'onOrAfter', ...FILL_OPERATORS],
 }
 
 const checkOption = (
@@ -35,7 +44,7 @@ const checkComparedValue = (
   if (!('value' in comparison) || earlier.kind === undefined) return
   const { valueType } = earlier.kind
 
-  if (valueType === 'choice' || valueType === 'choices') {
+  if (isChoice(valueType)) {
     const options = { options: optionValuesOf(earlier.field), field: comparison.field }
     if (Array.isArray(comparison.value)) {
       comparison.value.forEach((entry, index) => {

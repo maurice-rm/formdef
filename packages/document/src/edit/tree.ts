@@ -1,5 +1,7 @@
 import type { DocumentNode, FormDocument, RowItem, SectionItem } from '../form-document'
-import { describePosition, type Position } from './position'
+import { isField } from './is-field'
+import { isStep } from './is-step'
+import { failAtPosition, type Position } from './position'
 
 type Parent = FormDocument | DocumentNode
 
@@ -15,23 +17,14 @@ export const splice = <TEntry>(
   ...inserted: TEntry[]
 ): TEntry[] => [...list.slice(0, index), ...inserted, ...list.slice(index + removed)]
 
-/** Throws the error of an operation at a position. */
-export const failAt = (position: Position, problem: string): never => {
-  throw new Error(`formdef: ${describePosition(position)}: ${problem}`)
-}
-
 const isDocument = (parent: Parent): parent is FormDocument => 'format' in parent
-
-/** Whether a node is a step, the one node without a `type`. */
-export const isStep = (node: DocumentNode): node is Exclude<DocumentNode, { type: string }> =>
-  !('type' in node)
 
 const childrenOf = (parent: Parent): readonly DocumentNode[] | undefined => {
   if (isDocument(parent)) return parent.steps ?? parent.items
-  return isStep(parent) || parent.type !== 'field' ? parent.items : undefined
+  return isField(parent) ? undefined : parent.items
 }
 
-// The children's types follow the parent; `fitsInto` checks each child before it is placed.
+// The children's types follow the parent; `refuseMisfit` checks each child before it is placed.
 const withChildren = (parent: Parent, children: readonly DocumentNode[]): Parent => {
   if (!isDocument(parent)) return { ...parent, items: children as RowItem['items'] } as Parent
   return parent.steps === undefined
@@ -45,12 +38,16 @@ const withChildren = (parent: Parent, children: readonly DocumentNode[]): Parent
  *
  * @throws Error when it may not.
  */
-export const fitsInto = (parent: Parent, node: DocumentNode, position: Position): void => {
+export const refuseMisfit = (parent: Parent, node: DocumentNode, position: Position): void => {
   const holdsSteps = isDocument(parent) && parent.steps !== undefined
-  if (holdsSteps && !isStep(node)) failAt(position, 'a form with steps holds steps only.')
-  if (!holdsSteps && isStep(node)) failAt(position, 'a step goes only into the steps of a form.')
+  if (holdsSteps && !isStep(node)) {
+    failAtPosition(position, 'a form with steps holds steps only.')
+  }
+  if (!holdsSteps && isStep(node)) {
+    failAtPosition(position, 'a step goes only into the steps of a form.')
+  }
   const isRow = !isDocument(parent) && !isStep(parent) && parent.type === 'row'
-  if (isRow && !isStep(node) && node.type !== 'field') failAt(position, 'a row holds fields only.')
+  if (isRow && !isField(node)) failAtPosition(position, 'a row holds fields only.')
 }
 
 const updateBelow = (
@@ -58,11 +55,11 @@ const updateBelow = (
   { parent: rest, position }: Target,
   update: ChildrenUpdate,
 ): Parent => {
-  const children = childrenOf(parent) ?? failAt(position, 'a field holds no items.')
+  const children = childrenOf(parent) ?? failAtPosition(position, 'a field holds no items.')
   const [index, ...deeper] = rest
   if (index === undefined) return withChildren(parent, update(children, parent))
 
-  const child = children[index] ?? failAt(position, 'there is no such place.')
+  const child = children[index] ?? failAtPosition(position, 'there is no such place.')
   const updated = updateBelow(child, { parent: deeper, position }, update) as DocumentNode
   return withChildren(parent, splice(children, { index, removed: 1 }, updated))
 }
@@ -87,9 +84,9 @@ export const updateChildren = (
 export const nodeAt = (document: FormDocument, position: Position): DocumentNode => {
   let node: Parent = document
   for (const index of position) {
-    node = childrenOf(node)?.[index] ?? failAt(position, 'there is nothing here.')
+    node = childrenOf(node)?.[index] ?? failAtPosition(position, 'there is nothing here.')
   }
-  return isDocument(node) ? failAt(position, 'there is nothing here.') : node
+  return isDocument(node) ? failAtPosition(position, 'there is nothing here.') : node
 }
 
 /**
@@ -98,6 +95,6 @@ export const nodeAt = (document: FormDocument, position: Position): DocumentNode
  * @throws Error when the position is the root's.
  */
 export const splitPosition = (position: Position): Target & { index: number } => {
-  const index = position.at(-1) ?? failAt(position, 'there is nothing here.')
+  const index = position.at(-1) ?? failAtPosition(position, 'there is nothing here.')
   return { parent: position.slice(0, -1), position, index }
 }

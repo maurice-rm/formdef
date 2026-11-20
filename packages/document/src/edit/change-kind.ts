@@ -1,7 +1,7 @@
 import type { FormDocument } from '../form-document'
 import type { FieldKind } from '../kinds/field-kind'
-import type { Position } from './position'
-import { failAt, isStep } from './tree'
+import { isField } from './is-field'
+import { failAtPosition, type Position } from './position'
 import { updateNode } from './update-node'
 
 /**
@@ -27,7 +27,7 @@ export const changeKind = (
   kind: FieldKind<unknown>,
 ): FormDocument =>
   updateNode(document, position, (node) => {
-    if (isStep(node) || node.type !== 'field') return failAt(position, 'expected a field.')
+    if (!isField(node)) return failAtPosition(position, 'expected a field.')
     const { settings, ...field } = node
     const kept = Object.entries(settings ?? {}).filter(([name]) =>
       Object.hasOwn(kind.settings, name),

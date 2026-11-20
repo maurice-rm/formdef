@@ -1,3 +1,5 @@
+import { DOCUMENT_PATH } from '../document-path'
+import { failAt } from '../fail-at'
 import type { DocumentStep, FormDocument } from '../form-document'
 
 /**
@@ -17,8 +19,6 @@ export const splitIntoSteps = (
   document: FormDocument,
   step: Omit<DocumentStep, 'items'>,
 ): FormDocument => {
-  if (document.steps !== undefined) {
-    throw new Error('formdef: document: the form has steps already.')
-  }
+  if (document.steps !== undefined) failAt(DOCUMENT_PATH, 'the form has steps already.')
   return { format: document.format, steps: [{ ...step, items: document.items }] }
 }
