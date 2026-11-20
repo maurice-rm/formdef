@@ -1,6 +1,7 @@
 import { posix } from 'node:path'
 
 import { importsOf } from './imports-of'
+import { SETUP_FILES } from './owned-files'
 import type { RegistryItem } from './registry-item'
 
 type DependencyInput = {
@@ -44,7 +45,7 @@ const difference = (left: Iterable<string>, right: ReadonlySet<string>): string[
 
 /**
  * What `item` declares wrongly: an npm package, shadcn primitive or local file its files import
- * without declaring or shipping it, one it declares without importing it, or a peer of the core
+ * without declaring or shipping it (the setup's files every project has), one it declares without importing it, or a peer of the core
  * declared without the core's range.
  */
 export function dependencyProblems(
@@ -55,6 +56,7 @@ export function dependencyProblems(
     importsOf(readFile(file.path)).map((specifier) => ({ specifier, importer: file.path })),
   )
   const shipped = new Set(item.files.map((file) => withoutExtension(file.path)))
+  const fromSetup = new Set([...SETUP_FILES].map(withoutExtension))
   const declared = (item.dependencies ?? []).map(splitDeclaration)
   const declaredNames = new Set(declared.map(({ name }) => name))
   const primitives = new Set(item.registryDependencies ?? [])
@@ -71,7 +73,10 @@ export function dependencyProblems(
       specifier.startsWith('.') || (specifier.startsWith(LOCAL) && !specifier.startsWith(UI))
     const path = localPathOf(specifier, importer)
 
-    return isLocal && !(shipped.has(path) || shipped.has(`${path}/index`))
+    const isPresent = [path, `${path}/index`].some(
+      (candidate) => shipped.has(candidate) || fromSetup.has(candidate),
+    )
+    return isLocal && !isPresent
   })
 
   return [

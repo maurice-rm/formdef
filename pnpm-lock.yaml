@@ -446,6 +446,9 @@ importers:
       '@formdef/core':
         specifier: workspace:*
         version: link:../core
+      '@formdef/document':
+        specifier: workspace:*
+        version: link:../document
       '@formdef/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

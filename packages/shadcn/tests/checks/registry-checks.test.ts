@@ -132,6 +132,17 @@ describe('dependencyProblems', () => {
     ])
   })
 
+  it('accepts an import of the setup files, which every project fetches first', () => {
+    const problems = dependencyProblems(item(), {
+      readFile: sourceOf(
+        `${SOURCE}\nimport { registry } from '@/lib/formdef'\nimport { formContext } from '@/lib/formdef/context'`,
+      ),
+      peers: PEERS,
+    })
+
+    expect(problems).toEqual([])
+  })
+
   it("reports a peer of the core declared without the core's range", () => {
     const tanstack = "import { useSelector } from '@tanstack/react-form'"
     const problems = dependencyProblems(
@@ -188,8 +199,13 @@ describe('conventionProblems', () => {
     ])
   })
 
-  it('lets a setup file explain itself in comments', () => {
+  it('lets a setup file and the field kinds explain themselves in comments', () => {
+    const fieldKinds = { ...SETUP_FILE, path: 'lib/formdef/field-kinds.ts' }
+
     expect(conventionProblems(SETUP_FILE, '// add your widgets here\nconst value = 1')).toEqual([])
+    expect(conventionProblems(fieldKinds, '// remove the kinds you skip\nconst value = 1')).toEqual(
+      [],
+    )
   })
 
   it.each([

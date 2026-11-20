@@ -26,6 +26,22 @@
       "categories": ["form"]
     },
     {
+      "name": "field-kinds",
+      "type": "registry:lib",
+      "title": "formdef field kinds",
+      "description": "Field kinds for form documents and form builders, one or two per widget: short and long text, email, a number with a unit, a whole number, a checkbox, single and multiple choice, a dropdown and a date.",
+      "dependencies": ["@formdef/document@>=0.1.0"],
+      "files": [
+        {
+          "path": "lib/formdef/field-kinds.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-kinds.ts"
+        }
+      ],
+      "docs": "Fetch it after the setup. It lands in lib/formdef/field-kinds.ts and names the widgets text, textarea, number, checkbox, radio, select, checkboxes and date: register each under that name in index.tsx, or remove its field kinds. Render a form document with createDocumentForm(document, fieldKinds) from @formdef/document/react.",
+      "categories": ["form"]
+    },
+    {
       "name": "text-field",
       "type": "registry:component",
       "title": "Text field",

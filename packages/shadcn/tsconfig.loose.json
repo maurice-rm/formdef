@@ -3,5 +3,6 @@
   "compilerOptions": {
     "exactOptionalPropertyTypes": false
   },
-  "include": ["components/formdef", "lib/formdef", "hooks/formdef"]
+  "include": ["components/formdef", "lib/formdef", "hooks/formdef"],
+  "exclude": ["lib/formdef/field-kinds.ts"]
 }

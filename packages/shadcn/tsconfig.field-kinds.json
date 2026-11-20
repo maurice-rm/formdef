@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/lib/formdef": ["./tests/helpers/full-registry.tsx"],
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["lib/formdef/field-kinds.ts", "tests/field-kinds.test.tsx"],
+  "exclude": []
+}
