@@ -22,7 +22,7 @@ import type { Position } from '../position'
  * - `operatorMismatch`: an operator that does not fit the value type of the field compared;
  * - `unknownOption`: a compared value that is no option of the choice compared;
  * - `valueMismatch`: a compared value of the wrong type, such as text for a number;
- * - `empty`: a step, section, row or repeat without items;
+ * - `empty`: a step, section, row or repeat without items, or a form of steps without steps;
  * - `tooDeep`: a section inside a section inside a section, counting those around a repeat;
  * - `nestedRepeat`: a repeat inside a repeat;
  * - `minAboveMax`: a repeat whose fewest entries are more than its most;
@@ -88,7 +88,7 @@ export type ProblemParams = {
   unknownOption: { field: string; value: string }
   /** The type expected: a setting type, or `nothing`. */
   valueMismatch: { expected: string }
-  /** A step, section, row or repeat without items. */
+  /** A step, section, row or repeat without items, or a form of steps without steps. */
   empty: NoParams
   /** A section nested too deep. */
   tooDeep: NoParams

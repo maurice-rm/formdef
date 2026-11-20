@@ -47,6 +47,7 @@ const OPERATIONS: Readonly<Record<string, OperationShape>> = {
 
 const ACROSS_ENTRIES: ReadonlySet<string> = new Set(['sum', 'min', 'max'])
 const COUNT_WHERE = 'countWhere'
+const ROUND = 'round'
 
 const CHOICE_OPERATIONS: ReadonlySet<string> = new Set(['count', 'score'])
 
@@ -169,6 +170,16 @@ const checkCount = (
   mismatch({ walk: at.walk, path: `${at.path}.args` }, { op, expected })
 }
 
+const checkDigits = (digits: number, { op, at }: { op: string; at: At }): void => {
+  if (op !== ROUND) {
+    mismatch(at, { op, expected: 'no digits' })
+    return
+  }
+  if (!Number.isInteger(digits) || digits < 0 || digits > MOST_DIGITS) {
+    mismatch(at, { op, expected: `a whole number up to ${MOST_DIGITS}` })
+  }
+}
+
 const checkOperation = ({ op, args, digits }: Operation, at: At): ResultKind | undefined => {
   const shape = Object.hasOwn(OPERATIONS, op) ? OPERATIONS[op] : undefined
   if (shape === undefined) {
@@ -181,11 +192,8 @@ const checkOperation = ({ op, args, digits }: Operation, at: At): ResultKind | u
     path: `${at.path}.args[${index}]`,
   }))
   const first = checkOperands(operands, { at, op, expected: shape.operands })
-  if (digits !== undefined && (!Number.isInteger(digits) || digits < 0 || digits > MOST_DIGITS)) {
-    mismatch(
-      { walk: at.walk, path: `${at.path}.digits` },
-      { op, expected: `a whole number up to ${MOST_DIGITS}` },
-    )
+  if (digits !== undefined) {
+    checkDigits(digits, { op, at: { walk: at.walk, path: `${at.path}.digits` } })
   }
   return shape.result === 'first' ? first : shape.result
 }

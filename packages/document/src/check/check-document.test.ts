@@ -1880,3 +1880,65 @@ describe('checkDocument, where and in words', () => {
     ])
   })
 })
+
+describe('checkDocument, the rest of the form', () => {
+  it('reports digits on an operation other than round', () => {
+    const checked: FormDocument = {
+      format: 1,
+      items: [
+        { type: 'field', key: 'f1', kind: 'count', label: 'Rooms' },
+        {
+          type: 'computed',
+          key: 'c1',
+          label: 'Twice',
+          valueType: 'number',
+          expression: { op: 'add', digits: 2, args: [{ field: 'f1' }, { field: 'f1' }] },
+        },
+      ],
+    }
+
+    expect(codesOf(checked)).toEqual(['operandMismatch document.items[1].expression.digits'])
+  })
+
+  it('reports a form of steps without any step', () => {
+    expect(codesOf({ format: 1, steps: [] })).toEqual(['empty document.steps'])
+  })
+
+  it('reports an answer named in an option of an intro block as a text that names none', () => {
+    const withPick = registry.extendRegistry({ formComponents: { pick: Notice } })
+    const pick = defineBlockKind(withPick, {
+      name: 'pick',
+      label: 'Pick',
+      component: 'pick',
+      settings: { options: setting.options({ label: 'Options' }) },
+      props: () => ({ children: '' }),
+    })
+    const text = defineFieldKind(withPick, {
+      name: 'text',
+      label: 'Text',
+      widget: 'text',
+      valueType: valueTypes.text,
+    })
+    const checked: FormDocument = {
+      format: 1,
+      intro: {
+        items: [
+          {
+            type: 'block',
+            key: 'b1',
+            kind: 'pick',
+            settings: { options: [{ value: 'o1', label: 'Hi {f1}' }] },
+          },
+        ],
+        start: 'Go',
+      },
+      items: [{ type: 'field', key: 'f1', kind: 'text', label: 'Name' }],
+    }
+    const withPicks = createCatalog(withPick, { fields: [text], blocks: [pick] })
+    const found = checkDocument(checked, withPicks)
+
+    expect(found.map(({ code, path }) => `${code} ${path}`)).toEqual([
+      'fixedText document.intro.items[0].settings.options[0].label',
+    ])
+  })
+})

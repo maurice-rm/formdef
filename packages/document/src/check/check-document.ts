@@ -366,6 +366,9 @@ const checkSteps = (
   steps: readonly DocumentStep[],
   { walk, seenKeys, endingKeys }: StepWalk,
 ): void => {
+  if (steps.length === 0) {
+    report(walk, { code: 'empty', path: `${DOCUMENT_PATH}.steps` })
+  }
   const allStepKeys = steps.map((step) => step.key)
   const stepKeys = new Set<string>()
 

@@ -25,10 +25,10 @@ const reportMismatch = ({ walk, path, name }: At, type: string): void => {
   report(walk, { code: 'settingMismatch', path, params: { setting: name, type } })
 }
 
-const checkOptionTexts = (option: DocumentOption, { walk, path }: At): void => {
-  checkVaryingText(option.label, { walk, path: `${path}.label` })
+const checkOptionTexts = (option: DocumentOption, { walk, path, checkTextOf }: At): void => {
+  checkVaryingText(option.label, { walk, path: `${path}.label` }, checkTextOf)
   if (option.description !== undefined) {
-    checkVaryingText(option.description, { walk, path: `${path}.description` })
+    checkVaryingText(option.description, { walk, path: `${path}.description` }, checkTextOf)
   }
 }
 
