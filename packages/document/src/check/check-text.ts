@@ -3,17 +3,13 @@ import type { Text } from '../text'
 import { translationsOf } from '../translations-of'
 import { checkTranslations } from './check-translations'
 import type { CheckWalk } from './check-walk'
-import { report } from './report'
+import { earlierFieldNamed } from './earlier-field-named'
 
 type At = { walk: CheckWalk; path: string }
 
-const checkPlaceholders = (text: string, { walk, path }: At): void => {
+const checkPlaceholders = (text: string, at: At): void => {
   for (const field of placeholdersOf(text)) {
-    if (!walk.allFieldKeys.has(field)) {
-      report(walk, { code: 'unknownField', path, params: { field } })
-    } else if (!walk.earlier.has(field)) {
-      report(walk, { code: 'laterField', path, params: { field } })
-    }
+    earlierFieldNamed(field, at)
   }
 }
 

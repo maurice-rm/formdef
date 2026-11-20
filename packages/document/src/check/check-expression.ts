@@ -3,7 +3,8 @@ import type { Expression } from '../expression'
 import type { SettingType } from '../kinds/setting'
 import { pathTo } from '../path-to'
 import { checkCondition } from './check-condition'
-import type { CheckWalk, EarlierField } from './check-walk'
+import type { CheckWalk } from './check-walk'
+import { earlierFieldNamed } from './earlier-field-named'
 import { report } from './report'
 import { isResultKind, type ResultKind } from './result-kind'
 
@@ -58,21 +59,9 @@ const mismatch = ({ walk, path }: At, params: { op: string; expected: string }):
   report(walk, { code: 'operandMismatch', path, params })
 }
 
-const earlierAnswer = (key: string, { walk, path }: At): EarlierField | undefined => {
-  if (!walk.allFieldKeys.has(key)) {
-    report(walk, { code: 'unknownField', path, params: { field: key } })
-    return undefined
-  }
-  const earlier = walk.earlier.get(key)
-  if (earlier === undefined) {
-    report(walk, { code: 'laterField', path, params: { field: key } })
-  }
-  return earlier
-}
-
 const checkRead = (key: string, at: At): ResultKind | undefined => {
   const fieldAt = { walk: at.walk, path: `${at.path}.field` }
-  const valueType = earlierAnswer(key, fieldAt)?.valueType
+  const valueType = earlierFieldNamed(key, fieldAt)?.valueType
   if (valueType === undefined) {
     return undefined
   }
@@ -94,7 +83,7 @@ const checkOnChoices = (
     return undefined
   }
   const fieldAt = { walk: at.walk, path: `${at.path}.field` }
-  const valueType = earlierAnswer(field, fieldAt)?.valueType
+  const valueType = earlierFieldNamed(field, fieldAt)?.valueType
   const type = valueType?.comparesAs?.type
   if (valueType !== undefined && (type === undefined || !accepted.includes(type))) {
     mismatch(fieldAt, { op, expected: 'a field that chooses' })

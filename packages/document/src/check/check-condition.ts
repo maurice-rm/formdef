@@ -4,6 +4,7 @@ import { operatorOf } from '../kinds/operator-of'
 import type { Setting } from '../kinds/setting'
 import { checkOptionValues } from './check-option-values'
 import type { CheckWalk, EarlierField } from './check-walk'
+import { earlierFieldNamed } from './earlier-field-named'
 import { fitsSettingType } from './fits-setting-type'
 import { report } from './report'
 
@@ -30,25 +31,13 @@ const checkComparedValue = (
   }
 }
 
-const otherFieldOf = (key: string, { walk, path }: At): EarlierField | undefined => {
-  if (!walk.allFieldKeys.has(key)) {
-    report(walk, { code: 'unknownField', path, params: { field: key } })
-    return undefined
-  }
-  const other = walk.earlier.get(key)
-  if (other === undefined) {
-    report(walk, { code: 'laterField', path, params: { field: key } })
-  }
-  return other
-}
-
 const checkValueFrom = (
   valueFrom: string,
   compares: Setting<unknown> | undefined,
   { walk, path }: At,
 ): void => {
   const at = { walk, path: `${path}.valueFrom` }
-  const other = otherFieldOf(valueFrom, at)
+  const other = earlierFieldNamed(valueFrom, at)
   const valueType = other?.valueType
   if (valueType === undefined) {
     return
@@ -90,13 +79,8 @@ const checkCompared = (
 
 const checkComparison = (comparison: Comparison, path: string, walk: CheckWalk): void => {
   const { field, op } = comparison
-  if (!walk.allFieldKeys.has(field)) {
-    report(walk, { code: 'unknownField', path: `${path}.field`, params: { field } })
-    return
-  }
-  const earlier = walk.earlier.get(field)
+  const earlier = earlierFieldNamed(field, { walk, path: `${path}.field` })
   if (earlier === undefined) {
-    report(walk, { code: 'laterField', path: `${path}.field`, params: { field } })
     return
   }
   const { valueType } = earlier
