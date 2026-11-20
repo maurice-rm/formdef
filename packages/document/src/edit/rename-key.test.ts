@@ -63,6 +63,20 @@ describe('renameKey', () => {
     expect(document.steps?.[0]?.items[0]).toEqual(field('f1'))
   })
 
+  it('renames the field a comparison compares with', () => {
+    const compared: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        field('f2', { visibleWhen: { field: 'f2', op: 'atMost', valueFrom: 'f1' } }),
+      ],
+    }
+
+    expect(renameKey(compared, 'f1', 'area').items?.[1]).toEqual(
+      field('f2', { visibleWhen: { field: 'f2', op: 'atMost', valueFrom: 'area' } }),
+    )
+  })
+
   it('renames the field in the conditions of texts that follow an answer', () => {
     const texts: FormDocument = {
       format: 1,

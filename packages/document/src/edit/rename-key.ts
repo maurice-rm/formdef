@@ -20,7 +20,12 @@ const renameIn = (condition: Condition, rename: Rename): Condition => {
   if ('any' in condition) {
     return { any: condition.any.map((entry) => renameIn(entry, rename)) }
   }
-  return condition.field === rename.from ? { ...condition, field: rename.to } : condition
+  const renamed = (key: string): string => (key === rename.from ? rename.to : key)
+  return {
+    ...condition,
+    field: renamed(condition.field),
+    ...(condition.valueFrom === undefined ? {} : { valueFrom: renamed(condition.valueFrom) }),
+  }
 }
 
 const renameInCases = <TValue>(value: TValue, rename: Rename): TValue => {

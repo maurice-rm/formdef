@@ -193,6 +193,22 @@ describe('readDocument', () => {
     )
   })
 
+  it('reads a comparison with the answer of another field, but not with a value as well', () => {
+    const withValueOf = (visibleWhen: object) => ({
+      format: 1,
+      items: [{ type: 'field', key: 'f1', kind: 'text', label: 'Name', visibleWhen }],
+    })
+    const comparison = { field: 'f0', op: 'atMost', valueFrom: 'f9' }
+
+    expect(readDocument(withValueOf(comparison))).toEqual(withValueOf(comparison))
+    expect(() => readDocument(withValueOf({ ...comparison, value: 3 }))).toThrow(
+      'formdef: document.items[0].visibleWhen: expected either value or valueFrom, not both.',
+    )
+    expect(() => readDocument(withValueOf({ ...comparison, valueFrom: '' }))).toThrow(
+      'formdef: document.items[0].visibleWhen.valueFrom: expected text.',
+    )
+  })
+
   it('refuses a comparison without an operator', () => {
     const broken = {
       format: 1,

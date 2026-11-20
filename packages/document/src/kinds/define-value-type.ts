@@ -1,4 +1,5 @@
 import { failAt } from '../fail-at'
+import type { ComparesAs } from './compares-as'
 import type { Operator } from './operator'
 import type { Setting, SettingOption } from './setting'
 import type { ValueType } from './value-type'
@@ -86,6 +87,13 @@ export type ValueTypeDefinition<
    * @defaultValue only `isFilled` and `isEmpty`
    */
   operators?: OperatorDefinitions<TValue, TCompared>
+  /**
+   * How another field is compared with an answer of this type through `valueFrom`, such as a
+   * decimal as a `number`; an operator whose `compares` has that setting type accepts it.
+   *
+   * @defaultValue none; no condition compares with an answer of this type
+   */
+  comparesAs?: ComparesAs<TValue>
 }
 
 const FILL_OPERATORS: Readonly<Record<FillOperator, Operator>> = {
@@ -151,7 +159,15 @@ export function defineValueType<
 >(
   definition: ValueTypeDefinition<TValue, TName, TDescribed, TReadsOptions, TCompared>,
 ): ValueType<TValue, TName, TDescribed> & { readonly readsOptions: TReadsOptions } {
-  const { name, emptyValue, fits, isFilled = IS_FILLED, describe, toText = NO_TEXT } = definition
+  const {
+    name,
+    emptyValue,
+    fits,
+    isFilled = IS_FILLED,
+    describe,
+    toText = NO_TEXT,
+    comparesAs,
+  } = definition
   const readsOptions = (definition.readsOptions ?? false) as TReadsOptions
   // Each operator's compared value is typed by its own setting; at runtime it is checked data.
   const own = (definition.operators ?? {}) as Readonly<Record<string, Operator>>
@@ -161,6 +177,7 @@ export function defineValueType<
     emptyValue,
     readsOptions,
     operators: collectOperators(name, own),
+    comparesAs,
     fits,
     isFilled,
     describe,

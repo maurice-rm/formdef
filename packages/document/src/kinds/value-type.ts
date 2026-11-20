@@ -1,3 +1,4 @@
+import type { ComparesAs } from './compares-as'
 import type { Operator } from './operator'
 import type { SettingOption } from './setting'
 
@@ -25,6 +26,11 @@ export type ValueType<
   readonly readsOptions: boolean
   /** The operators a condition may compare a field of this type with, by name. */
   readonly operators: Readonly<Partial<Record<string, Operator<TValue>>>>
+  /**
+   * How another field is compared with an answer of this type through `valueFrom`; `undefined` when
+   * no condition may compare with it.
+   */
+  readonly comparesAs: ComparesAs<TValue> | undefined
   /** Whether a value has the shape of an answer of this type, such as a value from a request. */
   fits(value: unknown): value is TValue
   /** Whether a value of the right shape holds an answer, such as text that is not blank. */

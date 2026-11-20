@@ -136,6 +136,7 @@ const text: BuiltIn<string, 'text', Written> = defineValueType({
   isFilled: isNotBlank,
   describe: describeText,
   toText: asWritten,
+  comparesAs: { type: 'text', of: asWritten },
 })
 
 const choice: BuiltIn<string, 'choice', SettingOption, true> = defineValueType({
@@ -152,6 +153,7 @@ const choice: BuiltIn<string, 'choice', SettingOption, true> = defineValueType({
     in: isAmong,
     notIn: negated(isAmong),
   },
+  comparesAs: { type: 'option', of: asWritten },
 })
 
 const choices: BuiltIn<readonly string[], 'choices', Chosen, true> = defineValueType({
@@ -171,6 +173,7 @@ const choices: BuiltIn<readonly string[], 'choices', Chosen, true> = defineValue
       .filter((label) => label !== '')
       .join(LIST_SEPARATOR),
   operators: { includes: includesOption, excludes: negated(includesOption) },
+  comparesAs: { type: 'optionList', of: (value) => [...value] },
 })
 
 const boolean: BuiltIn<boolean, 'boolean', Ticked> = defineValueType({
@@ -183,6 +186,7 @@ const boolean: BuiltIn<boolean, 'boolean', Ticked> = defineValueType({
     isTrue: { holds: (answer) => answer === true },
     isFalse: { holds: (answer) => answer !== true },
   },
+  comparesAs: { type: 'boolean', of: (value) => value },
 })
 
 const number: BuiltIn<number, 'number', Counted> = defineValueType({
@@ -192,6 +196,7 @@ const number: BuiltIn<number, 'number', Counted> = defineValueType({
   describe: (value): Counted => ({ value }),
   toText: String,
   operators: numericOperators<number>((value) => value),
+  comparesAs: { type: 'number', of: (value) => value },
 })
 
 const decimal: BuiltIn<string, 'decimal', Written> = defineValueType({
@@ -202,6 +207,7 @@ const decimal: BuiltIn<string, 'decimal', Written> = defineValueType({
   describe: describeText,
   toText: asWritten,
   operators: numericOperators<string>(numberOf),
+  comparesAs: { type: 'number', of: numberOf },
 })
 
 const date: BuiltIn<string, 'date', Written> = defineValueType({
@@ -218,13 +224,16 @@ const date: BuiltIn<string, 'date', Written> = defineValueType({
     after: byDay(isGreater),
     onOrAfter: byDay(isAtLeast),
   },
+  comparesAs: { type: 'date', of: asWritten },
 })
 
 /**
  * The built-in value types, part of every catalog: text; one choice of the field's options and
  * several; a boolean, which is filled only when true, so a required consent has to be ticked; a
  * number; a decimal written as text with a comma or a dot, such as `120,5`; and a date as an ISO
- * string, compared by its day. A field kind names one as its `valueType`.
+ * string, compared by its day. A field kind names one as its `valueType`. A condition may compare
+ * a field with the answer of another through `valueFrom`: a decimal compares as a number, each other
+ * type as its own setting type.
  *
  * @example
  * ```ts

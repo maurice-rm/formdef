@@ -56,6 +56,7 @@ const ENTRIES: readonly Entry[] = [
       'CatalogOptions',
       'changeKind',
       'checkDocument',
+      'ComparesAs',
       'Condition',
       'createCatalog',
       'createKey',

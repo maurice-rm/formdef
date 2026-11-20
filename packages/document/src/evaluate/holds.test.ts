@@ -110,6 +110,20 @@ describe('holds', () => {
     expect(holdsEmpty({ field: 'built', op: 'before', value: '2000-01-01' })).toBe(false)
   })
 
+  it.each<[Condition, boolean]>([
+    [{ field: 'flats', op: 'atMost', valueFrom: 'area' }, true],
+    [{ field: 'area', op: 'lessThan', valueFrom: 'flats' }, false],
+    [{ field: 'built', op: 'onOrBefore', valueFrom: 'built' }, true],
+    [{ field: 'house', op: 'equals', valueFrom: 'house' }, true],
+  ])('compares with the answer of another field: %j is %s', (condition, expected) => {
+    expect(holdsOf(condition)).toBe(expected)
+  })
+
+  it('holds for no comparison with a field without an answer, negated or not', () => {
+    expect(holdsOf({ field: 'house', op: 'equals', valueFrom: 'missing' })).toBe(false)
+    expect(holdsOf({ field: 'house', op: 'notEquals', valueFrom: 'missing' })).toBe(false)
+  })
+
   it("compares with an operator of a project's value type", () => {
     expect(holdsOf({ field: 'postal', op: 'startsWith', value: '53' })).toBe(true)
     expect(holdsOf({ field: 'postal', op: 'startsWith', value: '10' })).toBe(false)

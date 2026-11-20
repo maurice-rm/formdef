@@ -50,6 +50,21 @@ describe('dependentsOf', () => {
     ])
   })
 
+  it('lists a comparison with the answer of a field inside the node', () => {
+    const compared: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        field('f2'),
+        field('f3', { visibleWhen: { field: 'f2', op: 'atMost', valueFrom: 'f1' } }),
+      ],
+    }
+
+    expect(dependentsOf(compared, [0])).toEqual([
+      { path: 'document.items[2].visibleWhen', field: 'f1' },
+    ])
+  })
+
   it('leaves out the conditions that go with the node', () => {
     expect(dependentsOf(document, [0])).toEqual([
       { path: 'document.steps[1].visibleWhen', field: 'f1' },

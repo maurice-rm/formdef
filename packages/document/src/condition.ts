@@ -12,6 +12,7 @@ import type { JsonValue } from './json-value'
  * ```ts
  * const isApartmentBlock: Condition = { field: 'f1', op: 'equals', value: 'o2' }
  * const either: Condition = { any: [isApartmentBlock, { field: 'f4', op: 'atLeast', value: 3 }] }
+ * const isPartOf: Condition = { field: 'f5', op: 'atMost', valueFrom: 'f4' }
  * ```
  */
 export type Condition =
@@ -26,6 +27,11 @@ export type Condition =
        * with nothing, such as `isFilled`.
        */
       value?: JsonValue
+      /**
+       * The key of an earlier field whose answer the field is compared with, instead of a fixed
+       * `value`; the comparison does not hold while that field has no answer.
+       */
+      valueFrom?: string
     }
   | {
       /** Holds when every one of these conditions holds. */

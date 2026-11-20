@@ -1,4 +1,5 @@
 import type { Comparison, Condition } from '../condition'
+import { failAt } from '../fail-at'
 import { hasKey } from './has-key'
 import { readJson } from './read-json'
 import { readList } from './read-list'
@@ -6,7 +7,7 @@ import { readOnlyKeys } from './read-only-keys'
 import { readShape, type Shape } from './read-shape'
 import { readText } from './read-text'
 
-const COMPARISON_KEYS = ['field', 'op', 'value']
+const COMPARISON_KEYS = ['field', 'op', 'value', 'valueFrom']
 
 const readConditions = (value: unknown, path: string): Condition[] =>
   readList(value, path).map((entry, index) => readCondition(entry, `${path}[${index}]`))
@@ -17,6 +18,12 @@ const readComparison = (shape: Shape, path: string): Comparison => {
   const field = readText(shape.field, `${path}.field`)
   const op = readText(shape.op, `${path}.op`)
 
+  if (hasKey(shape, 'value') && hasKey(shape, 'valueFrom')) {
+    failAt(path, 'expected either value or valueFrom, not both.')
+  }
+  if (hasKey(shape, 'valueFrom')) {
+    return { field, op, valueFrom: readText(shape.valueFrom, `${path}.valueFrom`) }
+  }
   return hasKey(shape, 'value')
     ? { field, op, value: readJson(shape.value, `${path}.value`) }
     : { field, op }

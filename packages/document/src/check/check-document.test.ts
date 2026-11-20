@@ -424,6 +424,87 @@ describe('checkDocument', () => {
     ])
   })
 
+  it('takes a comparison with an earlier answer whose value type compares as the operator needs', () => {
+    const document = plain(
+      { type: 'field', key: 'f1', kind: 'count', label: 'Rooms' },
+      {
+        type: 'field',
+        key: 'f2',
+        kind: 'measure',
+        label: 'Area',
+        settings: { unit: 'm²' },
+        visibleWhen: { field: 'f1', op: 'atMost', valueFrom: 'f1' },
+      },
+      {
+        type: 'field',
+        key: 'f3',
+        kind: 'count',
+        label: 'Heated rooms',
+        visibleWhen: { field: 'f1', op: 'atLeast', valueFrom: 'f2' },
+      },
+    )
+
+    expect(checkDocument(document, catalog)).toEqual([])
+  })
+
+  it('reports a comparison with a missing or later answer, or one that does not compare so', () => {
+    const document = plain(
+      choiceField,
+      { type: 'field', key: 'f2', kind: 'count', label: 'Rooms' },
+      { type: 'field', key: 'f3', kind: 'text', label: 'Name' },
+      {
+        type: 'field',
+        key: 'f4',
+        kind: 'text',
+        label: 'Note',
+        visibleWhen: {
+          all: [
+            { field: 'f2', op: 'atMost', valueFrom: 'f9' },
+            { field: 'f2', op: 'atMost', valueFrom: 'f5' },
+            { field: 'f2', op: 'atMost', valueFrom: 'f3' },
+            { field: 'f2', op: 'atMost', valueFrom: 'f1' },
+            { field: 'f2', op: 'isFilled', valueFrom: 'f2' },
+            { field: 'f2', op: 'atMost', value: 3, valueFrom: 'f2' },
+          ],
+        },
+      },
+      { type: 'field', key: 'f5', kind: 'count', label: 'Later' },
+    )
+
+    expect(checkDocument(document, catalog)).toEqual([
+      {
+        code: 'unknownField',
+        path: 'document.items[3].visibleWhen.all[0].valueFrom',
+        params: { field: 'f9' },
+      },
+      {
+        code: 'laterField',
+        path: 'document.items[3].visibleWhen.all[1].valueFrom',
+        params: { field: 'f5' },
+      },
+      {
+        code: 'valueMismatch',
+        path: 'document.items[3].visibleWhen.all[2].valueFrom',
+        params: { expected: 'number' },
+      },
+      {
+        code: 'valueMismatch',
+        path: 'document.items[3].visibleWhen.all[3].valueFrom',
+        params: { expected: 'number' },
+      },
+      {
+        code: 'valueMismatch',
+        path: 'document.items[3].visibleWhen.all[4].valueFrom',
+        params: { expected: 'nothing' },
+      },
+      {
+        code: 'valueMismatch',
+        path: 'document.items[3].visibleWhen.all[5].value',
+        params: { expected: 'nothing' },
+      },
+    ])
+  })
+
   it('reports a date that does not exist', () => {
     const document = plain(
       { type: 'field', key: 'f1', kind: 'date', label: 'A' },

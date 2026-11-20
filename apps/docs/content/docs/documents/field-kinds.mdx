@@ -138,6 +138,10 @@ export const catalog = createCatalog(registry, { valueTypes: [address], fields: 
   nothing. `holds` receives the answer, or `undefined` for a field without one, and the compared
   value. Every value type has `isFilled` and `isEmpty` besides, so its own operators take other
   names.
+- `comparesAs` lets a condition compare another field with an answer of this type through
+  [`valueFrom`](/documents#comparing-with-another-answer): `type` is the setting type it compares
+  as, and `of` turns the answer into a value of it, such as a decimal into a number. Without it,
+  no condition compares with an answer of this type.
 
 ## Block kinds
 

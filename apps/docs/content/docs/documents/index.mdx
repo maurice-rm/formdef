@@ -223,6 +223,22 @@ A builder offers only the operators of the field's value type and renders the in
 from the operator's setting; `checkDocument` reports an operator the value type does not have and
 a `value` that does not fit, is missing, or is given to an operator that compares with nothing.
 
+### Comparing with another answer
+
+`valueFrom` names an earlier field whose answer the field is compared with, in place of `value`:
+
+```json
+{ "field": "f5", "op": "atMost", "valueFrom": "f4" }
+```
+
+- The other field obeys the rules of every condition: it exists and comes earlier.
+- Its value type compares as the operator's setting: a decimal or a number for a number, a date
+  for a date, a choice for an option, several choices for a list of options, text for text.
+  `checkDocument` reports any other pairing as `valueMismatch`.
+- While the other field has no answer, the comparison does not hold, negated or not.
+- A comparison holds either `value` or `valueFrom`; `readDocument` refuses one with both, and
+  `checkDocument` reports the `value` of one built that way as `valueMismatch`.
+
 ## A first form
 
 <Steps>
