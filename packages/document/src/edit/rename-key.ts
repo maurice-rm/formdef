@@ -23,6 +23,8 @@ import { renamePlaceholder } from '../rename-placeholder'
 
 type Rename = { from: string; to: string }
 
+const renamedKey = (key: string, rename: Rename): string => (key === rename.from ? rename.to : key)
+
 const renameIn = (condition: Condition, rename: Rename): Condition => {
   if ('all' in condition) {
     return { all: condition.all.map((entry) => renameIn(entry, rename)) }
@@ -101,7 +103,11 @@ const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
 
 const renameInExpression = (expression: Expression, rename: Rename): Expression => {
   if ('field' in expression) {
-    return expression.field === rename.from ? { ...expression, field: rename.to } : expression
+    const when =
+      'when' in expression && expression.when !== undefined
+        ? { when: renameIn(expression.when, rename) }
+        : {}
+    return { ...expression, field: renamedKey(expression.field, rename), ...when }
   }
   if ('cases' in expression) {
     return {
@@ -131,8 +137,6 @@ const renamePlaceholdersIn = <TNode extends DocumentNode>(node: TNode, rename: R
   ])
   return { ...node, ...Object.fromEntries(renamed) }
 }
-
-const renamedKey = (key: string, rename: Rename): string => (key === rename.from ? rename.to : key)
 
 const renameInJump = (jump: Jump, rename: Rename): Jump => {
   const when = renameIn(jump.when, rename)

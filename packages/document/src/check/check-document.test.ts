@@ -1715,6 +1715,67 @@ describe('checkDocument with repeats', () => {
     ])
   })
 
+  it('takes sums and counts over an earlier repeat, a count by a condition of its entries', () => {
+    const rooms: FieldItem = { type: 'field', key: 'f5', kind: 'count', label: 'Rooms' }
+    const across = (key: string, expression: Expression): ComputedItem => ({
+      type: 'computed',
+      key,
+      label: key,
+      valueType: 'number',
+      expression,
+    })
+    const checked = document(
+      choiceField,
+      repeat([name, works, rooms]),
+      across('c1', { op: 'sum', field: 'f5' }),
+      across('c2', { op: 'max', field: 'f5' }),
+      across('c3', { op: 'count', field: 'r1' }),
+      across('c4', {
+        op: 'countWhere',
+        field: 'r1',
+        when: {
+          all: [
+            { field: 'f3', op: 'isTrue' },
+            { field: 'f1', op: 'equals', value: 'o1' },
+          ],
+        },
+      }),
+    )
+
+    expect(codesOf(checked)).toEqual([])
+  })
+
+  it('reports a sum over no number of an earlier repeat, and a count by a condition misplaced', () => {
+    const rooms: FieldItem = { type: 'field', key: 'f5', kind: 'count', label: 'Rooms' }
+    const across = (key: string, expression: Expression): ComputedItem => ({
+      type: 'computed',
+      key,
+      label: key,
+      valueType: 'number',
+      expression,
+    })
+    const checked = document(
+      choiceField,
+      repeat([name, rooms, across('c1', { op: 'sum', field: 'f5' })]),
+      across('c2', { op: 'sum', field: 'f2' }),
+      across('c3', { op: 'min', field: 'f1' }),
+      across('c4', { op: 'countWhere', field: 'r1' }),
+      across('c5', { op: 'count', field: 'r1', when: { field: 'f2', op: 'isFilled' } }),
+      across('c6', { op: 'countWhere', field: 'f1', when: { field: 'f2', op: 'isFilled' } }),
+      across('c7', { op: 'countWhere', field: 'r1', when: { field: 'c2', op: 'isFilled' } }),
+    )
+
+    expect(codesOf(checked)).toEqual([
+      'operandMismatch document.items[1].items[2].expression.field',
+      'operandMismatch document.items[2].expression.field',
+      'operandMismatch document.items[3].expression.field',
+      'operandMismatch document.items[4].expression',
+      'operandMismatch document.items[5].expression.when',
+      'operandMismatch document.items[6].expression.field',
+      'laterField document.items[7].expression.when.field',
+    ])
+  })
+
   it('reports a display whose kind does not apply to a repeat', () => {
     const withSection = registry.extendRegistry({ structure: { section: Section } })
     const card = defineDisplayKind(withSection, {

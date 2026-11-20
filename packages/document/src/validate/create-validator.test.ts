@@ -754,6 +754,37 @@ describe('createValidator', () => {
       ])
     })
 
+    it('works out sums, smallest, largest and counts over the entries of a repeat', () => {
+      const across = (key: string, expression: Expression): DocumentItem => ({
+        type: 'computed',
+        key,
+        label: key,
+        valueType: 'number',
+        expression,
+      })
+      const document = plain(
+        residents({ items: [field('f2', 'text'), field('f3', 'consent'), field('f5', 'count')] }),
+        across('c2', { op: 'sum', field: 'f5' }),
+        across('c3', { op: 'min', field: 'f5' }),
+        across('c4', { op: 'max', field: 'f5' }),
+        across('c5', { op: 'count', field: 'r1' }),
+        across('c6', { op: 'countWhere', field: 'r1', when: { field: 'f3', op: 'isTrue' } }),
+      )
+
+      expect(
+        validate(document, {
+          r1: [
+            { f2: 'Ada', f3: true, f5: 3 },
+            { f2: 'Max', f5: 2 },
+            { f2: 'Eve', f3: true },
+          ],
+        }),
+      ).toMatchObject({ value: { c2: 5, c3: 2, c4: 3, c5: 3, c6: 2 } })
+      expect(validate(document, { r1: [] })).toEqual({
+        value: { r1: [], c2: 0, c5: 0, c6: 0 },
+      })
+    })
+
     it('validates no entry of a repeat that does not show, and leaves it out', () => {
       const document = plain(houseType, residents({ min: 1, visibleWhen: isApartmentBlock }))
 

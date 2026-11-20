@@ -46,6 +46,9 @@ const OPERATIONS: Readonly<Record<string, OperationShape>> = {
   daysBetween: { count: TWO, operands: 'date', result: NUMBER },
 }
 
+const ACROSS_ENTRIES: ReadonlySet<string> = new Set(['sum', 'min', 'max'])
+const COUNT_WHERE = 'countWhere'
+
 // The setting types a field compares as, for each operation on its choices.
 const CHOICE_OPERATIONS: Readonly<Record<string, readonly SettingType[]>> = {
   count: ['optionList'],
@@ -73,10 +76,9 @@ const checkRead = (key: string, at: At): ResultKind | undefined => {
   return kind
 }
 
-const checkOnChoices = (
-  { op, field }: { op: string; field: string },
-  at: At,
-): ResultKind | undefined => {
+type OnField = { op: string; field: string; when?: Condition }
+
+const checkOnChoices = ({ op, field }: OnField, at: At): ResultKind | undefined => {
   const accepted = Object.hasOwn(CHOICE_OPERATIONS, op) ? CHOICE_OPERATIONS[op] : undefined
   if (accepted === undefined) {
     report(at.walk, { code: 'unknownOperation', path: `${at.path}.op`, params: { op } })
@@ -89,6 +91,60 @@ const checkOnChoices = (
     mismatch(fieldAt, { op, expected: 'a field that chooses' })
   }
   return NUMBER
+}
+
+const reportNotNamed = (
+  field: string,
+  { at, op, expected }: { at: At; op: string; expected: string },
+): void => {
+  if (!at.walk.allFieldKeys.has(field)) {
+    report(at.walk, { code: 'unknownField', path: at.path, params: { field } })
+    return
+  }
+  mismatch(at, { op, expected })
+}
+
+// A field inside a repeat is read across its entries only once the repeat is left.
+const checkAcrossEntries = ({ op, field }: OnField, at: At): ResultKind => {
+  const fieldAt = { walk: at.walk, path: `${at.path}.field` }
+  const repeat = at.walk.repeatOfField.get(field)
+  const scope = repeat === undefined ? undefined : at.walk.repeatScopes.get(repeat)
+  const valueType = scope?.get(field)?.valueType
+  if (scope === undefined) {
+    reportNotNamed(field, { at: fieldAt, op, expected: 'a number field of an earlier repeat' })
+  } else if (valueType !== undefined && valueType.comparesAs?.type !== NUMBER) {
+    mismatch(fieldAt, { op, expected: 'a number field of an earlier repeat' })
+  }
+  return NUMBER
+}
+
+// The condition reads each entry: the fields of the repeat and those before it.
+const checkCountWhere = ({ op, field, when }: OnField, at: At): ResultKind => {
+  const scope = at.walk.repeatScopes.get(field)
+  if (scope === undefined) {
+    const fieldAt = { walk: at.walk, path: `${at.path}.field` }
+    reportNotNamed(field, { at: fieldAt, op, expected: 'an earlier repeat' })
+  }
+  if (when === undefined) {
+    mismatch(at, { op, expected: 'a condition' })
+  } else if (scope !== undefined) {
+    checkCondition(when, `${at.path}.when`, { ...at.walk, earlier: new Map(scope) })
+  }
+  return NUMBER
+}
+
+const checkOnField = (operation: OnField, at: At): ResultKind | undefined => {
+  const { op, field, when } = operation
+  if (when !== undefined && op !== COUNT_WHERE) {
+    mismatch({ walk: at.walk, path: `${at.path}.when` }, { op, expected: 'no condition' })
+  }
+  if (ACROSS_ENTRIES.has(op)) {
+    return checkAcrossEntries(operation, at)
+  }
+  if (op === COUNT_WHERE) {
+    return checkCountWhere(operation, at)
+  }
+  return op === 'count' && at.walk.repeatScopes.has(field) ? NUMBER : checkOnChoices(operation, at)
 }
 
 // Each operand is checked, then its kind against the one expected, so problems stay in order.
@@ -165,12 +221,14 @@ const checkCases = ({ cases, otherwise }: Cases, at: At): ResultKind | undefined
  * Checks an expression against the answers before it and returns what it comes to: each answer
  * read exists, comes earlier and is a number, a text or a date; each operation is known, takes as
  * many operands as it has, of the kinds it works on; `count` and `score` read a field that
- * chooses; the results of a choice by conditions are of one kind. `undefined` when what it comes
+ * chooses; `sum`, `min` and `max` read a number field of an earlier repeat, `count` and
+ * `countWhere` an earlier repeat, the latter with a condition on its entries; the results of a
+ * choice by conditions are of one kind. `undefined` when what it comes
  * to cannot be told, as a problem was reported.
  */
 export function checkExpression(expression: Expression, at: At): ResultKind | undefined {
   if ('op' in expression) {
-    return 'field' in expression ? checkOnChoices(expression, at) : checkOperation(expression, at)
+    return 'field' in expression ? checkOnField(expression, at) : checkOperation(expression, at)
   }
   if ('field' in expression) {
     return checkRead(expression.field, at)

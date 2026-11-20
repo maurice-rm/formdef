@@ -400,6 +400,9 @@ An expression is data, never code the package runs:
 | `{ "op": "concat", "args": [ … ] }` | a text of its operands joined: an answer read as its [placeholder](#placeholders) writes it, such as a decimal with its comma, anything else as plain digits or text |
 | `{ "op": "count", "field": "f4" }` | how many options a field with several choices holds, 0 without any |
 | `{ "op": "score", "field": "f4" }` | the sum of the `score` of each option chosen, 0 without any; an option without a `score` counts 0 |
+| `{ "op": "sum", "field": "f5" }` | the sum of a number field of an earlier [repeat](#repeats) over its entries, 0 without any; `min` and `max` the smallest and largest, empty without any |
+| `{ "op": "count", "field": "r1" }` | how many entries an earlier repeat holds |
+| `{ "op": "countWhere", "field": "r1", "when": condition }` | how many entries of an earlier repeat the condition holds for; it reads each entry's fields and those before the repeat |
 | `{ "cases": [{ "when": condition, "value": x }], "otherwise": y }` | the `value` of the first case whose [condition](#conditions) holds, `y` when none does, shaped like a [setting that follows an answer](#settings-that-follow-an-answer) |
 
 - An empty operand makes an empty result, unless `otherwise` replaces it, so a total does not

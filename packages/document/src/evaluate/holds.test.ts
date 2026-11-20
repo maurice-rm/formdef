@@ -50,6 +50,8 @@ const answers: Answers = {
       : undefined
   },
   valueTypeOf: (key) => VALUE_TYPES.get(key),
+  entriesOf: () => [],
+  repeatOf: () => undefined,
 }
 
 const holdsOf = (condition: Condition): boolean => holds(condition, answers)
@@ -101,7 +103,7 @@ describe('holds', () => {
   })
 
   it('lets only the negated operators hold for a field without an answer', () => {
-    const empty = { get: () => undefined, valueTypeOf: answers.valueTypeOf }
+    const empty = { ...answers, get: () => undefined }
     const holdsEmpty = (condition: Condition): boolean => holds(condition, empty)
 
     expect(holdsEmpty({ field: 'heated', op: 'isFalse' })).toBe(true)

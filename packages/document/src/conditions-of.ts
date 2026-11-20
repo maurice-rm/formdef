@@ -71,7 +71,9 @@ const expressionConditions = (expression: Expression, path: string): Placed[] =>
       expressionConditions(arg, `${path}.args[${index}]`),
     )
   }
-  return []
+  return 'when' in expression && expression.when !== undefined
+    ? [{ condition: expression.when, path: `${path}.when` }]
+    : []
 }
 
 const ownConditions = (node: DocumentNode, path: string): Placed[] => {

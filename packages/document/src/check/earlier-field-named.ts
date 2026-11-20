@@ -16,7 +16,7 @@ export function earlierFieldNamed(
   }
   const earlier = walk.earlier.get(key)
   if (earlier === undefined) {
-    const code = walk.repeatFieldKeys.has(key) ? 'repeatField' : 'laterField'
+    const code = walk.repeatOfField.has(key) ? 'repeatField' : 'laterField'
     report(walk, { code, path, params: { field: key } })
   }
   return earlier

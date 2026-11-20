@@ -19,4 +19,8 @@ export type Answer = {
 export type Answers = {
   get: (key: string) => Answer | undefined
   valueTypeOf: (key: string) => ValueType | undefined
+  /** The answers each entry of an earlier repeat reads, by its key; none for one not shown. */
+  entriesOf: (repeat: string) => readonly Answers[]
+  /** The key of the repeat a field or computed value sits in; `undefined` outside repeats. */
+  repeatOf: (key: string) => string | undefined
 }

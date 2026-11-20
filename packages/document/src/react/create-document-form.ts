@@ -1,7 +1,7 @@
 import type { FormProps, Validation } from '@formdef/core'
 import { type ComponentType, createElement, useState } from 'react'
 
-import type { Answers } from '../evaluate/answers'
+import { NO_ANSWERS } from '../evaluate/no-answers'
 import type { FormDocument } from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
 import type { ValueType } from '../kinds/value-type'
@@ -20,9 +20,6 @@ import { endingLayoutOf } from './ending-layout-of'
 import { EndingView } from './ending-view'
 import { StartButton, type StartButtonProps } from './start-button'
 import { withIntro } from './with-intro'
-
-// The intro shows before any answer; `checkDocument` refuses texts in it that name one.
-const NO_ANSWERS: Answers = { get: () => undefined, valueTypeOf: () => undefined }
 
 /**
  * What {@link createDocumentForm} takes besides the document: what {@link createValidator} takes,
@@ -142,6 +139,7 @@ export function createDocumentForm(
   }
   return withIntro(Ended, {
     registry,
+    // The intro shows before any answer; `checkDocument` refuses texts in it that name one.
     layout: blockLayoutOf(document.intro.items, { catalog, answers: NO_ANSWERS, language }),
     label: resolveFixedText(document.intro.start, language),
     StartButton: options.startButton ?? StartButton,

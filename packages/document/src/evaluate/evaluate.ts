@@ -93,7 +93,7 @@ export type EvaluationInput = {
 type EvaluationWalk = {
   catalog: Catalog<unknown, ValueType>
   language: string | undefined
-  valueTypes: ReadonlyMap<string, ValueType>
+  sources: AnswerSources
   filled: Map<string, Answer>
   answers: Answers
   shown: ShownField[]
@@ -108,15 +108,23 @@ type Container = {
   path: ValuePath
 }
 
+/** What every scope of answers shares: the value types, and the entries of each repeat walked. */
+type AnswerSources = {
+  valueTypes: ReadonlyMap<string, ValueType>
+  entries: Map<string, readonly Answers[]>
+  repeatOfKey: ReadonlyMap<string, string>
+}
+
 const objectOf = (value: unknown): Readonly<Record<string, unknown>> =>
   isPlainObject(value) ? value : {}
 
-const answersOver = (
-  filled: ReadonlyMap<string, Answer>,
-  valueTypes: ReadonlyMap<string, ValueType>,
-): Answers => ({
+const NO_ENTRIES: readonly Answers[] = []
+
+const answersOver = (filled: ReadonlyMap<string, Answer>, sources: AnswerSources): Answers => ({
   get: (key) => filled.get(key),
-  valueTypeOf: (key) => valueTypes.get(key),
+  valueTypeOf: (key) => sources.valueTypes.get(key),
+  entriesOf: (repeat) => sources.entries.get(repeat) ?? NO_ENTRIES,
+  repeatOf: (key) => sources.repeatOfKey.get(key),
 })
 
 const isShown = (item: { visibleWhen?: Condition }, walk: EvaluationWalk): boolean =>
@@ -176,18 +184,32 @@ const valueTypeOfItem = (
     : catalog.findFieldKind(item.kind)?.valueType
 
 const valueTypesOf = (
-  document: FormDocument,
+  items: readonly DocumentItem[],
   catalog: Catalog<unknown, ValueType>,
-): ReadonlyMap<string, ValueType> => {
-  const items =
-    document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
-  return new Map([
+): ReadonlyMap<string, ValueType> =>
+  new Map([
     ...answerItemsOf(items).flatMap((item) => {
       const valueType = valueTypeOfItem(item, catalog)
       return valueType === undefined ? [] : [[item.key, valueType] as const]
     }),
     ...repeatsOf(items).map((repeat) => [repeat.key, entryCount] as const),
   ])
+
+const repeatOfKeyIn = (items: readonly DocumentItem[]): ReadonlyMap<string, string> =>
+  new Map(
+    repeatsOf(items).flatMap((repeat) =>
+      answerItemsOf(repeat.items).map((item) => [item.key, repeat.key] as const),
+    ),
+  )
+
+const sourcesOf = (document: FormDocument, catalog: Catalog<unknown, ValueType>): AnswerSources => {
+  const items =
+    document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
+  return {
+    valueTypes: valueTypesOf(items, catalog),
+    entries: new Map(),
+    repeatOfKey: repeatOfKeyIn(items),
+  }
 }
 
 const walkItems = (
@@ -227,11 +249,12 @@ const walkRepeat = (repeat: RepeatItem, container: Container, walk: EvaluationWa
   })
   entries.forEach((entry, index) => {
     const filled = new Map(walk.filled)
-    const answers = answersOver(filled, walk.valueTypes)
+    const answers = answersOver(filled, walk.sources)
     entryAnswers.push(answers)
     const entryWalk = { ...walk, filled, answers }
     walkItems(repeat.items, { values: objectOf(entry), path: [...path, index] }, entryWalk)
   })
+  walk.sources.entries.set(repeat.key, entryAnswers)
   if (entryCount.isFilled(entries.length)) {
     const count = entries.length
     walk.filled.set(repeat.key, {
@@ -259,13 +282,13 @@ export function evaluate(
   { values, language }: EvaluationInput,
 ): Evaluation {
   const filled = new Map<string, Answer>()
-  const valueTypes = valueTypesOf(document, catalog)
+  const sources = sourcesOf(document, catalog)
   const walk: EvaluationWalk = {
     catalog,
     language,
-    valueTypes,
+    sources,
     filled,
-    answers: answersOver(filled, valueTypes),
+    answers: answersOver(filled, sources),
     shown: [],
     computed: [],
     repeats: [],

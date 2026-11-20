@@ -7,6 +7,7 @@ import type { Answers } from '../evaluate/answers'
 import { type Evaluation, evaluate } from '../evaluate/evaluate'
 import { holds } from '../evaluate/holds'
 import { isRequired } from '../evaluate/is-required'
+import { NO_ANSWERS } from '../evaluate/no-answers'
 import { resolveFormattedText } from '../evaluate/resolve-formatted-text'
 import { resolveSettings } from '../evaluate/resolve-settings'
 import { resolveVaryingText } from '../evaluate/resolve-varying-text'
@@ -66,8 +67,6 @@ const varyingOf = (text: VaryingText, { build, answers }: { build: Build; answer
 
 const markdownOf = (text: VaryingText, { build, answers }: { build: Build; answers: Answers }) =>
   resolveFormattedText(text, { answers, language: build.language })
-
-const NO_ANSWERS: Answers = { get: () => undefined, valueTypeOf: () => undefined }
 
 // A display is fixed for the form: `checkDocument` refuses settings that follow or name an answer.
 const displayPropsOf = (display: Display | undefined, build: Build): Entry => {

@@ -336,6 +336,27 @@ describe('renameKey', () => {
     })
   })
 
+  it('renames the repeat and the fields an operation over its entries names', () => {
+    const counted: FormDocument = {
+      format: 1,
+      items: [
+        {
+          type: 'computed',
+          key: 'c1',
+          label: 'Working',
+          valueType: 'number',
+          expression: { op: 'countWhere', field: 'r1', when: { field: 'f3', op: 'isTrue' } },
+        },
+      ],
+    }
+
+    const renamed = renameKey(renameKey(counted, 'r1', 'residents'), 'f3', 'works')
+
+    expect(renamed.items?.[0]).toMatchObject({
+      expression: { field: 'residents', when: { field: 'works' } },
+    })
+  })
+
   it('renames a step key', () => {
     expect(renameKey(document, 's2', 'heating').steps?.map(({ key }) => key)).toEqual([
       's1',

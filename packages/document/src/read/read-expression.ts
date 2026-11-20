@@ -19,8 +19,14 @@ const readConstant = (value: unknown, path: string): number | string =>
 // The operations come from the package, which `checkDocument` checks the expression against.
 const readOperation = (shape: Shape, path: string): Expression => {
   if (hasKey(shape, 'field')) {
-    readOnlyKeys(shape, ['op', 'field'], path)
-    return { op: readText(shape.op, `${path}.op`), field: readText(shape.field, `${path}.field`) }
+    readOnlyKeys(shape, ['op', 'field', 'when'], path)
+    const onField = {
+      op: readText(shape.op, `${path}.op`),
+      field: readText(shape.field, `${path}.field`),
+    }
+    return shape.when === undefined
+      ? onField
+      : { ...onField, when: readCondition(shape.when, `${path}.when`) }
   }
   readOnlyKeys(shape, ['op', 'args', 'digits'], path)
   const op = readText(shape.op, `${path}.op`)

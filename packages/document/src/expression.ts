@@ -8,8 +8,11 @@ import type { Condition } from './condition'
  *
  * The operations are `add`, `subtract`, `multiply`, `divide`, `min`, `max` and `round` on numbers;
  * `daysBetween` two dates; `concat`, which joins its operands as placeholders write them;
- * `otherwise`, which takes its second expression when the first is empty; and `count` and `score`
- * on a field's choices, 0 without any. {@link checkDocument} reports any other.
+ * `otherwise`, which takes its second expression when the first is empty; `count` and `score` on a
+ * field's choices, 0 without any. Over the entries of an earlier repeat: `sum`, `min` and `max` of
+ * a number field inside it, `count` of its entries and `countWhere` of those whose condition holds;
+ * the sums and counts are 0 without entries, `min` and `max` empty. {@link checkDocument} reports
+ * any other.
  *
  * @example
  * ```ts
@@ -30,10 +33,18 @@ export type Expression =
       value: number | string
     }
   | {
-      /** The operation on a field's choices: `count` them, or add up the `score` of each. */
+      /**
+       * The operation on a field: `count` its choices or add up their `score`; `sum`, `min` or
+       * `max` of a field of an earlier repeat over its entries; `count` the entries of an earlier
+       * repeat, or `countWhere` those whose condition holds.
+       */
       op: string
-      /** The key of an earlier field that chooses among options. */
+      /** The key of the field, or of the repeat whose entries are counted. */
       field: string
+      /**
+       * For `countWhere`: the condition on each entry, on its fields and those before the repeat.
+       */
+      when?: Condition
     }
   | {
       /** The operation, such as `add`. */

@@ -179,6 +179,19 @@ describe('readDocument', () => {
     expect(readDocument(document)).toEqual(document)
   })
 
+  it('reads an operation over the entries of a repeat, a count with the condition it counts by', () => {
+    const computed = (expression: unknown) => ({
+      format: 1,
+      items: [{ type: 'computed', key: 'c1', label: 'C', valueType: 'number', expression }],
+    })
+    const countWhere = { op: 'countWhere', field: 'r1', when: { field: 'f3', op: 'isTrue' } }
+
+    expect(readDocument(computed(countWhere))).toEqual(computed(countWhere))
+    expect(() => readDocument(computed({ ...countWhere, args: [] }))).toThrow(
+      'formdef: document.items[0].expression.args: unknown key.',
+    )
+  })
+
   it('refuses a repeat in a row, and bounds that are no whole number of 0 or more', () => {
     const repeat = {
       type: 'repeat',

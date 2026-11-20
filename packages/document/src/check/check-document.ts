@@ -212,9 +212,10 @@ const checkRepeat = (repeat: RepeatItem, level: Level): void => {
     isInRepeat: true,
   })
   const { walk } = level.at
+  walk.repeatScopes.set(repeat.key, new Map(walk.earlier))
   for (const { key } of answerItemsOf(repeat.items)) {
     walk.earlier.delete(key)
-    walk.repeatFieldKeys.add(key)
+    walk.repeatOfField.set(key, repeat.key)
   }
   walk.earlier.set(repeat.key, {
     key: repeat.key,
@@ -395,7 +396,8 @@ export function checkDocument(
     languages: document.languages,
     allFieldKeys: new Set([...answerItemsOf(items), ...repeatsOf(items)].map((item) => item.key)),
     earlier: new Map(),
-    repeatFieldKeys: new Set(),
+    repeatOfField: new Map(),
+    repeatScopes: new Map(),
     problems: [],
   }
 

@@ -1,5 +1,7 @@
+import type { Condition } from '../condition'
 import { dayOf } from '../day-of'
 import type { Expression } from '../expression'
+import { entryCount } from '../kinds/entry-count'
 import type { Answers } from './answers'
 import { holds } from './holds'
 
@@ -44,12 +46,45 @@ const chosenOf = (key: string, answers: Answers): { values: string[]; scores: nu
   return { values, scores }
 }
 
-const computeOnChoices = ({ op, field }: { op: string; field: string }, answers: Answers) => {
+type OnField = { op: string; field: string; when?: Condition }
+
+const computeOnChoices = ({ op, field }: OnField, answers: Answers): number | undefined => {
   const { values, scores } = chosenOf(field, answers)
   if (op === 'count') {
     return values.length
   }
   return op === 'score' ? scores.reduce((sum, score) => sum + score, 0) : undefined
+}
+
+// The entries an answer is missing in are left out, so a sum of none is 0 and a min of none empty.
+const numbersAcross = (field: string, answers: Answers): number[] => {
+  const repeat = answers.repeatOf(field)
+  const entries = repeat === undefined ? [] : answers.entriesOf(repeat)
+  return entries.flatMap((entry) => {
+    const value = answerOf(field, entry)
+    return typeof value === 'number' ? [value] : []
+  })
+}
+
+const ACROSS_ENTRIES: Readonly<Record<string, Arithmetic>> = {
+  sum: (numbers) => numbers.reduce((sum, number) => sum + number, 0),
+  min: (numbers) => (numbers.length === 0 ? undefined : ARITHMETIC.min?.(numbers)),
+  max: (numbers) => (numbers.length === 0 ? undefined : ARITHMETIC.max?.(numbers)),
+}
+
+const computeOnField = (operation: OnField, answers: Answers): number | undefined => {
+  const { op, field, when } = operation
+  if (Object.hasOwn(ACROSS_ENTRIES, op)) {
+    return ACROSS_ENTRIES[op]?.(numbersAcross(field, answers))
+  }
+  if (op === 'countWhere') {
+    const entries = answers.entriesOf(field)
+    return when === undefined ? undefined : entries.filter((entry) => holds(when, entry)).length
+  }
+  if (op === 'count' && answers.valueTypeOf(field) === entryCount) {
+    return answers.entriesOf(field).length
+  }
+  return computeOnChoices(operation, answers)
 }
 
 // An answer joins as its placeholder writes it, such as a decimal with its comma.
@@ -117,12 +152,14 @@ const finite = (value: Computed | undefined): Computed | undefined =>
  * What an expression comes to for these answers; `undefined` when it is empty: an operand without
  * an answer, a division by zero, or a result that is no finite number. `otherwise` replaces an
  * empty first expression with its second; `count` and `score` of a field without choices are 0.
+ * Over the entries of a repeat, `sum`, `count` and `countWhere` are 0 without entries, and `min`
+ * and `max` are empty without an answer in any of them.
  */
 export function compute(expression: Expression, answers: Answers): Computed | undefined {
   if ('op' in expression) {
     return finite(
       'field' in expression
-        ? computeOnChoices(expression, answers)
+        ? computeOnField(expression, answers)
         : computeOperation(expression, answers),
     )
   }
