@@ -1,4 +1,5 @@
 import type { DocumentItem, FieldItem } from './form-document'
+import { isLeaf } from './is-leaf'
 
 /** The fields among these items and inside their rows and sections, in document order. */
 export function fieldsOf(items: readonly DocumentItem[]): FieldItem[] {
@@ -6,6 +7,6 @@ export function fieldsOf(items: readonly DocumentItem[]): FieldItem[] {
     if (item.type === 'field') {
       return [item]
     }
-    return item.type === 'block' ? [] : fieldsOf(item.items)
+    return isLeaf(item) ? [] : fieldsOf(item.items)
   })
 }

@@ -3,15 +3,19 @@ import type { JsonValue } from '../json-value'
 /**
  * What a problem of a form document is about:
  *
- * - `duplicateKey`: a step key used twice, or a key of fields and blocks used twice;
- * - `invalidKey`: a step, field or block key that is empty or holds a dot or a bracket;
+ * - `duplicateKey`: a step key used twice, or a key of fields, blocks and computed values used
+ *   twice;
+ * - `invalidKey`: a step, field, block or computed value key that is empty or holds a dot or a
+ *   bracket;
  * - `overlappingKey`: a step key that starts with another step's key, such as `s10` after `s1`;
  * - `duplicateOption`: an option value used twice in one field;
  * - `unknownKind`: a field, block or display of a kind that is not registered;
  * - `misplacedDisplay`: a display where its kind does not apply, such as a section's on a row, or
  *   the form's in a form without steps;
- * - `unknownField`: a condition on a field the document does not hold;
- * - `laterField`: a condition on a field that comes later, or on the field itself;
+ * - `unknownField`: a condition on, or an expression that reads, a field the document does not
+ *   hold;
+ * - `laterField`: a condition on, or an expression that reads, a field that comes later, or the
+ *   field itself;
  * - `operatorMismatch`: an operator that does not fit the value type of the field compared;
  * - `unknownOption`: a compared value that is no option of the choice compared;
  * - `valueMismatch`: a compared value of the wrong type, such as text for a number;
@@ -26,10 +30,15 @@ import type { JsonValue } from '../json-value'
  * - `unknownLanguage`: a translation into a language the document does not name;
  * - `fixedText`: a placeholder in the label of a step or section or in a display's setting, which
  *   names no answers;
- * - `unknownParam`: a placeholder in a field's error text that its issue code has no param for.
+ * - `unknownParam`: a placeholder in a field's error text that its issue code has no param for;
+ * - `unknownOperation`: an operation of an expression the package does not know;
+ * - `operandMismatch`: an operand of the wrong kind or number, such as text to `add`, or an
+ *   answer that is no number, text or date;
+ * - `resultMismatch`: a computed value of a value type other than `number`, `text` or `date`, or
+ *   whose expression comes to another.
  *
- * A placeholder on a field that does not exist or comes later is reported as `unknownField` or
- * `laterField`, like a condition.
+ * A placeholder, or a `valueFrom`, on a field that does not exist or comes later is reported as
+ * `unknownField` or `laterField`, like a condition or an expression.
  */
 export type ProblemCode =
   | 'duplicateKey'
@@ -54,6 +63,9 @@ export type ProblemCode =
   | 'unknownLanguage'
   | 'fixedText'
   | 'unknownParam'
+  | 'unknownOperation'
+  | 'operandMismatch'
+  | 'resultMismatch'
 
 /**
  * One problem {@link checkDocument} found in a form document: what it is about, where, and what an

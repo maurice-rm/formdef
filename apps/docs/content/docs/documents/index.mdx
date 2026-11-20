@@ -56,10 +56,11 @@ a field may be is decided in code, once: by the project's [field kinds](/documen
 - A document holds either `items`, a plain form, or `steps`, filled in one at a time. A step has a
   `key`, a `label`, an optional `description` under the label in the stepper, an optional
   `visibleWhen`, and its `items`.
-- An item is a **field**, a **block** of content without an answer, a **row** of fields and blocks
-  side by side, or a **section**: a `label` over its `items`, and an optional `description` under
-  it. A section inside a section is a group that reads like one question, such as an address; a
-  third level is not allowed. A row holds fields and blocks only.
+- An item is a **field**, a **block** of content without an answer, a
+  [**computed value**](#computed-values), a **row** of fields, blocks and computed values side by
+  side, or a **section**: a `label` over its `items`, and an optional `description` under it. A
+  section inside a section is a group that reads like one question, such as an address; a third
+  level is not allowed.
 - A block has a `key`, the `kind` of a registered [block kind](/documents/field-kinds#block-kinds),
   and optionally `settings` and `visibleWhen`. It gives no answer and is not validated; a condition
   cannot name it.
@@ -239,6 +240,52 @@ a `value` that does not fit, is missing, or is given to an operator that compare
 - While the other field has no answer, the comparison does not hold, negated or not.
 - A comparison holds either `value` or `valueFrom`; `readDocument` refuses one with both, and
   `checkDocument` reports the `value` of one built that way as `valueMismatch`.
+
+## Computed values
+
+A computed value works something out from earlier answers, such as a total or a share, and is
+used like an answer nobody types:
+
+```json
+{
+  "type": "computed",
+  "key": "c1",
+  "label": "Heated share",
+  "valueType": "number",
+  "expression": {
+    "op": "round",
+    "digits": 1,
+    "args": [
+      {
+        "op": "multiply",
+        "args": [{ "op": "divide", "args": [{ "field": "f4" }, { "field": "f3" }] }, { "value": 100 }]
+      }
+    ]
+  }
+}
+```
+
+An expression is data, never code the package runs:
+
+| Expression | Comes to |
+| --- | --- |
+| `{ "field": "f3" }` | the answer of an earlier field or computed value: a number, decimal, text or date |
+| `{ "value": 12.5 }` | a constant, a number or a text |
+| `{ "op": "add", "args": [ … ] }` | the sum; `subtract`, `multiply` and `divide` likewise, `min` and `max` the smallest and largest |
+| `{ "op": "round", "args": [x], "digits": 1 }` | `x` rounded, to no digits without `digits` |
+| `{ "op": "otherwise", "args": [x, fallback] }` | `x`, or `fallback` when `x` is empty |
+| `{ "cases": [{ "when": condition, "value": x }], "otherwise": y }` | the `value` of the first case whose [condition](#conditions) holds, `y` when none does, shaped like a [setting that follows an answer](#settings-that-follow-an-answer) |
+
+- An empty operand makes an empty result, unless `otherwise` replaces it, so a total does not
+  pretend to be complete while a part is missing. Dividing by zero is empty too.
+- `valueType` is `number`, `text` or `date`, what the expression comes to; `checkDocument` reports
+  another as `resultMismatch`, an unknown operation as `unknownOperation`, and an operand of the
+  wrong kind or number, such as text to `add`, as `operandMismatch`.
+- An expression reads earlier answers only, as a condition does; `visibleWhen` decides whether the
+  value counts.
+- Conditions compare it, placeholders name it, and the validator's `value` and `describeAnswers`
+  hold it, worked out again; a value sent under its key is never taken. It has no control in the
+  form.
 
 ## A first form
 

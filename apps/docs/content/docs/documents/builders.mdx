@@ -54,7 +54,7 @@ and the `params` an error text names. The text is the project's, keyed by the co
 
 | `code` | The document has | `params` |
 | --- | --- | --- |
-| `duplicateKey` | a step key used twice, or a key of fields and blocks used twice | `key` |
+| `duplicateKey` | a step key used twice, or a key of fields, blocks and computed values used twice | `key` |
 | `invalidKey` | a key that is empty or holds a dot or a bracket | `key` |
 | `overlappingKey` | a step key that starts with another step's key, such as `s10` after `s1` | `key`, `start` |
 | `duplicateOption` | an option value used twice in one field | `value` |
@@ -76,6 +76,9 @@ and the `params` an error text names. The text is the project's, keyed by the co
 | `unknownLanguage` | a translation into a language the document does not name | `language` |
 | `fixedText` | a placeholder in the label of a step or section or in a display's setting, which names no answers | `field` |
 | `unknownParam` | a placeholder in a field's own error text that its code has no param for | `param`, `code` |
+| `unknownOperation` | an operation of an expression the package does not know | `op` |
+| `operandMismatch` | an operand of the wrong kind or number, such as text to `add`, or an answer read that is no number, text or date | `op`, `expected` |
+| `resultMismatch` | a computed value of a value type other than `number`, `text` or `date`, or whose expression comes to another | `valueType`, and `result` for the expression |
 
 ## Positions
 
@@ -111,8 +114,8 @@ const problems = checkDocument(renamed, catalog)
 ```
 
 An operation throws when its position finds nothing or a place that cannot hold the node: steps go
-only into the steps of a form, a form with steps holds steps only, a row holds fields and blocks
-only, and a field or a block holds no items.
+only into the steps of a form, a form with steps holds steps only, a row holds fields, blocks and
+computed values only, and a field, a block or a computed value holds no items.
 Everything else, such as a key taken already or a condition whose operator no longer fits after
 `changeKind`, the operation leaves in place for `checkDocument` to report.
 

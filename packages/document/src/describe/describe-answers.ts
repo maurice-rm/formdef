@@ -2,7 +2,7 @@ import { refuseProblems } from '../check/refuse-problems'
 import type { Answers } from '../evaluate/answers'
 import { evaluate, type ShownField } from '../evaluate/evaluate'
 import { resolveVaryingText } from '../evaluate/resolve-varying-text'
-import type { DocumentItem, FormDocument } from '../form-document'
+import type { ComputedItem, DocumentItem, FormDocument } from '../form-document'
 import type { JsonValue } from '../json-value'
 import type { Catalog } from '../kinds/create-catalog'
 import { optionsOf } from '../kinds/options-of'
@@ -57,6 +57,22 @@ export type DescribedField<TValueType extends ValueType = never> = {
 }
 
 /**
+ * A computed value that counts, with what it is called and what it came to.
+ *
+ * @typeParam TValueType - The project's own value types, as its catalog holds them.
+ */
+export type DescribedComputed<TValueType extends ValueType = never> = {
+  /** Marks the entry as a computed value. */
+  type: 'computed'
+  /** The computed value's key. */
+  key: string
+  /** What the value is called. */
+  label: string
+  /** What it came to; `undefined` when it is empty, such as while an operand has no answer. */
+  answer: DescribedAnswer<TValueType> | undefined
+}
+
+/**
  * A section that shows, with the fields and sections in it that show.
  *
  * @typeParam TValueType - The project's own value types, as its catalog holds them.
@@ -71,12 +87,13 @@ export type DescribedSection<TValueType extends ValueType = never> = {
 }
 
 /**
- * One entry of a description: a field or a section.
+ * One entry of a description: a field, a computed value or a section.
  *
  * @typeParam TValueType - The project's own value types, as its catalog holds them.
  */
 export type DescribedItem<TValueType extends ValueType = never> =
   | DescribedField<TValueType>
+  | DescribedComputed<TValueType>
   | DescribedSection<TValueType>
 
 /**
@@ -123,6 +140,7 @@ export type DescribeOptions = {
 
 type Described = {
   shownByKey: ReadonlyMap<string, ShownField>
+  countingKeys: ReadonlySet<string>
   answers: Answers
   language: string | undefined
 }
@@ -153,11 +171,31 @@ const describeField = (shown: ShownField, described: Described): DescribedField<
   answer: describeAnswer(shown, described.answers),
 })
 
+const describeComputed = (
+  computed: ComputedItem,
+  described: Described,
+): DescribedComputed<ValueType> => {
+  const answer = described.answers.get(computed.key)
+  const answerDescribed = answer?.valueType.describe(answer.value, [])
+  return {
+    type: 'computed',
+    key: computed.key,
+    label: resolveVaryingText(computed.label, described),
+    answer:
+      answer === undefined || answerDescribed === undefined
+        ? undefined
+        : { ...answerDescribed, valueType: answer.valueType.name },
+  }
+}
+
 const describeItems = (items: readonly DocumentItem[], described: Described): AnyDescribedItem[] =>
   items.flatMap((item): AnyDescribedItem[] => {
     if (item.type === 'field') {
       const shown = described.shownByKey.get(item.key)
       return shown === undefined ? [] : [describeField(shown, described)]
+    }
+    if (item.type === 'computed') {
+      return described.countingKeys.has(item.key) ? [describeComputed(item, described)] : []
     }
     if (item.type === 'block') {
       return []
@@ -188,7 +226,7 @@ const describeDocument = (
 
 /**
  * Describes the answers of a form document: each field that shows with its question and its
- * answer, in document order, within the steps and sections that show, in a language. Each answer
+ * answer, and each computed value that counts with what it came to, in document order, within the steps and sections that show, in a language. Each answer
  * is described by its value type; a field left empty, or holding a value of the wrong type or no
  * option of the field, has no answer. A server describes the answers the validator returned, such
  * as for an email or a PDF; formatting them, such as a boolean as yes or a decimal with its unit,
@@ -219,9 +257,13 @@ export function describeAnswers<TValueType extends ValueType = never>(
 ): AnswerDescription<TValueType> {
   refuseProblems(document, catalog)
   const language = languageOf(document, options.language)
-  const { shown, answers } = evaluate(document, catalog, { values: options.values, language })
+  const { shown, computed, answers } = evaluate(document, catalog, {
+    values: options.values,
+    language,
+  })
   const described = {
     shownByKey: new Map(shown.map((entry) => [entry.field.key, entry])),
+    countingKeys: new Set(computed.map((entry) => entry.computed.key)),
     answers,
     language,
   }

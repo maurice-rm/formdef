@@ -147,7 +147,7 @@ describe('readDocument', () => {
     const broken = { format: 1, items: [{ type: 'image', key: 'f1' }] }
 
     expect(() => readDocument(broken)).toThrow(
-      'formdef: document.items[0].type: expected one of field, block, section, row.',
+      'formdef: document.items[0].type: expected one of field, block, computed, section, row.',
     )
   })
 
@@ -158,7 +158,7 @@ describe('readDocument', () => {
     }
 
     expect(() => readDocument(broken)).toThrow(
-      'formdef: document.items[0].items[0].type: expected one of field, block.',
+      'formdef: document.items[0].items[0].type: expected one of field, block, computed.',
     )
   })
 
@@ -206,6 +206,56 @@ describe('readDocument', () => {
     )
     expect(() => readDocument(withValueOf({ ...comparison, valueFrom: '' }))).toThrow(
       'formdef: document.items[0].visibleWhen.valueFrom: expected text.',
+    )
+  })
+
+  it('reads computed values among items and in rows, with their expressions', () => {
+    const total = {
+      type: 'computed',
+      key: 'c1',
+      label: 'Total',
+      valueType: 'number',
+      expression: {
+        op: 'round',
+        digits: 1,
+        args: [
+          {
+            cases: [
+              {
+                when: { field: 'f1', op: 'isFilled' },
+                value: { op: 'add', args: [{ field: 'f1' }, { value: 2 }] },
+              },
+            ],
+            otherwise: { value: 0 },
+          },
+        ],
+      },
+    }
+    const withComputed = {
+      format: 1,
+      items: [
+        { type: 'field', key: 'f1', kind: 'count', label: 'Rooms' },
+        total,
+        {
+          type: 'row',
+          items: [{ ...total, key: 'c2', visibleWhen: { field: 'c1', op: 'isFilled' } }],
+        },
+      ],
+    }
+    const broken = (expression: unknown) => ({
+      format: 1,
+      items: [{ ...total, expression }],
+    })
+
+    expect(readDocument(withComputed)).toEqual(withComputed)
+    expect(() => readDocument(broken({ field: 'f1', op: 'add' }))).toThrow(
+      'formdef: document.items[0].expression.op: unknown key.',
+    )
+    expect(() => readDocument(broken({ value: true }))).toThrow(
+      'formdef: document.items[0].expression.value: expected a number or text.',
+    )
+    expect(() => readDocument(broken({ args: [] }))).toThrow(
+      'formdef: document.items[0].expression: expected an expression: field, value, op or cases.',
     )
   })
 

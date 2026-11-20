@@ -4,6 +4,7 @@ export type { Condition } from './condition'
 export {
   type AnswerDescription,
   type DescribedAnswer,
+  type DescribedComputed,
   type DescribedField,
   type DescribedItem,
   type DescribedSection,
@@ -22,9 +23,11 @@ export { removeNode } from './edit/remove-node'
 export { renameKey } from './edit/rename-key'
 export { splitIntoSteps } from './edit/split-into-steps'
 export { updateNode } from './edit/update-node'
+export type { Expression } from './expression'
 export type {
   BlockItem,
   Check,
+  ComputedItem,
   Display,
   DocumentItem,
   DocumentNode,

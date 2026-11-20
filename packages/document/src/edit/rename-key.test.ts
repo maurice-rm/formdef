@@ -81,6 +81,51 @@ describe('renameKey', () => {
     )
   })
 
+  it('renames a computed value and the answers its expression reads', () => {
+    const computed: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        {
+          type: 'computed',
+          key: 'c1',
+          label: 'Twice {f1}',
+          valueType: 'number',
+          expression: {
+            cases: [
+              {
+                when: { field: 'f1', op: 'isFilled' },
+                value: { op: 'add', args: [{ field: 'f1' }, { field: 'f1' }] },
+              },
+            ],
+            otherwise: { value: 0 },
+          },
+        },
+        field('f2', { visibleWhen: { field: 'c1', op: 'atLeast', value: 2 } }),
+      ],
+    }
+    const renamed = renameKey(renameKey(computed, 'f1', 'rooms'), 'c1', 'twice')
+
+    expect(renamed.items?.[1]).toEqual({
+      type: 'computed',
+      key: 'twice',
+      label: 'Twice {rooms}',
+      valueType: 'number',
+      expression: {
+        cases: [
+          {
+            when: { field: 'rooms', op: 'isFilled' },
+            value: { op: 'add', args: [{ field: 'rooms' }, { field: 'rooms' }] },
+          },
+        ],
+        otherwise: { value: 0 },
+      },
+    })
+    expect(renamed.items?.[2]).toEqual(
+      field('f2', { visibleWhen: { field: 'twice', op: 'atLeast', value: 2 } }),
+    )
+  })
+
   it('renames the field a comparison compares with', () => {
     const compared: FormDocument = {
       format: 1,

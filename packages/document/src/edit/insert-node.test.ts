@@ -56,9 +56,23 @@ describe('insertNode', () => {
     )
   })
 
+  it('inserts a computed value into a row, next to its fields', () => {
+    const computed = {
+      type: 'computed',
+      key: 'c1',
+      label: 'Total',
+      valueType: 'number',
+      expression: { value: 1 },
+    } as const
+
+    expect(insertNode(plain, [1, 1], computed).items?.[1]).toEqual(
+      row(field('f2'), computed as unknown as FieldItem, field('f3')),
+    )
+  })
+
   it('refuses a node its place cannot hold, and a position that does not exist', () => {
     expect(() => insertNode(plain, [1, 0], section('Wall'))).toThrow(
-      'formdef: position [1, 0]: a row holds fields and blocks only.',
+      'formdef: position [1, 0]: a row holds fields, blocks and computed values only.',
     )
     expect(() => insertNode(stepped, [1], field('f9'))).toThrow(
       'formdef: position [1]: a form with steps holds steps only.',
@@ -70,7 +84,7 @@ describe('insertNode', () => {
       'formdef: position [5]: there is no such place.',
     )
     expect(() => insertNode(plain, [0, 0], field('f9'))).toThrow(
-      'formdef: position [0, 0]: a field or a block holds no items.',
+      'formdef: position [0, 0]: a field, a block or a computed value holds no items.',
     )
   })
 
@@ -81,7 +95,7 @@ describe('insertNode', () => {
     }
 
     expect(() => insertNode(withBlock, [0, 0], field('f9'))).toThrow(
-      'formdef: position [0, 0]: a field or a block holds no items.',
+      'formdef: position [0, 0]: a field, a block or a computed value holds no items.',
     )
   })
 })

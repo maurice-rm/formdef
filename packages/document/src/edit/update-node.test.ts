@@ -26,7 +26,7 @@ describe('updateNode', () => {
 
   it('refuses an update that turns a node into one its place cannot hold', () => {
     expect(() => updateNode(plain, [1, 0], () => section('Wall'))).toThrow(
-      'formdef: position [1, 0]: a row holds fields and blocks only.',
+      'formdef: position [1, 0]: a row holds fields, blocks and computed values only.',
     )
   })
 })

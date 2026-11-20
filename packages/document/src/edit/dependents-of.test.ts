@@ -82,6 +82,30 @@ describe('dependentsOf', () => {
     ])
   })
 
+  it('lists the expressions that read a field, and what reads a computed value', () => {
+    const computed: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        {
+          type: 'computed',
+          key: 'c1',
+          label: 'Twice',
+          valueType: 'number',
+          expression: { op: 'add', args: [{ field: 'f1' }, { field: 'f1' }] },
+        },
+        field('f2', { visibleWhen: { field: 'c1', op: 'atLeast', value: 2 } }),
+      ],
+    }
+
+    expect(dependentsOf(computed, [0])).toEqual([
+      { path: 'document.items[1].expression', field: 'f1' },
+    ])
+    expect(dependentsOf(computed, [1])).toEqual([
+      { path: 'document.items[2].visibleWhen', field: 'c1' },
+    ])
+  })
+
   it('leaves out the conditions that go with the node', () => {
     expect(dependentsOf(document, [0])).toEqual([
       { path: 'document.steps[1].visibleWhen', field: 'f1' },

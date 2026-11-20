@@ -1,5 +1,6 @@
 import type { Condition } from '../condition'
-import type { DocumentNode, FieldItem, FormDocument, Varying } from '../form-document'
+import type { Expression } from '../expression'
+import type { ComputedItem, DocumentNode, FieldItem, FormDocument, Varying } from '../form-document'
 import { isField } from '../is-field'
 import { isLeaf } from '../is-leaf'
 import { isPlainObject } from '../is-plain-object'
@@ -89,6 +90,30 @@ const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
       }),
 })
 
+const renameInExpression = (expression: Expression, rename: Rename): Expression => {
+  if ('field' in expression) {
+    return expression.field === rename.from ? { field: rename.to } : expression
+  }
+  if ('cases' in expression) {
+    return {
+      cases: expression.cases.map((entry) => ({
+        when: renameIn(entry.when, rename),
+        value: renameInExpression(entry.value, rename),
+      })),
+      otherwise: renameInExpression(expression.otherwise, rename),
+    }
+  }
+  if ('args' in expression) {
+    return { ...expression, args: expression.args.map((arg) => renameInExpression(arg, rename)) }
+  }
+  return expression
+}
+
+const renameInComputed = (computed: ComputedItem, rename: Rename): ComputedItem => ({
+  ...renameInTexts(computed, rename),
+  expression: renameInExpression(computed.expression, rename),
+})
+
 const renamePlaceholdersIn = <TNode extends DocumentNode>(node: TNode, rename: Rename): TNode => {
   const texts = node as Partial<Record<string, unknown>>
   const renamed = OWN_TEXT_KEYS.filter((name) => texts[name] !== undefined).map((name) => [
@@ -104,7 +129,9 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
   if (isLeaf(node)) {
     const own = isField(node)
       ? renameInField(node, rename)
-      : { ...node, ...renameInSettings(node, rename) }
+      : node.type === 'computed'
+        ? renameInComputed(node, rename)
+        : { ...node, ...renameInSettings(node, rename) }
     const leaf = renamePlaceholdersIn({ ...own, ...visibility }, rename)
     return leaf.key === rename.from ? { ...leaf, key: rename.to } : leaf
   }
@@ -121,8 +148,8 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
 }
 
 /**
- * Renames the key of a step, field or block in a form document, and the field in every condition and
- * placeholder that names it, leaving the document given as it was. A step and a field that share the key are both
+ * Renames the key of a step, field, block or computed value in a form document, and the field in
+ * every condition, expression and placeholder that names it, leaving the document given as it was. A step and a field that share the key are both
  * renamed. A key that is taken already, or not a plain name, {@link checkDocument} reports
  * afterwards.
  *

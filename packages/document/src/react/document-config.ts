@@ -161,26 +161,33 @@ const blockEntry = (block: BlockItem, build: Build): Entry => {
 }
 
 const layoutOf = (items: readonly DocumentItem[], build: Build): unknown[] =>
-  items.map((item) => {
+  items.flatMap((item): unknown[] => {
     if (item.type === 'field') {
-      return item.key
+      return [item.key]
     }
     if (item.type === 'block') {
-      return blockEntry(item, build)
+      return [blockEntry(item, build)]
+    }
+    if (item.type === 'computed') {
+      return []
     }
     if (item.type === 'row') {
-      return {
-        row: layoutOf(item.items, build),
+      return [
+        {
+          row: layoutOf(item.items, build),
+          ...slotProps(item, build, formatText),
+          ...visibility(item, build),
+        },
+      ]
+    }
+    return [
+      {
+        section: textOf(item.label, build),
+        layout: layoutOf(item.items, build),
         ...slotProps(item, build, formatText),
         ...visibility(item, build),
-      }
-    }
-    return {
-      section: textOf(item.label, build),
-      layout: layoutOf(item.items, build),
-      ...slotProps(item, build, formatText),
-      ...visibility(item, build),
-    }
+      },
+    ]
   })
 
 const levelOf = (items: readonly DocumentItem[], build: Build): Level => ({

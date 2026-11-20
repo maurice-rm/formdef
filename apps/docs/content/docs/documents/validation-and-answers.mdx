@@ -142,8 +142,9 @@ The form and its validator hand over different things:
 - **`onSubmit` receives the form's values.** They still hold what was entered in a field that no
   longer shows, such as a postal code typed before its checkbox was unticked.
 - **The validator's `value` holds the answers of the fields that show**, nested like the values
-  given. That is what a server keeps: validate what arrives and save `result.value`, not the values
-  as they were sent.
+  given, and each [computed value](/documents#computed-values) that counts, worked out again. That
+  is what a server keeps: validate what arrives and save `result.value`, not the values as they
+  were sent.
 
 ## Describing answers
 
@@ -173,6 +174,9 @@ and `{ items }` without. An item is a section, with its `label` and `items`, or 
 | `kind` | the name of its field kind, to format the answer by |
 | `settings` | its settings for these answers, such as the unit that applies; the description of an option stays Markdown, with the answers it names escaped |
 | `answer` | the answer, or `undefined` when the field was left empty, holds a value of the wrong type or no option of the field |
+
+A computed value that counts is an item of `type: 'computed'` with its `key`, its `label` and the
+`answer` it came to, `undefined` while it is empty.
 
 The answer carries its `valueType`: `text`, `decimal` and `date` the `value` as entered, `number`
 the number, `boolean` `true` (an unticked checkbox has no answer), `choice` the chosen option's

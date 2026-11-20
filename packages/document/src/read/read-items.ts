@@ -2,6 +2,7 @@ import type { Condition } from '../condition'
 import type {
   BlockItem,
   Check,
+  ComputedItem,
   DocumentItem,
   FieldItem,
   RowItem,
@@ -11,6 +12,7 @@ import { pathTo } from '../path-to'
 import type { VaryingText } from '../varying-text'
 import { readCondition } from './read-condition'
 import { readDisplay } from './read-display'
+import { readExpression } from './read-expression'
 import { readList } from './read-list'
 import { readOneOf } from './read-one-of'
 import { readOnlyKeys } from './read-only-keys'
@@ -23,8 +25,8 @@ import { readVaryingText } from './read-varying-text'
 import { readVisibleWhen } from './read-visible-when'
 import { withOptional } from './with-optional'
 
-const ITEM_TYPES = ['field', 'block', 'section', 'row'] as const
-const ROW_ITEM_TYPES = ['field', 'block'] as const
+const ITEM_TYPES = ['field', 'block', 'computed', 'section', 'row'] as const
+const ROW_ITEM_TYPES = ['field', 'block', 'computed'] as const
 
 const FIELD_KEYS = [
   'type',
@@ -40,6 +42,7 @@ const FIELD_KEYS = [
 ]
 const CHECK_KEYS = ['when', 'message']
 const BLOCK_KEYS = ['type', 'key', 'kind', 'visibleWhen', 'settings']
+const COMPUTED_KEYS = ['type', 'key', 'label', 'valueType', 'expression', 'visibleWhen']
 const ROW_KEYS = ['type', 'visibleWhen', 'display', 'items']
 const SECTION_KEYS = ['type', 'label', 'description', 'visibleWhen', 'display', 'items']
 
@@ -113,11 +116,34 @@ const readBlock = (shape: Shape, path: string): BlockItem => {
   }
 }
 
-const readRowItem = (value: unknown, path: string): FieldItem | BlockItem => {
+const readComputed = (shape: Shape, path: string): ComputedItem => {
+  readOnlyKeys(shape, COMPUTED_KEYS, path)
+
+  return {
+    type: 'computed',
+    key: readText(shape.key, `${path}.key`),
+    label: readVaryingText(shape.label, `${path}.label`),
+    valueType: readText(shape.valueType, `${path}.valueType`),
+    expression: readExpression(shape.expression, `${path}.expression`),
+    ...readVisibleWhen(shape, path),
+  }
+}
+
+const readLeaf = (
+  shape: Shape,
+  { type, path }: { type: (typeof ROW_ITEM_TYPES)[number]; path: string },
+): FieldItem | BlockItem | ComputedItem => {
+  if (type === 'field') {
+    return readField(shape, path)
+  }
+  return type === 'block' ? readBlock(shape, path) : readComputed(shape, path)
+}
+
+const readRowItem = (value: unknown, path: string): FieldItem | BlockItem | ComputedItem => {
   const shape = readShape(value, path)
   const type = readOneOf(shape.type, ROW_ITEM_TYPES, `${path}.type`)
 
-  return type === 'field' ? readField(shape, path) : readBlock(shape, path)
+  return readLeaf(shape, { type, path })
 }
 
 const readRow = (shape: Shape, path: string): RowItem => {
@@ -146,16 +172,10 @@ const readItem = (value: unknown, path: string): DocumentItem => {
   const shape = readShape(value, path)
   const type = readOneOf(shape.type, ITEM_TYPES, `${path}.type`)
 
-  if (type === 'field') {
-    return readField(shape, path)
-  }
-  if (type === 'block') {
-    return readBlock(shape, path)
-  }
   if (type === 'row') {
     return readRow(shape, path)
   }
-  return readSection(shape, path)
+  return type === 'section' ? readSection(shape, path) : readLeaf(shape, { type, path })
 }
 
 export function readItems(value: unknown, path: string): DocumentItem[] {

@@ -1,4 +1,5 @@
 import type { Condition } from './condition'
+import type { Expression } from './expression'
 import type { DocumentNode, FormDocument, Varying } from './form-document'
 import { isField } from './is-field'
 import { isLeaf } from './is-leaf'
@@ -52,6 +53,24 @@ const settingCases = (
     return [...own, ...optionCases(value, settingPath)]
   })
 
+const expressionConditions = (expression: Expression, path: string): Placed[] => {
+  if ('cases' in expression) {
+    return [
+      ...expression.cases.flatMap((entry, index) => [
+        { condition: entry.when, path: pathTo.caseWhen(path, index) },
+        ...expressionConditions(entry.value, `${pathTo.case(path, index)}.value`),
+      ]),
+      ...expressionConditions(expression.otherwise, `${path}.otherwise`),
+    ]
+  }
+  if ('args' in expression) {
+    return expression.args.flatMap((arg, index) =>
+      expressionConditions(arg, `${path}.args[${index}]`),
+    )
+  }
+  return []
+}
+
 const ownConditions = (node: DocumentNode, path: string): Placed[] => {
   const own =
     node.visibleWhen === undefined
@@ -60,6 +79,13 @@ const ownConditions = (node: DocumentNode, path: string): Placed[] => {
   if (!isLeaf(node)) {
     const description = 'description' in node ? node.description : undefined
     return [...own, ...casesOf(description, `${path}.description`)]
+  }
+  if (node.type === 'computed') {
+    return [
+      ...own,
+      ...casesOf(node.label, `${path}.label`),
+      ...expressionConditions(node.expression, `${path}.expression`),
+    ]
   }
   if (!isField(node)) {
     return [...own, ...settingCases(node, path)]

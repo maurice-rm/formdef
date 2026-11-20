@@ -1,0 +1,73 @@
+import type { Condition } from '../condition'
+import type { Expression } from '../expression'
+import { failAt } from '../fail-at'
+import { hasKey } from './has-key'
+import { readCondition } from './read-condition'
+import { readList } from './read-list'
+import { readOnlyKeys } from './read-only-keys'
+import { readShape, type Shape } from './read-shape'
+import { readText } from './read-text'
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value)
+
+const readConstant = (value: unknown, path: string): number | string =>
+  isFiniteNumber(value) || typeof value === 'string'
+    ? value
+    : failAt(path, 'expected a number or text.')
+
+// The operations come from the package, which `checkDocument` checks the expression against.
+const readOperation = (shape: Shape, path: string): Expression => {
+  readOnlyKeys(shape, ['op', 'args', 'digits'], path)
+  const op = readText(shape.op, `${path}.op`)
+  const args = readList(shape.args, `${path}.args`).map((arg, index) =>
+    readExpression(arg, `${path}.args[${index}]`),
+  )
+  if (shape.digits === undefined) {
+    return { op, args }
+  }
+  const digits = isFiniteNumber(shape.digits)
+    ? shape.digits
+    : failAt(`${path}.digits`, 'expected a number.')
+  return { op, args, digits }
+}
+
+const readCase = (value: unknown, path: string): { when: Condition; value: Expression } => {
+  const shape = readShape(value, path)
+  readOnlyKeys(shape, ['when', 'value'], path)
+  return {
+    when: readCondition(shape.when, `${path}.when`),
+    value: readExpression(shape.value, `${path}.value`),
+  }
+}
+
+const readCases = (shape: Shape, path: string): Expression => {
+  readOnlyKeys(shape, ['cases', 'otherwise'], path)
+  return {
+    cases: readList(shape.cases, `${path}.cases`).map((entry, index) =>
+      readCase(entry, `${path}.cases[${index}]`),
+    ),
+    otherwise: readExpression(shape.otherwise, `${path}.otherwise`),
+  }
+}
+
+/** Reads an expression of a computed value: an answer read, a constant, an operation or a choice. */
+export function readExpression(value: unknown, path: string): Expression {
+  const shape = readShape(value, path)
+
+  if (hasKey(shape, 'field')) {
+    readOnlyKeys(shape, ['field'], path)
+    return { field: readText(shape.field, `${path}.field`) }
+  }
+  if (hasKey(shape, 'value')) {
+    readOnlyKeys(shape, ['value'], path)
+    return { value: readConstant(shape.value, `${path}.value`) }
+  }
+  if (hasKey(shape, 'cases')) {
+    return readCases(shape, path)
+  }
+  if (hasKey(shape, 'op')) {
+    return readOperation(shape, path)
+  }
+  return failAt(path, 'expected an expression: field, value, op or cases.')
+}

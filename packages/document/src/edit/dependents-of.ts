@@ -1,29 +1,39 @@
+import { answerItemsOf } from '../answer-items-of'
 import { conditionsOf } from '../conditions-of'
-import { fieldsOf } from '../fields-of'
-import type { FieldItem, FormDocument } from '../form-document'
-import { isField } from '../is-field'
+import type { ComputedItem, DocumentNode, FieldItem, FormDocument } from '../form-document'
 import { isLeaf } from '../is-leaf'
+import { isStep } from '../is-step'
+import { nodesOf } from '../nodes-of'
 import { placeholdersIn } from '../placeholders-in'
 import type { Position } from '../position'
 import { fieldsNamed } from './fields-named'
+import { fieldsReadBy } from './fields-read-by'
 import { nodeAt } from './node-at'
 
-/** A condition that names a field of a node, as {@link dependentsOf} lists it. */
+/** A condition, placeholder or expression that names a field of a node, as {@link dependentsOf} lists it. */
 export type Dependent = {
-  /** Where the condition sits, as {@link checkDocument} names paths. */
+  /** Where the condition, text or expression sits, as {@link checkDocument} names paths. */
   path: string
-  /** The key of the field it names. */
+  /** The key of the field or computed value it names. */
   field: string
 }
 
 const isWithin = (position: Position, ancestor: Position): boolean =>
   ancestor.every((index, depth) => position[depth] === index)
 
+const answerItemsUnder = (node: DocumentNode): (FieldItem | ComputedItem)[] => {
+  if (!isLeaf(node)) {
+    return answerItemsOf(node.items)
+  }
+  return node.type === 'block' ? [] : [node]
+}
+
 /**
- * Lists the conditions and placeholders that name a field of a step or item, or the field itself,
- * and would lose it when the node is removed: one entry per condition and field named, in
- * document order, then one per placeholder. Those inside the node go with it and are left out. A
- * builder shows them before it removes the node.
+ * Lists the conditions, placeholders and expressions that name a field or computed value of a
+ * step or item, or the item itself, and would lose it when the node is removed: one entry per
+ * condition and key named, in document order, then one per placeholder, then one per expression.
+ * Those inside the node go with it and are left out. A builder shows them before it removes the
+ * node.
  *
  * @param document - The document.
  * @param position - Where the node sits.
@@ -38,8 +48,7 @@ const isWithin = (position: Position, ancestor: Position): boolean =>
  */
 export function dependentsOf(document: FormDocument, position: Position): Dependent[] {
   const node = nodeAt(document, position)
-  const fields: FieldItem[] = isLeaf(node) ? (isField(node) ? [node] : []) : fieldsOf(node.items)
-  const keys = new Set(fields.map((field) => field.key))
+  const keys = new Set(answerItemsUnder(node).map((item) => item.key))
 
   const fromConditions = conditionsOf(document)
     .filter((entry) => !isWithin(entry.position, position))
@@ -51,5 +60,14 @@ export function dependentsOf(document: FormDocument, position: Position): Depend
   const fromPlaceholders = placeholdersIn(document)
     .filter((entry) => !isWithin(entry.position, position) && keys.has(entry.field))
     .map(({ path, field }) => ({ path, field }))
-  return [...fromConditions, ...fromPlaceholders]
+  const fromExpressions = nodesOf(document)
+    .filter((entry) => !isWithin(entry.position, position))
+    .flatMap(({ node: other, path }) =>
+      !isStep(other) && other.type === 'computed'
+        ? fieldsReadBy(other.expression)
+            .filter((field) => keys.has(field))
+            .map((field) => ({ path: `${path}.expression`, field }))
+        : [],
+    )
+  return [...fromConditions, ...fromPlaceholders, ...fromExpressions]
 }

@@ -1,7 +1,7 @@
 import { refuseProblems } from '../check/refuse-problems'
 import type { DocumentValues } from '../document-values'
 import type { Answers } from '../evaluate/answers'
-import { evaluate, type ShownField } from '../evaluate/evaluate'
+import { type Evaluation, evaluate, type ShownField } from '../evaluate/evaluate'
 import { isFilled } from '../evaluate/is-filled'
 import { isMissing } from '../evaluate/is-missing'
 import { resolveVaryingText } from '../evaluate/resolve-varying-text'
@@ -113,8 +113,9 @@ const failureOf = (shown: ShownField): Failure | undefined => {
   return failed === undefined ? undefined : { code: failed.code, params: failed.params }
 }
 
-const answersOf = (shown: readonly ShownField[]): DocumentValues =>
-  nestValues(shown.filter(({ value }) => value !== undefined))
+// A computed value is worked out again; one the values hold under its key is never taken.
+const answersOf = ({ shown, computed }: Pick<Evaluation, 'shown' | 'computed'>): DocumentValues =>
+  nestValues([...shown, ...computed].filter(({ value }) => value !== undefined))
 
 /**
  * Builds a validator of a form document's answers, implementing Standard Schema v1: the same
@@ -135,8 +136,8 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues =>
  *   text, and a code without any text gets a general one.
  * @param options.language - The language the document's texts are used in.
  * @defaultValue `options.messages`: the English texts; `options.language`: the document's first.
- * @returns The validator; it returns the answers of the fields that show, nested like the values
- *   given, or every issue in document order.
+ * @returns The validator; it returns the answers of the fields that show and the computed values
+ *   that count, worked out again, nested like the values given, or every issue in document order.
  * @throws When the document has problems, as {@link checkDocument} reports them.
  *
  * @example
@@ -184,9 +185,9 @@ export function createValidator(
   }
 
   const validate = (values: unknown): ValidationResult => {
-    const { shown, answers } = evaluate(document, catalog, { values, language })
-    const issues = shown.flatMap((field) => issueOf(field, answers) ?? [])
-    return issues.length > 0 ? { issues } : { value: answersOf(shown) }
+    const evaluation = evaluate(document, catalog, { values, language })
+    const issues = evaluation.shown.flatMap((field) => issueOf(field, evaluation.answers) ?? [])
+    return issues.length > 0 ? { issues } : { value: answersOf(evaluation) }
   }
 
   return { '~standard': { version: 1, vendor: VENDOR, validate } }

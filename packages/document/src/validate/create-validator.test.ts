@@ -3,6 +3,7 @@ import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import type { Condition } from '../condition'
+import type { Expression } from '../expression'
 import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineFieldKind } from '../kinds/define-field-kind'
@@ -424,6 +425,78 @@ describe('createValidator', () => {
       expect(validate(document, { f1: '80', f2: '90' }).issues?.[0]?.message).toBe(
         'Heated area is too large.',
       )
+    })
+  })
+
+  describe('with computed values', () => {
+    const perRoom = (expression: Expression): DocumentItem => ({
+      type: 'computed',
+      key: 'c1',
+      label: 'Per room',
+      valueType: 'number',
+      expression,
+    })
+    const divided: Expression = {
+      op: 'round',
+      digits: 1,
+      args: [{ op: 'divide', args: [{ field: 'f2' }, { field: 'f1' }] }],
+    }
+
+    it('returns each computed value worked out again, never the one sent', () => {
+      const document = plain(field('f1', 'count'), field('f2', 'measure'), perRoom(divided))
+
+      expect(validate(document, { f1: 3, f2: '100', c1: 999 })).toEqual({
+        value: { f1: 3, f2: '100', c1: 33.3 },
+      })
+    })
+
+    it('leaves a computed value empty while an operand is, or on a division by zero', () => {
+      const document = plain(field('f1', 'count'), field('f2', 'measure'), perRoom(divided))
+
+      expect(validate(document, { f2: '100' })).toEqual({ value: { f2: '100' } })
+      expect(validate(document, { f1: 0, f2: '100' })).toEqual({ value: { f1: 0, f2: '100' } })
+    })
+
+    it('takes the fallback of otherwise and the result a condition chooses', () => {
+      const document = plain(
+        field('f1', 'count'),
+        field('f2', 'count'),
+        perRoom({
+          cases: [
+            {
+              when: { field: 'f1', op: 'atLeast', value: 5 },
+              value: { op: 'otherwise', args: [{ field: 'f2' }, { value: 1 }] },
+            },
+          ],
+          otherwise: { op: 'subtract', args: [{ field: 'f1' }, { value: 1 }] },
+        }),
+      )
+
+      expect(validate(document, { f1: 6 })).toEqual({ value: { f1: 6, c1: 1 } })
+      expect(validate(document, { f1: 3 })).toEqual({ value: { f1: 3, c1: 2 } })
+    })
+
+    it('works out the smallest of very many operands without running out of stack', () => {
+      const many: Expression = {
+        op: 'min',
+        args: Array.from({ length: 200_000 }, (_, index) => ({ value: index + 1 })),
+      }
+
+      expect(validate(plain(perRoom(many)), {})).toEqual({ value: { c1: 1 } })
+    })
+
+    it('lets a later condition compare a computed value like an answer', () => {
+      const document = plain(
+        field('f1', 'count'),
+        perRoom({ op: 'multiply', args: [{ field: 'f1' }, { value: 10 }] }),
+        field('f3', 'text', {
+          required: true,
+          visibleWhen: { field: 'c1', op: 'atLeast', value: 50 },
+        }),
+      )
+
+      expect(codesOf(validate(document, { f1: 6 }))).toEqual([{ path: ['f3'], code: 'required' }])
+      expect(validate(document, { f1: 2 })).toEqual({ value: { f1: 2, c1: 20 } })
     })
   })
 

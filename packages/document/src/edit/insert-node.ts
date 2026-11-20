@@ -17,8 +17,8 @@ import { updateChildren } from './update-children'
  * @param node - The step, section, row, field or block.
  * @returns The document with the node inserted.
  * @throws When the place does not exist, or cannot hold the node: steps go only into the steps of
- *   a form, a form with steps holds steps only, a row holds fields and blocks only, and a field or
- *   a block holds no items.
+ *   a form, a form with steps holds steps only, a row holds fields, blocks and computed values
+ *   only, and a field, a block or a computed value holds no items.
  *
  * @example
  * ```ts

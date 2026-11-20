@@ -374,6 +374,42 @@ describe('describeAnswers', () => {
     })
   })
 
+  it('describes a computed value that counts, with its label and what it came to', () => {
+    const document: FormDocument = {
+      format: 1,
+      items: [
+        field('flats', 'count'),
+        {
+          type: 'computed',
+          key: 'rooms',
+          label: 'Rooms in {flats} flats',
+          valueType: 'number',
+          expression: { op: 'multiply', args: [{ field: 'flats' }, { value: 3 }] },
+        },
+        {
+          type: 'computed',
+          key: 'hidden',
+          label: 'Hidden',
+          valueType: 'number',
+          expression: { value: 1 },
+          visibleWhen: { field: 'flats', op: 'isEmpty' },
+        },
+      ],
+    }
+
+    expect(describeAnswers(document, catalog, { values: { flats: 2 } })).toEqual({
+      items: [
+        expect.objectContaining({ key: 'flats' }),
+        {
+          type: 'computed',
+          key: 'rooms',
+          label: 'Rooms in 2 flats',
+          answer: { valueType: 'number', value: 6 },
+        },
+      ],
+    })
+  })
+
   it('describes a question with its placeholders filled', () => {
     const document: FormDocument = {
       format: 1,

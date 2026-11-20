@@ -369,6 +369,36 @@ describe('createDocumentForm without steps', () => {
     expect(screen.getByText('a.b')).toBeDefined()
   })
 
+  it('renders no control for a computed value, and fills its placeholder as it changes', async () => {
+    const Form = createDocumentForm(
+      plain(
+        field('rooms', 'text', { label: 'Rooms' }),
+        {
+          type: 'row',
+          items: [
+            {
+              type: 'computed',
+              key: 'total',
+              label: 'Total',
+              valueType: 'text',
+              expression: { op: 'otherwise', args: [{ field: 'rooms' }, { value: 'none' }] },
+            },
+          ],
+        },
+        field('note', 'text', { label: 'Note', description: 'For {total} rooms.' }),
+      ),
+      catalog,
+    )
+    render(<Form />)
+
+    expect(screen.getAllByRole('textbox')).toHaveLength(2)
+    expect(screen.getByText('For none rooms.')).toBeDefined()
+
+    await type('Rooms', '4')
+
+    expect(screen.getByText('For 4 rooms.')).toBeDefined()
+  })
+
   it('renders in the first language without one chosen', () => {
     const translated: FormDocument = {
       format: 1,

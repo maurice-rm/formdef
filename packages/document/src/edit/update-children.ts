@@ -17,7 +17,8 @@ const updateBelow = (
   update: ChildrenUpdate,
 ): Parent => {
   const children =
-    childrenOf(parent) ?? failAtPosition(position, 'a field or a block holds no items.')
+    childrenOf(parent) ??
+    failAtPosition(position, 'a field, a block or a computed value holds no items.')
   const [index, ...deeper] = rest
   if (index === undefined) {
     return withChildren(parent, update(children, parent))

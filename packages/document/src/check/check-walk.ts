@@ -22,6 +22,8 @@ export type CheckWalk = {
   blockKindNamed: (name: string) => BlockKind<unknown> | undefined
   /** The display kind of this name, or `undefined` when none is registered. */
   displayKindNamed: (name: string) => DisplayKind<unknown> | undefined
+  /** The value type of this name, or `undefined` when the catalog holds none. */
+  valueTypeNamed: (name: string) => ValueType | undefined
   /** The languages the document names; `undefined` when its texts are strings. */
   languages: readonly string[] | undefined
   allFieldKeys: ReadonlySet<string>

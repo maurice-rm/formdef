@@ -1,4 +1,5 @@
 import type { Condition } from './condition'
+import type { Expression } from './expression'
 import type { JsonValue } from './json-value'
 import type { Text } from './text'
 import type { VaryingText } from './varying-text'
@@ -92,7 +93,26 @@ export type BlockItem = {
   settings?: Record<string, JsonValue | Varying>
 }
 
-/** Fields and blocks side by side, as far as the space allows. */
+/**
+ * A value worked out from earlier answers, which nobody types: conditions compare it and
+ * placeholders name it like an answer, and the validator's answers hold it, computed again.
+ */
+export type ComputedItem = {
+  /** Marks the item as a computed value. */
+  type: 'computed'
+  /** The computed value's key, unique among the keys of fields, blocks and computed values. */
+  key: string
+  /** What the value is called; it may follow an answer. */
+  label: VaryingText
+  /** The name of the value type of its result: `number`, `text` or `date`. */
+  valueType: string
+  /** How the value is worked out. */
+  expression: Expression
+  /** The condition under which the value counts; without it, it always counts. */
+  visibleWhen?: Condition
+}
+
+/** Fields, blocks and computed values side by side, as far as the space allows. */
 export type RowItem = {
   /** Marks the item as a row. */
   type: 'row'
@@ -100,8 +120,8 @@ export type RowItem = {
   visibleWhen?: Condition
   /** How the row looks; without it, as the row slot renders it. */
   display?: Display
-  /** The fields and blocks of the row. */
-  items: (FieldItem | BlockItem)[]
+  /** The fields, blocks and computed values of the row. */
+  items: (FieldItem | BlockItem | ComputedItem)[]
 }
 
 /**
@@ -123,8 +143,8 @@ export type SectionItem = {
   items: DocumentItem[]
 }
 
-/** One item of a form document: a field, a block, a row or a section. */
-export type DocumentItem = FieldItem | BlockItem | RowItem | SectionItem
+/** One item of a form document: a field, a block, a computed value, a row or a section. */
+export type DocumentItem = FieldItem | BlockItem | ComputedItem | RowItem | SectionItem
 
 /** One step of a form document filled in one at a time. */
 export type DocumentStep = {

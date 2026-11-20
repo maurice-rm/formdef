@@ -7,8 +7,8 @@ import { isDocument } from './is-document'
 import type { Parent } from './parent'
 
 /**
- * Checks that a parent may hold a node: a document with steps holds steps, a row holds fields
- * and blocks, and the rest hold fields, blocks, rows and sections.
+ * Checks that a parent may hold a node: a document with steps holds steps, a row holds fields,
+ * blocks and computed values, and the rest hold those, rows and sections.
  *
  * @throws When it may not.
  */
@@ -22,6 +22,6 @@ export function refuseMisfit(parent: Parent, node: DocumentNode, position: Posit
   }
   const isRow = !isDocument(parent) && !isStep(parent) && parent.type === 'row'
   if (isRow && !isLeaf(node)) {
-    failAtPosition(position, 'a row holds fields and blocks only.')
+    failAtPosition(position, 'a row holds fields, blocks and computed values only.')
   }
 }

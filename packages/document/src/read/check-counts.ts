@@ -44,7 +44,8 @@ const checkOptionList = (value: JsonValue, { path, limit }: { path: string; limi
 }
 
 const checkOptions = ({ item, path }: PlacedItem, limit: number): void => {
-  const options = isLeaf(item) ? item.settings?.[OPTIONS_SETTING] : undefined
+  const options =
+    isLeaf(item) && item.type !== 'computed' ? item.settings?.[OPTIONS_SETTING] : undefined
   if (options === undefined) {
     return
   }

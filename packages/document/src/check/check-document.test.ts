@@ -2,7 +2,8 @@ import { createRegistry, type FieldOf, type SectionProps, type StepperProps } fr
 import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
-import type { FieldItem, FormDocument } from '../form-document'
+import type { Expression } from '../expression'
+import type { ComputedItem, FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineBlockKind } from '../kinds/define-block-kind'
 import { defineDisplayKind } from '../kinds/define-display-kind'
@@ -1291,5 +1292,108 @@ describe('checkDocument with displays', () => {
     expect(codesWithDisplays(section({ tone: { cases: [], otherwise: 'quiet' } }))).toContain(
       'notVarying document.items[1].display.settings.tone',
     )
+  })
+})
+
+describe('checkDocument with computed values', () => {
+  const rooms: FieldItem = { type: 'field', key: 'f1', kind: 'count', label: 'Rooms' }
+  const area: FieldItem = {
+    type: 'field',
+    key: 'f2',
+    kind: 'measure',
+    label: 'Area',
+    settings: { unit: 'm²' },
+  }
+  const computed = (expression: Expression, extra: Partial<ComputedItem> = {}): ComputedItem => ({
+    type: 'computed',
+    key: 'c1',
+    label: 'Per room',
+    valueType: 'number',
+    expression,
+    ...extra,
+  })
+
+  it('takes a computed value of earlier answers, which later conditions and expressions read', () => {
+    const document: FormDocument = {
+      format: 1,
+      items: [
+        rooms,
+        area,
+        computed({
+          op: 'otherwise',
+          args: [{ op: 'divide', args: [{ field: 'f2' }, { field: 'f1' }] }, { value: 0 }],
+        }),
+        {
+          type: 'computed',
+          key: 'c2',
+          label: 'Size',
+          valueType: 'text',
+          expression: {
+            cases: [{ when: { field: 'c1', op: 'atLeast', value: 20 }, value: { value: 'large' } }],
+            otherwise: { value: 'small' },
+          },
+        },
+        {
+          ...rooms,
+          key: 'f3',
+          label: 'Note',
+          visibleWhen: { field: 'c1', op: 'atLeast', value: 30 },
+        },
+      ],
+    }
+
+    expect(checkDocument(document, catalog)).toEqual([])
+  })
+
+  it('reports unknown operations, operands of the wrong kind or number, and later answers', () => {
+    const document: FormDocument = {
+      format: 1,
+      items: [
+        rooms,
+        { ...choiceField, key: 'f1-choice' },
+        computed({
+          op: 'add',
+          args: [
+            { field: 'f1' },
+            { value: 'two' },
+            { field: 'f9' },
+            { field: 'c9' },
+            { op: 'power', args: [] },
+            { op: 'subtract', args: [{ value: 1 }] },
+            { field: 'f1-choice' },
+            { op: 'round', args: [{ value: 1 }], digits: 16 },
+          ],
+        }),
+        computed({ value: 1 }, { key: 'c9' }),
+      ],
+    }
+
+    expect(codesOf(document)).toEqual([
+      'operandMismatch document.items[2].expression.args[1]',
+      'unknownField document.items[2].expression.args[2].field',
+      'laterField document.items[2].expression.args[3].field',
+      'unknownOperation document.items[2].expression.args[4].op',
+      'operandMismatch document.items[2].expression.args[5].args',
+      'operandMismatch document.items[2].expression.args[6].field',
+      'operandMismatch document.items[2].expression.args[7].digits',
+    ])
+  })
+
+  it('reports a value type other than number, text or date, and a result of another type', () => {
+    const document: FormDocument = {
+      format: 1,
+      items: [
+        rooms,
+        computed({ field: 'f1' }, { valueType: 'decimal' }),
+        computed({ value: 'many' }, { key: 'c2' }),
+        computed({ field: 'f1' }, { key: 'f1' }),
+      ],
+    }
+
+    expect(codesOf(document)).toEqual([
+      'resultMismatch document.items[1].valueType',
+      'resultMismatch document.items[2].expression',
+      'duplicateKey document.items[3].key',
+    ])
   })
 })

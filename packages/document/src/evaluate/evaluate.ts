@@ -1,6 +1,6 @@
+import { answerItemsOf } from '../answer-items-of'
 import type { Condition } from '../condition'
-import { fieldsOf } from '../fields-of'
-import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
+import type { ComputedItem, DocumentItem, FieldItem, FormDocument } from '../form-document'
 import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
 import type { Catalog } from '../kinds/create-catalog'
@@ -9,7 +9,9 @@ import { kindOf } from '../kinds/kind-of'
 import { optionsOf } from '../kinds/options-of'
 import type { SettingOption } from '../kinds/setting'
 import type { ValueType } from '../kinds/value-type'
+import { valueTypeNamed } from '../kinds/value-type-named'
 import type { Answer, Answers } from './answers'
+import { type Computed, compute } from './compute'
 import { holds } from './holds'
 import { isFilled } from './is-filled'
 import { isRequired } from './is-required'
@@ -26,10 +28,22 @@ export type ShownField = {
   settings: Readonly<Record<string, JsonValue>>
 }
 
+/** A computed value that counts for the values given, with what it came to. */
+type ShownComputed = {
+  computed: ComputedItem
+  valueType: ValueType
+  /** Where the value sits among the answers: the step key and its key, or its key alone. */
+  path: readonly string[]
+  /** What it came to; `undefined` when it is empty. */
+  value: Computed | undefined
+}
+
 /** What a document's values come to: the fields that show, and the answers conditions compare. */
 export type Evaluation = {
   /** The fields that show, in document order. */
   shown: ShownField[]
+  /** The computed values that count, in document order. */
+  computed: ShownComputed[]
   answers: Answers
 }
 
@@ -46,6 +60,7 @@ type EvaluationWalk = {
   filled: Map<string, Answer>
   answers: Answers
   shown: ShownField[]
+  computed: ShownComputed[]
 }
 
 type Container = {
@@ -79,6 +94,23 @@ const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk)
   }
 }
 
+const walkComputed = (computed: ComputedItem, container: Container, walk: EvaluationWalk): void => {
+  const valueType = valueTypeNamed(walk.catalog, computed.valueType)
+  const value = compute(computed.expression, walk.answers)
+  walk.computed.push({ computed, valueType, path: [...container.path, computed.key], value })
+  if (value !== undefined && valueType.isFilled(value)) {
+    walk.filled.set(computed.key, { value, valueType, text: valueType.toText(value, []) })
+  }
+}
+
+const valueTypeOfItem = (
+  item: FieldItem | ComputedItem,
+  catalog: Catalog<unknown, ValueType>,
+): ValueType | undefined =>
+  item.type === 'computed'
+    ? catalog.valueTypes.find((valueType) => valueType.name === item.valueType)
+    : catalog.findFieldKind(item.kind)?.valueType
+
 const valueTypesOf = (
   document: FormDocument,
   catalog: Catalog<unknown, ValueType>,
@@ -86,9 +118,9 @@ const valueTypesOf = (
   const items =
     document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
   return new Map(
-    fieldsOf(items).flatMap((field) => {
-      const kind = catalog.findFieldKind(field.kind)
-      return kind === undefined ? [] : [[field.key, kind.valueType] as const]
+    answerItemsOf(items).flatMap((item) => {
+      const valueType = valueTypeOfItem(item, catalog)
+      return valueType === undefined ? [] : [[item.key, valueType] as const]
     }),
   )
 }
@@ -104,6 +136,8 @@ const walkItems = (
     }
     if (item.type === 'field') {
       walkField(item, container, walk)
+    } else if (item.type === 'computed') {
+      walkComputed(item, container, walk)
     } else {
       walkItems(item.items, container, walk)
     }
@@ -128,7 +162,7 @@ export function evaluate(
     get: (key) => filled.get(key),
     valueTypeOf: (key) => valueTypes.get(key),
   }
-  const walk: EvaluationWalk = { catalog, language, filled, answers, shown: [] }
+  const walk: EvaluationWalk = { catalog, language, filled, answers, shown: [], computed: [] }
   const root = objectOf(values)
 
   if (document.steps === undefined) {

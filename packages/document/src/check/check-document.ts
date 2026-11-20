@@ -1,5 +1,5 @@
+import { answerItemsOf } from '../answer-items-of'
 import { DOCUMENT_PATH } from '../document-path'
-import { fieldsOf } from '../fields-of'
 import type {
   BlockItem,
   DocumentItem,
@@ -13,6 +13,7 @@ import type { ValueType } from '../kinds/value-type'
 import { pathTo } from '../path-to'
 import type { Text } from '../text'
 import type { VaryingText } from '../varying-text'
+import { checkComputed } from './check-computed'
 import { checkCondition } from './check-condition'
 import { checkDisplay } from './check-display'
 import { checkFixedText } from './check-fixed-text'
@@ -83,12 +84,17 @@ const checkChecks = (field: FieldItem, { walk, path }: At): void => {
   })
 }
 
-const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>): void => {
-  if (seenKeys.has(field.key)) {
-    report(walk, { code: 'duplicateKey', path: `${path}.key`, params: { key: field.key } })
+// Fields, blocks and computed values share one space of keys.
+const checkLeafKey = (key: string, { walk, path }: At, seenKeys: Set<string>): void => {
+  if (seenKeys.has(key)) {
+    report(walk, { code: 'duplicateKey', path: `${path}.key`, params: { key } })
   }
-  seenKeys.add(field.key)
-  checkKey(field.key, { walk, path })
+  seenKeys.add(key)
+  checkKey(key, { walk, path })
+}
+
+const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>): void => {
+  checkLeafKey(field.key, { walk, path }, seenKeys)
   checkVaryingText(field.label, { walk, path: `${path}.label` })
   checkDescription(field.description, { walk, path })
 
@@ -123,11 +129,7 @@ const checkItems = (items: readonly DocumentItem[], level: Level): void => {
 }
 
 const checkBlock = (block: BlockItem, { walk, path }: At, seenKeys: Set<string>): void => {
-  if (seenKeys.has(block.key)) {
-    report(walk, { code: 'duplicateKey', path: `${path}.key`, params: { key: block.key } })
-  }
-  seenKeys.add(block.key)
-  checkKey(block.key, { walk, path })
+  checkLeafKey(block.key, { walk, path }, seenKeys)
 
   const kind = walk.blockKindNamed(block.kind)
   if (kind === undefined) {
@@ -147,6 +149,12 @@ const checkItem = (item: DocumentItem, level: Level): void => {
   }
   if (item.type === 'block') {
     checkBlock(item, at, seenKeys)
+    return
+  }
+  if (item.type === 'computed') {
+    checkLeafKey(item.key, at, seenKeys)
+    checkVisibleWhen(item, at)
+    checkComputed(item, at)
     return
   }
   if (item.type === 'section') {
@@ -219,8 +227,9 @@ export function checkDocument(
     kindNamed: (name) => catalog.findFieldKind(name),
     blockKindNamed: (name) => catalog.findBlockKind(name),
     displayKindNamed: (name) => catalog.findDisplayKind(name),
+    valueTypeNamed: (name) => catalog.valueTypes.find((valueType) => valueType.name === name),
     languages: document.languages,
-    allFieldKeys: new Set(fieldsOf(items).map((field) => field.key)),
+    allFieldKeys: new Set(answerItemsOf(items).map((item) => item.key)),
     earlier: new Map(),
     problems: [],
   }
