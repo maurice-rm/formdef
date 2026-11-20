@@ -15,6 +15,7 @@ import type { Catalog } from '../kinds/create-catalog'
 import { entryCount } from '../kinds/entry-count'
 import { optionValuesOf } from '../kinds/option-values-of'
 import type { ValueType } from '../kinds/value-type'
+import { languageOf } from '../language-of'
 import { pathTo } from '../path-to'
 import { repeatsOf } from '../repeats-of'
 import type { Text } from '../text'
@@ -29,6 +30,8 @@ import { checkSettings } from './check-settings'
 import { checkVaryingText } from './check-varying-text'
 import type { CheckWalk } from './check-walk'
 import type { Problem } from './problem'
+import { problemInWords } from './problem-in-words'
+import type { ProblemMessages } from './problem-messages'
 import { report } from './report'
 
 type At = { walk: CheckWalk; path: string }
@@ -272,6 +275,24 @@ const checkSubmit = (document: FormDocument, walk: CheckWalk): void => {
   checkFixedText(document.submit, { walk, path })
 }
 
+/** What {@link checkDocument} takes besides the document and its catalog. */
+export type CheckOptions = {
+  /**
+   * The texts of the problems, by code, each given the problem's params and the label of its
+   * item; a code left out keeps its English text.
+   *
+   * @defaultValue the English texts
+   */
+  messages?: ProblemMessages
+  /**
+   * The language of the labels the texts name; a language the document does not name gives its
+   * first.
+   *
+   * @defaultValue the document's first language
+   */
+  language?: string
+}
+
 /** Where the steps and endings of a document are, which jumps name. */
 type Targets = { allStepKeys: readonly string[]; endingKeys: ReadonlySet<string> }
 
@@ -385,19 +406,29 @@ const checkSteps = (
  * A builder lists the problems while a document is edited; rendering refuses a document that has
  * any.
  *
+ * Each problem carries the position of the step or item it sits on, which a builder jumps to, and
+ * its text: the project's for its code, given the problem's params and that item's label, or the
+ * package's English one.
+ *
  * @param document - The document, as {@link readDocument} returns it.
  * @param catalog - The catalog with the kinds the document uses.
+ * @param options - The texts of the problems and the language of the labels they name.
+ * @param options.messages - The texts, by code; a code left out keeps its English text.
+ * @param options.language - The language of the labels; a language the document does not name
+ *   gives its first.
+ * @defaultValue `options.messages`: the English texts; `options.language`: the document's first.
  * @returns Every problem found; empty when the document is sound.
  *
  * @example
  * ```ts
- * const problems = checkDocument(document, catalog)
+ * const problems = checkDocument(document, catalog, { messages: germanProblems, language: 'de' })
  * if (problems.length > 0) showProblems(problems)
  * ```
  */
 export function checkDocument(
   document: FormDocument,
   catalog: Catalog<unknown, ValueType>,
+  options: CheckOptions = {},
 ): Problem[] {
   const items =
     document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
@@ -434,5 +465,10 @@ export function checkDocument(
   }
   checkEndings(document, { walk, seenKeys })
 
-  return walk.problems
+  const wording = {
+    document,
+    messages: options.messages ?? {},
+    language: languageOf(document, options.language),
+  }
+  return walk.problems.map((found) => problemInWords(found, wording))
 }

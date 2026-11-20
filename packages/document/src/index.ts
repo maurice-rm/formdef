@@ -1,5 +1,6 @@
-export { checkDocument } from './check/check-document'
-export type { Problem, ProblemCode } from './check/problem'
+export { type CheckOptions, checkDocument } from './check/check-document'
+export type { Problem, ProblemCode, ProblemParams } from './check/problem'
+export type { ProblemMessages } from './check/problem-messages'
 export type { Condition } from './condition'
 export {
   type AnswerDescription,

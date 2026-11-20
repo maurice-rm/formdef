@@ -50,7 +50,28 @@ const document = readDocument(stored, { limits: { items: 500, textLength: 5000 }
 ```
 
 A problem has a `code`, the `path` it is about, such as `document.steps[0].items[2].settings.unit`,
-and the `params` an error text names. The text is the project's, keyed by the code:
+the `params` its text names and the `message`, its text. It has a `position` when it sits on a step
+or an item, `[2]` or `[0, 2]` as the [edit operations](#positions) take it, so a builder selects
+what to fix; a problem of the document itself, its intro or its endings has none.
+
+The texts are English unless the project gives its own, by code, under `messages`. Each receives
+the `params` of its code, typed by `ProblemParams`, and the `label` of the step or item concerned in
+the `language` given, empty without one; a label that follows an answer names its fallback:
+
+```ts
+import { checkDocument, type FormDocument } from '@formdef/document'
+import { catalog } from '@/lib/formdef/field-kinds'
+declare const document: FormDocument
+// ---cut---
+const problems = checkDocument(document, catalog, {
+  language: 'de',
+  messages: {
+    laterField: ({ label, field }) => `${label}: Das Feld ${field} kommt erst später.`,
+  },
+})
+```
+
+The codes, and what their texts name:
 
 | `code` | The document has | `params` |
 | --- | --- | --- |

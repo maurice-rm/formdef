@@ -2,7 +2,7 @@ import type { BlockKind } from '../kinds/block-kind'
 import type { DisplayKind } from '../kinds/display-kind'
 import type { FieldKind } from '../kinds/field-kind'
 import type { ValueType } from '../kinds/value-type'
-import type { Problem } from './problem'
+import type { FoundProblem } from './problem'
 
 /** An answer already passed in document order, which later conditions may compare. */
 export type EarlierField = {
@@ -35,5 +35,5 @@ export type CheckWalk = {
   repeatOfField: Map<string, string>
   /** The answers an entry of each repeat already left reads: its own and those before it. */
   repeatScopes: Map<string, ReadonlyMap<string, EarlierField>>
-  problems: Problem[]
+  problems: FoundProblem[]
 }

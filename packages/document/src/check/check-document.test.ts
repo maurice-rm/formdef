@@ -118,6 +118,9 @@ const plain = (...items: FieldItem[]): FormDocument => ({
 const codesOf = (document: FormDocument) =>
   checkDocument(document, catalog).map(({ code, path }) => `${code} ${path}`)
 
+const foundIn = (document: FormDocument, given: Parameters<typeof checkDocument>[1] = catalog) =>
+  checkDocument(document, given).map(({ code, path, params }) => ({ code, path, params }))
+
 describe('checkDocument', () => {
   it('finds nothing in a sound document', () => {
     const document: FormDocument = {
@@ -179,7 +182,7 @@ describe('checkDocument', () => {
       ],
     }
 
-    expect(checkDocument(document, catalog)).toEqual([])
+    expect(foundIn(document)).toEqual([])
   })
 
   it('reports a field key used twice, and a step key used twice', () => {
@@ -199,7 +202,7 @@ describe('checkDocument', () => {
       ],
     }
 
-    expect(checkDocument(document, catalog)).toEqual([
+    expect(foundIn(document)).toEqual([
       { code: 'duplicateKey', path: 'document.steps[1].key', params: { key: 's1' } },
       { code: 'duplicateKey', path: 'document.steps[1].items[0].key', params: { key: 'f1' } },
     ])
@@ -227,7 +230,7 @@ describe('checkDocument', () => {
       ],
     }
 
-    expect(checkDocument(document, catalog)).toEqual([
+    expect(foundIn(document)).toEqual([
       { code: 'invalidKey', path: 'document.steps[0].items[0].key', params: { key: 'f.1' } },
       {
         code: 'overlappingKey',
@@ -296,7 +299,7 @@ describe('checkDocument', () => {
       },
     )
 
-    expect(checkDocument(document, catalog)).toEqual([
+    expect(foundIn(document)).toEqual([
       {
         code: 'operatorMismatch',
         path: 'document.items[1].visibleWhen.op',
@@ -369,7 +372,7 @@ describe('checkDocument', () => {
       },
     )
 
-    expect(checkDocument(document, catalog)).toEqual([
+    expect(foundIn(document)).toEqual([
       {
         code: 'operatorMismatch',
         path: 'document.items[1].visibleWhen.op',
@@ -408,7 +411,7 @@ describe('checkDocument', () => {
       },
     )
 
-    expect(checkDocument(document, catalog)).toEqual([
+    expect(foundIn(document)).toEqual([
       {
         code: 'valueMismatch',
         path: 'document.items[2].visibleWhen.all[0].value',
@@ -452,7 +455,7 @@ describe('checkDocument', () => {
       },
     )
 
-    expect(checkDocument(document, catalog)).toEqual([])
+    expect(foundIn(document)).toEqual([])
   })
 
   it('checks the checks of a field, which may compare the field itself', () => {
@@ -504,7 +507,7 @@ describe('checkDocument', () => {
       { type: 'field', key: 'f5', kind: 'count', label: 'Later' },
     )
 
-    expect(checkDocument(document, catalog)).toEqual([
+    expect(foundIn(document)).toEqual([
       {
         code: 'unknownField',
         path: 'document.items[3].visibleWhen.all[0].valueFrom',
@@ -769,7 +772,7 @@ describe('checkDocument', () => {
       },
     )
 
-    expect(checkDocument(document, withPostalCode)).toEqual([
+    expect(foundIn(document, withPostalCode)).toEqual([
       {
         code: 'operatorMismatch',
         path: 'document.items[2].visibleWhen.op',
@@ -805,7 +808,7 @@ describe('checkDocument', () => {
       settings: { options: OPTIONS, preselected: 'o9', highlighted: ['o1', 'o8'] },
     })
 
-    expect(checkDocument(document, withPreselect)).toEqual([
+    expect(foundIn(document, withPreselect)).toEqual([
       {
         code: 'unknownOption',
         path: 'document.items[0].settings.preselected',
@@ -855,7 +858,7 @@ describe('checkDocument with languages', () => {
       ],
     }
 
-    expect(checkDocument(document, catalog)).toEqual([])
+    expect(foundIn(document)).toEqual([])
   })
 
   it('reports a translation left out, in every text position', () => {
@@ -927,7 +930,7 @@ describe('checkDocument with languages', () => {
       items: [{ type: 'field', key: 'f1', kind: 'text', label: { de: 'Name' } }],
     }
 
-    expect(checkDocument(named, catalog)).toEqual([
+    expect(foundIn(named)).toEqual([
       { code: 'unknownLanguage', path: 'document.items[0].label.fr', params: { language: 'fr' } },
     ])
     expect(codesOf(unnamed)).toEqual(['unknownLanguage document.items[0].label.de'])
@@ -1012,7 +1015,7 @@ describe('checkDocument with languages', () => {
       ],
     }
 
-    expect(checkDocument({ ...document, languages: ['de', 'en'] }, catalog)).toEqual([
+    expect(foundIn({ ...document, languages: ['de', 'en'] })).toEqual([
       { code: 'fixedText', path: 'document.steps[0].label', params: { field: 'f1' } },
       { code: 'unknownField', path: 'document.steps[0].description', params: { field: 'f9' } },
       { code: 'laterField', path: 'document.steps[0].items[0].label', params: { field: 'f1' } },
@@ -1054,7 +1057,7 @@ describe('checkDocument with languages', () => {
       ],
     }
 
-    expect(checkDocument(document, catalog)).toEqual([
+    expect(foundIn(document)).toEqual([
       {
         code: 'missingTranslation',
         path: 'document.items[1].messages.required',
@@ -1207,7 +1210,7 @@ describe('checkDocument with jumps', () => {
       ],
     }
 
-    expect(checkDocument(document, catalog)).toEqual([])
+    expect(foundIn(document)).toEqual([])
   })
 
   it('reports a jump to a missing step, to itself or back, and on a later answer', () => {
@@ -1227,7 +1230,7 @@ describe('checkDocument with jumps', () => {
       ],
     }
 
-    expect(checkDocument(document, catalog)).toEqual([
+    expect(foundIn(document)).toEqual([
       { code: 'unknownStep', path: 'document.steps[1].next[0].step', params: { step: 's9' } },
       { code: 'backwardJump', path: 'document.steps[1].next[1].step', params: { step: 's2' } },
       { code: 'backwardJump', path: 'document.steps[1].next[2].step', params: { step: 's1' } },
@@ -1398,7 +1401,7 @@ describe('checkDocument with displays', () => {
       ],
     }
 
-    expect(checkDocument(document, withDisplays)).toEqual([
+    expect(foundIn(document, withDisplays)).toEqual([
       {
         code: 'misplacedDisplay',
         path: 'document.display.kind',
@@ -1496,7 +1499,7 @@ describe('checkDocument with computed values', () => {
       ],
     }
 
-    expect(checkDocument(document, catalog)).toEqual([])
+    expect(foundIn(document)).toEqual([])
   })
 
   it('reports unknown operations, operands of the wrong kind or number, and later answers', () => {
@@ -1819,5 +1822,62 @@ describe('checkDocument with a submit button', () => {
     }
 
     expect(codesOf(document)).toEqual(['misplacedSubmit document.submit'])
+  })
+})
+
+describe('checkDocument, where and in words', () => {
+  const document: FormDocument = {
+    format: 1,
+    languages: ['de', 'en'],
+    submit: { de: 'Senden', en: 'Send' },
+    intro: {
+      items: [{ type: 'block', key: 'b1', kind: 'banner' }],
+      start: { de: 'Los', en: 'Go' },
+    },
+    items: [
+      { type: 'field', key: 'f1', kind: 'text', label: { de: 'Name', en: 'Name' } },
+      {
+        type: 'section',
+        label: { de: 'Arbeit', en: 'Work' },
+        items: [
+          {
+            type: 'field',
+            key: 'f2',
+            kind: 'text',
+            label: {
+              cases: [{ when: { field: 'f1', op: 'isFilled' }, value: { de: '{f1}', en: '{f1}' } }],
+              otherwise: { de: 'Seit wann', en: 'Since when' },
+            },
+            visibleWhen: { field: 'f9', op: 'isFilled' },
+          },
+        ],
+      },
+    ],
+  }
+
+  it('gives the position of the step or item a problem sits on, none outside them', () => {
+    expect(checkDocument(document, catalog).map(({ code, position }) => [code, position])).toEqual([
+      ['unknownKind', undefined],
+      ['unknownField', [1, 0]],
+    ])
+  })
+
+  it("describes each problem in English, without the project's own texts", () => {
+    expect(checkDocument(document, catalog).map(({ message }) => message)).toEqual([
+      'This content is of a kind that is not registered: banner.',
+      'This names a field the form does not hold: f9.',
+    ])
+  })
+
+  it("describes a problem in the project's text, with the label of its item in the language", () => {
+    const problems = checkDocument(document, catalog, {
+      language: 'de',
+      messages: { unknownField: ({ label, field }) => `${label}: Das Feld ${field} fehlt.` },
+    })
+
+    expect(problems.map(({ message }) => message)).toEqual([
+      'This content is of a kind that is not registered: banner.',
+      'Seit wann: Das Feld f9 fehlt.',
+    ])
   })
 })
