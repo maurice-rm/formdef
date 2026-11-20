@@ -1,6 +1,6 @@
 ---
 title: Architecture
-description: The packages, the folders of @formdef/core, and the direction their imports point.
+description: The packages, the folders of @formdef/core and @formdef/document, and the direction their imports point.
 ---
 
 ## Packages
@@ -53,6 +53,30 @@ the way an app meets it:
 - its example consumers compile with the current TypeScript and with 5.7, the oldest supported;
 - one form on a registry of fourteen widgets stays cheap to check (see
   [Performance](/contributing/performance)).
+
+## `@formdef/document`
+
+The package reads, checks, edits and renders form documents. Its root entry runs on a server; the
+`/react` entry adds the form component. Its folders import one way too:
+
+```txt
+react  →  validate | describe | edit  →  evaluate | check  →  kinds | read  →  root files
+```
+
+| Folder | Holds |
+| --- | --- |
+| `react/` | `createDocumentForm` and the form config it builds, the `/react` entry |
+| `validate/` | `createValidator` and its error texts |
+| `describe/` | `describeAnswers` |
+| `edit/` | the edit operations of a builder, such as `insertNode` and `renameKey` |
+| `evaluate/` | which fields show and what conditions hold for a set of answers |
+| `check/` | `checkDocument` and its problems |
+| `kinds/` | field kinds, settings, rules and the options of a choice |
+| `read/` | `readDocument`, which checks the shape of a document |
+| root files | the document format, conditions and the helpers every folder shares |
+
+Folders of one level do not import each other, and nothing imports `react/`. A
+`noRestrictedImports` rule per level in `biome.json` enforces both.
 
 ## The shadcn registry
 
