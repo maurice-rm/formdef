@@ -1,6 +1,6 @@
 import type { FormDocument } from '../form-document'
+import type { Position } from '../position'
 import { nodeAt } from './node-at'
-import type { Position } from './position'
 import { splice } from './splice'
 import { splitPosition } from './split-position'
 import { updateChildren } from './update-children'

@@ -1,8 +1,8 @@
 import type { FormDocument } from '../form-document'
+import { isField } from '../is-field'
 import type { FieldKind } from '../kinds/field-kind'
+import type { Position } from '../position'
 import { failAtPosition } from './fail-at-position'
-import { isField } from './is-field'
-import type { Position } from './position'
 import { updateNode } from './update-node'
 
 /**

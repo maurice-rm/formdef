@@ -1,9 +1,9 @@
 import type { DocumentNode, FormDocument } from '../form-document'
+import type { Position } from '../position'
 import { childrenOf } from './children-of'
 import { failAtPosition } from './fail-at-position'
 import { isDocument } from './is-document'
 import type { Parent } from './parent'
-import type { Position } from './position'
 
 /**
  * The node at a position.

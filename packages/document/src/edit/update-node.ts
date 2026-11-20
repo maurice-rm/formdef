@@ -1,6 +1,6 @@
 import type { DocumentNode, FormDocument } from '../form-document'
+import type { Position } from '../position'
 import { nodeAt } from './node-at'
-import type { Position } from './position'
 import { refuseMisfit } from './refuse-misfit'
 import { splice } from './splice'
 import { splitPosition } from './split-position'

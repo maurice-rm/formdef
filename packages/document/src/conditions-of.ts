@@ -1,9 +1,9 @@
-import type { Condition } from '../condition'
-import { DOCUMENT_PATH } from '../document-path'
-import type { DocumentNode, FormDocument } from '../form-document'
-import { isVarying } from '../is-varying'
-import { pathTo } from '../path-to'
+import type { Condition } from './condition'
+import { DOCUMENT_PATH } from './document-path'
+import type { DocumentNode, FormDocument } from './form-document'
 import { isField } from './is-field'
+import { isVarying } from './is-varying'
+import { pathTo } from './path-to'
 import type { Position } from './position'
 
 /** One condition of a document, with the node it belongs to and where it sits. */

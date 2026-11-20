@@ -1,10 +1,10 @@
 import type { DocumentNode } from '../form-document'
+import { isField } from '../is-field'
+import { isStep } from '../is-step'
+import type { Position } from '../position'
 import { failAtPosition } from './fail-at-position'
 import { isDocument } from './is-document'
-import { isField } from './is-field'
-import { isStep } from './is-step'
 import type { Parent } from './parent'
-import type { Position } from './position'
 
 /**
  * Checks that a parent may hold a node: a document with steps holds steps, a row holds fields,

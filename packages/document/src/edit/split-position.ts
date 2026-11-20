@@ -1,5 +1,5 @@
+import type { Position } from '../position'
 import { failAtPosition } from './fail-at-position'
-import type { Position } from './position'
 import type { Target } from './update-children'
 
 /**

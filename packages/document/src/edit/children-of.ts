@@ -1,6 +1,6 @@
 import type { DocumentNode } from '../form-document'
+import { isField } from '../is-field'
 import { isDocument } from './is-document'
-import { isField } from './is-field'
 import type { Parent } from './parent'
 
 /** The steps or items a parent holds, or `undefined` for a field. */

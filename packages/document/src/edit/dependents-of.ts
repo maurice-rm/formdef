@@ -1,10 +1,10 @@
+import { conditionsOf } from '../conditions-of'
 import { fieldsOf } from '../fields-of'
 import type { FieldItem, FormDocument } from '../form-document'
-import { conditionsOf } from './conditions-of'
+import { isField } from '../is-field'
+import type { Position } from '../position'
 import { fieldsNamed } from './fields-named'
-import { isField } from './is-field'
 import { nodeAt } from './node-at'
-import type { Position } from './position'
 
 /** A condition that names a field of a node, as {@link dependentsOf} lists it. */
 export type Dependent = {

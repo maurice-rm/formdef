@@ -1,7 +1,7 @@
 import type { FormDocument } from '../form-document'
+import type { Position } from '../position'
 import { insertNode } from './insert-node'
 import { nodeAt } from './node-at'
-import type { Position } from './position'
 import { removeNode } from './remove-node'
 
 /**
