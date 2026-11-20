@@ -1536,7 +1536,7 @@ describe('checkDocument with computed values', () => {
     ])
   })
 
-  it('reports count and score on fields that choose nothing, and days between no dates', () => {
+  it('reports count and score on fields that choose nothing, not on one choice, and days between no dates', () => {
     const document: FormDocument = {
       format: 1,
       items: [
@@ -1557,7 +1557,6 @@ describe('checkDocument with computed values', () => {
 
     expect(codesOf(document)).toEqual([
       'operandMismatch document.items[2].expression.args[0].field',
-      'operandMismatch document.items[2].expression.args[1].field',
       'operandMismatch document.items[2].expression.args[2].field',
       'operandMismatch document.items[2].expression.args[3].args[0]',
       'operandMismatch document.items[2].expression.args[3].args[1]',

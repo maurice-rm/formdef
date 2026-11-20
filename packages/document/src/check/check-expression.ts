@@ -1,6 +1,5 @@
 import type { Condition } from '../condition'
 import type { Expression } from '../expression'
-import type { SettingType } from '../kinds/setting'
 import { pathTo } from '../path-to'
 import { checkCondition } from './check-condition'
 import type { CheckWalk } from './check-walk'
@@ -49,11 +48,7 @@ const OPERATIONS: Readonly<Record<string, OperationShape>> = {
 const ACROSS_ENTRIES: ReadonlySet<string> = new Set(['sum', 'min', 'max'])
 const COUNT_WHERE = 'countWhere'
 
-// The setting types a field compares as, for each operation on its choices.
-const CHOICE_OPERATIONS: Readonly<Record<string, readonly SettingType[]>> = {
-  count: ['optionList'],
-  score: ['option', 'optionList'],
-}
+const CHOICE_OPERATIONS: ReadonlySet<string> = new Set(['count', 'score'])
 
 // Beyond 15 digits a double holds no more, and the factor of rounding overflows past 308.
 const MOST_DIGITS = 15
@@ -79,15 +74,13 @@ const checkRead = (key: string, at: At): ResultKind | undefined => {
 type OnField = { op: string; field: string; when?: Condition }
 
 const checkOnChoices = ({ op, field }: OnField, at: At): ResultKind | undefined => {
-  const accepted = Object.hasOwn(CHOICE_OPERATIONS, op) ? CHOICE_OPERATIONS[op] : undefined
-  if (accepted === undefined) {
+  if (!CHOICE_OPERATIONS.has(op)) {
     report(at.walk, { code: 'unknownOperation', path: `${at.path}.op`, params: { op } })
     return undefined
   }
   const fieldAt = { walk: at.walk, path: `${at.path}.field` }
   const valueType = earlierFieldNamed(field, fieldAt)?.valueType
-  const type = valueType?.comparesAs?.type
-  if (valueType !== undefined && (type === undefined || !accepted.includes(type))) {
+  if (valueType !== undefined && !valueType.readsOptions) {
     mismatch(fieldAt, { op, expected: 'a field that chooses' })
   }
   return NUMBER

@@ -129,7 +129,10 @@ export const catalog = createCatalog(registry, { valueTypes: [address], fields: 
   shows it, next to the value type's name; it receives the field's options. `undefined` leaves the
   answer out.
 - `readsOptions: true` makes the value type choose among the field's options: its field kinds need
-  a setting `options`, and the validator refuses an answer that is no option.
+  a setting `options`, and `chosenOf` says which option values an answer chooses, such as
+  `['o3']` for `{ option: 'o3', other: 'Pellets' }`. The validator refuses an answer that chooses
+  no option of the field, and `count` and `score` read the options chosen. `defineValueType` throws
+  for a value type that reads options without `chosenOf`.
 - `toText` writes an answer as text for a [placeholder](/documents#placeholders) that names the
   field, given the field's options. Without it, a placeholder gives nothing.
 - `operators` are what a [condition](/documents#conditions) may compare a field of this type with,

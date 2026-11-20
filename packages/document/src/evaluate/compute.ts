@@ -34,12 +34,15 @@ const answerOf = (key: string, answers: Answers): Computed | undefined => {
   return typeof value === 'number' || typeof value === 'string' ? value : undefined
 }
 
-const chosenOf = (key: string, answers: Answers): { values: string[]; scores: number[] } => {
+const chosenIn = (
+  key: string,
+  answers: Answers,
+): { values: readonly string[]; scores: number[] } => {
   const answer = answers.get(key)
   if (answer === undefined) {
     return { values: [], scores: [] }
   }
-  const values = (Array.isArray(answer.value) ? answer.value : [answer.value]) as string[]
+  const values = answer.valueType.chosenOf(answer.value)
   const scores = values.map(
     (value) => answer.options.find((option) => option.value === value)?.score ?? 0,
   )
@@ -49,7 +52,7 @@ const chosenOf = (key: string, answers: Answers): { values: string[]; scores: nu
 type OnField = { op: string; field: string; when?: Condition }
 
 const computeOnChoices = ({ op, field }: OnField, answers: Answers): number | undefined => {
-  const { values, scores } = chosenOf(field, answers)
+  const { values, scores } = chosenIn(field, answers)
   if (op === 'count') {
     return values.length
   }

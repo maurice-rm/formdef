@@ -35,6 +35,8 @@ export type ValueType<
   fits(value: unknown): value is TValue
   /** Whether a value of the right shape holds an answer, such as text that is not blank. */
   isFilled(value: TValue): boolean
+  /** The values of the options an answer chooses; none for a value type that reads no options. */
+  chosenOf(value: TValue): readonly string[]
   /**
    * Describes an answer, given the field's options; `undefined` leaves the answer out, such as a
    * choice that is no option of the field.

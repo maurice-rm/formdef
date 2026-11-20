@@ -22,6 +22,9 @@ const ChoiceWidget = (_: FieldOf<string> & { label?: string; options: Option[] }
 const ChoicesWidget = (_: FieldOf<string[]> & { label?: string; options: Option[] }) => null
 const CheckWidget = (_: FieldOf<boolean> & { label?: string }) => null
 
+type Other = { option: string; other: string }
+const OtherWidget = (_: FieldOf<Other | undefined> & { label?: string }) => null
+
 const { fieldContext, formContext } = createFormHookContexts()
 const registry = createRegistry({
   fieldContext,
@@ -316,6 +319,57 @@ describe('createValidator', () => {
     expect(result.issues?.map(({ path, code, params }) => [path, code, params])).toEqual([
       [['f1'], 'required', {}],
       [['f2'], 'type', { expected: 'postalCode' }],
+    ])
+  })
+
+  it("checks and scores the options a project's value type says an answer chooses", () => {
+    const withOtherWidget = registry.extendRegistry({ widgets: { other: OtherWidget } })
+    const withOther = defineValueType({
+      name: 'withOther',
+      emptyValue: undefined,
+      readsOptions: true,
+      fits: (value): value is Other =>
+        typeof value === 'object' && value !== null && 'option' in value && 'other' in value,
+      chosenOf: (value) => (value.option === '' ? [] : [value.option]),
+      describe: (value) => value,
+    })
+    const catalogWithOther = createCatalog(withOtherWidget, {
+      valueTypes: [withOther],
+      fields: [
+        defineFieldKind(withOtherWidget, {
+          name: 'heating',
+          label: 'Heating',
+          widget: 'other',
+          valueType: withOther,
+          settings: { options: setting.options({ label: 'Options' }) },
+        }),
+      ],
+    })
+    const document = plain(
+      field('f1', 'heating', {
+        settings: {
+          options: [
+            { value: 'o1', label: 'Gas', score: 2 },
+            { value: 'o2', label: 'Other', score: 5 },
+          ],
+        },
+      }),
+      {
+        type: 'computed',
+        key: 'c1',
+        label: 'Score',
+        valueType: 'number',
+        expression: { op: 'score', field: 'f1' },
+      },
+    )
+    const validateOther = (values: unknown) =>
+      createValidator(document, catalogWithOther)['~standard'].validate(values)
+
+    expect(validateOther({ f1: { option: 'o2', other: 'Pellets' } })).toEqual({
+      value: { f1: { option: 'o2', other: 'Pellets' }, c1: 5 },
+    })
+    expect(codesOf(validateOther({ f1: { option: 'o9', other: '' } }))).toEqual([
+      { path: ['f1'], code: 'option' },
     ])
   })
 

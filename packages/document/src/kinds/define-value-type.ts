@@ -94,6 +94,13 @@ export type ValueTypeDefinition<
    * @defaultValue none; no condition compares with an answer of this type
    */
   comparesAs?: ComparesAs<TValue>
+  /**
+   * The values of the options an answer chooses, which the validator checks against the field's
+   * options and `count` and `score` read; required with `readsOptions`, and only taken with it.
+   *
+   * @defaultValue none, for a value type that reads no options
+   */
+  chosenOf?: (value: TValue) => readonly string[]
 }
 
 const FILL_OPERATORS: Readonly<Record<FillOperator, Operator>> = {
@@ -103,6 +110,7 @@ const FILL_OPERATORS: Readonly<Record<FillOperator, Operator>> = {
 
 const IS_FILLED = (): boolean => true
 const NO_TEXT = (): string => ''
+const NO_CHOICES = (): readonly string[] => []
 
 const collectOperators = (
   name: string,
@@ -129,7 +137,8 @@ const collectOperators = (
  * @typeParam TCompared - What each operator compares with, by operator name.
  * @param definition - The value type.
  * @returns The value type, for field kinds and {@link createCatalog}.
- * @throws When an operator of its own is named `isFilled` or `isEmpty`, which every value type has.
+ * @throws When an operator of its own is named `isFilled` or `isEmpty`, which every value type has,
+ *   or when it reads options without `chosenOf`.
  *
  * @example
  * ```ts
@@ -180,7 +189,25 @@ export function defineValueType<
     comparesAs,
     fits,
     isFilled,
+    chosenOf: chosenOfDefined(definition),
     describe,
     toText,
   }
+}
+
+const chosenOfDefined = <TValue>(definition: {
+  name: string
+  readsOptions?: boolean | undefined
+  chosenOf?: ((value: TValue) => readonly string[]) | undefined
+}): ((value: TValue) => readonly string[]) => {
+  if (definition.readsOptions !== true) {
+    return NO_CHOICES
+  }
+  return (
+    definition.chosenOf ??
+    failAt(
+      `${definition.name}.chosenOf`,
+      'a value type that reads options tells which an answer chooses.',
+    )
+  )
 }

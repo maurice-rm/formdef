@@ -145,6 +145,7 @@ const choice: BuiltIn<string, 'choice', SettingOption, true> = defineValueType({
   readsOptions: true,
   fits: isText,
   isFilled: isNotBlank,
+  chosenOf: (value) => (isNotBlank(value) ? [value] : []),
   describe: (value, options): SettingOption | undefined => optionOf(options, value),
   toText: (value, options) => labelOf(options, value),
   operators: {
@@ -163,6 +164,7 @@ const choices: BuiltIn<readonly string[], 'choices', Chosen, true> = defineValue
   fits: (value): value is readonly string[] =>
     Array.isArray(value) && value.every(isText) && new Set(value).size === value.length,
   isFilled: (value) => value.length > 0,
+  chosenOf: (value) => value,
   describe: (value, options): Chosen | undefined => {
     const chosen = value.map((entry) => optionOf(options, entry))
     const known = chosen.filter((option) => option !== undefined)

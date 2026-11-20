@@ -22,6 +22,7 @@ const ranking = defineValueType({
   emptyValue: [],
   readsOptions: true,
   fits: (value): value is readonly string[] => Array.isArray(value),
+  chosenOf: (value) => value,
   describe: (value) => ({ ranked: value }),
 })
 

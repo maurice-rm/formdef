@@ -97,20 +97,47 @@ describe('defineValueType', () => {
     ).toThrow('formdef: address.operators.isFilled: every value type has this operator.')
   })
 
-  it('reads options when it says so', () => {
+  it('reads options when it says so, and tells which options an answer chooses', () => {
     const ranking = defineValueType({
       name: 'ranking',
       emptyValue: [],
       readsOptions: true,
-      fits: (value): value is string[] => Array.isArray(value),
+      fits: (value: unknown): value is string[] => Array.isArray(value),
+      chosenOf: (value) => value,
       describe: (value, options) => ({
         ranked: value.map((entry) => options.find((option) => option.value === entry)),
       }),
     })
 
     expect(ranking.readsOptions).toBe(true)
+    expect(ranking.chosenOf(['o2', 'o1'])).toEqual(['o2', 'o1'])
     expect(ranking.describe(['o1'], [{ value: 'o1', label: 'First' }])).toEqual({
       ranked: [{ value: 'o1', label: 'First' }],
     })
+  })
+
+  it('chooses no options when it reads none', () => {
+    const address = defineValueType({
+      name: 'address',
+      emptyValue: undefined,
+      fits: isAddress,
+      describe: (value) => value,
+    })
+
+    expect(address.chosenOf({ street: 'Main', city: 'Bonn' })).toEqual([])
+  })
+
+  it('refuses a value type that reads options without telling which an answer chooses', () => {
+    expect(() =>
+      defineValueType({
+        name: 'ranking',
+        emptyValue: [],
+        readsOptions: true,
+        fits: (value: unknown): value is string[] => Array.isArray(value),
+        describe: () => ({}),
+      } as never),
+    ).toThrow(
+      'formdef: ranking.chosenOf: a value type that reads options tells which an answer chooses.',
+    )
   })
 })

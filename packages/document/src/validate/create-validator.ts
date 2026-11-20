@@ -98,10 +98,9 @@ const VENDOR = 'formdef'
 const CHECK = 'check'
 const LIST = 'list'
 
-const fitsOptions = ({ field, value }: ShownField): boolean => {
-  const choices: unknown[] = Array.isArray(value) ? value : [value]
-  const options = optionsOf(field.settings)
-  return choices.every((choice) => optionOf(options, choice) !== undefined)
+const fitsOptions = ({ kind, value, settings }: ShownField): boolean => {
+  const options = optionsOf(settings)
+  return kind.valueType.chosenOf(value).every((choice) => optionOf(options, choice) !== undefined)
 }
 
 const failureOf = (shown: ShownField): Failure | undefined => {
