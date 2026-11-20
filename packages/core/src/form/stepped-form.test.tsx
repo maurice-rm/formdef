@@ -44,8 +44,9 @@ const Stepper = ({
   isLast,
   isSubmitting,
   children,
-}: StepperProps<{ description?: string }>): ReactNode => (
-  <section aria-label="Stepper" data-submitting={String(isSubmitting)}>
+  variant,
+}: StepperProps<{ description?: string }> & { variant?: string }): ReactNode => (
+  <section aria-label="Stepper" data-submitting={String(isSubmitting)} data-variant={variant}>
     <ol>
       {steps.map((step, index) => (
         <li
@@ -330,6 +331,16 @@ describe('createForm with steps', () => {
 
     expect(stepItem('Contact').dataset.description).toBe('How we reach you')
     expect(stepItem('Building').dataset.description).toBeUndefined()
+  })
+
+  it("passes the config's stepper props to the stepper", () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({ stepper: { props: { variant: 'rail' } } }),
+    )
+    render(<Checklist />)
+
+    expect(screen.getByRole('region', { name: 'Stepper' }).dataset.variant).toBe('rail')
   })
 
   it('builds the props of a step from the values of the form', async () => {

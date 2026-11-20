@@ -33,12 +33,21 @@ type FormComponentProps = FormElementProps & {
 type ConfigInput = Options & {
   fields?: unknown
   layout?: unknown
+  stepper?: unknown
 }
 
 type ConfiguredFormProps = FormComponentProps & {
   binding: FormBinding
   config: ConfigInput
   requiredPaths: ReadonlySet<string>
+}
+
+const stepperPropsOf = ({ stepper }: ConfigInput): Options | undefined => {
+  const props =
+    typeof stepper === 'object' && stepper !== null && 'props' in stepper
+      ? stepper.props
+      : undefined
+  return typeof props === 'object' && props !== null ? (props as Options) : undefined
 }
 
 const MISSING_DEFAULT_VALUES =
@@ -89,6 +98,7 @@ const ConfiguredForm = ({
             steps={steps}
             requiredPaths={requiredPaths}
             submitStep={submitStep}
+            stepperProps={stepperPropsOf(config)}
           />
         )}
       </form>

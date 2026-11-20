@@ -62,6 +62,8 @@ type SteppedFormProps = {
   requiredPaths: ReadonlySet<string>
   /** Receives what a submit of the `<form>` element does: `next` of the current step. */
   submitStep: RefObject<(() => void) | undefined>
+  /** What the config passes the stepper besides what the form gives it. */
+  stepperProps: Readonly<Record<string, unknown>> | undefined
 }
 
 type GroupHandleProps = {
@@ -253,6 +255,7 @@ export const SteppedForm = ({
   steps,
   requiredPaths,
   submitStep,
+  stepperProps,
 }: SteppedFormProps): ReactNode => {
   const [currentKey, setCurrentKey] = useState(() => firstShownKey(steps, form.store.get().values))
   const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set([currentKey]))
@@ -457,6 +460,7 @@ export const SteppedForm = ({
 
   return (
     <Stepper
+      {...stepperProps}
       steps={states}
       current={current}
       next={next}
