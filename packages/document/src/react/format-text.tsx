@@ -94,16 +94,23 @@ const optionsWith = (hasLinks: boolean): MarkdownToJSX.Options => ({
 const WITH_LINKS = optionsWith(true)
 const WITHOUT_LINKS = optionsWith(false)
 
+// A widget shows a description, and points to it, whenever it is given; an empty one is none.
+const compiled = (markdown: string, options: MarkdownToJSX.Options): ReactNode =>
+  markdown.trim() === '' ? null : compiler(markdown, options)
+
 /**
  * Renders a formatted text of a document, written in limited Markdown: bold, italics, links to
  * `https:` and `mailto:` addresses, and paragraphs, which fit inside a paragraph. HTML stays text,
- * and other Markdown renders as its text.
+ * and other Markdown renders as its text. A text that is empty or blank renders nothing.
  */
 export function formatText(markdown: string): ReactNode {
-  return compiler(markdown, WITH_LINKS)
+  return compiled(markdown, WITH_LINKS)
 }
 
-/** Renders a formatted text like {@link formatText}, but each link as its text, for a place that holds no links. */
+/**
+ * Renders a formatted text like {@link formatText}, but each link as its text, for a place that
+ * holds no links.
+ */
 export function formatTextWithoutLinks(markdown: string): ReactNode {
-  return compiler(markdown, WITHOUT_LINKS)
+  return compiled(markdown, WITHOUT_LINKS)
 }

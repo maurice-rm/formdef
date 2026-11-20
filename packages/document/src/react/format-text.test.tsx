@@ -12,6 +12,13 @@ const htmlOf = (markdown: string, format = formatText): string => {
 }
 
 describe('formatText', () => {
+  it('renders nothing for a text that is empty or blank, such as a placeholder not answered yet', () => {
+    for (const format of [formatText, formatTextWithoutLinks]) {
+      expect(format('')).toBeNull()
+      expect(format('  \n')).toBeNull()
+    }
+  })
+
   it('renders bold and italics', () => {
     expect(htmlOf('A **bold** and an *italic* word')).toBe(
       '<p>A <strong>bold</strong> and an <em>italic</em> word</p>',
