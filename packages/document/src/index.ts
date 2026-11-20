@@ -22,3 +22,11 @@ export type { FieldKind, ValueType } from './kinds/field-kind'
 export { type Rule, rule } from './kinds/rule'
 export { type Setting, type SettingOption, type SettingType, setting } from './kinds/setting'
 export { readDocument } from './read-document'
+export {
+  createValidator,
+  type DocumentValidator,
+  type DocumentValues,
+  type ValidationIssue,
+  type ValidationResult,
+} from './validate/create-validator'
+export type { Messages } from './validate/messages'
