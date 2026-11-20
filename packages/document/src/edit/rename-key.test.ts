@@ -98,7 +98,7 @@ describe('renameKey', () => {
                 value: { op: 'add', args: [{ field: 'f1' }, { field: 'f1' }] },
               },
             ],
-            otherwise: { value: 0 },
+            otherwise: { op: 'count', field: 'f1' },
           },
         },
         field('f2', { visibleWhen: { field: 'c1', op: 'atLeast', value: 2 } }),
@@ -118,7 +118,7 @@ describe('renameKey', () => {
             value: { op: 'add', args: [{ field: 'rooms' }, { field: 'rooms' }] },
           },
         ],
-        otherwise: { value: 0 },
+        otherwise: { op: 'count', field: 'rooms' },
       },
     })
     expect(renamed.items?.[2]).toEqual(

@@ -274,6 +274,10 @@ An expression is data, never code the package runs:
 | `{ "op": "add", "args": [ … ] }` | the sum; `subtract`, `multiply` and `divide` likewise, `min` and `max` the smallest and largest |
 | `{ "op": "round", "args": [x], "digits": 1 }` | `x` rounded, to no digits without `digits` |
 | `{ "op": "otherwise", "args": [x, fallback] }` | `x`, or `fallback` when `x` is empty |
+| `{ "op": "daysBetween", "args": [from, to] }` | the days from one date to the other, by their day |
+| `{ "op": "concat", "args": [ … ] }` | a text of its operands joined: an answer read as its [placeholder](#placeholders) writes it, such as a decimal with its comma, anything else as plain digits or text |
+| `{ "op": "count", "field": "f4" }` | how many options a field with several choices holds, 0 without any |
+| `{ "op": "score", "field": "f4" }` | the sum of the `score` of each option chosen, 0 without any; an option without a `score` counts 0 |
 | `{ "cases": [{ "when": condition, "value": x }], "otherwise": y }` | the `value` of the first case whose [condition](#conditions) holds, `y` when none does, shaped like a [setting that follows an answer](#settings-that-follow-an-answer) |
 
 - An empty operand makes an empty result, unless `otherwise` replaces it, so a total does not
@@ -285,7 +289,8 @@ An expression is data, never code the package runs:
   value counts.
 - Conditions compare it, placeholders name it, and the validator's `value` and `describeAnswers`
   hold it, worked out again; a value sent under its key is never taken. It has no control in the
-  form.
+  form: a block shows it through a placeholder, such as a notice reading `Heated share: {c1} %`.
+- An option may carry a `score`, any number, for `score`: `{ "value": "o2", "label": "Oil", "score": 2 }`.
 
 ## A first form
 

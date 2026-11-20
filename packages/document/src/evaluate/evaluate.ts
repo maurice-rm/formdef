@@ -89,8 +89,9 @@ const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk)
   })
   if (isFilled(value, kind.valueType)) {
     // The settings of a field that shows are resolved, so their options hold strings.
-    const text = kind.valueType.toText(value, optionsOf(settings) as SettingOption[])
-    walk.filled.set(field.key, { value, valueType: kind.valueType, text })
+    const options = optionsOf(settings) as SettingOption[]
+    const text = kind.valueType.toText(value, options)
+    walk.filled.set(field.key, { value, valueType: kind.valueType, text, options })
   }
 }
 
@@ -99,7 +100,12 @@ const walkComputed = (computed: ComputedItem, container: Container, walk: Evalua
   const value = compute(computed.expression, walk.answers)
   walk.computed.push({ computed, valueType, path: [...container.path, computed.key], value })
   if (value !== undefined && valueType.isFilled(value)) {
-    walk.filled.set(computed.key, { value, valueType, text: valueType.toText(value, []) })
+    walk.filled.set(computed.key, {
+      value,
+      valueType,
+      text: valueType.toText(value, []),
+      options: [],
+    })
   }
 }
 

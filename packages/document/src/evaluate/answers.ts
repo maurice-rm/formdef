@@ -1,3 +1,4 @@
+import type { SettingOption } from '../kinds/setting'
 import type { ValueType } from '../kinds/value-type'
 
 /** A filled answer of a field that shows, with the value type of its field kind. */
@@ -6,6 +7,8 @@ export type Answer = {
   valueType: ValueType
   /** The answer as text, for a placeholder that names its field. */
   text: string
+  /** The options the answer chose among, with their scores; empty for an answer of no choice. */
+  options: readonly SettingOption[]
 }
 
 /**

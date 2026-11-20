@@ -41,7 +41,7 @@ describe('describeAnswers', () => {
     }
     if (answer?.type === 'field' && answer.answer?.valueType === 'choices') {
       expectTypeOf(answer.answer.values).toEqualTypeOf<
-        { value: string; label: string; description?: string }[]
+        { value: string; label: string; description?: string; score?: number }[]
       >()
     }
     if (answer?.type === 'field') {

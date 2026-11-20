@@ -1,8 +1,9 @@
 import type { Condition } from '../condition'
 import type { Expression } from '../expression'
+import type { SettingType } from '../kinds/setting'
 import { pathTo } from '../path-to'
 import { checkCondition } from './check-condition'
-import type { CheckWalk } from './check-walk'
+import type { CheckWalk, EarlierField } from './check-walk'
 import { report } from './report'
 import { isResultKind, type ResultKind } from './result-kind'
 
@@ -10,24 +11,44 @@ type At = { walk: CheckWalk; path: string }
 
 type Operation = { op: string; args: readonly Expression[]; digits?: number }
 
+type OperandCount = { fewest: number; most: number }
+
+/** What an operation takes: how many operands, of which kind, and what it comes to. */
+type OperationShape = {
+  count: OperandCount
+  /** The kind every operand has; `first` the kind of the first; `any` every kind. */
+  operands: ResultKind | 'first' | 'any'
+  /** What it comes to; `first` the kind of its first operand. */
+  result: ResultKind | 'first'
+}
+
 const NUMBER: ResultKind = 'number'
 const ANY_KIND = 'number, text or date'
-
-type OperandCount = { fewest: number; most: number }
 
 const ANY_NUMBER: OperandCount = { fewest: 1, most: Number.POSITIVE_INFINITY }
 const ONE: OperandCount = { fewest: 1, most: 1 }
 const TWO: OperandCount = { fewest: 2, most: 2 }
 
-const OPERAND_COUNTS: Readonly<Record<string, OperandCount>> = {
-  add: ANY_NUMBER,
-  multiply: ANY_NUMBER,
-  min: ANY_NUMBER,
-  max: ANY_NUMBER,
-  subtract: TWO,
-  divide: TWO,
-  round: ONE,
-  otherwise: TWO,
+const ON_NUMBERS: OperationShape = { count: ANY_NUMBER, operands: NUMBER, result: NUMBER }
+const ON_TWO_NUMBERS: OperationShape = { count: TWO, operands: NUMBER, result: NUMBER }
+
+const OPERATIONS: Readonly<Record<string, OperationShape>> = {
+  add: ON_NUMBERS,
+  multiply: ON_NUMBERS,
+  min: ON_NUMBERS,
+  max: ON_NUMBERS,
+  subtract: ON_TWO_NUMBERS,
+  divide: ON_TWO_NUMBERS,
+  round: { count: ONE, operands: NUMBER, result: NUMBER },
+  otherwise: { count: TWO, operands: 'first', result: 'first' },
+  concat: { count: ANY_NUMBER, operands: 'any', result: 'text' },
+  daysBetween: { count: TWO, operands: 'date', result: NUMBER },
+}
+
+// The setting types a field compares as, for each operation on its choices.
+const CHOICE_OPERATIONS: Readonly<Record<string, readonly SettingType[]>> = {
+  count: ['optionList'],
+  score: ['option', 'optionList'],
 }
 
 // Beyond 15 digits a double holds no more, and the factor of rounding overflows past 308.
@@ -37,77 +58,103 @@ const mismatch = ({ walk, path }: At, params: { op: string; expected: string }):
   report(walk, { code: 'operandMismatch', path, params })
 }
 
-const checkRead = (key: string, { walk, path }: At): ResultKind | undefined => {
-  const fieldPath = `${path}.field`
+const earlierAnswer = (key: string, { walk, path }: At): EarlierField | undefined => {
   if (!walk.allFieldKeys.has(key)) {
-    report(walk, { code: 'unknownField', path: fieldPath, params: { field: key } })
+    report(walk, { code: 'unknownField', path, params: { field: key } })
     return undefined
   }
   const earlier = walk.earlier.get(key)
   if (earlier === undefined) {
-    report(walk, { code: 'laterField', path: fieldPath, params: { field: key } })
+    report(walk, { code: 'laterField', path, params: { field: key } })
+  }
+  return earlier
+}
+
+const checkRead = (key: string, at: At): ResultKind | undefined => {
+  const fieldAt = { walk: at.walk, path: `${at.path}.field` }
+  const valueType = earlierAnswer(key, fieldAt)?.valueType
+  if (valueType === undefined) {
     return undefined
   }
-  if (earlier.valueType === undefined) {
-    return undefined
-  }
-  const kind = earlier.valueType.comparesAs?.type
+  const kind = valueType.comparesAs?.type
   if (!isResultKind(kind)) {
-    mismatch({ walk, path: fieldPath }, { op: 'field', expected: ANY_KIND })
+    mismatch(fieldAt, { op: 'field', expected: ANY_KIND })
     return undefined
   }
   return kind
 }
 
+const checkOnChoices = (
+  { op, field }: { op: string; field: string },
+  at: At,
+): ResultKind | undefined => {
+  const accepted = Object.hasOwn(CHOICE_OPERATIONS, op) ? CHOICE_OPERATIONS[op] : undefined
+  if (accepted === undefined) {
+    report(at.walk, { code: 'unknownOperation', path: `${at.path}.op`, params: { op } })
+    return undefined
+  }
+  const fieldAt = { walk: at.walk, path: `${at.path}.field` }
+  const valueType = earlierAnswer(field, fieldAt)?.valueType
+  const type = valueType?.comparesAs?.type
+  if (valueType !== undefined && (type === undefined || !accepted.includes(type))) {
+    mismatch(fieldAt, { op, expected: 'a field that chooses' })
+  }
+  return NUMBER
+}
+
 // Each operand is checked, then its kind against the one expected, so problems stay in order.
 const checkOperands = (
   operands: readonly { expression: Expression; path: string }[],
-  { at, op, expected }: { at: At; op: string; expected: ResultKind | 'first' },
+  { at, op, expected }: { at: At; op: string; expected: OperationShape['operands'] },
 ): ResultKind | undefined => {
   let first: ResultKind | undefined
   for (const { expression, path } of operands) {
     const kind = checkExpression(expression, { walk: at.walk, path })
     const wanted = expected === 'first' ? first : expected
-    if (kind !== undefined && wanted !== undefined && kind !== wanted) {
+    if (kind !== undefined && wanted !== undefined && wanted !== 'any' && kind !== wanted) {
       mismatch({ walk: at.walk, path }, { op, expected: wanted })
     }
     first ??= kind
   }
-  return expected === 'first' ? first : expected
+  return first
+}
+
+const checkCount = (
+  args: readonly Expression[],
+  { op, count, at }: { op: string; count: OperandCount; at: At },
+): void => {
+  if (args.length >= count.fewest && args.length <= count.most) {
+    return
+  }
+  const expected =
+    count.fewest === count.most ? `${count.fewest} operands` : `at least ${count.fewest} operand`
+  mismatch({ walk: at.walk, path: `${at.path}.args` }, { op, expected })
 }
 
 const checkOperation = ({ op, args, digits }: Operation, at: At): ResultKind | undefined => {
-  const count = Object.hasOwn(OPERAND_COUNTS, op) ? OPERAND_COUNTS[op] : undefined
-  if (count === undefined) {
+  const shape = Object.hasOwn(OPERATIONS, op) ? OPERATIONS[op] : undefined
+  if (shape === undefined) {
     report(at.walk, { code: 'unknownOperation', path: `${at.path}.op`, params: { op } })
     return undefined
   }
-  const { fewest, most } = count
-  if (args.length < fewest || args.length > most) {
-    const expected = fewest === most ? `${fewest} operands` : `at least ${fewest} operand`
-    mismatch({ walk: at.walk, path: `${at.path}.args` }, { op, expected })
-  }
+  checkCount(args, { op, count: shape.count, at })
   const operands = args.map((expression, index) => ({
     expression,
     path: `${at.path}.args[${index}]`,
   }))
-  const result = checkOperands(operands, {
-    at,
-    op,
-    expected: op === 'otherwise' ? 'first' : NUMBER,
-  })
+  const first = checkOperands(operands, { at, op, expected: shape.operands })
   if (digits !== undefined && (!Number.isInteger(digits) || digits < 0 || digits > MOST_DIGITS)) {
     mismatch(
       { walk: at.walk, path: `${at.path}.digits` },
       { op, expected: `a whole number up to ${MOST_DIGITS}` },
     )
   }
-  return result
+  return shape.result === 'first' ? first : shape.result
 }
 
-// Each case's condition, then its result, so problems stay in document order.
 type Cases = { cases: readonly { when: Condition; value: Expression }[]; otherwise: Expression }
 
+// Each case's condition, then its result, so problems stay in document order.
 const checkCases = ({ cases, otherwise }: Cases, at: At): ResultKind | undefined => {
   let first: ResultKind | undefined
   const checkResult = (expression: Expression, path: string): void => {
@@ -118,9 +165,8 @@ const checkCases = ({ cases, otherwise }: Cases, at: At): ResultKind | undefined
     first ??= kind
   }
   cases.forEach((entry, index) => {
-    const casePath = pathTo.case(at.path, index)
     checkCondition(entry.when, pathTo.caseWhen(at.path, index), at.walk)
-    checkResult(entry.value, `${casePath}.value`)
+    checkResult(entry.value, `${pathTo.case(at.path, index)}.value`)
   })
   checkResult(otherwise, `${at.path}.otherwise`)
   return first
@@ -129,18 +175,19 @@ const checkCases = ({ cases, otherwise }: Cases, at: At): ResultKind | undefined
 /**
  * Checks an expression against the answers before it and returns what it comes to: each answer
  * read exists, comes earlier and is a number, a text or a date; each operation is known, takes as
- * many operands as it has, of the kinds it works on; the results of a choice by conditions are of
- * one kind. `undefined` when what it comes to cannot be told, as a problem was reported.
+ * many operands as it has, of the kinds it works on; `count` and `score` read a field that
+ * chooses; the results of a choice by conditions are of one kind. `undefined` when what it comes
+ * to cannot be told, as a problem was reported.
  */
 export function checkExpression(expression: Expression, at: At): ResultKind | undefined {
+  if ('op' in expression) {
+    return 'field' in expression ? checkOnChoices(expression, at) : checkOperation(expression, at)
+  }
   if ('field' in expression) {
     return checkRead(expression.field, at)
   }
   if ('value' in expression) {
     return typeof expression.value === 'number' ? NUMBER : 'text'
   }
-  if ('cases' in expression) {
-    return checkCases(expression, at)
-  }
-  return checkOperation(expression, at)
+  return checkCases(expression, at)
 }

@@ -485,6 +485,58 @@ describe('createValidator', () => {
       expect(validate(plain(perRoom(many)), {})).toEqual({ value: { c1: 1 } })
     })
 
+    it('counts choices and adds up the scores of the options chosen, 0 without any', () => {
+      const scored = [
+        { value: 'o1', label: 'Gas', score: 1 },
+        { value: 'o2', label: 'Oil', score: 2.5 },
+        { value: 'o3', label: 'Wood' },
+      ]
+      const document = plain(
+        field('f1', 'choices', { settings: { options: scored } }),
+        field('f2', 'choice', { settings: { options: scored } }),
+        perRoom({ op: 'count', field: 'f1' }),
+        { ...perRoom({ op: 'score', field: 'f1' }), key: 'c2' } as DocumentItem,
+        { ...perRoom({ op: 'score', field: 'f2' }), key: 'c3' } as DocumentItem,
+      )
+
+      expect(validate(document, { f1: ['o1', 'o2', 'o3'], f2: 'o2' })).toEqual({
+        value: { f1: ['o1', 'o2', 'o3'], f2: 'o2', c1: 3, c2: 3.5, c3: 2.5 },
+      })
+      expect(validate(document, {})).toEqual({ value: { c1: 0, c2: 0, c3: 0 } })
+    })
+
+    it('joins texts, numbers and dates as placeholders write them, and counts days between', () => {
+      const document = plain(
+        field('f1', 'measure'),
+        field('f2', 'date'),
+        field('f3', 'date'),
+        {
+          type: 'computed',
+          key: 'c1',
+          label: 'Summary',
+          valueType: 'text',
+          expression: {
+            op: 'concat',
+            args: [{ field: 'f1' }, { value: ' m² from ' }, { field: 'f2' }],
+          },
+        },
+        {
+          ...perRoom({ op: 'daysBetween', args: [{ field: 'f2' }, { field: 'f3' }] }),
+          key: 'c2',
+        } as DocumentItem,
+      )
+
+      expect(validate(document, { f1: '9,5', f2: '2026-01-30', f3: '2026-03-01T08:00' })).toEqual({
+        value: {
+          f1: '9,5',
+          f2: '2026-01-30',
+          f3: '2026-03-01T08:00',
+          c1: '9,5 m² from 2026-01-30',
+          c2: 30,
+        },
+      })
+    })
+
     it('lets a later condition compare a computed value like an answer', () => {
       const document = plain(
         field('f1', 'count'),

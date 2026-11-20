@@ -18,6 +18,10 @@ const readConstant = (value: unknown, path: string): number | string =>
 
 // The operations come from the package, which `checkDocument` checks the expression against.
 const readOperation = (shape: Shape, path: string): Expression => {
+  if (hasKey(shape, 'field')) {
+    readOnlyKeys(shape, ['op', 'field'], path)
+    return { op: readText(shape.op, `${path}.op`), field: readText(shape.field, `${path}.field`) }
+  }
   readOnlyKeys(shape, ['op', 'args', 'digits'], path)
   const op = readText(shape.op, `${path}.op`)
   const args = readList(shape.args, `${path}.args`).map((arg, index) =>
@@ -55,6 +59,9 @@ const readCases = (shape: Shape, path: string): Expression => {
 export function readExpression(value: unknown, path: string): Expression {
   const shape = readShape(value, path)
 
+  if (hasKey(shape, 'op')) {
+    return readOperation(shape, path)
+  }
   if (hasKey(shape, 'field')) {
     readOnlyKeys(shape, ['field'], path)
     return { field: readText(shape.field, `${path}.field`) }
@@ -65,9 +72,6 @@ export function readExpression(value: unknown, path: string): Expression {
   }
   if (hasKey(shape, 'cases')) {
     return readCases(shape, path)
-  }
-  if (hasKey(shape, 'op')) {
-    return readOperation(shape, path)
   }
   return failAt(path, 'expected an expression: field, value, op or cases.')
 }

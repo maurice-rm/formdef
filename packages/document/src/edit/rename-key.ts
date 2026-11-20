@@ -92,7 +92,7 @@ const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
 
 const renameInExpression = (expression: Expression, rename: Rename): Expression => {
   if ('field' in expression) {
-    return expression.field === rename.from ? { field: rename.to } : expression
+    return expression.field === rename.from ? { ...expression, field: rename.to } : expression
   }
   if ('cases' in expression) {
     return {

@@ -248,8 +248,11 @@ describe('readDocument', () => {
     })
 
     expect(readDocument(withComputed)).toEqual(withComputed)
-    expect(() => readDocument(broken({ field: 'f1', op: 'add' }))).toThrow(
-      'formdef: document.items[0].expression.op: unknown key.',
+    expect(readDocument(broken({ op: 'count', field: 'f1' }))).toEqual(
+      broken({ op: 'count', field: 'f1' }),
+    )
+    expect(() => readDocument(broken({ op: 'count', field: 'f1', args: [] }))).toThrow(
+      'formdef: document.items[0].expression.args: unknown key.',
     )
     expect(() => readDocument(broken({ value: true }))).toThrow(
       'formdef: document.items[0].expression.value: expected a number or text.',

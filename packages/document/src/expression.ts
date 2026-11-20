@@ -6,9 +6,10 @@ import type { Condition } from './condition'
  * like a setting that follows an answer. An empty operand makes an empty result, unless the
  * operation `otherwise` replaces it.
  *
- * The operations are `add`, `subtract`, `multiply`, `divide`, `min`, `max` and `round` on numbers,
- * and `otherwise`, which takes its second expression when the first is empty;
- * {@link checkDocument} reports any other.
+ * The operations are `add`, `subtract`, `multiply`, `divide`, `min`, `max` and `round` on numbers;
+ * `daysBetween` two dates; `concat`, which joins its operands as placeholders write them;
+ * `otherwise`, which takes its second expression when the first is empty; and `count` and `score`
+ * on a field's choices, 0 without any. {@link checkDocument} reports any other.
  *
  * @example
  * ```ts
@@ -27,6 +28,12 @@ export type Expression =
   | {
       /** A constant: a number, or a text. */
       value: number | string
+    }
+  | {
+      /** The operation on a field's choices: `count` them, or add up the `score` of each. */
+      op: string
+      /** The key of an earlier field that chooses among options. */
+      field: string
     }
   | {
       /** The operation, such as `add`. */

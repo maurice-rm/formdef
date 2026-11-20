@@ -1379,6 +1379,44 @@ describe('checkDocument with computed values', () => {
     ])
   })
 
+  it('reports count and score on fields that choose nothing, and days between no dates', () => {
+    const document: FormDocument = {
+      format: 1,
+      items: [
+        rooms,
+        { ...choiceField, key: 'choice' },
+        computed({
+          op: 'add',
+          args: [
+            { op: 'count', field: 'f1' },
+            { op: 'count', field: 'choice' },
+            { op: 'score', field: 'f1' },
+            { op: 'daysBetween', args: [{ field: 'f1' }, { value: 'x' }] },
+            { op: 'concat', args: [{ field: 'f1' }, { value: 'x' }] },
+          ],
+        }),
+      ],
+    }
+
+    expect(codesOf(document)).toEqual([
+      'operandMismatch document.items[2].expression.args[0].field',
+      'operandMismatch document.items[2].expression.args[1].field',
+      'operandMismatch document.items[2].expression.args[2].field',
+      'operandMismatch document.items[2].expression.args[3].args[0]',
+      'operandMismatch document.items[2].expression.args[3].args[1]',
+      'operandMismatch document.items[2].expression.args[4]',
+    ])
+  })
+
+  it('reports an option score that is no number', () => {
+    const document = plain({
+      ...choiceField,
+      settings: { options: [{ value: 'o1', label: 'One', score: 'high' }, ...OPTIONS] },
+    })
+
+    expect(codesOf(document)).toEqual(['settingMismatch document.items[0].settings.options'])
+  })
+
   it('reports a value type other than number, text or date, and a result of another type', () => {
     const document: FormDocument = {
       format: 1,

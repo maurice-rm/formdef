@@ -15,13 +15,14 @@ const resolveOption = (option: JsonValue, context: Context): JsonValue => {
   if (!isOption(option)) {
     return option
   }
-  const { value, label, description } = option
+  const { value, label, description, score } = option
   return {
     value,
     label: resolveVaryingText(label, context),
     ...(description === undefined
       ? {}
       : { description: resolveFormattedText(description, context) }),
+    ...(score === undefined ? {} : { score }),
   }
 }
 

@@ -8,6 +8,7 @@ export type DocumentOption = {
   value: string
   label: VaryingText
   description?: VaryingText
+  score?: number
 }
 
 // A label shows in every language, so none of its translations may be empty.
@@ -26,13 +27,20 @@ const isVaryingOf = (value: unknown, isPlain: (text: unknown) => boolean): boole
   )
 }
 
-/** Whether a value is one option of a choice: a value, a label and possibly a description. */
+const isScore = (value: unknown): boolean =>
+  value === undefined || (typeof value === 'number' && Number.isFinite(value))
+
+/**
+ * Whether a value is one option of a choice: a value, a label and possibly a description and a
+ * score.
+ */
 export function isOption(value: unknown): value is DocumentOption {
   return (
     isPlainObject(value) &&
     typeof value.value === 'string' &&
     value.value !== '' &&
     isVaryingOf(value.label, isLabel) &&
-    (value.description === undefined || isVaryingOf(value.description, isText))
+    (value.description === undefined || isVaryingOf(value.description, isText)) &&
+    isScore(value.score)
   )
 }

@@ -1,3 +1,4 @@
+import { dayOf } from '../day-of'
 import type { Expression } from '../expression'
 import type { Answers } from './answers'
 import { holds } from './holds'
@@ -7,7 +8,10 @@ export type Computed = number | string
 
 type Arithmetic = (numbers: readonly number[]) => number | undefined
 
+type Operation = { op: string; args: readonly Expression[]; digits?: number }
+
 const DIGITS_BASE = 10
+const MS_PER_DAY = 86_400_000
 
 const ARITHMETIC: Readonly<Record<string, Arithmetic>> = {
   add: (numbers) => numbers.reduce((sum, number) => sum + number, 0),
@@ -28,6 +32,49 @@ const answerOf = (key: string, answers: Answers): Computed | undefined => {
   return typeof value === 'number' || typeof value === 'string' ? value : undefined
 }
 
+const chosenOf = (key: string, answers: Answers): { values: string[]; scores: number[] } => {
+  const answer = answers.get(key)
+  if (answer === undefined) {
+    return { values: [], scores: [] }
+  }
+  const values = (Array.isArray(answer.value) ? answer.value : [answer.value]) as string[]
+  const scores = values.map(
+    (value) => answer.options.find((option) => option.value === value)?.score ?? 0,
+  )
+  return { values, scores }
+}
+
+const computeOnChoices = ({ op, field }: { op: string; field: string }, answers: Answers) => {
+  const { values, scores } = chosenOf(field, answers)
+  if (op === 'count') {
+    return values.length
+  }
+  return op === 'score' ? scores.reduce((sum, score) => sum + score, 0) : undefined
+}
+
+// An answer joins as its placeholder writes it, such as a decimal with its comma.
+const textOf = (expression: Expression, answers: Answers): string | undefined => {
+  if ('field' in expression && !('op' in expression)) {
+    return answers.get(expression.field)?.text
+  }
+  const value = compute(expression, answers)
+  return value === undefined ? undefined : String(value)
+}
+
+const joined = (args: readonly Expression[], answers: Answers): string | undefined => {
+  const texts = args.map((arg) => textOf(arg, answers))
+  return texts.every((text) => text !== undefined) ? texts.join('') : undefined
+}
+
+const daysBetween = (args: readonly Expression[], answers: Answers): number | undefined => {
+  const [from, to] = args.map((arg) => compute(arg, answers))
+  if (typeof from !== 'string' || typeof to !== 'string') {
+    return undefined
+  }
+  const dayStart = (date: string): number => Date.parse(`${dayOf(date)}T00:00:00Z`)
+  return Math.round((dayStart(to) - dayStart(from)) / MS_PER_DAY)
+}
+
 const numbersOf = (args: readonly Expression[], answers: Answers): number[] | undefined => {
   const values = args.map((arg) => compute(arg, answers))
   return values.every((value) => typeof value === 'number') ? values : undefined
@@ -39,13 +86,19 @@ const roundTo = (value: number, digits: number): number => {
 }
 
 const computeOperation = (
-  { op, args, digits = 0 }: { op: string; args: readonly Expression[]; digits?: number },
+  { op, args, digits = 0 }: Operation,
   answers: Answers,
 ): Computed | undefined => {
   if (op === 'otherwise') {
     const [first, fallback] = args
     const value = first === undefined ? undefined : compute(first, answers)
     return value ?? (fallback === undefined ? undefined : compute(fallback, answers))
+  }
+  if (op === 'concat') {
+    return joined(args, answers)
+  }
+  if (op === 'daysBetween') {
+    return daysBetween(args, answers)
   }
   const numbers = numbersOf(args, answers)
   if (numbers === undefined) {
@@ -63,18 +116,22 @@ const finite = (value: Computed | undefined): Computed | undefined =>
 /**
  * What an expression comes to for these answers; `undefined` when it is empty: an operand without
  * an answer, a division by zero, or a result that is no finite number. `otherwise` replaces an
- * empty first expression with its second.
+ * empty first expression with its second; `count` and `score` of a field without choices are 0.
  */
 export function compute(expression: Expression, answers: Answers): Computed | undefined {
+  if ('op' in expression) {
+    return finite(
+      'field' in expression
+        ? computeOnChoices(expression, answers)
+        : computeOperation(expression, answers),
+    )
+  }
   if ('field' in expression) {
     return finite(answerOf(expression.field, answers))
   }
   if ('value' in expression) {
     return expression.value
   }
-  if ('cases' in expression) {
-    const chosen = expression.cases.find((entry) => holds(entry.when, answers))
-    return compute(chosen?.value ?? expression.otherwise, answers)
-  }
-  return finite(computeOperation(expression, answers))
+  const chosen = expression.cases.find((entry) => holds(entry.when, answers))
+  return compute(chosen?.value ?? expression.otherwise, answers)
 }

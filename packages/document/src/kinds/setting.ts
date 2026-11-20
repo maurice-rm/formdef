@@ -82,6 +82,8 @@ export type SettingOption = {
   label: string
   /** A description under the option's text. */
   description?: string
+  /** What the option counts for when a computed value adds up the `score` of a field's choices. */
+  score?: number
 }
 
 /** The value of a setting that may be left empty. */
