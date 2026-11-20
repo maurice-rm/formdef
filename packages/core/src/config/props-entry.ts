@@ -1,13 +1,15 @@
+import type { EntryPlace } from './entry-place'
+
 type KeysOfEach<TType> = TType extends unknown ? keyof TType : never
 
 type HasNoKeys<TType> = [KeysOfEach<TType>] extends [never] ? true : false
 
-type PropsInput<TProps, TValues> = TProps | ((values: TValues) => TProps)
+type PropsInput<TProps, TValues> = TProps | ((values: TValues, at: EntryPlace) => TProps)
 
 /**
  * The `props` key of an entry whose component takes `TProps` from the config: absent when there
  * are none, optional when the component renders without them, required otherwise. Either an
- * object or a function of the form's values.
+ * object or a function of the form's values and where the entry renders.
  */
 export type PropsEntry<TProps, TValues> =
   HasNoKeys<TProps> extends true

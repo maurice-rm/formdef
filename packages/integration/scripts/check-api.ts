@@ -27,6 +27,7 @@ const ENTRIES: readonly Entry[] = [
       'StepperProps',
       'StepState',
       'Validation',
+      'EntryPlace',
       'errorsOf',
       'fieldId',
       'FieldApiOf',

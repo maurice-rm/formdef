@@ -1,12 +1,17 @@
+import type { EntryPlace } from '../config/entry-place'
+
 /** A step of the root layout, as the renderer reads it. */
 export type RootStep = {
   step: string
   label: string
-  visibleWhen?: ((values: unknown) => boolean) | undefined
+  visibleWhen?: ((values: unknown, at: EntryPlace) => boolean) | undefined
   submitsWhen?: ((values: unknown) => boolean) | undefined
-  /** The props for the stepper: an object, or a function of the form's values. */
+  /** The props for the stepper: an object, or a function of the form's values and its place. */
   props?: unknown
 }
+
+/** Where a step renders: a layout entry of the root level, outside any array. */
+export const STEP_PLACE: EntryPlace = { path: '', item: undefined }
 
 /** The steps of a root layout that holds any: at least one. */
 export type RootSteps = readonly [RootStep, ...RootStep[]]

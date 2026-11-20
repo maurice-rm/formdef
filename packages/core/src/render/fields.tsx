@@ -44,6 +44,8 @@ export type FieldsProps = {
 
 type Level = Omit<FieldsProps, 'layout'> & {
   path: string | undefined
+  /** The path of the innermost array item the level belongs to; `undefined` outside arrays. */
+  itemPath: string | undefined
   /** Props an array frame passes the one widget of an item, through this level. */
   extra?: object | undefined
 }
@@ -62,7 +64,7 @@ type FieldContentProps = Omit<EntryProps, 'entry'> & {
   props: object | undefined
 }
 
-type ItemProps = Omit<EntryProps, 'extra'> & {
+type ItemProps = Omit<EntryProps, 'extra' | 'itemPath'> & {
   index: number
   extra: object | undefined
 }
@@ -110,19 +112,29 @@ const Item = ({ parts, form, entry, path, index, extra }: ItemProps): ReactNode 
   if (extra !== undefined && !reachesWidget) {
     warnOnce(entry, `formdef: the array frame of "${path}" ${DROPPED_EXTRA}; they are dropped.`)
   }
+  const itemPath = childPath(path, index)
 
   return (
     <Entry
       parts={parts}
       form={form}
       entry={item}
-      path={childPath(path, index)}
+      path={itemPath}
+      itemPath={itemPath}
       extra={reachesWidget ? extra : undefined}
     />
   )
 }
 
-const FieldContent = ({ parts, form, entry, path, props, extra }: FieldContentProps): ReactNode => {
+const FieldContent = ({
+  parts,
+  form,
+  entry,
+  path,
+  itemPath,
+  props,
+  extra,
+}: FieldContentProps): ReactNode => {
   const { own, fieldOptions } = entry
   const requiredPaths = use(RequiredPaths)
 
@@ -194,23 +206,25 @@ const FieldContent = ({ parts, form, entry, path, props, extra }: FieldContentPr
         fields={own.fields as LevelFields}
         layout={Array.isArray(own.layout) ? own.layout : undefined}
         path={path}
+        itemPath={itemPath}
         extra={extra}
       />
     </>
   )
 }
 
-const Entry = ({ parts, form, entry, path, extra }: EntryProps): ReactNode => {
+const Entry = ({ parts, form, entry, path, itemPath, extra }: EntryProps): ReactNode => {
   const split = { ...splitEntry(entry), source: entry }
 
   return (
-    <Derived form={form} entry={split.own}>
+    <Derived form={form} entry={split.own} place={{ path, itemPath }}>
       {(props) => (
         <FieldContent
           parts={parts}
           form={form}
           entry={split}
           path={path}
+          itemPath={itemPath}
           props={props}
           extra={extra}
         />
@@ -233,6 +247,7 @@ const FieldNode = ({ level, name }: { level: Level; name: string }): ReactNode =
       form={level.form}
       entry={entry}
       path={childPath(level.path, name)}
+      itemPath={level.itemPath}
       extra={level.extra}
     />
   )
@@ -319,7 +334,11 @@ const LayoutNode = ({ level, entry }: LayoutNodeProps): ReactNode => {
   }
 
   return (
-    <Derived form={level.form} entry={entry}>
+    <Derived
+      form={level.form}
+      entry={entry}
+      place={{ path: level.path ?? '', itemPath: level.itemPath }}
+    >
       {(props) => <LayoutKind level={level} entry={entry} props={props} />}
     </Derived>
   )
@@ -344,6 +363,13 @@ const LevelEntries = ({ layout, ...level }: LevelProps): ReactNode => {
  */
 export const Fields = ({ parts, form, fields, layout, requiredPaths }: FieldsProps): ReactNode => (
   <RequiredPaths value={requiredPaths ?? NO_REQUIRED_PATHS}>
-    <LevelEntries parts={parts} form={form} fields={fields} layout={layout} path={undefined} />
+    <LevelEntries
+      parts={parts}
+      form={form}
+      fields={fields}
+      layout={layout}
+      path={undefined}
+      itemPath={undefined}
+    />
   </RequiredPaths>
 )

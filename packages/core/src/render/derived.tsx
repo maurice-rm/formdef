@@ -1,6 +1,7 @@
 import { getBy } from '@tanstack/react-form'
 import { type ReactNode, useRef } from 'react'
 
+import type { EntryPlace } from '../config/entry-place'
 import type { RenderForm } from './render-form'
 
 /** What an entry reads from the form values: its condition, its props and the paths they read. */
@@ -10,9 +11,16 @@ type DerivedEntry = {
   dependsOn?: unknown
 }
 
+/** Where an entry renders: its path, and the path of the innermost array item it belongs to. */
+type Place = {
+  path: string
+  itemPath: string | undefined
+}
+
 type DerivedProps = {
   form: RenderForm
   entry: DerivedEntry
+  place: Place
   /** Builds the entry from its props; called only while the entry is visible. */
   children: (props: object | undefined) => ReactNode
 }
@@ -22,6 +30,8 @@ type LastRead = {
   dependencies: unknown[]
   selected: unknown
 }
+
+type Read = (values: unknown, at: EntryPlace) => unknown
 
 const HIDDEN = Symbol('hidden')
 const VISIBLE = Symbol('visible')
@@ -38,13 +48,26 @@ const isStale = (
   last.entry !== entry ||
   dependencies.some((value, index) => !Object.is(value, last.dependencies[index]))
 
+const placeIn = (values: unknown, { path, itemPath }: Place): EntryPlace => ({
+  path,
+  item: itemPath === undefined ? undefined : getBy(values, itemPath),
+})
+
+// An entry inside an array item reads the item, so it reads again when the item changes.
+const dependenciesOf = (values: unknown, dependsOn: readonly string[], place: Place) => [
+  ...dependsOn.map((path) => getBy(values, path)),
+  ...(place.itemPath === undefined ? [] : [getBy(values, place.itemPath)]),
+]
+
 /**
  * Renders an entry from what it reads from the form values. An entry with a condition or derived
  * props subscribes to the values; the selected result alone decides whether it re-renders: whether
- * it is shown for a condition, the values for derived props. `dependsOn` narrows when the selector
- * reads again, never what it returns. A hidden entry is never built.
+ * it is shown for a condition, the values for derived props. Both receive where the entry renders:
+ * its path and the value of the innermost array item it belongs to. `dependsOn` narrows when the
+ * selector reads again, never what it returns; inside an item, a change of the item reads again
+ * too. A hidden entry is never built.
  */
-export const Derived = ({ form, entry, children }: DerivedProps): ReactNode => {
+export const Derived = ({ form, entry, place, children }: DerivedProps): ReactNode => {
   const lastRead = useRef<LastRead | undefined>(undefined)
   const { visibleWhen, props, dependsOn } = entry
   const isConditional = typeof visibleWhen === 'function'
@@ -55,7 +78,7 @@ export const Derived = ({ form, entry, children }: DerivedProps): ReactNode => {
   }
 
   const selectFrom = (values: unknown): unknown => {
-    if (isConditional && !visibleWhen(values)) {
+    if (isConditional && !(visibleWhen as Read)(values, placeIn(values, place))) {
       return HIDDEN
     }
 
@@ -67,7 +90,7 @@ export const Derived = ({ form, entry, children }: DerivedProps): ReactNode => {
       return selectFrom(values)
     }
 
-    const dependencies = dependsOn.map((path: string) => getBy(values, path))
+    const dependencies = dependenciesOf(values, dependsOn, place)
     if (isStale(lastRead.current, entry, dependencies)) {
       lastRead.current = { entry, dependencies, selected: selectFrom(values) }
     }
@@ -82,7 +105,9 @@ export const Derived = ({ form, entry, children }: DerivedProps): ReactNode => {
           return null
         }
 
-        return children(propsOf(isDerived ? props(selected) : props))
+        return children(
+          propsOf(isDerived ? (props as Read)(selected, placeIn(selected, place)) : props),
+        )
       }}
     </form.Subscribe>
   )

@@ -7,6 +7,7 @@
     "form-config",
     "form-props",
     "form-handle",
+    "entry-place",
     "fields-of",
     "layout-of",
     "infer-data",

@@ -51,6 +51,9 @@ The inputs land at `contacts[0].name`, `contacts[0].email`, `contacts[1].name` a
 Name each remove control after what it removes. Three buttons all called "Remove" tell a screen
 reader nothing about which contact goes.
 
+A condition or a props function inside `item` receives the item it renders for as `at.item`; see
+[inside an array item](/guides/visibility#inside-an-array-item).
+
 ## Keys and reordering
 
 Without `itemKey`, items are keyed by their position. Values always follow their item, but

@@ -30,7 +30,7 @@ const Probe = ({ entry, renderEntry }: ProbeProps): ReactNode => {
   form = instance
 
   return (
-    <Derived form={instance} entry={entry}>
+    <Derived form={instance} entry={entry} place={{ path: '', itemPath: undefined }}>
       {renderEntry}
     </Derived>
   )

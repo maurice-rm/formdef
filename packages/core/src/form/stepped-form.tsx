@@ -15,7 +15,7 @@ import { warnOnce } from '../render/warn-once'
 import { fieldId } from '../widget/field-id'
 import { hasDueError } from '../widget/has-due-error'
 import { StepSubmitted } from '../widget/step-submitted'
-import type { RootStep, RootSteps } from './root-steps'
+import { type RootStep, type RootSteps, STEP_PLACE } from './root-steps'
 
 type FieldMeta =
   | { errors?: readonly unknown[]; isValid: boolean; isBlurred: boolean; isDirty: boolean }
@@ -125,7 +125,7 @@ const withoutCheck = (checks: StepChecks, key: string): StepChecks => {
 }
 
 const isShown = (step: RootStep, values: unknown): boolean =>
-  step.visibleWhen === undefined || step.visibleWhen(values)
+  step.visibleWhen === undefined || step.visibleWhen(values, STEP_PLACE)
 
 // A step that submits is the last that shows; the steps after it do not, whatever their condition.
 const shownStepsOf = (steps: RootSteps, values: unknown): boolean[] => {
@@ -146,7 +146,7 @@ const hasSameItems = (first: readonly boolean[], second: readonly boolean[]): bo
 type StepProps = Readonly<Record<string, unknown>> | undefined
 
 const stepPropsOf = (step: RootStep, values: unknown): StepProps => {
-  const props = typeof step.props === 'function' ? step.props(values) : step.props
+  const props = typeof step.props === 'function' ? step.props(values, STEP_PLACE) : step.props
 
   return typeof props === 'object' && props !== null ? props : undefined
 }

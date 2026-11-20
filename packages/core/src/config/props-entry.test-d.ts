@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { describe, expectTypeOf, it } from 'vitest'
 
 import type { FieldOf } from '../widget/field-of'
+import type { EntryPlace } from './entry-place'
 import type { ExtraProps } from './extra-props'
 import type { PropsEntry } from './props-entry'
 
@@ -34,6 +35,17 @@ describe('PropsEntry', () => {
   it('requires props when the component has a required prop', () => {
     expectTypeOf<Record<never, never>>().not.toExtend<EntryFor<WithRequiredProps>>()
     expectTypeOf({ props: { label: 'Email' } }).toExtend<EntryFor<WithRequiredProps>>()
+  })
+
+  it('derives props from the values and where the entry renders', () => {
+    const entry: EntryFor<WithOptionalProps> = {
+      props: (values, at) => {
+        expectTypeOf(values).toEqualTypeOf<Values>()
+        expectTypeOf(at).toEqualTypeOf<EntryPlace>()
+        return { label: `${values.email} at ${at.path}` }
+      },
+    }
+    expectTypeOf(entry).not.toBeAny()
   })
 
   it('rejects an unknown key and a wrong type', () => {

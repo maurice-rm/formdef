@@ -367,6 +367,22 @@ describe('createForm with steps', () => {
     expect(stepItem('Building').dataset.description).toBe("Ada's building")
   })
 
+  it('hands the condition and props of a step where it renders, at the root', () => {
+    const visibleWhen = vi.fn(() => true)
+    const buildProps = vi.fn(() => ({ description: 'Your building' }))
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        layout: [STEPS[0], { ...STEPS[1], visibleWhen, props: buildProps }, STEPS[2]],
+      }),
+    )
+    render(<Checklist />)
+
+    const atRoot = { path: '', item: undefined }
+    expect(visibleWhen).toHaveBeenCalledWith(DEFAULT_VALUES, atRoot)
+    expect(buildProps).toHaveBeenCalledWith(DEFAULT_VALUES, atRoot)
+  })
+
   it('builds no props for a step its condition hides', async () => {
     const buildProps = vi.fn(() => ({ description: 'Your building' }))
     const Checklist = createForm(
