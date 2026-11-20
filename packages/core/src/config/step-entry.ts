@@ -38,5 +38,13 @@ export type StepEntry<TParts extends ConfigParts, TValues> = {
   step: 'stepper' extends keyof TParts['structure'] ? LevelKeys<TValues> : NoStepper
   /** The label the stepper shows for the step. */
   label: string
+  /**
+   * Whether moving on from the step submits the form, from the values of the whole form. While it
+   * holds, the step is the last that shows: its `next` checks it and submits, the stepper receives
+   * `isLast`, and the steps after it do not show.
+   *
+   * @defaultValue never; the last step that shows submits
+   */
+  submitsWhen?: (values: TValues) => boolean
 } & PropsEntry<StepperStepProps<TParts['structure']>, TValues> &
   Visibility<TValues>

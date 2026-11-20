@@ -228,6 +228,45 @@ export const Order = createForm({
 })
 ```
 
+A step may also end the form early: while its `submitsWhen` holds, it is the last step that
+shows. Its `next` checks it and submits the form, the stepper receives `isLast` and labels the
+button as the submit button, and the steps after it do not show:
+
+```tsx
+import { createRegistry, type FieldOf, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const CheckboxField = (_: FieldOf<boolean> & { label: string }) => null
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const Stepper = ({ children }: StepperProps) => <section>{children}</section>
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { checkbox: CheckboxField, text: TextField },
+  structure: { stepper: Stepper },
+})
+// ---cut---
+export const Enquiry = createForm({
+  schema: z.object({
+    house: z.object({ isOwned: z.boolean() }),
+    heating: z.object({ kind: z.string() }),
+  }),
+  defaultValues: { house: { isOwned: true }, heating: { kind: '' } },
+  fields: {
+    house: { fields: { isOwned: { widget: 'checkbox', props: { label: 'I own the house' } } } },
+    heating: { fields: { kind: { widget: 'text', props: { label: 'Heating' } } } },
+  },
+  layout: [
+    { step: 'house', label: 'House', submitsWhen: (values) => !values.house.isOwned },
+    { step: 'heating', label: 'Heating' },
+  ],
+})
+```
+
+The steps it leaves out count as hidden: the [rules for the schema](#three-rules-for-the-schema)
+below apply to them as to a step its condition hides.
+
 ## Three rules for the schema
 
 The schema validates the whole form, steps or not. Three habits keep a person from getting stuck:

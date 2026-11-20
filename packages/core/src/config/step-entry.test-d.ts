@@ -71,6 +71,21 @@ describe('StepEntry', () => {
     expectTypeOf(entry).not.toBeAny()
   })
 
+  it('submits by a condition on the values of the whole form', () => {
+    const entry: Step = {
+      step: 'contact',
+      label: 'Contact',
+      submitsWhen: (values) => {
+        expectTypeOf(values).toEqualTypeOf<Values>()
+        return values.email.endsWith('.test')
+      },
+    }
+    // @ts-expect-error submitsWhen returns whether the step submits
+    const wrong: Step = { step: 'contact', label: 'Contact', submitsWhen: () => 'yes' }
+    expectTypeOf(entry).not.toBeAny()
+    expectTypeOf(wrong).not.toBeAny()
+  })
+
   it('takes no props when the stepper declares none per step', () => {
     // @ts-expect-error the registered stepper reads nothing per step beyond its state
     const entry: Step = { step: 'contact', label: 'Contact', props: { icon: 'user' } }

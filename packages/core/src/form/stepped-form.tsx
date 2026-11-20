@@ -127,6 +127,16 @@ const withoutCheck = (checks: StepChecks, key: string): StepChecks => {
 const isShown = (step: RootStep, values: unknown): boolean =>
   step.visibleWhen === undefined || step.visibleWhen(values)
 
+// A step that submits is the last that shows; the steps after it do not, whatever their condition.
+const shownStepsOf = (steps: RootSteps, values: unknown): boolean[] => {
+  let hasEnded = false
+  return steps.map((step) => {
+    const isStepShown = !hasEnded && isShown(step, values)
+    hasEnded ||= isStepShown && step.submitsWhen?.(values) === true
+    return isStepShown
+  })
+}
+
 const firstShownKey = (steps: RootSteps, values: unknown): string =>
   (steps.find((step) => isShown(step, values)) ?? steps[0]).step
 
@@ -212,13 +222,16 @@ const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): 
   )
 }
 
-// A hidden step has a condition; its function is a stable owner the other warnings do not use.
-const warnAboutHiddenSteps = (steps: RootSteps, fieldMeta: StepFormState['fieldMeta']): void => {
+// A step is hidden by its condition or left out after a step that submits; its entry is a stable
+// owner the other warnings do not use.
+type SubmitState = { fieldMeta: StepFormState['fieldMeta']; shownKeys: ReadonlySet<string> }
+
+const warnAboutHiddenSteps = (steps: RootSteps, { fieldMeta, shownKeys }: SubmitState): void => {
   for (const step of steps) {
     const erring = erringPathsUnder(fieldMeta, step.step)
-    if (erring.length > 0 && step.visibleWhen !== undefined) {
+    if (erring.length > 0 && !shownKeys.has(step.step)) {
       warnOnce(
-        step.visibleWhen,
+        step,
         `formdef: the form fails to submit through errors in the hidden step "${step.step}": ${erring.join(', ')}. ${HIDDEN_VALUES_RULE}`,
       )
     }
@@ -267,11 +280,9 @@ export const SteppedForm = ({
   // A recheck submits the step's group, which a remount reset, so a mode like `revalidate` checks
   // on change again; it neither moves on nor takes the focus.
   const recheckingKey = useRef<string | undefined>(undefined)
-  const shownByCondition = useSelector(
-    form.store,
-    (state) => steps.map((step) => isShown(step, state.values)),
-    { compare: hasSameItems },
-  )
+  const shownByCondition = useSelector(form.store, (state) => shownStepsOf(steps, state.values), {
+    compare: hasSameItems,
+  })
   const hasErrors = useSelector(
     form.store,
     (state) => steps.map((step) => erringPathsUnder(state.fieldMeta, step.step).length > 0),
@@ -291,12 +302,14 @@ export const SteppedForm = ({
   )
   const stepProps = useSelector(
     form.store,
-    (state) =>
-      steps.map((step) =>
-        step.step === currentKey || isShown(step, state.values)
+    (state) => {
+      const shown = shownStepsOf(steps, state.values)
+      return steps.map((step, position) =>
+        step.step === currentKey || shown[position] === true
           ? stepPropsOf(step, state.values)
           : undefined,
-      ),
+      )
+    },
     { compare: hasSameStepProps },
   )
   const wasSubmitted = useSelector(form.store, (state) => state.submissionAttempts > 0)
@@ -418,7 +431,10 @@ export const SteppedForm = ({
     )
     const erring = visible.find(({ step }) => erringPathsUnder(fieldMeta, step.step).length > 0)
     if (erring === undefined) {
-      warnAboutHiddenSteps(steps, fieldMeta)
+      warnAboutHiddenSteps(steps, {
+        fieldMeta,
+        shownKeys: new Set(visible.map(({ step }) => step.step)),
+      })
       return
     }
     moveTo(erring.step.step)

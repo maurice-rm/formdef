@@ -3,6 +3,7 @@ export type RootStep = {
   step: string
   label: string
   visibleWhen?: ((values: unknown) => boolean) | undefined
+  submitsWhen?: ((values: unknown) => boolean) | undefined
   /** The props for the stepper: an object, or a function of the form's values. */
   props?: unknown
 }

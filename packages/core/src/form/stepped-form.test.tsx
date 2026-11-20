@@ -669,6 +669,40 @@ describe('createForm with steps', () => {
     expect(currentStep()).toBe('Go to Contact')
   })
 
+  it('submits from a step whose submitsWhen holds, and shows no step after it', async () => {
+    const onSubmit = vi.fn()
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: z.object({
+          contact: z.object({ name: z.string().min(1, 'Enter a name') }),
+          building: z.object({ city: z.string() }),
+          heating: z.object({ kind: z.string() }),
+        }),
+        layout: [
+          {
+            ...STEPS[0],
+            submitsWhen: (values: typeof DEFAULT_VALUES) => values.contact.name === 'Ada',
+          },
+          STEPS[1],
+          STEPS[2],
+        ],
+        onSubmit: ({ value }: { value: unknown }) => onSubmit(value),
+      }),
+    )
+    render(<Checklist />)
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(3)
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDefined()
+
+    await type('Name', 'Ada')
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(1)
+    await click('Submit')
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+    expect(currentStep()).toBe('Go to Contact')
+  })
+
   it('skips a step its condition hides, forward and back', async () => {
     const Checklist = createForm(
       BINDING,
@@ -994,6 +1028,24 @@ describe('createForm with steps, errors and focus', () => {
     await click('Submit')
 
     expect(currentStep()).toBe('Go to Building')
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the form fails to submit through errors in the hidden step "heating": heating.kind. What a condition hides must accept every value it can hold.',
+    )
+  })
+
+  it('warns when a step left out by submitsWhen holds the errors that stop the submit', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        layout: [{ ...STEPS[0], submitsWhen: () => true }, { ...STEPS[1] }, { ...STEPS[2] }],
+      }),
+    )
+    render(<Checklist />)
+
+    await type('Name', 'Ada')
+    await click('Submit')
+
     expect(warn).toHaveBeenCalledWith(
       'formdef: the form fails to submit through errors in the hidden step "heating": heating.kind. What a condition hides must accept every value it can hold.',
     )
