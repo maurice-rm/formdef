@@ -1,5 +1,5 @@
 import { dayOf } from '../day-of'
-import type { JsonValue } from '../form-document'
+import type { JsonValue } from '../json-value'
 import { numberOf } from '../number-of'
 
 /**

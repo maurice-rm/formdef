@@ -1,6 +1,7 @@
 import type { Condition } from '../condition'
-import type { DocumentNode, FieldItem, FormDocument, JsonValue, Varying } from '../form-document'
+import type { DocumentNode, FieldItem, FormDocument, Varying } from '../form-document'
 import { isVarying } from '../is-varying'
+import type { JsonValue } from '../json-value'
 import { isField } from './is-field'
 import { isStep } from './is-step'
 

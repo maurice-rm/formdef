@@ -1,4 +1,4 @@
-import type { JsonValue } from '../form-document'
+import type { JsonValue } from '../json-value'
 
 /**
  * What a problem of a form document is about:

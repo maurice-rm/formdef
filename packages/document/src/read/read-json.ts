@@ -1,6 +1,6 @@
 import { failAt } from '../fail-at'
-import type { JsonValue } from '../form-document'
 import { isPlainObject } from '../is-plain-object'
+import type { JsonValue } from '../json-value'
 import type { Shape } from './read-shape'
 
 const readJsonList = (value: unknown[], path: string): JsonValue[] =>

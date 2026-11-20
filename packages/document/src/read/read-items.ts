@@ -1,13 +1,7 @@
 import type { Condition } from '../condition'
 import { failAt } from '../fail-at'
-import type {
-  DocumentItem,
-  FieldItem,
-  JsonValue,
-  RowItem,
-  SectionItem,
-  Varying,
-} from '../form-document'
+import type { DocumentItem, FieldItem, RowItem, SectionItem, Varying } from '../form-document'
+import type { JsonValue } from '../json-value'
 import { looksVarying } from '../looks-varying'
 import { pathTo } from '../path-to'
 import { hasKey } from './has-key'

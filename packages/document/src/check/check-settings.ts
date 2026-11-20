@@ -1,6 +1,7 @@
-import type { FieldItem, JsonValue, Varying } from '../form-document'
+import type { FieldItem, Varying } from '../form-document'
 import { isIsoDate } from '../is-iso-date'
 import { isVarying } from '../is-varying'
+import type { JsonValue } from '../json-value'
 import type { FieldKind } from '../kinds/field-kind'
 import { isOption } from '../kinds/is-option'
 import type { Setting } from '../kinds/setting'

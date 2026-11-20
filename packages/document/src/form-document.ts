@@ -1,13 +1,5 @@
 import type { Condition } from './condition'
-
-/** A value a form document can hold in a setting: what JSON can express. */
-export type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue }
+import type { JsonValue } from './json-value'
 
 /**
  * A setting whose value follows an answer: the value of the first case whose condition holds,

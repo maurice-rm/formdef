@@ -1,5 +1,6 @@
-import type { FieldItem, JsonValue, Varying } from '../form-document'
+import type { FieldItem, Varying } from '../form-document'
 import { isVarying } from '../is-varying'
+import type { JsonValue } from '../json-value'
 import type { Answers } from './answers'
 import { holds } from './holds'
 

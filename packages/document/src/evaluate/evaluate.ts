@@ -1,6 +1,7 @@
 import type { Condition } from '../condition'
-import type { DocumentItem, FieldItem, FormDocument, JsonValue } from '../form-document'
+import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
 import { isPlainObject } from '../is-plain-object'
+import type { JsonValue } from '../json-value'
 import type { Catalog } from '../kinds/create-catalog'
 import type { FieldKind } from '../kinds/field-kind'
 import { kindOf } from '../kinds/kind-of'

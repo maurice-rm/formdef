@@ -1,4 +1,4 @@
-import type { JsonValue } from '../form-document'
+import type { JsonValue } from '../json-value'
 
 /**
  * The error texts of a validator, by issue code: each takes the issue's parameters, such as
