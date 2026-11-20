@@ -20,13 +20,13 @@ import type {
   FormDocument,
   RepeatItem,
 } from '../form-document'
-import { isLeaf } from '../is-leaf'
 import { blockKindOf } from '../kinds/block-kind-of'
 import type { Catalog } from '../kinds/create-catalog'
 import { displayKindOf } from '../kinds/display-kind-of'
 import { kindOf } from '../kinds/kind-of'
 import type { ValueType } from '../kinds/value-type'
 import { nestValues, type ValuePath } from '../nest-values'
+import { repeatsOf } from '../repeats-of'
 import { resolveFixedText } from '../resolve-fixed-text'
 import { resolveNumberedText } from '../resolve-numbered-text'
 import type { Text } from '../text'
@@ -171,14 +171,6 @@ const layoutOf = (items: readonly DocumentItem[], build: Build): unknown[] =>
         ...visibility(item, build),
       },
     ]
-  })
-
-const repeatsOf = (items: readonly DocumentItem[]): RepeatItem[] =>
-  items.flatMap((item) => {
-    if (item.type === 'repeat') {
-      return [item]
-    }
-    return isLeaf(item) ? [] : repeatsOf(item.items)
   })
 
 const newEntryOf = (repeat: RepeatItem, build: Build): Entry =>

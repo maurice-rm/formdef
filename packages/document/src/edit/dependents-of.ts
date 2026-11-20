@@ -1,11 +1,12 @@
 import { answerItemsOf } from '../answer-items-of'
 import { conditionsOf } from '../conditions-of'
-import type { ComputedItem, DocumentNode, FieldItem, FormDocument } from '../form-document'
+import type { DocumentNode, FormDocument } from '../form-document'
 import { isLeaf } from '../is-leaf'
 import { isStep } from '../is-step'
 import { nodesOf } from '../nodes-of'
 import { placeholdersIn } from '../placeholders-in'
 import type { Position } from '../position'
+import { repeatsOf } from '../repeats-of'
 import { fieldsNamed } from './fields-named'
 import { fieldsReadBy } from './fields-read-by'
 import { nodeAt } from './node-at'
@@ -21,16 +22,21 @@ export type Dependent = {
 const isWithin = (position: Position, ancestor: Position): boolean =>
   ancestor.every((index, depth) => position[depth] === index)
 
-const answerItemsUnder = (node: DocumentNode): (FieldItem | ComputedItem)[] => {
-  if (!isLeaf(node)) {
-    return answerItemsOf(node.items)
+// A repeat is named by its key, which conditions compare by its number of entries.
+const namedKeysUnder = (node: DocumentNode): string[] => {
+  if (isLeaf(node)) {
+    return node.type === 'block' ? [] : [node.key]
   }
-  return node.type === 'block' ? [] : [node]
+  const own = !isStep(node) && node.type === 'repeat' ? [node.key] : []
+  return [
+    ...own,
+    ...[...answerItemsOf(node.items), ...repeatsOf(node.items)].map((item) => item.key),
+  ]
 }
 
 /**
- * Lists the conditions, placeholders and expressions that name a field or computed value of a
- * step or item, or the item itself, and would lose it when the node is removed: one entry per
+ * Lists the conditions, placeholders and expressions that name a field, computed value or repeat of
+ * a step or item, or the item itself, and would lose it when the node is removed: one entry per
  * condition and key named, in document order, then one per placeholder, then one per expression.
  * Those inside the node go with it and are left out. A builder shows them before it removes the
  * node.
@@ -48,7 +54,7 @@ const answerItemsUnder = (node: DocumentNode): (FieldItem | ComputedItem)[] => {
  */
 export function dependentsOf(document: FormDocument, position: Position): Dependent[] {
   const node = nodeAt(document, position)
-  const keys = new Set(answerItemsUnder(node).map((item) => item.key))
+  const keys = new Set(namedKeysUnder(node))
 
   const fromConditions = conditionsOf(document)
     .filter((entry) => !isWithin(entry.position, position))

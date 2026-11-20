@@ -216,6 +216,8 @@ built-in value types have these:
 | `date` | `equals`, `before`, `onOrBefore`, `after`, `onOrAfter` | a date as an ISO string, such as `2026-05-01` |
 | | `isFilled`, `isEmpty` | none |
 | a [value type of your own](/documents/field-kinds#value-types) | its own operators, `isFilled`, `isEmpty` | what each operator compares with |
+| a [repeat](#repeats), by its number of entries | `atLeast`, `atMost` | a whole number |
+| | `isFilled` (one entry or more), `isEmpty` | none |
 
 - An empty field equals nothing and comes in no order, so of the comparisons only `notEquals`,
   `notIn` and `excludes` hold for it.
@@ -347,6 +349,9 @@ resident:
   that field of the same entry: above, `f4` shows for each resident who works. It may also name
   fields before the repeat. Outside the repeat, no entry is meant, so nothing there names a field
   inside it.
+- A condition after the repeat names the repeat itself to compare its number of entries, such as
+  `{ "field": "r1", "op": "atLeast", "value": 2 }`. A repeat that does not show counts as one
+  without entries.
 - The repeat's key shares the keys of fields. Its value is a list of entries, one object each:
   `{ "r1": [{ "f2": "Ada" }, { "f2": "Max" }] }`.
 - `createDocumentForm` renders a repeat through the registry's

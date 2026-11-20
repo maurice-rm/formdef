@@ -10,6 +10,7 @@ import type {
 import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
 import type { Catalog } from '../kinds/create-catalog'
+import { entryCount } from '../kinds/entry-count'
 import type { FieldKind } from '../kinds/field-kind'
 import { kindOf } from '../kinds/kind-of'
 import { optionsOf } from '../kinds/options-of'
@@ -17,6 +18,7 @@ import type { SettingOption } from '../kinds/setting'
 import type { ValueType } from '../kinds/value-type'
 import { valueTypeNamed } from '../kinds/value-type-named'
 import type { ValuePath } from '../nest-values'
+import { repeatsOf } from '../repeats-of'
 import type { Answer, Answers } from './answers'
 import { type Computed, compute } from './compute'
 import { holds } from './holds'
@@ -179,12 +181,13 @@ const valueTypesOf = (
 ): ReadonlyMap<string, ValueType> => {
   const items =
     document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
-  return new Map(
-    answerItemsOf(items).flatMap((item) => {
+  return new Map([
+    ...answerItemsOf(items).flatMap((item) => {
       const valueType = valueTypeOfItem(item, catalog)
       return valueType === undefined ? [] : [[item.key, valueType] as const]
     }),
-  )
+    ...repeatsOf(items).map((repeat) => [repeat.key, entryCount] as const),
+  ])
 }
 
 const walkItems = (
@@ -229,6 +232,15 @@ const walkRepeat = (repeat: RepeatItem, container: Container, walk: EvaluationWa
     const entryWalk = { ...walk, filled, answers }
     walkItems(repeat.items, { values: objectOf(entry), path: [...path, index] }, entryWalk)
   })
+  if (entryCount.isFilled(entries.length)) {
+    const count = entries.length
+    walk.filled.set(repeat.key, {
+      value: count,
+      valueType: entryCount,
+      text: entryCount.toText(count, []),
+      options: [],
+    })
+  }
 }
 
 /**

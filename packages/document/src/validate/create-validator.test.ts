@@ -715,6 +715,45 @@ describe('createValidator', () => {
       ])
     })
 
+    it('compares the number of entries in a condition after the repeat', () => {
+      const shared = field('f6', 'text', {
+        required: true,
+        visibleWhen: { field: 'r1', op: 'atLeast', value: 2 },
+      })
+      const alone = field('f7', 'text', {
+        required: true,
+        visibleWhen: {
+          any: [
+            { field: 'r1', op: 'isEmpty' },
+            { field: 'r1', op: 'atMost', value: 0 },
+          ],
+        },
+      })
+      const document = plain(residents({ items: [field('f2', 'text')] }), shared, alone)
+
+      expect(codesOf(validate(document, { r1: [{}, {}] }))).toEqual([
+        { path: ['f6'], code: 'required' },
+      ])
+      expect(codesOf(validate(document, { r1: [{}] }))).toEqual([])
+      expect(codesOf(validate(document, {}))).toEqual([{ path: ['f7'], code: 'required' }])
+    })
+
+    it('counts a repeat that does not show as one without entries', () => {
+      const few = field('f6', 'text', {
+        required: true,
+        visibleWhen: { field: 'r1', op: 'atMost', value: 1 },
+      })
+      const document = plain(
+        houseType,
+        residents({ visibleWhen: isApartmentBlock, items: [field('f2', 'text')] }),
+        few,
+      )
+
+      expect(codesOf(validate(document, { f1: 'o1', r1: [{}, {}, {}] }))).toEqual([
+        { path: ['f6'], code: 'required' },
+      ])
+    })
+
     it('validates no entry of a repeat that does not show, and leaves it out', () => {
       const document = plain(houseType, residents({ min: 1, visibleWhen: isApartmentBlock }))
 

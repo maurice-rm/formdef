@@ -195,6 +195,33 @@ describe('dependentsOf', () => {
     ])
   })
 
+  it('lists the conditions on the number of entries of a repeat inside the node', () => {
+    const withRepeat: FormDocument = {
+      format: 1,
+      items: [
+        {
+          type: 'section',
+          label: 'Household',
+          items: [
+            {
+              type: 'repeat',
+              key: 'r1',
+              label: 'Residents',
+              addLabel: 'Add',
+              removeLabel: 'Remove {n}',
+              items: [field('f1')],
+            },
+          ],
+        },
+        field('f2', { visibleWhen: { field: 'r1', op: 'atLeast', value: 2 } }),
+      ],
+    }
+    const dependent = { path: 'document.items[1].visibleWhen', field: 'r1' }
+
+    expect(dependentsOf(withRepeat, [0, 0])).toEqual([dependent])
+    expect(dependentsOf(withRepeat, [0])).toEqual([dependent])
+  })
+
   it('refuses a position that holds nothing', () => {
     expect(() => dependentsOf(document, [2])).toThrow(
       'formdef: position [2]: there is nothing here.',

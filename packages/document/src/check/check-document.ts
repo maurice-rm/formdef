@@ -12,9 +12,11 @@ import type {
 } from '../form-document'
 import { jumpEndingsOf } from '../jump-endings-of'
 import type { Catalog } from '../kinds/create-catalog'
+import { entryCount } from '../kinds/entry-count'
 import { optionValuesOf } from '../kinds/option-values-of'
 import type { ValueType } from '../kinds/value-type'
 import { pathTo } from '../path-to'
+import { repeatsOf } from '../repeats-of'
 import type { Text } from '../text'
 import type { VaryingText } from '../varying-text'
 import { checkComputed } from './check-computed'
@@ -198,7 +200,10 @@ const checkRepeatOwn = (repeat: RepeatItem, level: Level): void => {
   checkDisplay(repeat.display, 'repeat', at)
 }
 
-// Inside a repeat, its fields read the same entry; past it, no entry is meant, so none is named.
+const NO_OPTIONS: ReadonlySet<string> = new Set()
+
+// Inside a repeat, its fields read the same entry; past it, no entry is meant, so none is named,
+// and the repeat itself is compared by its number of entries.
 const checkRepeat = (repeat: RepeatItem, level: Level): void => {
   checkRepeatOwn(repeat, level)
   checkItems(repeat.items, {
@@ -206,10 +211,16 @@ const checkRepeat = (repeat: RepeatItem, level: Level): void => {
     at: { ...level.at, path: `${level.at.path}.items` },
     isInRepeat: true,
   })
+  const { walk } = level.at
   for (const { key } of answerItemsOf(repeat.items)) {
-    level.at.walk.earlier.delete(key)
-    level.at.walk.repeatFieldKeys.add(key)
+    walk.earlier.delete(key)
+    walk.repeatFieldKeys.add(key)
   }
+  walk.earlier.set(repeat.key, {
+    key: repeat.key,
+    valueType: entryCount,
+    optionValues: NO_OPTIONS,
+  })
 }
 
 const checkItem = (item: DocumentItem, level: Level): void => {
@@ -382,7 +393,7 @@ export function checkDocument(
     displayKindNamed: (name) => catalog.findDisplayKind(name),
     valueTypeNamed: (name) => catalog.valueTypes.find((valueType) => valueType.name === name),
     languages: document.languages,
-    allFieldKeys: new Set(answerItemsOf(items).map((item) => item.key)),
+    allFieldKeys: new Set([...answerItemsOf(items), ...repeatsOf(items)].map((item) => item.key)),
     earlier: new Map(),
     repeatFieldKeys: new Set(),
     problems: [],

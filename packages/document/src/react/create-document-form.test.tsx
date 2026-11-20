@@ -1114,6 +1114,22 @@ describe('createDocumentForm with repeats', () => {
     expect(screen.getAllByLabelText('Flats')).toHaveLength(2)
   })
 
+  it('shows a field after the repeat once the repeat has as many entries as its condition asks', async () => {
+    const shared = field('shared', 'text', {
+      label: 'Shared household',
+      visibleWhen: { field: 'residents', op: 'atLeast', value: 2 },
+    })
+    const Form = createDocumentForm(
+      plain(residents({ min: 1, items: [field('name', 'text', { label: 'Name' })] }), shared),
+      catalog,
+    )
+    render(<Form />)
+
+    expect(screen.queryByLabelText('Shared household')).toBeNull()
+    await click('Add person')
+    expect(screen.getByLabelText('Shared household')).toBeDefined()
+  })
+
   it('submits the answers of each entry as a list', async () => {
     const onSubmit = vi.fn()
     const Form = createDocumentForm(

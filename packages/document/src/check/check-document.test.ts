@@ -1689,6 +1689,32 @@ describe('checkDocument with repeats', () => {
     ])
   })
 
+  it('takes a condition on the number of entries after the repeat, by its own operators', () => {
+    const checked = document(
+      repeat([{ ...name, visibleWhen: { field: 'r1', op: 'isFilled' } }]),
+      { ...works, visibleWhen: { field: 'r1', op: 'atLeast', value: 2 } },
+      { ...since, visibleWhen: { field: 'r1', op: 'equals', value: 2 } },
+      {
+        type: 'field',
+        key: 'f5',
+        kind: 'text',
+        label: 'Alone',
+        visibleWhen: {
+          all: [
+            { field: 'r1', op: 'atMost', value: 'one' },
+            { field: 'r1', op: 'isEmpty' },
+          ],
+        },
+      },
+    )
+
+    expect(codesOf(checked)).toEqual([
+      'laterField document.items[0].items[0].visibleWhen.field',
+      'operatorMismatch document.items[2].visibleWhen.op',
+      'valueMismatch document.items[3].visibleWhen.all[0].value',
+    ])
+  })
+
   it('reports a display whose kind does not apply to a repeat', () => {
     const withSection = registry.extendRegistry({ structure: { section: Section } })
     const card = defineDisplayKind(withSection, {
