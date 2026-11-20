@@ -5,7 +5,8 @@ import type { AnyRegistry, PartsOf } from './registry'
 
 /**
  * The config of a form: the schema, the default values, the `fields` and `layout` of the
- * root level, when the schema runs, and TanStack's form options, all typed by the schema's data
+ * root level, when the schema runs, the stepper's own props under `stepper`, and TanStack's form
+ * options, all typed by the schema's data
  * type and checked against the widgets, structure slots and form components of `TRegistry`.
  *
  * Every key that is not formdef's own is one of TanStack's form options and keeps TanStack's
