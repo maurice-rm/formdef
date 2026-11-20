@@ -624,6 +624,50 @@ describe('createDocumentForm with endings', () => {
   })
 })
 
+const StartButton = ({ label, onStart }: { label: string; onStart: () => void }): ReactNode => (
+  <button type="button" onClick={onStart}>
+    {`${label} now`}
+  </button>
+)
+
+describe('createDocumentForm with an intro', () => {
+  const withIntro: FormDocument = {
+    format: 1,
+    intro: {
+      items: [
+        { type: 'block', key: 'b1', kind: 'callout', settings: { body: 'Takes **5** minutes.' } },
+      ],
+      start: 'Begin',
+    },
+    items: [field('name', 'text', { label: 'Name' })],
+  }
+
+  it('shows the intro and its start button, then the form, which takes the focus', async () => {
+    const Form = createDocumentForm(withIntro, catalog)
+    render(<Form aria-label="Order" />)
+
+    expect(screen.getByRole('complementary', { name: 'Notice' }).textContent).toBe(
+      'Takes 5 minutes.',
+    )
+    expect(screen.queryByRole('form', { name: 'Order' })).toBeNull()
+
+    await click('Begin')
+
+    const form = screen.getByRole('form', { name: 'Order' })
+    expect(screen.queryByRole('complementary', { name: 'Notice' })).toBeNull()
+    expect(form.parentElement).toBe(document.activeElement)
+  })
+
+  it("renders the project's start button", async () => {
+    const Form = createDocumentForm(withIntro, catalog, { startButton: StartButton })
+    render(<Form aria-label="Order" />)
+
+    await click('Begin now')
+
+    expect(screen.getByRole('form', { name: 'Order' })).toBeDefined()
+  })
+})
+
 describe('createDocumentForm with blocks', () => {
   it('renders a block through its form component, as its condition and placeholders say', async () => {
     const Form = createDocumentForm(

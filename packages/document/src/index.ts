@@ -36,6 +36,7 @@ export type {
   Ending,
   FieldItem,
   FormDocument,
+  Intro,
   Jump,
   RowItem,
   SectionItem,

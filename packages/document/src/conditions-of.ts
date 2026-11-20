@@ -1,8 +1,7 @@
 import type { Condition } from './condition'
 import { DOCUMENT_PATH } from './document-path'
-import { ENDING_POSITION } from './ending-position'
 import type { Expression } from './expression'
-import type { DocumentNode, FormDocument, Varying } from './form-document'
+import type { BlockItem, DocumentNode, FormDocument, Varying } from './form-document'
 import { isField } from './is-field'
 import { isLeaf } from './is-leaf'
 import { isPlainObject } from './is-plain-object'
@@ -12,6 +11,7 @@ import type { JsonValue } from './json-value'
 import { looksVarying } from './looks-varying'
 import { nodesOf } from './nodes-of'
 import { optionListsOf } from './option-lists-of'
+import { OUTSIDE_FORM_POSITION } from './outside-form-position'
 import { pathTo } from './path-to'
 import type { Position } from './position'
 
@@ -125,20 +125,22 @@ const ownConditions = (node: DocumentNode, path: string): Placed[] => {
 }
 
 /**
- * Every condition of a document, in document order, those of its endings last: visibility, required, texts and error texts that follow an
+ * Every condition of a document, in document order, those of its intro first and of its endings last: visibility, required, texts and error texts that follow an
  * answer, and settings that follow an answer with the texts of their options.
  */
 export function conditionsOf(document: FormDocument): PlacedCondition[] {
+  const blockConditions = (blocks: readonly BlockItem[], path: string): Placed[] =>
+    blocks.flatMap((block, index) => ownConditions(block, `${path}.items[${index}]`))
+  const ofIntro = blockConditions(document.intro?.items ?? [], `${DOCUMENT_PATH}.intro`)
   const ofNodes = nodesOf(document).flatMap(({ node, position, path }) =>
     ownConditions(node, path).map((entry) => ({ ...entry, position })),
   )
   const ofEndings = (document.endings ?? []).flatMap((ending, index) => {
     const path = pathTo.entry(DOCUMENT_PATH, 'endings', index)
     const own = ending.when === undefined ? [] : [{ condition: ending.when, path: `${path}.when` }]
-    const ofBlocks = ending.items.flatMap((block, blockIndex) =>
-      ownConditions(block, `${path}.items[${blockIndex}]`),
-    )
-    return [...own, ...ofBlocks].map((entry) => ({ ...entry, position: ENDING_POSITION }))
+    return [...own, ...blockConditions(ending.items, path)]
   })
-  return [...ofNodes, ...ofEndings]
+  const outside = (entries: Placed[]) =>
+    entries.map((entry) => ({ ...entry, position: OUTSIDE_FORM_POSITION }))
+  return [...outside(ofIntro), ...ofNodes, ...outside(ofEndings)]
 }

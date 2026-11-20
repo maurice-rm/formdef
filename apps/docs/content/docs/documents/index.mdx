@@ -264,6 +264,21 @@ holds goes on with the step it names, and the steps in between do not show.
 - `{ "when": …, "end": "e1" }` ends the form instead: moving on from the step submits it with the
   answers so far, the steps after it do not show, and the [ending](#endings) `e1` applies.
 
+## Intro
+
+A document may open with an intro under `intro` at the root: blocks and the label of the button
+that starts the form.
+
+```json
+{ "intro": { "items": [{ "type": "block", "key": "b1", "kind": "notice", "settings": { "body": "This takes about **5 minutes**." } }], "start": "Start" } }
+```
+
+- `createDocumentForm` shows the intro and its start button first, then the form, which takes the
+  focus. `startButton` passes a button of the project's own, which receives `label` and
+  `onStart`; without it the button is a plain `<button type="button">`.
+- The intro shows before any answer, so its texts and the button's label name none:
+  `checkDocument` reports a placeholder in them as `fixedText`. They may be translated.
+
 ## Endings
 
 A document may name what a person sees once the form is submitted, under `endings` at the root:

@@ -28,8 +28,8 @@ import type { JsonValue } from '../json-value'
  * - `settingLimit`: a setting outside its constraints, such as too long or too few options;
  * - `missingTranslation`: a translated text that leaves out a language of the document;
  * - `unknownLanguage`: a translation into a language the document does not name;
- * - `fixedText`: a placeholder in the label of a step or section or in a display's setting, which
- *   names no answers;
+ * - `fixedText`: a placeholder in the label of a step or section, a display's setting or the intro,
+ *   which names no answers;
  * - `unknownParam`: a placeholder in a field's error text that its issue code has no param for;
  * - `unknownStep`: a jump to a step the document does not hold;
  * - `backwardJump`: a jump to the step itself or an earlier one, which could loop;

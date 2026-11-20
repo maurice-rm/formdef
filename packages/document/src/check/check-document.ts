@@ -6,6 +6,7 @@ import type {
   DocumentStep,
   FieldItem,
   FormDocument,
+  Intro,
   Jump,
 } from '../form-document'
 import { jumpEndingsOf } from '../jump-endings-of'
@@ -130,7 +131,13 @@ const checkItems = (items: readonly DocumentItem[], level: Level): void => {
   })
 }
 
-const checkBlock = (block: BlockItem, { walk, path }: At, seenKeys: Set<string>): void => {
+type BlockCheck = { seenKeys: Set<string>; checkTextOf?: typeof checkFixedText }
+
+const checkBlock = (
+  block: BlockItem,
+  { walk, path }: At,
+  { seenKeys, checkTextOf }: BlockCheck,
+): void => {
   checkLeafKey(block.key, { walk, path }, seenKeys)
 
   const kind = walk.blockKindNamed(block.kind)
@@ -139,8 +146,31 @@ const checkBlock = (block: BlockItem, { walk, path }: At, seenKeys: Set<string>)
   }
   checkVisibleWhen(block, { walk, path })
   if (kind !== undefined) {
-    checkSettings(block, kind, { walk, path })
+    checkSettings(block, kind, {
+      walk,
+      path,
+      ...(checkTextOf === undefined ? {} : { checkTextOf }),
+    })
   }
+}
+
+// The intro shows before any answer, so its texts name none.
+const checkIntro = (
+  intro: Intro | undefined,
+  { walk, seenKeys }: BlockCheck & { walk: CheckWalk },
+): void => {
+  if (intro === undefined) {
+    return
+  }
+  const path = `${DOCUMENT_PATH}.intro`
+  intro.items.forEach((block, index) => {
+    checkBlock(
+      block,
+      { walk, path: `${path}.items[${index}]` },
+      { seenKeys, checkTextOf: checkFixedText },
+    )
+  })
+  checkFixedText(intro.start, { walk, path: `${path}.start` })
 }
 
 const checkItem = (item: DocumentItem, level: Level): void => {
@@ -150,7 +180,7 @@ const checkItem = (item: DocumentItem, level: Level): void => {
     return
   }
   if (item.type === 'block') {
-    checkBlock(item, at, seenKeys)
+    checkBlock(item, at, { seenKeys })
     return
   }
   if (item.type === 'computed') {
@@ -236,7 +266,7 @@ const checkEndings = (
       checkCondition(ending.when, `${path}.when`, walk)
     }
     ending.items.forEach((block, blockIndex) => {
-      checkBlock(block, { walk, path: `${path}.items[${blockIndex}]` }, seenKeys)
+      checkBlock(block, { walk, path: `${path}.items[${blockIndex}]` }, { seenKeys })
     })
   })
 }
@@ -318,6 +348,7 @@ export function checkDocument(
     path: DOCUMENT_PATH,
   })
   const seenKeys = new Set<string>()
+  checkIntro(document.intro, { walk, seenKeys })
   if (document.steps === undefined) {
     checkItems(document.items, {
       at: { walk, path: `${DOCUMENT_PATH}.items` },

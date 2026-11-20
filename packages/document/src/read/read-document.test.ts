@@ -459,6 +459,21 @@ describe('readDocument with languages', () => {
     )
   })
 
+  it('reads an intro of blocks and the text of its start button', () => {
+    const withIntro = (items: unknown) => ({
+      format: 1,
+      intro: { items, start: { de: 'Los', en: 'Start' } },
+      languages: ['de', 'en'],
+      items: [{ type: 'field', key: 'f1', kind: 'text', label: 'Name' }],
+    })
+    const blocks = [{ type: 'block', key: 'b1', kind: 'notice', settings: { body: 'Hello.' } }]
+
+    expect(readDocument(withIntro(blocks))).toEqual(withIntro(blocks))
+    expect(() => readDocument(withIntro([{ type: 'row', items: [] }]))).toThrow(
+      'formdef: document.intro.items[0].type: expected one of block.',
+    )
+  })
+
   it('reads endings of blocks, and a jump that ends the form', () => {
     const ending = (items: unknown) => ({
       format: 1,
@@ -638,6 +653,31 @@ describe('readDocument within its limits', () => {
     expect(readDocument(conditioned, { limits: { conditions: 2 } })).toBeDefined()
     expect(() => readDocument(conditioned, { limits: { conditions: 1 } })).toThrow(
       'formdef: document: more than 1 comparisons in conditions (limit conditions).',
+    )
+  })
+
+  it('counts the comparisons in the blocks of the intro and the endings', () => {
+    const block = {
+      type: 'block',
+      key: 'b1',
+      kind: 'notice',
+      visibleWhen: {
+        all: [
+          { field: 'f1', op: 'isFilled' },
+          { field: 'f1', op: 'isFilled' },
+        ],
+      },
+    }
+    const outside = {
+      format: 1,
+      intro: { items: [block], start: 'Start' },
+      items: [fieldOf('f1')],
+      endings: [{ key: 'e1', items: [{ ...block, key: 'b2' }] }],
+    }
+
+    expect(readDocument(outside, { limits: { conditions: 4 } })).toBeDefined()
+    expect(() => readDocument(outside, { limits: { conditions: 3 } })).toThrow(
+      'formdef: document: more than 3 comparisons in conditions (limit conditions).',
     )
   })
 

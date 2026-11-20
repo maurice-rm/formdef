@@ -1,5 +1,3 @@
-export {
-  createDocumentForm,
-  type DocumentForm,
-  type DocumentFormOptions,
-} from './create-document-form'
+export { createDocumentForm, type DocumentFormOptions } from './create-document-form'
+export type { DocumentForm } from './document-form'
+export type { StartButtonProps } from './start-button'

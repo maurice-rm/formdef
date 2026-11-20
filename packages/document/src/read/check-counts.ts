@@ -21,6 +21,7 @@ const placedIn = (items: readonly DocumentItem[], path: string): PlacedItem[] =>
   })
 
 const itemsOf = (document: FormDocument): PlacedItem[] => {
+  const ofIntro = placedIn(document.intro?.items ?? [], `${DOCUMENT_PATH}.intro`)
   const ofEndings = (document.endings ?? []).flatMap((ending, index) =>
     placedIn(ending.items, pathTo.entry(DOCUMENT_PATH, 'endings', index)),
   )
@@ -30,7 +31,7 @@ const itemsOf = (document: FormDocument): PlacedItem[] => {
       : document.steps.flatMap((step, index) =>
           placedIn(step.items, pathTo.entry(DOCUMENT_PATH, 'steps', index)),
         )
-  return [...ofForm, ...ofEndings]
+  return [...ofIntro, ...ofForm, ...ofEndings]
 }
 
 const comparisonsIn = (condition: Condition): number => {

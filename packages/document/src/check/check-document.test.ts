@@ -1279,6 +1279,25 @@ describe('checkDocument with endings', () => {
     expect(checkDocument(document, withEndings)).toEqual([])
   })
 
+  it('takes an intro of fixed texts, and reports one that names an answer or shares a key', () => {
+    const intro = (body: string, start: string): FormDocument => ({
+      format: 1,
+      intro: { items: [notice('b1', body)], start },
+      items: [owned, { ...owned, key: 'b1' }],
+    })
+
+    expect(checkDocument(intro('Welcome.', 'Start'), withEndings).map(({ code }) => code)).toEqual([
+      'duplicateKey',
+    ])
+    const named = checkDocument(intro('Hi {f1}', 'Start {f1}'), withEndings)
+
+    expect(named.map(({ code, path }) => `${code} ${path}`)).toEqual([
+      'fixedText document.intro.items[0].settings.body',
+      'fixedText document.intro.start',
+      'duplicateKey document.items[1].key',
+    ])
+  })
+
   it('reports a jump to a missing ending, a fallback not last, and the problems of its blocks', () => {
     const document: FormDocument = {
       format: 1,

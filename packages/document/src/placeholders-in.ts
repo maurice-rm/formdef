@@ -1,7 +1,7 @@
 import { DOCUMENT_PATH } from './document-path'
-import { ENDING_POSITION } from './ending-position'
-import type { FormDocument } from './form-document'
+import type { BlockItem, FormDocument } from './form-document'
 import { nodesOf } from './nodes-of'
+import { OUTSIDE_FORM_POSITION } from './outside-form-position'
 import { OWN_TEXT_KEYS } from './own-text-keys'
 import { pathTo } from './path-to'
 import { placeholdersOf } from './placeholders-of'
@@ -19,17 +19,22 @@ export type PlacedPlaceholder = {
 
 /**
  * Every placeholder of a document, in document order: in the labels, descriptions and settings of
- * its steps and items, with their translations and cases, then in the blocks of its endings.
+ * its steps and items, with their translations and cases, with the blocks of its intro first and of
+ * its endings last.
  */
 export function placeholdersIn(document: FormDocument): PlacedPlaceholder[] {
-  const blocksOfEndings = (document.endings ?? []).flatMap((ending, index) =>
-    ending.items.map((block, blockIndex) => ({
+  const placedBlocks = (blocks: readonly BlockItem[], path: string) =>
+    blocks.map((block, index) => ({
       node: block,
-      position: ENDING_POSITION,
-      path: `${pathTo.entry(DOCUMENT_PATH, 'endings', index)}.items[${blockIndex}]`,
-    })),
+      position: OUTSIDE_FORM_POSITION,
+      path: `${path}.items[${index}]`,
+    }))
+  const blocksOfIntro = placedBlocks(document.intro?.items ?? [], `${DOCUMENT_PATH}.intro`)
+  const blocksOfEndings = (document.endings ?? []).flatMap((ending, index) =>
+    placedBlocks(ending.items, pathTo.entry(DOCUMENT_PATH, 'endings', index)),
   )
-  return [...nodesOf(document), ...blocksOfEndings].flatMap(({ node, position, path }) =>
+  const placed = [...blocksOfIntro, ...nodesOf(document), ...blocksOfEndings]
+  return placed.flatMap(({ node, position, path }) =>
     OWN_TEXT_KEYS.flatMap((name) =>
       stringsIn((node as Partial<Record<string, unknown>>)[name], `${path}.${name}`),
     ).flatMap(({ text, path: textPath }) =>

@@ -98,6 +98,7 @@ const ENTRIES: readonly Entry[] = [
       'FormattedSetting',
       'FormDocument',
       'insertNode',
+      'Intro',
       'Jump',
       'IssueParams',
       'JsonValue',
@@ -138,7 +139,12 @@ const ENTRIES: readonly Entry[] = [
   {
     specifier: '@formdef/document/react',
     packageName: '@formdef/document',
-    publicExports: ['createDocumentForm', 'DocumentForm', 'DocumentFormOptions'],
+    publicExports: [
+      'createDocumentForm',
+      'DocumentForm',
+      'DocumentFormOptions',
+      'StartButtonProps',
+    ],
   },
 ]
 

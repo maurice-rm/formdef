@@ -1,24 +1,28 @@
 import type { FormProps, Validation } from '@formdef/core'
-import { createElement, type ReactNode, useState } from 'react'
+import { type ComponentType, createElement, useState } from 'react'
 
+import type { Answers } from '../evaluate/answers'
 import type { FormDocument } from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
 import type { ValueType } from '../kinds/value-type'
 import { languageOf } from '../language-of'
+import { resolveFixedText } from '../resolve-fixed-text'
 import {
   createValidator,
   type DocumentValidator,
   type ValidatorOptions,
 } from '../validate/create-validator'
+import { blockLayoutOf } from './block-layout-of'
+import type { BlockRenderer } from './blocks-view'
 import { type DocumentConfig, documentConfig } from './document-config'
+import type { DocumentForm } from './document-form'
 import { endingLayoutOf } from './ending-layout-of'
-import { type BlockRenderer, EndingView } from './ending-view'
+import { EndingView } from './ending-view'
+import { StartButton, type StartButtonProps } from './start-button'
+import { withIntro } from './with-intro'
 
-/**
- * A form component rendered from a form document. It takes the props of every formdef form
- * component, such as `options.onSubmit`; its values are the document's answers.
- */
-export type DocumentForm = (props: FormProps<DocumentValidator>) => ReactNode
+// The intro shows before any answer; `checkDocument` refuses texts in it that name one.
+const NO_ANSWERS: Answers = { get: () => undefined, valueTypeOf: () => undefined }
 
 /**
  * What {@link createDocumentForm} takes besides the document: what {@link createValidator} takes,
@@ -39,6 +43,13 @@ export type DocumentFormOptions = ValidatorOptions & {
    * @defaultValue `true`
    */
   showsEnding?: boolean
+  /**
+   * The button that starts the form after the document's intro; it receives the `label` the
+   * document gives it and `onStart`.
+   *
+   * @defaultValue a plain `<button type="button">`
+   */
+  startButton?: ComponentType<StartButtonProps>
 }
 
 type SubmitArgs = Parameters<
@@ -78,7 +89,8 @@ type CreatesForms = {
  * which still hold what was entered in fields that no longer show; the validator's `value` holds
  * the answers of the fields that show, which is what a server keeps. Once `onSubmit` is done, the
  * form gives way to the document's ending that applies, which takes the focus; without one that
- * applies, the form stays.
+ * applies, the form stays. A document with an intro shows it and its start button first; once
+ * started, the form takes the focus.
  *
  * @param document - The document, as {@link readDocument} returns it.
  * @param catalog - The catalog with the kinds the document uses and the registry that renders them.
@@ -90,8 +102,11 @@ type CreatesForms = {
  * @param options.validation - When the answers are validated, as a form config's `validation`.
  * @param options.showsEnding - Whether the form gives way to the ending that applies once it is
  *   submitted and `onSubmit` is done.
+ * @param options.startButton - The button that starts the form after the intro; it receives
+ *   `label` and `onStart`.
  * @defaultValue `options.messages`: the English texts; `options.language`: the document's first;
- *   `options.validation`: `{ mode: 'revalidate' }`; `options.showsEnding`: `true`.
+ *   `options.validation`: `{ mode: 'revalidate' }`; `options.showsEnding`: `true`;
+ *   `options.startButton`: a plain `<button type="button">`.
  * @returns The form component.
  * @throws When the document has problems, as {@link checkDocument} reports them.
  *
@@ -115,11 +130,20 @@ export function createDocumentForm(
   const Form = registry.createForm(
     options.validation === undefined ? config : { ...config, validation: options.validation },
   )
-  if (options.showsEnding === false || document.endings === undefined) {
-    return Form
+  const Ended =
+    options.showsEnding === false || document.endings === undefined
+      ? Form
+      : withEnding(Form, {
+          registry,
+          layoutOf: (values) => endingLayoutOf(document, catalog, { values, language }),
+        })
+  if (document.intro === undefined) {
+    return Ended
   }
-  return withEnding(Form, {
+  return withIntro(Ended, {
     registry,
-    layoutOf: (values) => endingLayoutOf(document, catalog, { values, language }),
+    layout: blockLayoutOf(document.intro.items, { catalog, answers: NO_ANSWERS, language }),
+    label: resolveFixedText(document.intro.start, language),
+    StartButton: options.startButton ?? StartButton,
   })
 }

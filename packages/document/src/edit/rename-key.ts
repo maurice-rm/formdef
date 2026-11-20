@@ -199,14 +199,25 @@ export function renameKey(document: FormDocument, from: string, to: string): For
     document.endings === undefined
       ? {}
       : { endings: document.endings.map((ending) => renameInEnding(ending, rename)) }
+  const intro =
+    document.intro === undefined
+      ? {}
+      : {
+          intro: {
+            ...document.intro,
+            items: document.intro.items.map((block) => renameInNode(block, rename) as BlockItem),
+          },
+        }
   return document.steps === undefined
     ? {
         ...document,
+        ...intro,
         ...endings,
         items: document.items.map((item) => renameInNode(item, rename) as typeof item),
       }
     : {
         ...document,
+        ...intro,
         ...endings,
         steps: document.steps.map((step) => renameInNode(step, rename) as typeof step),
       }

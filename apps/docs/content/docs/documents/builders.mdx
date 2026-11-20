@@ -37,7 +37,7 @@ const problems = checkDocument(document, catalog)
 | Limit | Holds at most | Default |
 | --- | --- | --- |
 | `depth` | levels of nesting of objects and lists, the document being the first | `32` |
-| `items` | items of the whole document, counting those inside rows and sections and the blocks of endings | `2000` |
+| `items` | items of the whole document, counting those inside rows and sections and the blocks of the intro and endings | `2000` |
 | `conditions` | comparisons in all conditions together | `2000` |
 | `options` | options of one field or block | `1000` |
 | `textLength` | characters of one text, such as a label or a setting | `20000` |
@@ -74,7 +74,7 @@ and the `params` an error text names. The text is the project's, keyed by the co
 | `settingLimit` | a setting outside its constraints, such as too long or too few options | `setting` and the constraint, such as `minCount` |
 | `missingTranslation` | a translated text that leaves out one of the document's languages | `language` |
 | `unknownLanguage` | a translation into a language the document does not name | `language` |
-| `fixedText` | a placeholder in the label of a step or section or in a display's setting, which names no answers | `field` |
+| `fixedText` | a placeholder in the label of a step or section, a display's setting or the intro, which names no answers | `field` |
 | `unknownParam` | a placeholder in a field's own error text that its code has no param for | `param`, `code` |
 | `unknownStep` | a jump to a step the document does not hold | `step` |
 | `backwardJump` | a jump to the step itself or an earlier one | `step` |
