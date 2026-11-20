@@ -187,6 +187,40 @@ describe('checkDocument', () => {
     ])
   })
 
+  it('reports a key that is no plain name, and a step key that starts another', () => {
+    const document: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'One',
+          items: [{ type: 'field', key: 'f.1', kind: 'text', label: 'A' }],
+        },
+        {
+          key: 's10',
+          label: 'Two',
+          items: [{ type: 'field', key: 'f[2]', kind: 'text', label: 'B' }],
+        },
+        {
+          key: '',
+          label: 'Three',
+          items: [{ type: 'field', key: 'f3', kind: 'text', label: 'C' }],
+        },
+      ],
+    }
+
+    expect(checkDocument(document, kinds)).toEqual([
+      { code: 'invalidKey', path: 'document.steps[0].items[0].key', params: { key: 'f.1' } },
+      {
+        code: 'overlappingKey',
+        path: 'document.steps[1].key',
+        params: { key: 's10', start: 's1' },
+      },
+      { code: 'invalidKey', path: 'document.steps[1].items[0].key', params: { key: 'f[2]' } },
+      { code: 'invalidKey', path: 'document.steps[2].key', params: { key: '' } },
+    ])
+  })
+
   it('reports an unknown field kind', () => {
     expect(codesOf(plain({ type: 'field', key: 'f1', kind: 'signature', label: 'Sign' }))).toEqual([
       'unknownKind document.items[0].kind',

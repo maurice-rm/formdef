@@ -11,6 +11,21 @@ const MOST_SECTION_LEVELS = 2
 
 type At = { walk: Walk; path: string }
 
+// A key becomes a path in the form's values, where a dot or a bracket would nest it.
+const PLAIN_KEY = /^[^.[\]]+$/
+
+const checkKey = (key: string, { walk, path }: At): void => {
+  if (PLAIN_KEY.test(key)) return
+  report(walk, { code: 'invalidKey', path: `${path}.key`, params: { key } })
+}
+
+// TanStack's form group of a step counts every field whose path starts with the step's key.
+const checkOverlap = (key: string, stepKeys: readonly string[], { walk, path }: At): void => {
+  const start = stepKeys.find((other) => other !== '' && other !== key && key.startsWith(other))
+  if (start === undefined) return
+  report(walk, { code: 'overlappingKey', path: `${path}.key`, params: { key, start } })
+}
+
 const checkVisibleWhen = (
   item: { visibleWhen?: DocumentItem['visibleWhen'] },
   { walk, path }: At,
@@ -23,6 +38,7 @@ const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>)
     report(walk, { code: 'duplicateKey', path: `${path}.key`, params: { key: field.key } })
   }
   seenKeys.add(field.key)
+  checkKey(field.key, { walk, path })
 
   const kind = walk.kindOf(field.kind)
   if (kind === undefined) {
@@ -62,6 +78,7 @@ const checkItem = (item: DocumentItem, level: Level): void => {
 }
 
 const checkSteps = (steps: readonly DocumentStep[], walk: Walk): void => {
+  const allStepKeys = steps.map((step) => step.key)
   const stepKeys = new Set<string>()
   const fieldKeys = new Set<string>()
 
@@ -71,6 +88,8 @@ const checkSteps = (steps: readonly DocumentStep[], walk: Walk): void => {
       report(walk, { code: 'duplicateKey', path: `${path}.key`, params: { key: step.key } })
     }
     stepKeys.add(step.key)
+    checkKey(step.key, { walk, path })
+    checkOverlap(step.key, allStepKeys, { walk, path })
     checkVisibleWhen(step, { walk, path })
     checkItems(step.items, {
       at: { walk, path: `${path}.items` },
