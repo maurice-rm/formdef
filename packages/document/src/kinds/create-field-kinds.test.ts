@@ -26,6 +26,7 @@ const measure = defineFieldKind(registry, {
   name: 'measure',
   label: 'Measure with unit',
   widget: 'text',
+  valueType: 'decimal',
   settings: {
     unit: setting.text({ label: 'Unit', required: true, varies: true }),
     min: setting.number({ label: 'Minimum' }),
@@ -34,12 +35,18 @@ const measure = defineFieldKind(registry, {
   rules: ({ min }) => [rule.decimal(), rule.min(min)],
 })
 
-const text = defineFieldKind(registry, { name: 'text', label: 'Short text', widget: 'text' })
+const text = defineFieldKind(registry, {
+  name: 'text',
+  label: 'Short text',
+  widget: 'text',
+  valueType: 'text',
+})
 
 const choice = defineFieldKind(registry, {
   name: 'choice',
   label: 'One choice',
   widget: 'choice',
+  valueType: 'choice',
   settings: { options: setting.options({ label: 'Choices', minCount: 2 }) },
   props: ({ options }) => ({ options }),
 })
@@ -65,6 +72,11 @@ describe('defineFieldKind', () => {
     expect(text.rules({})).toEqual([])
     expect(text.settings).toEqual({})
   })
+
+  it('keeps the value type, which checks and answers read', () => {
+    expect(choice.valueType).toBe('choice')
+    expect(measure.valueType).toBe('decimal')
+  })
 })
 
 describe('createFieldKinds', () => {
@@ -77,7 +89,12 @@ describe('createFieldKinds', () => {
   })
 
   it('refuses two field kinds of the same name', () => {
-    const again = defineFieldKind(registry, { name: 'text', label: 'Text again', widget: 'text' })
+    const again = defineFieldKind(registry, {
+      name: 'text',
+      label: 'Text again',
+      widget: 'text',
+      valueType: 'text',
+    })
 
     expect(() => createFieldKinds(registry, [text, again])).toThrow(
       'formdef: fieldKinds[1].name: the name text is used twice.',
@@ -89,11 +106,20 @@ describe('createFieldKinds', () => {
       name: 'foreign',
       label: 'Foreign',
       widget: 'text',
+      valueType: 'text',
     })
 
     // @ts-expect-error the compiler refuses it already; this checks the runtime, for untyped code
     expect(() => createFieldKinds(registry, [text, foreign])).toThrow(
       'formdef: fieldKinds[1]: the field kind foreign was defined with another registry.',
+    )
+  })
+
+  it('refuses a field kind without a known value type, as untyped code could pass', () => {
+    const untyped = { ...text, valueType: 'colour' } as unknown as typeof text
+
+    expect(() => createFieldKinds(registry, [untyped])).toThrow(
+      'formdef: fieldKinds[0].valueType: expected one of text, choice, choices, boolean, number, decimal, date.',
     )
   })
 })

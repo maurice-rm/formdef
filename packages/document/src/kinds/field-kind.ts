@@ -2,6 +2,23 @@ import type { Rule } from './rule'
 import type { Setting } from './setting'
 
 /**
+ * What kind of answer a field kind gives, which decides the operators a condition may compare it
+ * with and how an answer is described: text, one choice of its options, several choices, a
+ * boolean, a number, a decimal written as text, or a date as an ISO string.
+ */
+export type ValueType = (typeof VALUE_TYPES)[number]
+
+export const VALUE_TYPES: readonly [
+  'text',
+  'choice',
+  'choices',
+  'boolean',
+  'number',
+  'decimal',
+  'date',
+] = ['text', 'choice', 'choices', 'boolean', 'number', 'decimal', 'date']
+
+/**
  * A field kind of a form document: what a field of that kind is. It binds a widget of the
  * registry to the props built from the field's settings, the rules that check its value, and the
  * settings a person may change. Built with `defineFieldKind`, collected with `createFieldKinds`.
@@ -17,6 +34,8 @@ export type FieldKind<TRegistry> = {
   readonly label: string
   /** The name of the widget that renders fields of this kind. */
   readonly widget: string
+  /** What kind of answer a field of this kind gives. */
+  readonly valueType: ValueType
   /** The settings a person may change on a field of this kind, by name. */
   readonly settings: Readonly<Record<string, Setting<unknown>>>
   /** The widget props for a field with these settings. */

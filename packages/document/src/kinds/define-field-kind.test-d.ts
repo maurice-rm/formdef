@@ -13,13 +13,20 @@ const TextWidget = (
 ) => null
 const NumberWidget = (_: FieldOf<number | undefined> & { label?: string; min?: number }) => null
 const ChoiceWidget = (_: FieldOf<string> & { label?: string; options: Option[] }) => null
+const ChoicesWidget = (_: FieldOf<string[]> & { label?: string; options: Option[] }) => null
 const ContextWidget = (_: { label?: string }) => null
 
 const { fieldContext, formContext } = createFormHookContexts()
 const registry = createRegistry({
   fieldContext,
   formContext,
-  widgets: { text: TextWidget, number: NumberWidget, choice: ChoiceWidget, context: ContextWidget },
+  widgets: {
+    text: TextWidget,
+    number: NumberWidget,
+    choice: ChoiceWidget,
+    choices: ChoicesWidget,
+    context: ContextWidget,
+  },
 })
 
 describe('defineFieldKind', () => {
@@ -28,6 +35,7 @@ describe('defineFieldKind', () => {
       name: 'measure',
       label: 'Measure',
       widget: 'text',
+      valueType: 'decimal',
       settings: {
         unit: setting.text({ label: 'Unit', required: true }),
         hint: setting.text({ label: 'Hint' }),
@@ -49,6 +57,7 @@ describe('defineFieldKind', () => {
       name: 'choice',
       label: 'Choice',
       widget: 'choice',
+      valueType: 'choice',
       settings: { options: setting.options({ label: 'Choices' }) },
       props: ({ options }) => {
         expectTypeOf(options).toEqualTypeOf<SettingOption[]>()
@@ -59,12 +68,18 @@ describe('defineFieldKind', () => {
 
   it('rejects a widget the registry does not hold', () => {
     // @ts-expect-error there is no widget `date` in the registry
-    defineFieldKind(registry, { name: 'date', label: 'Date', widget: 'date' })
+    defineFieldKind(registry, { name: 'date', label: 'Date', widget: 'date', valueType: 'date' })
   })
 
   it('requires props when the widget has a prop it cannot render without', () => {
     // @ts-expect-error the choice widget needs `options`
-    defineFieldKind(registry, { name: 'choice', label: 'Choice', widget: 'choice' })
+    defineFieldKind(registry, {
+      name: 'choice',
+      label: 'Choice',
+      widget: 'choice',
+      valueType: 'choice',
+      settings: { options: setting.options({ label: 'Choices' }) },
+    })
   })
 
   it('rejects props the widget does not take the type of', () => {
@@ -72,6 +87,7 @@ describe('defineFieldKind', () => {
       name: 'measure',
       label: 'Measure',
       widget: 'text',
+      valueType: 'decimal',
       // @ts-expect-error `inputMode` is 'decimal' only
       props: () => ({ inputMode: 'numeric' }),
     })
@@ -82,6 +98,7 @@ describe('defineFieldKind', () => {
       name: 'count',
       label: 'Count',
       widget: 'number',
+      valueType: 'number',
       // @ts-expect-error `decimal` checks text, the number widget serves numbers
       rules: () => [rule.decimal()],
     })
@@ -92,6 +109,7 @@ describe('defineFieldKind', () => {
       name: 'context',
       label: 'Context',
       widget: 'context',
+      valueType: 'text',
       // @ts-expect-error the widget declares no value type, so no rule can know what it checks
       rules: () => [rule.decimal()],
     })
@@ -102,8 +120,43 @@ describe('defineFieldKind', () => {
       name: 'count',
       label: 'Count',
       widget: 'number',
+      valueType: 'number',
       settings: { min: setting.number({ label: 'Minimum' }) },
       rules: ({ min }) => [rule.integer(), rule.min(min)],
+    })
+  })
+
+  it('rejects a value type the widget does not serve', () => {
+    defineFieldKind(registry, {
+      name: 'count',
+      label: 'Count',
+      widget: 'text',
+      // @ts-expect-error the text widget serves text, not numbers
+      valueType: 'number',
+    })
+  })
+
+  it('takes every text-like value type for a text widget', () => {
+    defineFieldKind(registry, { name: 'text', label: 'Text', widget: 'text', valueType: 'text' })
+    defineFieldKind(registry, { name: 'date', label: 'Date', widget: 'text', valueType: 'date' })
+    defineFieldKind(registry, {
+      name: 'choices',
+      label: 'Choices',
+      widget: 'choices',
+      valueType: 'choices',
+      settings: { options: setting.options({ label: 'Choices' }) },
+      props: ({ options }) => ({ options }),
+    })
+  })
+
+  it('requires an options setting for a choice', () => {
+    defineFieldKind(registry, {
+      name: 'choice',
+      label: 'Choice',
+      widget: 'choice',
+      // @ts-expect-error a choice needs its options in a setting named `options`
+      valueType: 'choice',
+      props: () => ({ options: [] }),
     })
   })
 })

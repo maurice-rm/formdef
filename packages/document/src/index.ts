@@ -16,7 +16,7 @@ export {
   type FieldKindDefinition,
   type SettingValues,
 } from './kinds/define-field-kind'
-export type { FieldKind } from './kinds/field-kind'
+export type { FieldKind, ValueType } from './kinds/field-kind'
 export { type Rule, rule } from './kinds/rule'
 export { type Setting, type SettingOption, type SettingType, setting } from './kinds/setting'
 export { readDocument } from './read-document'

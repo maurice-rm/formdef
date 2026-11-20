@@ -1,9 +1,9 @@
 import type { Registry, ValueOf } from '@formdef/core'
 import type { ComponentType } from 'react'
 
-import type { FieldKind } from './field-kind'
+import type { FieldKind, ValueType } from './field-kind'
 import type { Rule } from './rule'
-import type { Setting } from './setting'
+import type { Setting, SettingOption } from './setting'
 
 // biome-ignore lint/suspicious/noExplicitAny: a registry of any widgets, form components and slots.
 type AnyRegistry = Registry<any, any, any>
@@ -29,6 +29,30 @@ type Settings = Readonly<Record<string, Setting<unknown>>>
 export type SettingValues<TSettings> = {
   [Name in keyof TSettings]: TSettings[Name] extends Setting<infer TValue> ? TValue : never
 }
+
+type ChoiceValueType = 'choice' | 'choices'
+
+// The value types a widget's value can carry; a widget without a value type carries every one.
+type ValueTypesFor<TValue> = unknown extends TValue
+  ? ValueType
+  : FilledValueTypes<NonNullable<TValue>>
+
+type FilledValueTypes<TValue> = [TValue] extends [string]
+  ? 'text' | 'choice' | 'decimal' | 'date'
+  : [TValue] extends [readonly string[]]
+    ? 'choices'
+    : [TValue] extends [boolean]
+      ? 'boolean'
+      : [TValue] extends [number]
+        ? 'number'
+        : never
+
+// A choice reads its options from the setting `options`, to compare and describe answers.
+type AllowedValueTypes<TWidget, TSettings> = TSettings extends {
+  options: Setting<SettingOption[]>
+}
+  ? ValueTypesFor<ValueOf<TWidget>>
+  : Exclude<ValueTypesFor<ValueOf<TWidget>>, ChoiceValueType>
 
 type PropsPart<TWidget, TSettings> =
   // biome-ignore lint/complexity/noBannedTypes: `{}` tests whether every own prop is optional.
@@ -64,6 +88,11 @@ export type FieldKindDefinition<
   label: string
   /** The widget that renders fields of this kind. */
   widget: TName
+  /**
+   * What kind of answer a field of this kind gives; it has to fit the widget's value. A `choice`
+   * or `choices` reads its options from a setting named `options`.
+   */
+  valueType: AllowedValueTypes<TWidgets[TName], TSettings>
   /**
    * The settings a person may change on a field of this kind.
    *
@@ -103,6 +132,7 @@ const NO_RULES = (): readonly (Rule<never> | undefined)[] => []
  *   name: 'measure',
  *   label: 'Measure with unit',
  *   widget: 'text',
+ *   valueType: 'decimal',
  *   settings: { unit: setting.text({ label: 'Unit', required: true, varies: true }) },
  *   props: ({ unit }) => ({ inputMode: 'decimal', addons: [{ id: 'unit', content: unit, align: 'inline-end' }] }),
  *   rules: () => [rule.decimal()],
@@ -117,7 +147,7 @@ export const defineFieldKind = <
   registry: TRegistry,
   definition: FieldKindDefinition<WidgetsOf<TRegistry>, TName, TSettings>,
 ): FieldKind<TRegistry> => {
-  const { name, label, widget, settings, rules } = definition
+  const { name, label, widget, valueType, settings, rules } = definition
   const props = (definition as { props?: FieldKind<TRegistry>['props'] }).props
 
   return {
@@ -125,6 +155,7 @@ export const defineFieldKind = <
     name,
     label,
     widget,
+    valueType: valueType as ValueType,
     settings: settings ?? {},
     props: props ?? NO_PROPS,
     rules: (rules as FieldKind<TRegistry>['rules'] | undefined) ?? NO_RULES,
