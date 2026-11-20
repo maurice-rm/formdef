@@ -3,7 +3,8 @@ import type { JsonValue } from '../json-value'
 import { operatorOf } from '../kinds/operator-of'
 import type { Setting } from '../kinds/setting'
 import { checkOptionValues } from './check-option-values'
-import type { CheckWalk, EarlierField } from './check-walk'
+import type { CheckWalk } from './check-walk'
+import type { EarlierField } from './earlier-field'
 import { earlierFieldNamed } from './earlier-field-named'
 import { fitsSettingType } from './fits-setting-type'
 import { report } from './report'
@@ -102,8 +103,8 @@ const checkComparison = (comparison: Comparison, path: string, walk: CheckWalk):
 /**
  * Checks one condition against the fields before it: that the field exists and comes earlier,
  * that its value type has the operator, and that the compared value is what the operator compares
- * with, or left out when it compares with nothing. A field compared with through `valueFrom` exists,
- * comes earlier and has a value type that compares as the operator's setting type.
+ * with, or left out when it compares with nothing. A field compared with through `valueFrom`
+ * exists, comes earlier and has a value type that compares as the operator's setting type.
  */
 export function checkCondition(condition: Condition, path: string, walk: CheckWalk): void {
   if ('all' in condition) {

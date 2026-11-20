@@ -172,10 +172,10 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
 }
 
 /**
- * Renames the key of a step, field, block, computed value, repeat or ending in a form document, and the key
- * in every condition, expression, jump and placeholder that names it, endings included, leaving the
- * document given as it was. Keys of different kinds that are the same are all renamed. A key that is taken already, or not a plain name, {@link checkDocument} reports
- * afterwards.
+ * Renames the key of a step, field, block, computed value, repeat or ending in a form document, and
+ * the key in every condition, expression, jump and placeholder that names it, endings included,
+ * leaving the document given as it was. Keys of different kinds that are the same are all renamed.
+ * A key that is taken already, or not a plain name, {@link checkDocument} reports afterwards.
  *
  * @param document - The document.
  * @param from - The key now.

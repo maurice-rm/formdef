@@ -1,15 +1,7 @@
 import { isPlainObject } from '../is-plain-object'
 import { isText } from '../is-text'
 import { looksVarying } from '../looks-varying'
-import type { VaryingText } from '../varying-text'
-
-/** One choice of an options setting as a document holds it, its texts possibly varying. */
-export type DocumentOption = {
-  value: string
-  label: VaryingText
-  description?: VaryingText
-  score?: number
-}
+import type { DocumentOption } from './document-option'
 
 // A label shows in every language, so none of its translations may be empty.
 const isLabel = (value: unknown): boolean =>

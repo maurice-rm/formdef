@@ -127,8 +127,9 @@ const ownConditions = (node: DocumentNode, path: string): Placed[] => {
 }
 
 /**
- * Every condition of a document, in document order, those of its intro first and of its endings last: visibility, required, texts and error texts that follow an
- * answer, and settings that follow an answer with the texts of their options.
+ * Every condition of a document, in document order, those of its intro first and of its endings
+ * last: visibility, required, texts and error texts that follow an answer, settings that follow an
+ * answer with the texts of their options, and the conditions of expressions.
  */
 export function conditionsOf(document: FormDocument): PlacedCondition[] {
   const blockConditions = (blocks: readonly BlockItem[], path: string): Placed[] =>

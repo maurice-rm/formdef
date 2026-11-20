@@ -6,9 +6,9 @@ import type { CheckWalk } from './check-walk'
 import { report } from './report'
 
 /**
- * Checks the display of the form, a step, a section or a row: a registered kind that applies to
- * `target`, with settings that fit it and texts that name no answers. The display of a form
- * without steps is checked with the target `undefined`, which no kind applies to.
+ * Checks the display of the form, a step, a section, a row or a repeat: a registered kind that
+ * applies to `target`, with settings that fit it and texts that name no answers. The display of a
+ * form without steps is checked with the target `undefined`, which no kind applies to.
  */
 export function checkDisplay(
   display: Display | undefined,

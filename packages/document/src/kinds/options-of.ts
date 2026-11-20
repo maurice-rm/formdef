@@ -1,4 +1,5 @@
-import { type DocumentOption, isOption } from './is-option'
+import type { DocumentOption } from './document-option'
+import { isOption } from './is-option'
 
 const OPTIONS_SETTING = 'options'
 

@@ -1,7 +1,7 @@
 import type { Varying } from '../form-document'
 import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
-import type { DocumentOption } from '../kinds/is-option'
+import type { DocumentOption } from '../kinds/document-option'
 import { optionValuesOf } from '../kinds/option-values-of'
 import type { Setting } from '../kinds/setting'
 import { pathTo } from '../path-to'

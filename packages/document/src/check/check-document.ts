@@ -29,6 +29,7 @@ import { checkNumberedText } from './check-numbered-text'
 import { checkSettings } from './check-settings'
 import { checkVaryingText } from './check-varying-text'
 import type { CheckWalk } from './check-walk'
+import { earlierWithoutOptions } from './earlier-field'
 import type { Problem } from './problem'
 import { problemInWords } from './problem-in-words'
 import type { ProblemMessages } from './problem-messages'
@@ -203,8 +204,6 @@ const checkRepeatOwn = (repeat: RepeatItem, level: Level): void => {
   checkDisplay(repeat.display, 'repeat', at)
 }
 
-const NO_OPTIONS: ReadonlySet<string> = new Set()
-
 // Inside a repeat, its fields read the same entry; past it, no entry is meant, so none is named,
 // and the repeat itself is compared by its number of entries.
 const checkRepeat = (repeat: RepeatItem, level: Level): void => {
@@ -220,11 +219,7 @@ const checkRepeat = (repeat: RepeatItem, level: Level): void => {
     walk.earlier.delete(key)
     walk.repeatOfField.set(key, repeat.key)
   }
-  walk.earlier.set(repeat.key, {
-    key: repeat.key,
-    valueType: entryCount,
-    optionValues: NO_OPTIONS,
-  })
+  walk.earlier.set(repeat.key, earlierWithoutOptions(repeat.key, entryCount))
 }
 
 const checkItem = (item: DocumentItem, level: Level): void => {

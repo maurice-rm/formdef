@@ -2,10 +2,9 @@ import type { ComputedItem } from '../form-document'
 import { checkExpression } from './check-expression'
 import { checkVaryingText } from './check-varying-text'
 import type { CheckWalk } from './check-walk'
+import { earlierWithoutOptions } from './earlier-field'
 import { report } from './report'
 import { isResultKind } from './result-kind'
-
-const NO_OPTIONS: ReadonlySet<string> = new Set()
 
 /**
  * Checks a computed value once its key and condition are checked: its label, its value type,
@@ -34,9 +33,8 @@ export function checkComputed(
       params: { valueType: computed.valueType, result },
     })
   }
-  walk.earlier.set(computed.key, {
-    key: computed.key,
-    valueType: isKnown ? valueType : undefined,
-    optionValues: NO_OPTIONS,
-  })
+  walk.earlier.set(
+    computed.key,
+    earlierWithoutOptions(computed.key, isKnown ? valueType : undefined),
+  )
 }

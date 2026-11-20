@@ -44,10 +44,10 @@ const LIST_SEPARATOR = ', '
 // An ISO time after the day: hours and minutes, optional seconds and fraction, optional offset.
 const ISO_TIME = /^T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?(Z|[+-]([01]\d|2[0-3]):[0-5]\d)?$/
 
-const isText = (value: unknown): value is string => typeof value === 'string'
+const isString = (value: unknown): value is string => typeof value === 'string'
 
 const isDate = (value: unknown): value is string => {
-  if (!isText(value)) {
+  if (!isString(value)) {
     return false
   }
   const time = value.slice(dayOf(value).length)
@@ -132,7 +132,7 @@ const labelOf = (options: readonly SettingOption[], value: string): string =>
 const text: BuiltIn<string, 'text', Written> = defineValueType({
   name: 'text',
   emptyValue: '',
-  fits: isText,
+  fits: isString,
   isFilled: isNotBlank,
   describe: describeText,
   toText: asWritten,
@@ -143,7 +143,7 @@ const choice: BuiltIn<string, 'choice', SettingOption, true> = defineValueType({
   name: 'choice',
   emptyValue: '',
   readsOptions: true,
-  fits: isText,
+  fits: isString,
   isFilled: isNotBlank,
   chosenOf: (value) => (isNotBlank(value) ? [value] : []),
   describe: (value, options): SettingOption | undefined => optionOf(options, value),
@@ -162,7 +162,7 @@ const choices: BuiltIn<readonly string[], 'choices', Chosen, true> = defineValue
   emptyValue: [],
   readsOptions: true,
   fits: (value): value is readonly string[] =>
-    Array.isArray(value) && value.every(isText) && new Set(value).size === value.length,
+    Array.isArray(value) && value.every(isString) && new Set(value).size === value.length,
   isFilled: (value) => value.length > 0,
   chosenOf: (value) => value,
   describe: (value, options): Chosen | undefined => {
@@ -205,7 +205,7 @@ const number: BuiltIn<number, 'number', Counted> = defineValueType({
 const decimal: BuiltIn<string, 'decimal', Written> = defineValueType({
   name: 'decimal',
   emptyValue: '',
-  fits: isText,
+  fits: isString,
   isFilled: isNotBlank,
   describe: describeText,
   toText: asWritten,

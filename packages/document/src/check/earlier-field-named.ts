@@ -1,4 +1,5 @@
-import type { CheckWalk, EarlierField } from './check-walk'
+import type { CheckWalk } from './check-walk'
+import type { EarlierField } from './earlier-field'
 import { report } from './report'
 
 /**
