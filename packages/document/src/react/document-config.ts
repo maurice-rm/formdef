@@ -5,6 +5,7 @@ import { evaluate } from '../evaluate/evaluate'
 import { holds } from '../evaluate/holds'
 import { isRequired } from '../evaluate/is-required'
 import { resolveSettings } from '../evaluate/resolve-settings'
+import { resolveVaryingText } from '../evaluate/resolve-varying-text'
 import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
@@ -14,6 +15,7 @@ import { nestValues } from '../nest-values'
 import { resolveText } from '../resolve-text'
 import type { Text } from '../text'
 import type { DocumentValidator } from '../validate/create-validator'
+import type { VaryingText } from '../varying-text'
 
 type Entry = Readonly<Record<string, unknown>>
 
@@ -36,11 +38,21 @@ type Build = {
 
 const textOf = (text: Text, build: Build): string => resolveText(text, build.language)
 
-const descriptionOf = (
-  { description }: { description?: Text },
+const varyingOf = (text: VaryingText, { build, answers }: { build: Build; answers: Answers }) =>
+  resolveVaryingText(text, { answers, language: build.language })
+
+// A description that may follow an answer reaches its slot as props of the form's values.
+const descriptionProps = (
+  { description }: { description?: VaryingText | undefined },
   build: Build,
-): { description?: string } =>
-  description === undefined ? {} : { description: textOf(description, build) }
+): Entry =>
+  description === undefined
+    ? {}
+    : {
+        props: (values: unknown) => ({
+          description: varyingOf(description, { build, answers: build.answersOf(values) }),
+        }),
+      }
 
 const visibility = (item: { visibleWhen?: Condition }, build: Build): Entry => {
   const condition = item.visibleWhen
@@ -56,8 +68,10 @@ const fieldEntry = (field: FieldItem, build: Build): Entry => {
     const answers = build.answersOf(values)
     return {
       ...kind.props(resolveSettings(field, kind, { answers, language: build.language })),
-      label: textOf(field.label, build),
-      ...descriptionOf(field, build),
+      label: varyingOf(field.label, { build, answers }),
+      ...(field.description === undefined
+        ? {}
+        : { description: varyingOf(field.description, { build, answers }) }),
       required: isRequired(field, answers),
     }
   }
@@ -72,11 +86,10 @@ const layoutOf = (items: readonly DocumentItem[], build: Build): unknown[] =>
     if (item.type === 'row') {
       return { row: layoutOf(item.items, build), ...visibility(item, build) }
     }
-    const description = descriptionOf(item, build)
     return {
       section: textOf(item.label, build),
       layout: layoutOf(item.items, build),
-      ...(description.description === undefined ? {} : { props: description }),
+      ...descriptionProps(item, build),
       ...visibility(item, build),
     }
   })
@@ -95,15 +108,12 @@ const emptyValuesOf = (
     value: kindOf(build.catalog, field).valueType.emptyValue,
   }))
 
-const stepEntry = (step: DocumentStep, build: Build): Entry => {
-  const description = descriptionOf(step, build)
-  return {
-    step: step.key,
-    label: textOf(step.label, build),
-    ...(description.description === undefined ? {} : { props: description }),
-    ...visibility(step, build),
-  }
-}
+const stepEntry = (step: DocumentStep, build: Build): Entry => ({
+  step: step.key,
+  label: textOf(step.label, build),
+  ...descriptionProps(step, build),
+  ...visibility(step, build),
+})
 
 const steppedConfig = (steps: readonly DocumentStep[], build: Build): Parts => ({
   defaultValues: nestValues(

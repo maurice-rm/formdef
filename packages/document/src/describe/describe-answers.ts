@@ -1,6 +1,7 @@
 import { refuseProblems } from '../check/refuse-problems'
 import type { Answers } from '../evaluate/answers'
 import { evaluate, type ShownField } from '../evaluate/evaluate'
+import { resolveVaryingText } from '../evaluate/resolve-varying-text'
 import type { DocumentItem, FormDocument } from '../form-document'
 import type { JsonValue } from '../json-value'
 import type { Catalog } from '../kinds/create-catalog'
@@ -146,7 +147,7 @@ const describeAnswer = (
 const describeField = (shown: ShownField, described: Described): DescribedField<ValueType> => ({
   type: 'field',
   key: shown.field.key,
-  label: resolveText(shown.field.label, described.language),
+  label: resolveVaryingText(shown.field.label, described),
   kind: shown.kind.name,
   settings: shown.settings,
   answer: describeAnswer(shown, described.answers),

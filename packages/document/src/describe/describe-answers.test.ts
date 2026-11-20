@@ -314,6 +314,41 @@ describe('describeAnswers', () => {
     ).toThrow('formdef: document: the document has 1 problem; checkDocument lists it.')
   })
 
+  it('describes a question and an option by the texts that follow the answers', () => {
+    const document: FormDocument = {
+      format: 1,
+      items: [
+        house,
+        field('heating', 'choice', {
+          label: {
+            cases: [{ when: isBlock, value: 'Heating of the block' }],
+            otherwise: 'Heating',
+          },
+          settings: {
+            options: [
+              {
+                value: 'h1',
+                label: { cases: [{ when: isBlock, value: 'Central' }], otherwise: 'Own' },
+              },
+            ],
+          },
+        }),
+      ],
+    }
+
+    expect(
+      describeAnswers(document, catalog, { values: { house: 'o2', heating: 'h1' } }),
+    ).toMatchObject({
+      items: [
+        {},
+        {
+          label: 'Heating of the block',
+          answer: { valueType: 'choice', value: 'h1', label: 'Central' },
+        },
+      ],
+    })
+  })
+
   it('describes the questions, sections and options in the language chosen', () => {
     const translated: FormDocument = {
       format: 1,

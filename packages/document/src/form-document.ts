@@ -1,6 +1,7 @@
 import type { Condition } from './condition'
 import type { JsonValue } from './json-value'
 import type { Text } from './text'
+import type { VaryingText } from './varying-text'
 
 /**
  * A setting whose value follows an answer: the value of the first case whose condition holds,
@@ -26,10 +27,10 @@ export type FieldItem = {
   key: string
   /** The name of the field kind the field is of. */
   kind: string
-  /** The question shown above the control. */
-  label: Text
-  /** A description between the question and the control. */
-  description?: Text
+  /** The question shown above the control; it may follow an answer. */
+  label: VaryingText
+  /** A description between the question and the control; it may follow an answer. */
+  description?: VaryingText
   /**
    * Whether the field must be filled in: always, never, or under a condition.
    *
@@ -61,8 +62,8 @@ export type SectionItem = {
   type: 'section'
   /** The section's title. */
   label: Text
-  /** A description under the title. */
-  description?: Text
+  /** A description under the title; it may follow an answer. */
+  description?: VaryingText
   /** The condition under which the section shows; without it, the section always shows. */
   visibleWhen?: Condition
   /** The items of the section. */
@@ -78,8 +79,8 @@ export type DocumentStep = {
   key: string
   /** The step's name in the stepper. */
   label: Text
-  /** A line under the step's name. */
-  description?: Text
+  /** A line under the step's name; it may follow an answer. */
+  description?: VaryingText
   /** The condition under which the step shows; without it, the step always shows. */
   visibleWhen?: Condition
   /** The items of the step. */

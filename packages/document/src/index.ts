@@ -63,3 +63,4 @@ export {
   type ValidatorOptions,
 } from './validate/create-validator'
 export type { Messages } from './validate/messages'
+export type { VaryingText } from './varying-text'

@@ -1,12 +1,13 @@
 import { isPlainObject } from '../is-plain-object'
 import { isText } from '../is-text'
-import type { Text } from '../text'
+import { looksVarying } from '../looks-varying'
+import type { VaryingText } from '../varying-text'
 
-/** One choice of an options setting as a document holds it, its texts possibly translated. */
+/** One choice of an options setting as a document holds it, its texts possibly varying. */
 export type DocumentOption = {
   value: string
-  label: Text
-  description?: Text
+  label: VaryingText
+  description?: VaryingText
 }
 
 // A label shows in every language, so none of its translations may be empty.
@@ -14,13 +15,24 @@ const isLabel = (value: unknown): boolean =>
   isText(value) &&
   (typeof value === 'string' ? [value] : Object.values(value)).every((entry) => entry !== '')
 
+// `readDocument` has read the conditions of a text that follows an answer; its texts remain.
+const isVaryingOf = (value: unknown, isPlain: (text: unknown) => boolean): boolean => {
+  if (!looksVarying(value)) {
+    return isPlain(value)
+  }
+  const cases = Array.isArray(value.cases) ? value.cases : []
+  return (
+    cases.every((entry) => isPlainObject(entry) && isPlain(entry.value)) && isPlain(value.otherwise)
+  )
+}
+
 /** Whether a value is one option of a choice: a value, a label and possibly a description. */
 export function isOption(value: unknown): value is DocumentOption {
   return (
     isPlainObject(value) &&
     typeof value.value === 'string' &&
     value.value !== '' &&
-    isLabel(value.label) &&
-    (value.description === undefined || isText(value.description))
+    isVaryingOf(value.label, isLabel) &&
+    (value.description === undefined || isVaryingOf(value.description, isText))
   )
 }

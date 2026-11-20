@@ -1,9 +1,11 @@
 import type { Condition } from '../condition'
 import type { DocumentNode, FieldItem, FormDocument, Varying } from '../form-document'
 import { isField } from '../is-field'
+import { isPlainObject } from '../is-plain-object'
 import { isStep } from '../is-step'
-import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
+import { looksVarying } from '../looks-varying'
+import { mapOptionLists } from '../map-option-lists'
 
 type Rename = { from: string; to: string }
 
@@ -17,16 +19,36 @@ const renameIn = (condition: Condition, rename: Rename): Condition => {
   return condition.field === rename.from ? { ...condition, field: rename.to } : condition
 }
 
+const renameInCases = <TValue>(value: TValue, rename: Rename): TValue => {
+  if (!looksVarying(value) || !Array.isArray(value.cases)) {
+    return value
+  }
+  const cases = (value.cases as { when: Condition }[]).map((entry) => ({
+    ...entry,
+    when: renameIn(entry.when, rename),
+  }))
+  return { ...value, cases } as TValue
+}
+
+const renameInTexts = <TTexts extends { label?: unknown; description?: unknown }>(
+  texts: TTexts,
+  rename: Rename,
+): TTexts => ({
+  ...texts,
+  ...(texts.label === undefined ? {} : { label: renameInCases(texts.label, rename) }),
+  ...(texts.description === undefined
+    ? {}
+    : { description: renameInCases(texts.description, rename) }),
+})
+
+const renameInOptions = (list: readonly JsonValue[], rename: Rename): JsonValue[] =>
+  list.map((option) => (isPlainObject(option) ? renameInTexts(option, rename) : option))
+
 const renameInSetting = (value: JsonValue | Varying, rename: Rename): JsonValue | Varying =>
-  isVarying(value)
-    ? {
-        ...value,
-        cases: value.cases.map((entry) => ({ ...entry, when: renameIn(entry.when, rename) })),
-      }
-    : value
+  mapOptionLists(renameInCases(value, rename), (list) => renameInOptions(list, rename))
 
 const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
-  ...field,
+  ...renameInTexts(field, rename),
   ...(typeof field.required === 'object' ? { required: renameIn(field.required, rename) } : {}),
   ...(field.settings === undefined
     ? {}
@@ -48,7 +70,11 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
     return field.key === rename.from ? { ...field, key: rename.to } : field
   }
   const items = node.items.map((child) => renameInNode(child, rename))
-  const renamed = { ...node, ...visibility, items } as DocumentNode
+  const description =
+    'description' in node && node.description !== undefined
+      ? { description: renameInCases(node.description, rename) }
+      : {}
+  const renamed = { ...node, ...visibility, ...description, items } as DocumentNode
   return isStep(renamed) && renamed.key === rename.from ? { ...renamed, key: rename.to } : renamed
 }
 

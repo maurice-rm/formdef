@@ -96,6 +96,28 @@ The field shows the unit that applies while the answers change; the validator an
 [`describeAnswers`](/documents/validation-and-answers#describing-answers) use it too. A setting
 whose field kind does not mark it takes a plain value.
 
+### Texts that follow an answer
+
+A text may follow an answer the same way, with `cases` and `otherwise`: the label and
+description of a field, the description of a step or section, and the label and description of an
+option. The labels of steps and sections stay fixed, since the stepper and the section show them
+for the whole form.
+
+```json
+{
+  "type": "field",
+  "key": "f8",
+  "kind": "number",
+  "label": {
+    "cases": [{ "when": { "field": "f6", "op": "equals", "value": "o1" }, "value": "Number of radiators" }],
+    "otherwise": "Number of heating circuits"
+  }
+}
+```
+
+A condition of a text names a field that comes earlier, as every condition does. The case is
+chosen first, then the language.
+
 ### Languages
 
 A document in several languages names them at the root, as language codes. Every text then takes

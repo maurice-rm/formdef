@@ -284,6 +284,42 @@ describe('readDocument with languages', () => {
     expect(readDocument(translated)).toEqual(translated)
   })
 
+  it('reads texts that follow an answer, but not as the label of a step or a section', () => {
+    const follows = {
+      cases: [{ when: { field: 'f0', op: 'isFilled' }, value: 'A' }],
+      otherwise: 'B',
+    }
+    const varying = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'One',
+          description: follows,
+          items: [
+            { type: 'field', key: 'f0', kind: 'text', label: 'Name' },
+            {
+              type: 'section',
+              label: 'Two',
+              description: follows,
+              items: [
+                { type: 'field', key: 'f1', kind: 'text', label: follows, description: follows },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(readDocument(varying)).toEqual(varying)
+    expect(() =>
+      readDocument({ format: 1, steps: [{ key: 's1', label: follows, items: [] }] }),
+    ).toThrow('formdef: document.steps[0].label: this text does not follow answers.')
+    expect(() =>
+      readDocument({ format: 1, items: [{ type: 'section', label: follows, items: [] }] }),
+    ).toThrow('formdef: document.items[0].label: this text does not follow answers.')
+  })
+
   it('refuses a language code that is none', () => {
     expect(() => readDocument({ format: 1, languages: ['German'], items: [] })).toThrow(
       'formdef: document.languages[0]: expected a language code, such as "de" or "de-CH".',

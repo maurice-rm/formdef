@@ -4,10 +4,10 @@ import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../for
 import type { Catalog } from '../kinds/create-catalog'
 import type { ValueType } from '../kinds/value-type'
 import { pathTo } from '../path-to'
-import type { Text } from '../text'
+import type { VaryingText } from '../varying-text'
 import { checkCondition } from './check-condition'
 import { checkSettings } from './check-settings'
-import { checkText } from './check-text'
+import { checkVaryingText } from './check-varying-text'
 import type { CheckWalk } from './check-walk'
 import type { Problem } from './problem'
 import { report } from './report'
@@ -38,12 +38,12 @@ const checkOverlap = (key: string, stepKeys: readonly string[], { walk, path }: 
 }
 
 const checkTexts = (
-  { label, description }: { label: Text; description?: Text },
+  { label, description }: { label: VaryingText; description?: VaryingText | undefined },
   { walk, path }: At,
 ): void => {
-  checkText(label, { walk, path: `${path}.label` })
+  checkVaryingText(label, { walk, path: `${path}.label` })
   if (description !== undefined) {
-    checkText(description, { walk, path: `${path}.description` })
+    checkVaryingText(description, { walk, path: `${path}.description` })
   }
 }
 

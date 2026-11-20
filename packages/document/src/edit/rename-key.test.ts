@@ -63,6 +63,46 @@ describe('renameKey', () => {
     expect(document.steps?.[0]?.items[0]).toEqual(field('f1'))
   })
 
+  it('renames the field in the conditions of texts that follow an answer', () => {
+    const texts: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'Building',
+          description: { cases: [{ when: isBlock, value: 'Flats' }], otherwise: 'House' },
+          items: [
+            field('f1'),
+            {
+              type: 'section',
+              label: 'Heating',
+              description: { cases: [{ when: isBlock, value: 'Flats' }], otherwise: 'House' },
+              items: [
+                field('f2', {
+                  label: { cases: [{ when: isBlock, value: 'Radiators' }], otherwise: 'Rooms' },
+                  description: { cases: [{ when: isBlock, value: 'All' }], otherwise: 'Some' },
+                  settings: {
+                    options: [
+                      {
+                        value: 'o1',
+                        label: { cases: [{ when: isBlock, value: 'Floor' }], otherwise: 'Wall' },
+                      },
+                    ],
+                  },
+                }),
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    const renamed = JSON.stringify(renameKey(texts, 'f1', 'house'))
+
+    expect(renamed).not.toContain('"field":"f1"')
+    expect(renamed.match(/"field":"house"/g)).toHaveLength(5)
+  })
+
   it('renames a step key', () => {
     expect(renameKey(document, 's2', 'heating').steps?.map(({ key }) => key)).toEqual([
       's1',

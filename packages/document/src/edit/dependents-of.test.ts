@@ -61,6 +61,31 @@ describe('dependentsOf', () => {
     expect(dependentsOf(document, [1])).toEqual([])
   })
 
+  it('lists the conditions of texts that follow an answer', () => {
+    const texts: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        field('f2', {
+          label: { cases: [{ when: isBlock, value: 'Radiators' }], otherwise: 'Rooms' },
+          settings: {
+            options: [
+              {
+                value: 'o1',
+                label: { cases: [{ when: isBlock, value: 'Floor' }], otherwise: 'Wall' },
+              },
+            ],
+          },
+        }),
+      ],
+    }
+
+    expect(dependentsOf(texts, [0])).toEqual([
+      { path: 'document.items[1].label.cases[0].when', field: 'f1' },
+      { path: 'document.items[1].settings.options[0].label.cases[0].when', field: 'f1' },
+    ])
+  })
+
   it('refuses a position that holds nothing', () => {
     expect(() => dependentsOf(document, [2])).toThrow(
       'formdef: position [2]: there is nothing here.',

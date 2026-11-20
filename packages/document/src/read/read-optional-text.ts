@@ -1,6 +1,6 @@
-import type { Text } from '../text'
-import { readTranslatableText } from './read-translatable-text'
+import type { VaryingText } from '../varying-text'
+import { readVaryingText } from './read-varying-text'
 
-export function readOptionalText(value: unknown, path: string): Text | undefined {
-  return value === undefined ? undefined : readTranslatableText(value, path)
+export function readOptionalText(value: unknown, path: string): VaryingText | undefined {
+  return value === undefined ? undefined : readVaryingText(value, path)
 }

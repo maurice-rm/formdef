@@ -1,8 +1,12 @@
 import type { Condition } from './condition'
 import { DOCUMENT_PATH } from './document-path'
-import type { DocumentNode, FormDocument } from './form-document'
+import type { DocumentNode, FieldItem, FormDocument, Varying } from './form-document'
 import { isField } from './is-field'
+import { isPlainObject } from './is-plain-object'
 import { isVarying } from './is-varying'
+import type { JsonValue } from './json-value'
+import { looksVarying } from './looks-varying'
+import { optionListsOf } from './option-lists-of'
 import { pathTo } from './path-to'
 import type { Position } from './position'
 
@@ -15,28 +19,50 @@ export type PlacedCondition = {
   path: string
 }
 
-const ownConditions = (node: DocumentNode, path: string): Omit<PlacedCondition, 'position'>[] => {
+type Placed = Omit<PlacedCondition, 'position'>
+
+const casesOf = (value: unknown, path: string): Placed[] =>
+  looksVarying(value) && Array.isArray(value.cases)
+    ? (value.cases as { when: Condition }[]).map((entry, index) => ({
+        condition: entry.when,
+        path: pathTo.caseWhen(path, index),
+      }))
+    : []
+
+const textCases = (texts: { label?: unknown; description?: unknown }, path: string): Placed[] => [
+  ...casesOf(texts.label, `${path}.label`),
+  ...casesOf(texts.description, `${path}.description`),
+]
+
+const optionCases = (value: JsonValue | Varying, path: string): Placed[] =>
+  optionListsOf(value, path).flatMap(({ list, path: listPath }) =>
+    list.flatMap((option, index) =>
+      isPlainObject(option) ? textCases(option, `${listPath}[${index}]`) : [],
+    ),
+  )
+
+const settingCases = (field: FieldItem, path: string): Placed[] =>
+  Object.entries(field.settings ?? {}).flatMap(([name, value]) => {
+    const settingPath = pathTo.setting(path, name)
+    const own = isVarying(value) ? casesOf(value, settingPath) : []
+    return [...own, ...optionCases(value, settingPath)]
+  })
+
+const ownConditions = (node: DocumentNode, path: string): Placed[] => {
   const own =
     node.visibleWhen === undefined
       ? []
       : [{ condition: node.visibleWhen, path: pathTo.visibleWhen(path) }]
   if (!isField(node)) {
-    return own
+    const description = 'description' in node ? node.description : undefined
+    return [...own, ...casesOf(description, `${path}.description`)]
   }
 
   const required =
     typeof node.required === 'object'
       ? [{ condition: node.required, path: pathTo.required(path) }]
       : []
-  const cases = Object.entries(node.settings ?? {}).flatMap(([name, value]) =>
-    isVarying(value)
-      ? value.cases.map((entry, index) => ({
-          condition: entry.when,
-          path: pathTo.caseWhen(pathTo.setting(path, name), index),
-        }))
-      : [],
-  )
-  return [...own, ...required, ...cases]
+  return [...own, ...required, ...textCases(node, path), ...settingCases(node, path)]
 }
 
 const conditionsBelow = (
@@ -52,7 +78,10 @@ const conditionsBelow = (
       )),
 ]
 
-/** Every condition of a document, in document order: visibility, required and varying settings. */
+/**
+ * Every condition of a document, in document order: visibility, required, texts that follow an
+ * answer, the texts of options, and settings that follow an answer.
+ */
 export function conditionsOf(document: FormDocument): PlacedCondition[] {
   const [nodes, list]: [readonly DocumentNode[], 'steps' | 'items'] =
     document.steps === undefined ? [document.items, 'items'] : [document.steps, 'steps']

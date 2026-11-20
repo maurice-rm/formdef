@@ -10,6 +10,7 @@ import type { Text } from '../text'
 import { checkCondition } from './check-condition'
 import { checkOptionValues } from './check-option-values'
 import { checkText } from './check-text'
+import { checkVaryingText } from './check-varying-text'
 import type { CheckWalk } from './check-walk'
 import { fitsSettingType } from './fits-setting-type'
 import { report } from './report'
@@ -21,9 +22,9 @@ const reportMismatch = ({ walk, path, name }: At, type: string): void => {
 }
 
 const checkOptionTexts = (option: DocumentOption, { walk, path }: At): void => {
-  checkText(option.label, { walk, path: `${path}.label` })
+  checkVaryingText(option.label, { walk, path: `${path}.label` })
   if (option.description !== undefined) {
-    checkText(option.description, { walk, path: `${path}.description` })
+    checkVaryingText(option.description, { walk, path: `${path}.description` })
   }
 }
 

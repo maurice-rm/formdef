@@ -817,6 +817,52 @@ describe('checkDocument with languages', () => {
     expect(codesOf(unnamed)).toEqual(['unknownLanguage document.items[0].label.de'])
   })
 
+  it('checks the conditions and translations of texts that follow an answer', () => {
+    const document: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      items: [
+        {
+          type: 'field',
+          key: 'f1',
+          kind: 'choice',
+          label: {
+            cases: [{ when: { field: 'f1', op: 'isFilled' }, value: { de: 'Haus' } }],
+            otherwise: 'House',
+          },
+          settings: {
+            options: [
+              {
+                value: 'o1',
+                label: {
+                  cases: [{ when: { field: 'f9', op: 'isFilled' }, value: 'One' }],
+                  otherwise: { de: 'Eins', en: 'One' },
+                },
+              },
+              { value: 'o2', label: 'Two' },
+            ],
+          },
+        },
+        {
+          type: 'section',
+          label: 'More',
+          description: {
+            cases: [{ when: { field: 'f1', op: 'equals', value: 'o1' }, value: 'Yes' }],
+            otherwise: { en: 'No' },
+          },
+          items: [{ type: 'field', key: 'f2', kind: 'text', label: 'Name' }],
+        },
+      ],
+    }
+
+    expect(codesOf(document)).toEqual([
+      'laterField document.items[0].label.cases[0].when.field',
+      'missingTranslation document.items[0].label.cases[0].value',
+      'unknownField document.items[0].settings.options[0].label.cases[0].when.field',
+      'missingTranslation document.items[1].description.otherwise',
+    ])
+  })
+
   it('refuses an option whose label is empty in a language', () => {
     const document: FormDocument = {
       format: 1,

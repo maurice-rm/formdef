@@ -112,6 +112,7 @@ const ENTRIES: readonly Entry[] = [
       'ValueTypeDefinition',
       'valueTypes',
       'Varying',
+      'VaryingText',
     ],
   },
   {

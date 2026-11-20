@@ -213,6 +213,38 @@ describe('createDocumentForm without steps', () => {
     expect(screen.getByText('in square metres')).toBeDefined()
   })
 
+  it('updates labels, descriptions and options that follow an answer', async () => {
+    const follows = (yes: string, no: string) => ({
+      cases: [{ when: isApartmentBlock, value: yes }],
+      otherwise: no,
+    })
+    const Form = createDocumentForm(
+      plain(
+        houseType,
+        field('flats', 'text', {
+          label: follows('Number of flats', 'Number of rooms'),
+          description: follows('All flats', 'All rooms'),
+        }),
+        field('heating', 'choice', {
+          label: 'Heating',
+          settings: { options: [{ value: 'h1', label: follows('Central', 'Own') }] },
+        }),
+      ),
+      catalog,
+    )
+    render(<Form />)
+
+    expect(screen.getByLabelText('Number of rooms')).toBeDefined()
+    expect(screen.getByText('All rooms')).toBeDefined()
+    expect(screen.getByRole('option', { name: 'Own' })).toBeDefined()
+
+    await choose('House type', 'o2')
+
+    expect(screen.getByLabelText('Number of flats')).toBeDefined()
+    expect(screen.getByText('All flats')).toBeDefined()
+    expect(screen.getByRole('option', { name: 'Central' })).toBeDefined()
+  })
+
   it('renders in the first language without one chosen', () => {
     const translated: FormDocument = {
       format: 1,
@@ -372,6 +404,32 @@ describe('createDocumentForm with steps', () => {
     ])
     expect(screen.getByLabelText('House type')).toBeDefined()
     expect(screen.queryByLabelText('Name *')).toBeNull()
+  })
+
+  it('updates a step description that follows an answer', async () => {
+    const following: FormDocument = {
+      format: 1,
+      steps: [
+        { key: 'building', label: 'Building', items: [houseType] },
+        {
+          key: 'contact',
+          label: 'Contact',
+          description: {
+            cases: [{ when: isApartmentBlock, value: 'Caretaker' }],
+            otherwise: 'Owner',
+          },
+          items: [field('name', 'text', { label: 'Name' })],
+        },
+      ],
+    }
+    const Form = createDocumentForm(following, catalog)
+    render(<Form />)
+
+    expect(screen.getByText('Contact: Owner')).toBeDefined()
+
+    await choose('House type', 'o2')
+
+    expect(screen.getByText('Contact: Caretaker')).toBeDefined()
   })
 
   it('moves on past a required field that does not show, and adds a step once it shows', async () => {

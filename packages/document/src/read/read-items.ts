@@ -1,10 +1,10 @@
 import type { Condition } from '../condition'
 import { failAt } from '../fail-at'
 import type { DocumentItem, FieldItem, RowItem, SectionItem, Varying } from '../form-document'
+import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
 import { looksVarying } from '../looks-varying'
 import { pathTo } from '../path-to'
-import { hasKey } from './has-key'
 import { readCondition } from './read-condition'
 import { readJson } from './read-json'
 import { readList } from './read-list'
@@ -14,6 +14,8 @@ import { readOptionalText } from './read-optional-text'
 import { readShape, type Shape } from './read-shape'
 import { readText } from './read-text'
 import { readTranslatableText } from './read-translatable-text'
+import { readVarying } from './read-varying'
+import { readVaryingText } from './read-varying-text'
 import { readVisibleWhen } from './read-visible-when'
 import { withOptional } from './with-optional'
 
@@ -31,36 +33,30 @@ const FIELD_KEYS = [
 ]
 const ROW_KEYS = ['type', 'visibleWhen', 'items']
 const SECTION_KEYS = ['type', 'label', 'description', 'visibleWhen', 'items']
-const VARYING_KEYS = ['cases', 'otherwise']
-const CASE_KEYS = ['when', 'value']
+const OPTION_TEXTS = ['label', 'description']
 
 const readRequired = (value: unknown, path: string): boolean | Condition =>
   typeof value === 'boolean' ? value : readCondition(value, path)
 
-const readCase = (value: unknown, path: string): Varying['cases'][number] => {
-  const shape = readShape(value, path)
-  readOnlyKeys(shape, CASE_KEYS, path)
-
-  return {
-    when: readCondition(shape.when, `${path}.when`),
-    value: readJson(shape.value, `${path}.value`),
+const readOption = (value: unknown, path: string): JsonValue => {
+  const entry = readJson(value, path)
+  if (!isPlainObject(value) || !OPTION_TEXTS.some((name) => looksVarying(value[name]))) {
+    return entry
   }
+  const texts = OPTION_TEXTS.filter((name) => looksVarying(value[name])).map((name) => [
+    name,
+    readVaryingText(value[name], `${path}.${name}`),
+  ])
+  return { ...(entry as Record<string, JsonValue>), ...Object.fromEntries(texts) }
 }
 
-const readVarying = (shape: Shape, path: string): Varying => {
-  readOnlyKeys(shape, VARYING_KEYS, path)
-  const cases = readList(shape.cases, `${path}.cases`).map((entry, index) =>
-    readCase(entry, pathTo.case(path, index)),
-  )
-  if (!hasKey(shape, 'otherwise')) {
-    failAt(`${path}.otherwise`, 'expected a value.')
-  }
-
-  return { cases, otherwise: readJson(shape.otherwise, `${path}.otherwise`) }
-}
+const readSettingValue = (value: unknown, path: string): JsonValue =>
+  Array.isArray(value)
+    ? value.map((entry, index) => readOption(entry, `${path}[${index}]`))
+    : readJson(value, path)
 
 const readSetting = (value: unknown, path: string): JsonValue | Varying =>
-  looksVarying(value) ? readVarying(value, path) : readJson(value, path)
+  looksVarying(value) ? readVarying(value, path, readSettingValue) : readSettingValue(value, path)
 
 const readSettings = (value: unknown, path: string): Record<string, JsonValue | Varying> =>
   Object.fromEntries(
@@ -77,7 +73,7 @@ const readField = (shape: Shape, path: string): FieldItem => {
     type: 'field',
     key: readText(shape.key, `${path}.key`),
     kind: readText(shape.kind, `${path}.kind`),
-    label: readTranslatableText(shape.label, `${path}.label`),
+    label: readVaryingText(shape.label, `${path}.label`),
     ...withOptional('description', readOptionalText(shape.description, `${path}.description`)),
     ...withOptional(
       'required',
