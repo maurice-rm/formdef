@@ -34,6 +34,7 @@ export type {
   DocumentStep,
   FieldItem,
   FormDocument,
+  Jump,
   RowItem,
   SectionItem,
   Varying,

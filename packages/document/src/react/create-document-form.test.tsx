@@ -613,6 +613,37 @@ describe('createDocumentForm with steps', () => {
     expect(screen.queryByLabelText('Name *')).toBeNull()
   })
 
+  it('leaves the steps a jump passes over out of the stepper once its condition holds', async () => {
+    const jumping: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 'building',
+          label: 'Building',
+          items: [houseType],
+          next: [{ when: isApartmentBlock, step: 'contact' }],
+        },
+        { key: 'owner', label: 'Owner', items: [field('owner', 'text', { label: 'Owner' })] },
+        { key: 'contact', label: 'Contact', items: [field('name', 'text', { label: 'Name' })] },
+      ],
+    }
+    const Form = createDocumentForm(jumping, catalog)
+    render(<Form />)
+
+    expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      'Building',
+      'Owner',
+      'Contact',
+    ])
+
+    await choose('House type', 'o2')
+
+    expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      'Building',
+      'Contact',
+    ])
+  })
+
   it('renders the formatting of a step description, without links', () => {
     const formatted: FormDocument = {
       format: 1,

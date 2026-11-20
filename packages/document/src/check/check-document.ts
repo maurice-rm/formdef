@@ -6,6 +6,7 @@ import type {
   DocumentStep,
   FieldItem,
   FormDocument,
+  Jump,
 } from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
 import { optionValuesOf } from '../kinds/option-values-of'
@@ -172,6 +173,27 @@ const checkItem = (item: DocumentItem, level: Level): void => {
   })
 }
 
+// A jump applies once the person moves on, so its condition reads the step's own answers too.
+type StepOrder = { at: At; laterSteps: readonly string[]; allStepKeys: readonly string[] }
+
+const checkJumps = (
+  jumps: readonly Jump[] | undefined,
+  { at, laterSteps, allStepKeys }: StepOrder,
+): void => {
+  jumps?.forEach((jump, index) => {
+    const jumpPath = `${at.path}.next[${index}]`
+    checkCondition(jump.when, `${jumpPath}.when`, at.walk)
+    if (laterSteps.includes(jump.step)) {
+      return
+    }
+    report(at.walk, {
+      code: allStepKeys.includes(jump.step) ? 'backwardJump' : 'unknownStep',
+      path: `${jumpPath}.step`,
+      params: { step: jump.step },
+    })
+  })
+}
+
 const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
   const allStepKeys = steps.map((step) => step.key)
   const stepKeys = new Set<string>()
@@ -192,6 +214,11 @@ const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
       at: { walk, path: `${path}.items` },
       seenKeys: fieldKeys,
       sections: 0,
+    })
+    checkJumps(step.next, {
+      at: { walk, path },
+      laterSteps: allStepKeys.slice(index + 1),
+      allStepKeys,
     })
   })
 }

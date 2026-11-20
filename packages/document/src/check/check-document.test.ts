@@ -3,7 +3,7 @@ import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import type { Expression } from '../expression'
-import type { ComputedItem, FieldItem, FormDocument } from '../form-document'
+import type { ComputedItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineBlockKind } from '../kinds/define-block-kind'
 import { defineDisplayKind } from '../kinds/define-display-kind'
@@ -1180,6 +1180,58 @@ describe('checkDocument with blocks', () => {
 
 const Stepper = (_: StepperProps<{ icon?: string }> & { variant?: 'circles' | 'rail' }) => null
 const Section = (_: SectionProps & { tone?: string }) => null
+
+describe('checkDocument with jumps', () => {
+  const step = (key: string, extra: Partial<DocumentStep> = {}): DocumentStep => ({
+    key,
+    label: key,
+    items: [{ type: 'field', key: `f-${key}`, kind: 'yesNo', label: key }],
+    ...extra,
+  })
+
+  it('takes a jump forward on an answer of its own step or an earlier one', () => {
+    const document: FormDocument = {
+      format: 1,
+      steps: [
+        step('s1'),
+        step('s2', { next: [{ when: { field: 'f-s2', op: 'isTrue' }, step: 's4' }] }),
+        step('s3'),
+        step('s4'),
+      ],
+    }
+
+    expect(checkDocument(document, catalog)).toEqual([])
+  })
+
+  it('reports a jump to a missing step, to itself or back, and on a later answer', () => {
+    const document: FormDocument = {
+      format: 1,
+      steps: [
+        step('s1'),
+        step('s2', {
+          next: [
+            { when: { field: 'f-s2', op: 'isTrue' }, step: 's9' },
+            { when: { field: 'f-s2', op: 'isTrue' }, step: 's2' },
+            { when: { field: 'f-s2', op: 'isTrue' }, step: 's1' },
+            { when: { field: 'f-s3', op: 'isTrue' }, step: 's3' },
+          ],
+        }),
+        step('s3'),
+      ],
+    }
+
+    expect(checkDocument(document, catalog)).toEqual([
+      { code: 'unknownStep', path: 'document.steps[1].next[0].step', params: { step: 's9' } },
+      { code: 'backwardJump', path: 'document.steps[1].next[1].step', params: { step: 's2' } },
+      { code: 'backwardJump', path: 'document.steps[1].next[2].step', params: { step: 's1' } },
+      {
+        code: 'laterField',
+        path: 'document.steps[1].next[3].when.field',
+        params: { field: 'f-s3' },
+      },
+    ])
+  })
+})
 
 describe('checkDocument with displays', () => {
   const withSlots = registry.extendRegistry({ structure: { stepper: Stepper, section: Section } })

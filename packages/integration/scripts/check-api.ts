@@ -95,6 +95,7 @@ const ENTRIES: readonly Entry[] = [
       'FormattedSetting',
       'FormDocument',
       'insertNode',
+      'Jump',
       'IssueParams',
       'JsonValue',
       'Messages',

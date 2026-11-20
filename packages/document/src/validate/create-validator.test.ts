@@ -361,6 +361,55 @@ describe('createValidator', () => {
     expect(validate(document, { f1: 'o1' }).issues?.[0]?.message).toBe('Name the owner.')
   })
 
+  it('validates no step a jump passes over, and leaves its answers out', () => {
+    const document: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'House',
+          items: [field('rented', 'consent')],
+          next: [{ when: { field: 'rented', op: 'isTrue' }, step: 's3' }],
+        },
+        { key: 's2', label: 'Owner', items: [field('owner', 'text', { required: true })] },
+        { key: 's3', label: 'Contact', items: [field('name', 'text', { required: true })] },
+      ],
+    }
+
+    expect(
+      validate(document, { s1: { rented: true }, s2: { owner: '' }, s3: { name: 'Ada' } }),
+    ).toEqual({ value: { s1: { rented: true }, s3: { name: 'Ada' } } })
+    expect(codesOf(validate(document, { s1: { rented: false }, s3: { name: 'Ada' } }))).toEqual([
+      { path: ['s2', 'owner'], code: 'required' },
+    ])
+  })
+
+  it('goes on after a jump target its own condition hides', () => {
+    const document: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'House',
+          items: [field('rented', 'consent')],
+          next: [{ when: { field: 'rented', op: 'isTrue' }, step: 's3' }],
+        },
+        { key: 's2', label: 'Owner', items: [field('owner', 'text')] },
+        {
+          key: 's3',
+          label: 'Tenant',
+          visibleWhen: { field: 'rented', op: 'isFalse' },
+          items: [field('tenant', 'text')],
+        },
+        { key: 's4', label: 'Contact', items: [field('name', 'text', { required: true })] },
+      ],
+    }
+
+    expect(codesOf(validate(document, { s1: { rented: true } }))).toEqual([
+      { path: ['s4', 'name'], code: 'required' },
+    ])
+  })
+
   describe('with checks against other answers', () => {
     const living = field('f1', 'measure', { label: 'Living area' })
     const heated = (checks: FieldItem['checks']): FieldItem =>

@@ -76,6 +76,8 @@ and the `params` an error text names. The text is the project's, keyed by the co
 | `unknownLanguage` | a translation into a language the document does not name | `language` |
 | `fixedText` | a placeholder in the label of a step or section or in a display's setting, which names no answers | `field` |
 | `unknownParam` | a placeholder in a field's own error text that its code has no param for | `param`, `code` |
+| `unknownStep` | a jump to a step the document does not hold | `step` |
+| `backwardJump` | a jump to the step itself or an earlier one | `step` |
 | `unknownOperation` | an operation of an expression the package does not know | `op` |
 | `operandMismatch` | an operand of the wrong kind or number, such as text to `add`, or an answer read that is no number, text or date | `op`, `expected` |
 | `resultMismatch` | a computed value of a value type other than `number`, `text` or `date`, or whose expression comes to another | `valueType`, and `result` for the expression |
@@ -144,8 +146,8 @@ else setDocument(removeNode(document, position))
 `splitIntoSteps` turns a plain form into one with steps: its items become the items of one step,
 and further steps are inserted after it. `dissolveSteps` turns the steps back into sections, each
 with the step's label, description and condition. A section of a step now sits one level deeper,
-where `checkDocument` may report it as `tooDeep`. The displays of the form and of its steps apply to
-steps only and are left out.
+where `checkDocument` may report it as `tooDeep`. The displays of the form and of its steps, and the
+jumps of its steps, apply to steps only and are left out.
 
 ```ts
 import { createKey, dissolveSteps, insertNode, splitIntoSteps, type FormDocument } from '@formdef/document'

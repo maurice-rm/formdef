@@ -5,8 +5,8 @@ import type { FormDocument, SectionItem } from '../form-document'
 /**
  * Turns a form with steps into one without: each step becomes a section with the step's label,
  * description, condition and items. A section of a step now sits one level deeper, and one nested
- * too deep {@link checkDocument} reports. The displays of the form and of its steps apply to steps
- * only and are left out.
+ * too deep {@link checkDocument} reports. The displays of the form and of its steps, and the jumps
+ * of its steps, apply to steps only and are left out.
  *
  * @param document - The document, with steps.
  * @returns The document without steps, in the same languages.

@@ -44,11 +44,19 @@ describe('dissolveSteps', () => {
     })
   })
 
-  it('leaves out the displays of the form and of its steps, which need steps', () => {
+  it('leaves out the displays and jumps of the form and its steps, which need steps', () => {
     const stepped: FormDocument = {
       format: 1,
       display: { kind: 'rail' },
-      steps: [{ key: 's1', label: 'Building', display: { kind: 'icon' }, items: [field('f1')] }],
+      steps: [
+        {
+          key: 's1',
+          label: 'Building',
+          display: { kind: 'icon' },
+          next: [{ when: { field: 'f1', op: 'isFilled' }, step: 's1' }],
+          items: [field('f1')],
+        },
+      ],
     }
 
     expect(dissolveSteps(stepped)).toEqual({

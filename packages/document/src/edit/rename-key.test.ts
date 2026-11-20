@@ -126,6 +126,26 @@ describe('renameKey', () => {
     )
   })
 
+  it('renames a step a jump goes to, and the field in the jump condition', () => {
+    const jumping: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'House',
+          items: [field('f1')],
+          next: [{ when: { field: 'f1', op: 'isFilled' }, step: 's2' }],
+        },
+        { key: 's2', label: 'Owner', items: [field('f2')] },
+      ],
+    }
+    const renamed = renameKey(renameKey(jumping, 's2', 'owner'), 'f1', 'rented')
+
+    expect(renamed.steps?.[0]?.next).toEqual([
+      { when: { field: 'rented', op: 'isFilled' }, step: 'owner' },
+    ])
+  })
+
   it('renames the field a comparison compares with', () => {
     const compared: FormDocument = {
       format: 1,

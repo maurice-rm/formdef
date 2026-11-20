@@ -140,8 +140,17 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
     'description' in node && node.description !== undefined
       ? { description: renameInCases(node.description, rename) }
       : {}
+  const jumps =
+    isStep(node) && node.next !== undefined
+      ? {
+          next: node.next.map((jump) => ({
+            when: renameIn(jump.when, rename),
+            step: jump.step === rename.from ? rename.to : jump.step,
+          })),
+        }
+      : {}
   const renamed = renamePlaceholdersIn(
-    { ...node, ...visibility, ...description, items } as DocumentNode,
+    { ...node, ...visibility, ...description, ...jumps, items } as DocumentNode,
     rename,
   )
   return isStep(renamed) && renamed.key === rename.from ? { ...renamed, key: rename.to } : renamed

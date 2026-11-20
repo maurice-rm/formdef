@@ -44,6 +44,8 @@ export type Evaluation = {
   shown: ShownField[]
   /** The computed values that count, in document order. */
   computed: ShownComputed[]
+  /** The keys of the steps that show: by their condition, and not passed over by a jump. */
+  shownSteps: Set<string>
   answers: Answers
 }
 
@@ -61,6 +63,7 @@ type EvaluationWalk = {
   answers: Answers
   shown: ShownField[]
   computed: ShownComputed[]
+  shownSteps: Set<string>
 }
 
 type Container = {
@@ -153,7 +156,8 @@ const walkItems = (
 /**
  * Evaluates a document for these values, its settings resolved in the language. A field shows
  * when it and every step, section and row around it show; a field that does not show counts as
- * empty in the conditions after it, whatever value it still holds.
+ * empty in the conditions after it, whatever value it still holds. A step a jump passes over does
+ * not show.
  *
  * @throws When a field is of a field kind that is not registered.
  */
@@ -168,18 +172,33 @@ export function evaluate(
     get: (key) => filled.get(key),
     valueTypeOf: (key) => valueTypes.get(key),
   }
-  const walk: EvaluationWalk = { catalog, language, filled, answers, shown: [], computed: [] }
+  const walk: EvaluationWalk = {
+    catalog,
+    language,
+    filled,
+    answers,
+    shown: [],
+    computed: [],
+    shownSteps: new Set(),
+  }
   const root = objectOf(values)
 
   if (document.steps === undefined) {
     walkItems(document.items, { values: root, path: [] }, walk)
     return walk
   }
+  let jumpTarget: string | undefined
   for (const step of document.steps) {
+    if (jumpTarget !== undefined && step.key !== jumpTarget) {
+      continue
+    }
+    jumpTarget = undefined
     if (!isShown(step, walk)) {
       continue
     }
     walkItems(step.items, { values: objectOf(root[step.key]), path: [step.key] }, walk)
+    walk.shownSteps.add(step.key)
+    jumpTarget = step.next?.find((jump) => holds(jump.when, walk.answers))?.step
   }
   return walk
 }

@@ -55,7 +55,7 @@ a field may be is decided in code, once: by the project's [field kinds](/documen
   one this release writes. A document of a newer format is refused when it is read.
 - A document holds either `items`, a plain form, or `steps`, filled in one at a time. A step has a
   `key`, a `label`, an optional `description` under the label in the stepper, an optional
-  `visibleWhen`, and its `items`.
+  `visibleWhen`, optional [jumps](#jumps) under `next`, and its `items`.
 - An item is a **field**, a **block** of content without an answer, a
   [**computed value**](#computed-values), a **row** of fields, blocks and computed values side by
   side, or a **section**: a `label` over its `items`, and an optional `description` under it. A
@@ -240,6 +240,27 @@ a `value` that does not fit, is missing, or is given to an operator that compare
 - While the other field has no answer, the comparison does not hold, negated or not.
 - A comparison holds either `value` or `valueFrom`; `readDocument` refuses one with both, and
   `checkDocument` reports the `value` of one built that way as `valueMismatch`.
+
+## Jumps
+
+A step may jump forward when the person moves on: the first jump under `next` whose condition
+holds goes on with the step it names, and the steps in between do not show.
+
+```json
+{
+  "key": "s1",
+  "label": "House",
+  "next": [{ "when": { "field": "f1", "op": "equals", "value": "o2" }, "step": "s4" }],
+  "items": []
+}
+```
+
+- A jump is visibility in disguise: the steps it passes over are left out of the stepper, not
+  validated, and their answers are left out of the validator's `value` and `describeAnswers`.
+- Its condition reads the answers of its own step and those before it.
+- It goes forward only, so the form cannot loop. `checkDocument` reports a jump to a step the
+  document does not hold as `unknownStep`, and one to the step itself or an earlier one as
+  `backwardJump`.
 
 ## Computed values
 

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import type { Condition } from '../condition'
 import type { DocumentValues } from '../document-values'
 import type { Answers } from '../evaluate/answers'
-import { evaluate } from '../evaluate/evaluate'
+import { type Evaluation, evaluate } from '../evaluate/evaluate'
 import { holds } from '../evaluate/holds'
 import { isRequired } from '../evaluate/is-required'
 import { resolveFormattedText } from '../evaluate/resolve-formatted-text'
@@ -50,6 +50,7 @@ type Parts = Omit<DocumentConfig, 'schema'>
 type Build = {
   catalog: Catalog<unknown, ValueType>
   language: string | undefined
+  evaluationOf: (values: unknown) => Evaluation
   answersOf: (values: unknown) => Answers
 }
 
@@ -204,11 +205,12 @@ const emptyValuesOf = (
     value: kindOf(build.catalog, field).valueType.emptyValue,
   }))
 
+// A step shows by its condition and the jumps before it, which the evaluation follows.
 const stepEntry = (step: DocumentStep, build: Build): Entry => ({
   step: step.key,
   label: textOf(step.label, build),
   ...slotProps(step, build, formatTextWithoutLinks),
-  ...visibility(step, build),
+  visibleWhen: (values: unknown) => build.evaluationOf(values).shownSteps.has(step.key),
 })
 
 const stepperOf = (display: Display | undefined, build: Build): Pick<Parts, 'stepper'> => {
@@ -247,6 +249,7 @@ export function documentConfig(
   const build: Build = {
     catalog,
     language,
+    evaluationOf: (values) => evaluate(document, catalog, { values, language }),
     answersOf: (values) => evaluate(document, catalog, { values, language }).answers,
   }
   const parts =

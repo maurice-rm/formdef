@@ -4,6 +4,7 @@ import type { DocumentNode, FormDocument, Varying } from './form-document'
 import { isField } from './is-field'
 import { isLeaf } from './is-leaf'
 import { isPlainObject } from './is-plain-object'
+import { isStep } from './is-step'
 import { isVarying } from './is-varying'
 import type { JsonValue } from './json-value'
 import { looksVarying } from './looks-varying'
@@ -78,7 +79,13 @@ const ownConditions = (node: DocumentNode, path: string): Placed[] => {
       : [{ condition: node.visibleWhen, path: pathTo.visibleWhen(path) }]
   if (!isLeaf(node)) {
     const description = 'description' in node ? node.description : undefined
-    return [...own, ...casesOf(description, `${path}.description`)]
+    const jumps = isStep(node)
+      ? (node.next ?? []).map((jump, index) => ({
+          condition: jump.when,
+          path: `${path}.next[${index}].when`,
+        }))
+      : []
+    return [...own, ...casesOf(description, `${path}.description`), ...jumps]
   }
   if (node.type === 'computed') {
     return [

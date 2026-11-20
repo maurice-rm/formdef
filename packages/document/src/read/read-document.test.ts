@@ -434,6 +434,31 @@ describe('readDocument with languages', () => {
     ).toThrow('formdef: document.items[0].label: unknown key.')
   })
 
+  it('reads the jumps of a step, each a condition and the step it goes to', () => {
+    const jumping = (next: unknown) => ({
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'House',
+          next,
+          items: [{ type: 'field', key: 'f1', kind: 'check', label: 'Rented' }],
+        },
+        {
+          key: 's2',
+          label: 'Owner',
+          items: [{ type: 'field', key: 'f2', kind: 'text', label: 'Name' }],
+        },
+      ],
+    })
+    const next = [{ when: { field: 'f1', op: 'isTrue' }, step: 's2' }]
+
+    expect(readDocument(jumping(next))).toEqual(jumping(next))
+    expect(() => readDocument(jumping([{ when: next[0]?.when, to: 's2' }]))).toThrow(
+      'formdef: document.steps[0].next[0].to: unknown key.',
+    )
+  })
+
   it('reads the display of the form, a step, a section and a row', () => {
     const withDisplays = {
       format: 1,
