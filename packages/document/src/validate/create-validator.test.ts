@@ -233,6 +233,15 @@ describe('createValidator', () => {
     ])
   })
 
+  it('reports an option chosen twice as of the wrong type, so it counts once at most', () => {
+    const document = plain(field('f2', 'choices', { settings: { options: HOUSE_TYPES } }))
+
+    expect(codesOf(validate(document, { f2: ['o1', 'o1'] }))).toEqual([
+      { path: ['f2'], code: 'type' },
+    ])
+    expect(validate(document, { f2: ['o1', 'o2'] }).issues).toBeUndefined()
+  })
+
   it('reports an optional answer of the wrong type that reads as empty', () => {
     const document = plain(field('f1', 'consent'), field('f2', 'count'))
 

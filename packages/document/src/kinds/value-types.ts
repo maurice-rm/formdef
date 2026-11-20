@@ -160,7 +160,8 @@ const choices: BuiltIn<readonly string[], 'choices', Chosen, true> = defineValue
   name: 'choices',
   emptyValue: [],
   readsOptions: true,
-  fits: (value): value is readonly string[] => Array.isArray(value) && value.every(isText),
+  fits: (value): value is readonly string[] =>
+    Array.isArray(value) && value.every(isText) && new Set(value).size === value.length,
   isFilled: (value) => value.length > 0,
   describe: (value, options): Chosen | undefined => {
     const chosen = value.map((entry) => optionOf(options, entry))
