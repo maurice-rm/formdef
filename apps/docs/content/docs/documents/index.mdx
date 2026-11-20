@@ -282,6 +282,10 @@ each a `key`, an optional `when` and blocks, whose texts may name any answer.
 - A jump that ends the form applies its ending. Otherwise the first ending whose `when` holds
   applies, and one without `when` is the fallback. An ending a jump names, such as `e1` above,
   applies only through its jump, never in this order.
+- Once the form is submitted and `onSubmit` is done, `createDocumentForm` shows the ending that
+  applies in place of the form and moves the focus to it; an `onSubmit` that fails, or an ending
+  none of whose blocks shows, keeps the form.
+  `showsEnding: false` leaves the form in place, for a page of the project's own or a redirect.
 - `endingOf(document, catalog, { values })` tells which ending applies, so a server and a
   confirmation email agree with the page.
 - `checkDocument` reports a jump to an ending the document does not hold as `unknownEnding`, and a

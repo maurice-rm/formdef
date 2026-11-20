@@ -521,6 +521,109 @@ describe('createDocumentForm without steps', () => {
   })
 })
 
+describe('createDocumentForm with endings', () => {
+  const withEndings: FormDocument = {
+    format: 1,
+    items: [houseType, field('name', 'text', { label: 'Name' })],
+    endings: [
+      {
+        key: 'block',
+        when: isApartmentBlock,
+        items: [
+          {
+            type: 'block',
+            key: 'b1',
+            kind: 'callout',
+            settings: { body: 'Thanks, **{name}**. We will call the caretaker.' },
+          },
+        ],
+      },
+      {
+        key: 'thanks',
+        items: [
+          { type: 'block', key: 'b2', kind: 'notice', settings: { body: 'Thanks, {name}.' } },
+        ],
+      },
+    ],
+  }
+  const submit = async (): Promise<void> => {
+    await act(async () => {
+      fireEvent.submit(screen.getByRole('form', { name: 'Order' }))
+    })
+  }
+
+  it('shows the ending that applies in place of the form once it is submitted', async () => {
+    const onSubmit = vi.fn()
+    const Form = createDocumentForm(withEndings, catalog)
+    render(<Form aria-label="Order" options={{ onSubmit: ({ value }) => onSubmit(value) }} />)
+
+    await choose('House type', 'o2')
+    await type('Name', 'Ada')
+    await submit()
+
+    expect(onSubmit).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('form', { name: 'Order' })).toBeNull()
+    const notice = screen.getByRole('complementary', { name: 'Notice' })
+    expect(notice.textContent).toBe('Thanks, Ada. We will call the caretaker.')
+    expect(screen.getByText('Ada').tagName).toBe('STRONG')
+    expect(notice.closest('[tabindex="-1"]')).toBe(document.activeElement)
+  })
+
+  it('keeps the form when the ending that applies shows none of its blocks', async () => {
+    const hidden: FormDocument = {
+      ...withEndings,
+      endings: [
+        {
+          key: 'thanks',
+          items: [
+            {
+              type: 'block',
+              key: 'b1',
+              kind: 'notice',
+              settings: { body: 'Thanks.' },
+              visibleWhen: isApartmentBlock,
+            },
+          ],
+        },
+      ],
+    }
+    const Form = createDocumentForm(hidden, catalog)
+    render(<Form aria-label="Order" />)
+
+    await submit()
+
+    expect(screen.getByRole('form', { name: 'Order' })).toBeDefined()
+  })
+
+  it('keeps the form until onSubmit is done, and when the project shows the ending itself', async () => {
+    let finish = (): void => undefined
+    const Slow = createDocumentForm(withEndings, catalog)
+    const { unmount } = render(
+      <Slow
+        aria-label="Order"
+        options={{
+          onSubmit: () =>
+            new Promise<void>((resolve) => {
+              finish = resolve
+            }),
+        }}
+      />,
+    )
+    await submit()
+    expect(screen.getByRole('form', { name: 'Order' })).toBeDefined()
+    await act(async () => {
+      finish()
+    })
+    expect(screen.queryByRole('form', { name: 'Order' })).toBeNull()
+    unmount()
+
+    const Own = createDocumentForm(withEndings, catalog, { showsEnding: false })
+    render(<Own aria-label="Order" />)
+    await submit()
+    expect(screen.getByRole('form', { name: 'Order' })).toBeDefined()
+  })
+})
+
 describe('createDocumentForm with blocks', () => {
   it('renders a block through its form component, as its condition and placeholders say', async () => {
     const Form = createDocumentForm(
