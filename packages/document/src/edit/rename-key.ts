@@ -20,25 +20,9 @@ import { mapOptionLists } from '../map-option-lists'
 import { mapStrings } from '../map-strings'
 import { OWN_TEXT_KEYS } from '../own-text-keys'
 import { renamePlaceholder } from '../rename-placeholder'
-
-type Rename = { from: string; to: string }
+import { type Rename, renameInCondition } from './rename-in-condition'
 
 const renamedKey = (key: string, rename: Rename): string => (key === rename.from ? rename.to : key)
-
-const renameIn = (condition: Condition, rename: Rename): Condition => {
-  if ('all' in condition) {
-    return { all: condition.all.map((entry) => renameIn(entry, rename)) }
-  }
-  if ('any' in condition) {
-    return { any: condition.any.map((entry) => renameIn(entry, rename)) }
-  }
-  const renamed = (key: string): string => (key === rename.from ? rename.to : key)
-  return {
-    ...condition,
-    field: renamed(condition.field),
-    ...(condition.valueFrom === undefined ? {} : { valueFrom: renamed(condition.valueFrom) }),
-  }
-}
 
 const renameInCases = <TValue>(value: TValue, rename: Rename): TValue => {
   if (!looksVarying(value) || !Array.isArray(value.cases)) {
@@ -46,7 +30,7 @@ const renameInCases = <TValue>(value: TValue, rename: Rename): TValue => {
   }
   const cases = (value.cases as { when: Condition }[]).map((entry) => ({
     ...entry,
-    when: renameIn(entry.when, rename),
+    when: renameInCondition(entry.when, rename),
   }))
   return { ...value, cases } as TValue
 }
@@ -82,7 +66,9 @@ const renameInSettings = (
 
 const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
   ...renameInTexts(field, rename),
-  ...(typeof field.required === 'object' ? { required: renameIn(field.required, rename) } : {}),
+  ...(typeof field.required === 'object'
+    ? { required: renameInCondition(field.required, rename) }
+    : {}),
   ...renameInSettings(field, rename),
   ...(field.messages === undefined
     ? {}
@@ -95,7 +81,7 @@ const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
     ? {}
     : {
         checks: field.checks.map((check) => ({
-          when: renameIn(check.when, rename),
+          when: renameInCondition(check.when, rename),
           ...(check.message === undefined ? {} : { message: renameInCases(check.message, rename) }),
         })),
       }),
@@ -105,14 +91,14 @@ const renameInExpression = (expression: Expression, rename: Rename): Expression 
   if ('field' in expression) {
     const when =
       'when' in expression && expression.when !== undefined
-        ? { when: renameIn(expression.when, rename) }
+        ? { when: renameInCondition(expression.when, rename) }
         : {}
     return { ...expression, field: renamedKey(expression.field, rename), ...when }
   }
   if ('cases' in expression) {
     return {
       cases: expression.cases.map((entry) => ({
-        when: renameIn(entry.when, rename),
+        when: renameInCondition(entry.when, rename),
         value: renameInExpression(entry.value, rename),
       })),
       otherwise: renameInExpression(expression.otherwise, rename),
@@ -139,7 +125,7 @@ const renamePlaceholdersIn = <TNode extends DocumentNode>(node: TNode, rename: R
 }
 
 const renameInJump = (jump: Jump, rename: Rename): Jump => {
-  const when = renameIn(jump.when, rename)
+  const when = renameInCondition(jump.when, rename)
   return jump.end === undefined
     ? { when, step: renamedKey(jump.step, rename) }
     : { when, end: renamedKey(jump.end, rename) }
@@ -147,7 +133,7 @@ const renameInJump = (jump: Jump, rename: Rename): Jump => {
 
 const renameInEnding = (ending: Ending, rename: Rename): Ending => ({
   key: renamedKey(ending.key, rename),
-  ...(ending.when === undefined ? {} : { when: renameIn(ending.when, rename) }),
+  ...(ending.when === undefined ? {} : { when: renameInCondition(ending.when, rename) }),
   items: ending.items.map((block) => renameInNode(block, rename) as BlockItem),
 })
 
@@ -156,7 +142,9 @@ const withRenamedKey = <TNode extends DocumentNode>(node: TNode, rename: Rename)
 
 const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
   const visibility =
-    node.visibleWhen === undefined ? {} : { visibleWhen: renameIn(node.visibleWhen, rename) }
+    node.visibleWhen === undefined
+      ? {}
+      : { visibleWhen: renameInCondition(node.visibleWhen, rename) }
   if (isLeaf(node)) {
     const own = isField(node)
       ? renameInField(node, rename)
