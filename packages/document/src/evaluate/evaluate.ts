@@ -1,4 +1,5 @@
 import type { Condition } from '../condition'
+import { fieldsOf } from '../fields-of'
 import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
 import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
@@ -32,7 +33,8 @@ export type Evaluation = {
 
 type EvaluationWalk = {
   catalog: Catalog<unknown, ValueType>
-  answers: Map<string, Answer>
+  filled: Map<string, Answer>
+  answers: Answers
   shown: ShownField[]
 }
 
@@ -60,8 +62,22 @@ const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk)
     settings: resolveSettings(field, walk.answers),
   })
   if (isFilled(value, kind.valueType)) {
-    walk.answers.set(field.key, { value, valueType: kind.valueType })
+    walk.filled.set(field.key, { value, valueType: kind.valueType })
   }
+}
+
+const valueTypesOf = (
+  document: FormDocument,
+  catalog: Catalog<unknown, ValueType>,
+): ReadonlyMap<string, ValueType> => {
+  const items =
+    document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
+  return new Map(
+    fieldsOf(items).flatMap((field) => {
+      const kind = catalog.findFieldKind(field.kind)
+      return kind === undefined ? [] : [[field.key, kind.valueType] as const]
+    }),
+  )
 }
 
 const walkItems = (
@@ -93,7 +109,13 @@ export function evaluate(
   catalog: Catalog<unknown, ValueType>,
   values: unknown,
 ): Evaluation {
-  const walk: EvaluationWalk = { catalog, answers: new Map(), shown: [] }
+  const filled = new Map<string, Answer>()
+  const valueTypes = valueTypesOf(document, catalog)
+  const answers: Answers = {
+    get: (key) => filled.get(key),
+    valueTypeOf: (key) => valueTypes.get(key),
+  }
+  const walk: EvaluationWalk = { catalog, filled, answers, shown: [] }
   const root = objectOf(values)
 
   if (document.steps === undefined) {

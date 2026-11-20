@@ -57,4 +57,19 @@ describe('setting', () => {
       varies: false,
     })
   })
+
+  it('describes one option of the field, and several', () => {
+    expect(setting.option({ label: 'Option', required: true })).toEqual({
+      type: 'option',
+      label: 'Option',
+      required: true,
+      varies: false,
+    })
+    expect(setting.optionList({ label: 'Options' })).toEqual({
+      type: 'optionList',
+      label: 'Options',
+      required: false,
+      varies: false,
+    })
+  })
 })

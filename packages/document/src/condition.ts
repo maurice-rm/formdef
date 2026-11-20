@@ -1,12 +1,12 @@
-import type { ListOperator, PresenceOperator, ValueOperator } from './operators'
+import type { JsonValue } from './json-value'
 
 /**
  * A condition of a form document: a comparison of one field, or several conditions combined.
  * Conditions decide whether a step, section, row or field shows, whether a field is required, and
  * which case of a varying setting applies.
  *
- * Which operators fit a field follows from its field kind; a document is checked for that before
- * it is used.
+ * The operators come from the value type of the field compared, and each says what it compares
+ * with; {@link checkDocument} checks a document's conditions against its catalog before it is used.
  *
  * @example
  * ```ts
@@ -18,24 +18,14 @@ export type Condition =
   | {
       /** The key of the field compared. */
       field: string
-      /** How the field is compared. */
-      op: PresenceOperator
-    }
-  | {
-      /** The key of the field compared. */
-      field: string
-      /** How the field is compared. */
-      op: ValueOperator
-      /** The value compared with: an option's value, a number, or a date as an ISO string. */
-      value: string | number
-    }
-  | {
-      /** The key of the field compared. */
-      field: string
-      /** How the field is compared. */
-      op: ListOperator
-      /** The option values compared with. */
-      value: string[]
+      /** The operator of the field's value type that compares it, such as `equals`. */
+      op: string
+      /**
+       * What the field is compared with, as the operator's setting describes it, such as an
+       * option's value, a list of them, a number or a date; left out when the operator compares
+       * with nothing, such as `isFilled`.
+       */
+      value?: JsonValue
     }
   | {
       /** Holds when every one of these conditions holds. */

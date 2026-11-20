@@ -29,11 +29,19 @@ type ValueSettingOptions<TRequired extends boolean> = SettingOptions & {
 }
 
 /** The kinds of value a setting holds. */
-export type SettingType = 'text' | 'number' | 'boolean' | 'options' | 'date'
+export type SettingType =
+  | 'text'
+  | 'number'
+  | 'boolean'
+  | 'options'
+  | 'option'
+  | 'optionList'
+  | 'date'
 
 /**
  * One setting of a field kind, described as data: what a person may change on a field, with its
- * type and constraints. A builder renders its settings panel from these.
+ * type and constraints. A builder renders its settings panel from these, and the input for the
+ * value an operator compares with, which an operator describes as a setting too.
  *
  * @typeParam TValue - The value the setting holds, as the field kind's `props` and `rules` receive
  *   it.
@@ -121,6 +129,24 @@ type Settings = {
     },
   ) => Setting<SettingOption[]>
   /**
+   * The value of one option of the field, such as one preselected; an operator that compares a
+   * choice with one option compares with this.
+   *
+   * @typeParam TRequired - Whether the setting must be set; without, its value may be `undefined`.
+   */
+  option: <TRequired extends boolean = false>(
+    options: ValueSettingOptions<TRequired>,
+  ) => Setting<Filled<string, TRequired>>
+  /**
+   * The values of several options of the field; an operator that compares a choice with a list of
+   * options, such as `in`, compares with this.
+   *
+   * @typeParam TRequired - Whether the setting must be set; without, its value may be `undefined`.
+   */
+  optionList: <TRequired extends boolean = false>(
+    options: ValueSettingOptions<TRequired>,
+  ) => Setting<Filled<string[], TRequired>>
+  /**
    * A date as an ISO string, such as the earliest date allowed.
    *
    * @typeParam TRequired - Whether the setting must be set; without, its value may be `undefined`.
@@ -156,5 +182,7 @@ export const setting: Settings = {
   number: (options) => createSetting('number', options),
   boolean: (options) => createSetting('boolean', options),
   options: (options) => createSetting('options', { ...options, required: true }),
+  option: (options) => createSetting('option', options),
+  optionList: (options) => createSetting('optionList', options),
   date: (options) => createSetting('date', options),
 }

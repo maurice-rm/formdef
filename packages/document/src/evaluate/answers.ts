@@ -7,7 +7,11 @@ export type Answer = {
 }
 
 /**
- * The answers conditions compare, by field key: only of fields that show, are filled and hold a
- * value of their value type. A field missing here counts as empty.
+ * The answers conditions compare: by field key, the answer of a field that shows, is filled and
+ * holds a value of its value type, and the value type of every field of the document, which
+ * decides how a condition compares it. A field without an answer counts as empty.
  */
-export type Answers = ReadonlyMap<string, Answer>
+export type Answers = {
+  get: (key: string) => Answer | undefined
+  valueTypeOf: (key: string) => ValueType | undefined
+}

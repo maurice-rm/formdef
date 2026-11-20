@@ -171,7 +171,29 @@ describe('readDocument', () => {
     expect(() => readDocument(broken)).toThrow('formdef: document.items[0].lable: unknown key.')
   })
 
-  it('refuses a condition with an unknown operator', () => {
+  it('reads a comparison of any operator and value, which checkDocument checks against the catalog', () => {
+    const comparisons = [
+      { field: 'f0', op: 'resembles', value: { near: 'x' } },
+      { field: 'f0', op: 'equals' },
+      { field: 'f0', op: 'in', value: 'o1' },
+    ]
+    const document = readDocument({
+      format: 1,
+      items: comparisons.map((visibleWhen, index) => ({
+        type: 'field',
+        key: `f${index + 1}`,
+        kind: 'text',
+        label: 'Name',
+        visibleWhen,
+      })),
+    })
+
+    expect('items' in document && document.items.map((item) => item.visibleWhen)).toEqual(
+      comparisons,
+    )
+  })
+
+  it('refuses a comparison without an operator', () => {
     const broken = {
       format: 1,
       items: [
@@ -180,13 +202,13 @@ describe('readDocument', () => {
           key: 'f1',
           kind: 'text',
           label: 'Name',
-          visibleWhen: { field: 'f0', op: 'resembles', value: 'x' },
+          visibleWhen: { field: 'f0', value: 'x' },
         },
       ],
     }
 
     expect(() => readDocument(broken)).toThrow(
-      'formdef: document.items[0].visibleWhen.op: unknown operator "resembles".',
+      'formdef: document.items[0].visibleWhen.op: expected text.',
     )
   })
 
@@ -205,45 +227,7 @@ describe('readDocument', () => {
     }
 
     expect(() => readDocument(broken)).toThrow(
-      'formdef: document.items[0].visibleWhen.value: expected text or a number.',
-    )
-  })
-
-  it('refuses a comparison without the value it needs', () => {
-    const broken = {
-      format: 1,
-      items: [
-        {
-          type: 'field',
-          key: 'f1',
-          kind: 'text',
-          label: 'Name',
-          visibleWhen: { field: 'f0', op: 'equals' },
-        },
-      ],
-    }
-
-    expect(() => readDocument(broken)).toThrow(
-      'formdef: document.items[0].visibleWhen.value: expected text or a number.',
-    )
-  })
-
-  it('refuses a list operator without a list', () => {
-    const broken = {
-      format: 1,
-      items: [
-        {
-          type: 'field',
-          key: 'f1',
-          kind: 'text',
-          label: 'Name',
-          visibleWhen: { field: 'f0', op: 'in', value: 'o1' },
-        },
-      ],
-    }
-
-    expect(() => readDocument(broken)).toThrow(
-      'formdef: document.items[0].visibleWhen.value: expected a list of text.',
+      'formdef: document.items[0].visibleWhen.value: expected a value.',
     )
   })
 

@@ -43,9 +43,9 @@ and the `params` an error text names. The text is the project's, keyed by the co
 | `unknownKind` | a field of a field kind that is not registered | `kind` |
 | `unknownField` | a condition on a field the document does not hold | `field` |
 | `laterField` | a condition on a field that comes later, or on the field itself | `field` |
-| `operatorMismatch` | an operator that does not fit the value type of the field compared | `op`, `valueType` |
-| `unknownOption` | a compared value that is no option of the choice compared | `field`, `value` |
-| `valueMismatch` | a compared value of the wrong type, such as text for a number | `expected` |
+| `operatorMismatch` | an operator the value type of the field compared does not have | `op`, `valueType` |
+| `unknownOption` | a compared value, or a setting of one option or several, that is no option of the field | `field`, `value` |
+| `valueMismatch` | a compared value of the wrong type, such as text for a number, left out, or given to an operator that compares with nothing | `expected`, the setting type, or `nothing` |
 | `empty` | a step, section or row without items | none |
 | `tooDeep` | a section inside a section inside a section | none |
 | `unknownSetting` | a setting the field kind does not have | `setting` |

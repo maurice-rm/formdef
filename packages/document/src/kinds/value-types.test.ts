@@ -42,6 +42,33 @@ describe('valueTypes', () => {
     expect(valueTypes.number.isFilled(0)).toBe(true)
   })
 
+  it('offer the operators of their kind of answer, and isFilled and isEmpty', () => {
+    const operatorsOf = Object.fromEntries(
+      Object.values(valueTypes).map(({ name, operators }) => [name, Object.keys(operators)]),
+    )
+    const ordered = ['equals', 'notEquals', 'lessThan', 'atMost', 'greaterThan', 'atLeast']
+    const filled = ['isFilled', 'isEmpty']
+
+    expect(operatorsOf).toEqual({
+      text: filled,
+      choice: ['equals', 'notEquals', 'in', 'notIn', ...filled],
+      choices: ['includes', 'excludes', ...filled],
+      boolean: ['isTrue', 'isFalse', ...filled],
+      number: [...ordered, ...filled],
+      decimal: [...ordered, ...filled],
+      date: ['equals', 'before', 'onOrBefore', 'after', 'onOrAfter', ...filled],
+    })
+  })
+
+  it('compare with a setting: an option, a list of them, a number or a date', () => {
+    expect(valueTypes.choice.operators.equals?.compares?.type).toBe('option')
+    expect(valueTypes.choice.operators.in?.compares?.type).toBe('optionList')
+    expect(valueTypes.choices.operators.includes?.compares?.type).toBe('option')
+    expect(valueTypes.decimal.operators.atLeast?.compares?.type).toBe('number')
+    expect(valueTypes.date.operators.before?.compares?.type).toBe('date')
+    expect(valueTypes.boolean.operators.isTrue?.compares).toBeUndefined()
+  })
+
   it('read options for choices only', () => {
     const readers = Object.values(valueTypes).filter((valueType) => valueType.readsOptions)
 

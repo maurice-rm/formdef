@@ -333,6 +333,95 @@ describe('checkDocument', () => {
     ])
   })
 
+  it('reports an operator no value type has, and one the compared field has not', () => {
+    const document = plain(
+      choiceField,
+      {
+        type: 'field',
+        key: 'f2',
+        kind: 'text',
+        label: 'B',
+        visibleWhen: { field: 'f1', op: 'resembles', value: 'o1' },
+      },
+      {
+        type: 'field',
+        key: 'f3',
+        kind: 'text',
+        label: 'C',
+        visibleWhen: { field: 'f1', op: 'includes', value: 'o1' },
+      },
+      {
+        type: 'field',
+        key: 'f4',
+        kind: 'text',
+        label: 'D',
+        visibleWhen: { field: 'f1', op: 'constructor' },
+      },
+    )
+
+    expect(checkDocument(document, catalog)).toEqual([
+      {
+        code: 'operatorMismatch',
+        path: 'document.items[1].visibleWhen.op',
+        params: { op: 'resembles', valueType: 'choice' },
+      },
+      {
+        code: 'operatorMismatch',
+        path: 'document.items[2].visibleWhen.op',
+        params: { op: 'includes', valueType: 'choice' },
+      },
+      {
+        code: 'operatorMismatch',
+        path: 'document.items[3].visibleWhen.op',
+        params: { op: 'constructor', valueType: 'choice' },
+      },
+    ])
+  })
+
+  it('reports a compared value left out, given for an operator that compares nothing, or no list', () => {
+    const document = plain(
+      choiceField,
+      { type: 'field', key: 'f2', kind: 'count', label: 'B' },
+      {
+        type: 'field',
+        key: 'f3',
+        kind: 'text',
+        label: 'C',
+        visibleWhen: {
+          all: [
+            { field: 'f2', op: 'atLeast' },
+            { field: 'f1', op: 'isFilled', value: 'o1' },
+            { field: 'f1', op: 'in', value: 'o1' },
+            { field: 'f1', op: 'equals', value: 1 },
+          ],
+        },
+      },
+    )
+
+    expect(checkDocument(document, catalog)).toEqual([
+      {
+        code: 'valueMismatch',
+        path: 'document.items[2].visibleWhen.all[0].value',
+        params: { expected: 'number' },
+      },
+      {
+        code: 'valueMismatch',
+        path: 'document.items[2].visibleWhen.all[1].value',
+        params: { expected: 'nothing' },
+      },
+      {
+        code: 'valueMismatch',
+        path: 'document.items[2].visibleWhen.all[2].value',
+        params: { expected: 'optionList' },
+      },
+      {
+        code: 'valueMismatch',
+        path: 'document.items[2].visibleWhen.all[3].value',
+        params: { expected: 'option' },
+      },
+    ])
+  })
+
   it('reports a date that does not exist', () => {
     const document = plain(
       { type: 'field', key: 'f1', kind: 'date', label: 'A' },
@@ -509,12 +598,18 @@ describe('checkDocument', () => {
     ])
   })
 
-  it("lets a condition ask only whether a field of a project's value type is filled", () => {
+  it("checks a condition against the operators of a project's value type", () => {
     const postalCode = defineValueType({
       name: 'postalCode',
       emptyValue: '',
       fits: (value): value is string => typeof value === 'string',
       describe: (value) => ({ value }),
+      operators: {
+        startsWith: {
+          compares: setting.text({ label: 'Start', required: true }),
+          holds: (answer, start) => answer?.startsWith(start) === true,
+        },
+      },
     })
     const withPostalCode = createCatalog(registry, {
       valueTypes: [postalCode],
@@ -544,6 +639,18 @@ describe('checkDocument', () => {
         label: 'B',
         visibleWhen: { field: 'f1', op: 'equals', value: '53111' },
       },
+      {
+        type: 'field',
+        key: 'f4',
+        kind: 'text',
+        label: 'C',
+        visibleWhen: {
+          any: [
+            { field: 'f1', op: 'startsWith', value: '53' },
+            { field: 'f1', op: 'startsWith', value: 53 },
+          ],
+        },
+      },
     )
 
     expect(checkDocument(document, withPostalCode)).toEqual([
@@ -551,6 +658,47 @@ describe('checkDocument', () => {
         code: 'operatorMismatch',
         path: 'document.items[2].visibleWhen.op',
         params: { op: 'equals', valueType: 'postalCode' },
+      },
+      {
+        code: 'valueMismatch',
+        path: 'document.items[3].visibleWhen.any[1].value',
+        params: { expected: 'text' },
+      },
+    ])
+  })
+
+  it("checks a setting of one option or several against the field's own options", () => {
+    const preselect = defineFieldKind(registry, {
+      name: 'preselect',
+      label: 'Choice with a preselection',
+      widget: 'choice',
+      valueType: valueTypes.choice,
+      settings: {
+        options: setting.options({ label: 'Options' }),
+        preselected: setting.option({ label: 'Preselected' }),
+        highlighted: setting.optionList({ label: 'Highlighted' }),
+      },
+      props: ({ options }) => ({ options }),
+    })
+    const withPreselect = createCatalog(registry, { fields: [...fieldKinds, preselect] })
+    const document = plain({
+      type: 'field',
+      key: 'f1',
+      kind: 'preselect',
+      label: 'Pick',
+      settings: { options: OPTIONS, preselected: 'o9', highlighted: ['o1', 'o8'] },
+    })
+
+    expect(checkDocument(document, withPreselect)).toEqual([
+      {
+        code: 'unknownOption',
+        path: 'document.items[0].settings.preselected',
+        params: { field: 'f1', value: 'o9' },
+      },
+      {
+        code: 'unknownOption',
+        path: 'document.items[0].settings.highlighted[1]',
+        params: { field: 'f1', value: 'o8' },
       },
     ])
   })

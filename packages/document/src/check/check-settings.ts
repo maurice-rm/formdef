@@ -1,26 +1,23 @@
 import type { FieldItem, Varying } from '../form-document'
-import { isIsoDate } from '../is-iso-date'
 import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
 import type { FieldKind } from '../kinds/field-kind'
-import { isOption } from '../kinds/is-option'
-import type { Setting } from '../kinds/setting'
+import { optionValuesOf } from '../kinds/option-values-of'
+import type { Setting, SettingOption } from '../kinds/setting'
 import { pathTo } from '../path-to'
 import { checkCondition } from './check-condition'
+import { checkOptionValues } from './check-option-values'
 import type { CheckWalk } from './check-walk'
+import { fitsSettingType } from './fits-setting-type'
 import { report } from './report'
 
-type At = { walk: CheckWalk; path: string; name: string }
+type At = { walk: CheckWalk; path: string; name: string; field: FieldItem }
 
 const reportMismatch = ({ walk, path, name }: At, type: string): void => {
   report(walk, { code: 'settingMismatch', path, params: { setting: name, type } })
 }
 
-const checkOptions = (value: JsonValue, setting: Setting<unknown>, at: At): void => {
-  if (!Array.isArray(value) || !value.every(isOption)) {
-    reportMismatch(at, 'options')
-    return
-  }
+const checkOptions = (value: SettingOption[], setting: Setting<unknown>, at: At): void => {
   const seen = new Set<string>()
   value.forEach((option, index) => {
     if (seen.has(option.value)) {
@@ -41,11 +38,7 @@ const checkOptions = (value: JsonValue, setting: Setting<unknown>, at: At): void
   }
 }
 
-const checkText = (value: JsonValue, setting: Setting<unknown>, at: At): void => {
-  if (typeof value !== 'string') {
-    reportMismatch(at, 'text')
-    return
-  }
+const checkText = (value: string, setting: Setting<unknown>, at: At): void => {
   if (setting.maxLength !== undefined && value.length > setting.maxLength) {
     report(at.walk, {
       code: 'settingLimit',
@@ -55,11 +48,7 @@ const checkText = (value: JsonValue, setting: Setting<unknown>, at: At): void =>
   }
 }
 
-const checkNumber = (value: JsonValue, setting: Setting<unknown>, at: At): void => {
-  if (typeof value !== 'number') {
-    reportMismatch(at, 'number')
-    return
-  }
+const checkNumber = (value: number, setting: Setting<unknown>, at: At): void => {
   if (setting.integer === true && !Number.isInteger(value)) {
     report(at.walk, {
       code: 'settingLimit',
@@ -69,26 +58,29 @@ const checkNumber = (value: JsonValue, setting: Setting<unknown>, at: At): void 
   }
 }
 
+// Each case runs once the value has the setting's type, which `fitsSettingType` checked.
 const checkValue = (value: JsonValue, setting: Setting<unknown>, at: At): void => {
+  if (!fitsSettingType(value, setting.type)) {
+    reportMismatch(at, setting.type)
+    return
+  }
   switch (setting.type) {
     case 'text':
-      checkText(value, setting, at)
+      checkText(value as string, setting, at)
       return
     case 'number':
-      checkNumber(value, setting, at)
-      return
-    case 'boolean':
-      if (typeof value !== 'boolean') {
-        reportMismatch(at, 'boolean')
-      }
-      return
-    case 'date':
-      if (!isIsoDate(value)) {
-        reportMismatch(at, 'date')
-      }
+      checkNumber(value as number, setting, at)
       return
     case 'options':
-      checkOptions(value, setting, at)
+      checkOptions(value as SettingOption[], setting, at)
+      return
+    case 'option':
+    case 'optionList':
+      checkOptionValues(
+        value,
+        { field: at.field.key, options: optionValuesOf(at.field) },
+        { walk: at.walk, path: at.path },
+      )
   }
 }
 
@@ -126,7 +118,7 @@ export function checkSettings(
       report(walk, { code: 'missingSetting', path: settingPath, params: { setting: name } })
     }
     if (value !== undefined) {
-      checkSetting(value, setting, { walk, path: settingPath, name })
+      checkSetting(value, setting, { walk, path: settingPath, name, field })
     }
   }
 

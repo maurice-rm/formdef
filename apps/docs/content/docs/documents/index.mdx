@@ -111,7 +111,10 @@ A condition compares one field, or combines conditions with `all` or `any`:
 The field compared comes earlier in the document than the condition that names it. A field that
 does not show counts as empty in the conditions after it, whatever value it still holds.
 
-Which operators fit a field follows from the value type of its field kind:
+The operators belong to the value type of the field compared, and each says what it compares with,
+as a setting: `op` is a name and `value` any JSON, and
+[`checkDocument`](/documents/builders#reading-and-checking) checks both against the catalog. The
+built-in value types have these:
 
 | Value type | Operators | `value` |
 | --- | --- | --- |
@@ -126,15 +129,16 @@ Which operators fit a field follows from the value type of its field kind:
 | | `isFilled`, `isEmpty` | none |
 | `date` | `equals`, `before`, `onOrBefore`, `after`, `onOrAfter` | a date as an ISO string, such as `2026-05-01` |
 | | `isFilled`, `isEmpty` | none |
-| a [value type of your own](/documents/field-kinds#value-types) | `isFilled`, `isEmpty` | none |
+| a [value type of your own](/documents/field-kinds#value-types) | its own operators, `isFilled`, `isEmpty` | what each operator compares with |
 
 - An empty field equals nothing and comes in no order, so of the comparisons only `notEquals`,
   `notIn` and `excludes` hold for it.
 - A boolean counts as filled only when it is true: `isFalse` holds for a checkbox left unticked.
 - A decimal is compared as a number, and a date with a time by its day.
 
-A builder offers only the operators that fit; [`checkDocument`](/documents/builders#reading-and-checking)
-reports the others.
+A builder offers only the operators of the field's value type and renders the input for `value`
+from the operator's setting; `checkDocument` reports an operator the value type does not have and
+a `value` that does not fit, is missing, or is given to an operator that compares with nothing.
 
 ## A first form
 

@@ -83,7 +83,7 @@ describe('createCatalog', () => {
   })
 
   it('refuses a value type of a built-in name', () => {
-    const again = defineValueType({ ...postalCode, name: 'text' })
+    const again = { ...postalCode, name: 'text' }
 
     expect(() => createCatalog(registry, { valueTypes: [again], fields: [] })).toThrow(
       'formdef: valueTypes[0].name: the name "text" is used twice.',

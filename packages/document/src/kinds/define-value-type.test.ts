@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { defineValueType } from './define-value-type'
+import { setting } from './setting'
 
 type Address = { street: string; city: string }
 
@@ -41,6 +42,40 @@ describe('defineValueType', () => {
     })
 
     expect(rating.isFilled(0)).toBe(true)
+  })
+
+  it('holds its operators, each with what it compares with, next to isFilled and isEmpty', () => {
+    const compares = setting.text({ label: 'City', required: true })
+    const address = defineValueType({
+      name: 'address',
+      emptyValue: { street: '', city: '' },
+      fits: isAddress,
+      describe: (value) => ({ city: value.city }),
+      operators: {
+        inCity: { compares, holds: (answer, city) => answer?.city === city },
+      },
+    })
+
+    expect(Object.keys(address.operators)).toEqual(['inCity', 'isFilled', 'isEmpty'])
+    expect(address.operators.inCity?.compares).toBe(compares)
+    expect(address.operators.inCity?.holds({ street: 'Main St', city: 'Bonn' }, 'Bonn')).toBe(true)
+    expect(address.operators.isFilled?.compares).toBeUndefined()
+    expect(address.operators.isFilled?.holds({ street: '', city: 'Bonn' }, undefined)).toBe(true)
+    expect(address.operators.isFilled?.holds(undefined, undefined)).toBe(false)
+    expect(address.operators.isEmpty?.holds(undefined, undefined)).toBe(true)
+  })
+
+  it('refuses an operator of its own named isFilled or isEmpty', () => {
+    expect(() =>
+      defineValueType({
+        name: 'address',
+        emptyValue: undefined,
+        fits: isAddress,
+        describe: (value) => ({ city: value.city }),
+        // @ts-expect-error every value type has isFilled already
+        operators: { isFilled: { holds: () => true } },
+      }),
+    ).toThrow('formdef: address.operators.isFilled: every value type has this operator.')
   })
 
   it('reads options when it says so', () => {

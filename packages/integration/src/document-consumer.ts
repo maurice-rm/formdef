@@ -48,6 +48,12 @@ const postalCode = defineValueType({
   emptyValue: '',
   fits: (value): value is string => typeof value === 'string',
   describe: (value) => ({ code: value }),
+  operators: {
+    startsWith: {
+      compares: setting.text({ label: 'Start', required: true }),
+      holds: (answer, start) => answer?.startsWith(start) === true,
+    },
+  },
 })
 
 const postal = defineFieldKind(registry, {

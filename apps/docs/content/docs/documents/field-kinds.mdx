@@ -83,7 +83,7 @@ fits none of them, such as an address as one object, gets a value type of its ow
 ```tsx
 import { createRegistry, type FieldOf } from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
-import { createCatalog, defineFieldKind, defineValueType } from '@formdef/document'
+import { createCatalog, defineFieldKind, defineValueType, setting } from '@formdef/document'
 type Address = { street: string; city: string }
 declare const AddressField: (props: FieldOf<Address> & { label?: string }) => null
 const { fieldContext, formContext } = createFormHookContexts()
@@ -101,6 +101,12 @@ const address = defineValueType({
   fits: isAddress,
   isFilled: ({ street, city }) => street.trim() !== '' && city.trim() !== '',
   describe: ({ street, city }) => ({ street, city }),
+  operators: {
+    inCity: {
+      compares: setting.text({ label: 'City', required: true }),
+      holds: (answer, city) => answer?.city === city,
+    },
+  },
 })
 
 const postalAddress = defineFieldKind(registry, {
@@ -124,8 +130,12 @@ export const catalog = createCatalog(registry, { valueTypes: [address], fields: 
   answer out.
 - `readsOptions: true` makes the value type choose among the field's options: its field kinds need
   a setting `options`, and the validator refuses an answer that is no option.
-
-A condition compares a field of a project's value type with `isFilled` and `isEmpty`.
+- `operators` are what a [condition](/documents#conditions) may compare a field of this type with,
+  by name. `compares` is the [setting](#settings) the compared `value` is, which a builder renders
+  the input for and `checkDocument` checks; leave it out for an operator that compares with
+  nothing. `holds` receives the answer, or `undefined` for a field without one, and the compared
+  value. Every value type has `isFilled` and `isEmpty` besides, so its own operators take other
+  names.
 
 ## Settings
 
@@ -139,12 +149,15 @@ against them.
 | `setting.number` | a number, such as a bound | `integer` |
 | `setting.boolean` | a switch, such as whether a text has several lines | none |
 | `setting.options` | the choices of a choice field, each a `value` the builder generates and a `label` | `minCount` |
+| `setting.option` | the value of one of the field's options, such as one preselected | an option of the field |
+| `setting.optionList` | the values of several of the field's options | options of the field |
 | `setting.date` | a date as an ISO string, such as the earliest date allowed | none |
 
 - Every setting takes a `label` and a `description` for the settings panel.
-- `text`, `number` and `date` take `required`: a document has to set it, and `props` and `rules`
-  receive its value without `undefined`. `options` is always required; a `boolean` may be left out.
-- `text`, `number` and `date` take `varies`: the setting may then
+- `text`, `number`, `date`, `option` and `optionList` take `required`: a document has to set it,
+  and `props` and `rules` receive its value without `undefined`. `options` is always required; a
+  `boolean` may be left out.
+- `text`, `number`, `date`, `option` and `optionList` take `varies`: the setting may then
   [follow an answer](/documents#settings-that-follow-an-answer) through `cases` and `otherwise`.
 
 ## Rules

@@ -1,5 +1,36 @@
-import type { SettingOption } from './setting'
+import { failAt } from '../fail-at'
+import type { Operator } from './operator'
+import type { Setting, SettingOption } from './setting'
 import type { ValueType } from './value-type'
+
+/** The operators every value type has, which compare whether a field holds an answer. */
+type FillOperator = 'isFilled' | 'isEmpty'
+
+/**
+ * The operators of a value type, as {@link defineValueType} takes them: by name, each with the
+ * setting it compares with and whether the comparison holds.
+ *
+ * @typeParam TValue - The value of an answer of the value type.
+ * @typeParam TCompared - What each operator compares with, by operator name.
+ */
+export type OperatorDefinitions<TValue, TCompared> = {
+  [Name in keyof TCompared]: Name extends FillOperator
+    ? never
+    : {
+        /**
+         * What the operator compares with, as a setting, such as `setting.number`; left out when
+         * it compares with nothing.
+         *
+         * @defaultValue nothing
+         */
+        compares?: Setting<TCompared[Name]>
+        /**
+         * Whether the comparison holds, given the answer, or `undefined` when the field has none,
+         * and the compared value, which `checkDocument` has checked against `compares`.
+         */
+        holds: (answer: TValue | undefined, compared: NonNullable<TCompared[Name]>) => boolean
+      }
+}
 
 /**
  * What {@link defineValueType} takes.
@@ -8,12 +39,14 @@ import type { ValueType } from './value-type'
  * @typeParam TName - The value type's name.
  * @typeParam TDescribed - How an answer of this type is described.
  * @typeParam TReadsOptions - Whether an answer chooses among the field's options.
+ * @typeParam TCompared - What each operator compares with, by operator name.
  */
 export type ValueTypeDefinition<
   TValue,
   TName extends string,
   TDescribed extends object,
   TReadsOptions extends boolean,
+  TCompared,
 > = {
   /** The value type's name, unique in a catalog; the built-in value types hold theirs. */
   name: TName
@@ -39,22 +72,48 @@ export type ValueTypeDefinition<
    * choice that is no option of the field.
    */
   describe: (value: TValue, options: readonly SettingOption[]) => TDescribed | undefined
+  /**
+   * The operators a condition may compare a field of this type with, by name; `isFilled` and
+   * `isEmpty` come with every value type.
+   *
+   * @defaultValue only `isFilled` and `isEmpty`
+   */
+  operators?: OperatorDefinitions<TValue, TCompared>
+}
+
+const FILL_OPERATORS: Readonly<Record<FillOperator, Operator>> = {
+  isFilled: { holds: (answer) => answer !== undefined },
+  isEmpty: { holds: (answer) => answer === undefined },
 }
 
 const IS_FILLED = (): boolean => true
 
+const collectOperators = (
+  name: string,
+  own: Readonly<Record<string, Operator>>,
+): Readonly<Record<string, Operator>> => {
+  for (const operator of Object.keys(FILL_OPERATORS)) {
+    if (Object.hasOwn(own, operator)) {
+      failAt(`${name}.operators.${operator}`, 'every value type has this operator.')
+    }
+  }
+  return { ...own, ...FILL_OPERATORS }
+}
+
 /**
  * Defines a value type for form documents: what kind of answer a field gives. A field kind names
- * its value type, which decides how its answers are recognised, when they count as given and how
- * they are described. The built-in value types are in every catalog; a project adds its own with
- * {@link createCatalog}.
+ * its value type, which decides how its answers are recognised, when they count as given, how a
+ * condition compares them and how they are described. The built-in value types are in every
+ * catalog; a project adds its own with {@link createCatalog}.
  *
  * @typeParam TValue - The value of an answer of this type.
  * @typeParam TName - The value type's name.
  * @typeParam TDescribed - How an answer of this type is described.
  * @typeParam TReadsOptions - Whether an answer chooses among the field's options.
+ * @typeParam TCompared - What each operator compares with, by operator name.
  * @param definition - The value type.
  * @returns The value type, for field kinds and {@link createCatalog}.
+ * @throws When an operator of its own is named `isFilled` or `isEmpty`, which every value type has.
  *
  * @example
  * ```ts
@@ -66,6 +125,12 @@ const IS_FILLED = (): boolean => true
  *   fits: (value): value is Address => isAddress(value),
  *   isFilled: ({ street, city }) => street.trim() !== '' && city.trim() !== '',
  *   describe: ({ street, city }) => ({ street, city }),
+ *   operators: {
+ *     inCity: {
+ *       compares: setting.text({ label: 'City', required: true }),
+ *       holds: (answer, city) => answer?.city === city,
+ *     },
+ *   },
  * })
  * ```
  */
@@ -74,11 +139,22 @@ export function defineValueType<
   const TName extends string,
   TDescribed extends object,
   const TReadsOptions extends boolean = false,
+  TCompared = Record<never, never>,
 >(
-  definition: ValueTypeDefinition<TValue, TName, TDescribed, TReadsOptions>,
+  definition: ValueTypeDefinition<TValue, TName, TDescribed, TReadsOptions, TCompared>,
 ): ValueType<TValue, TName, TDescribed> & { readonly readsOptions: TReadsOptions } {
   const { name, emptyValue, fits, isFilled = IS_FILLED, describe } = definition
   const readsOptions = (definition.readsOptions ?? false) as TReadsOptions
+  // Each operator's compared value is typed by its own setting; at runtime it is checked data.
+  const own = (definition.operators ?? {}) as Readonly<Record<string, Operator>>
 
-  return { name, emptyValue, readsOptions, fits, isFilled, describe }
+  return {
+    name,
+    emptyValue,
+    readsOptions,
+    operators: collectOperators(name, own),
+    fits,
+    isFilled,
+    describe,
+  }
 }
