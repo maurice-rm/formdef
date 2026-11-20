@@ -97,7 +97,7 @@ is set up, how code is written in it and how a change reaches a release. Report 
 packages/core            @formdef/core — the library, published to npm
 packages/document        @formdef/document — forms described as data, for builders, published to npm
 packages/shadcn          the widgets, built as a shadcn registry into apps/docs/public/r (private)
-packages/integration     uses the built @formdef/core as a consumer would (private)
+packages/integration     uses the built @formdef/core and @formdef/document as a consumer would (private)
 packages/tsconfig        the shared TypeScript configuration (private)
 apps/docs                the documentation, built with Fumadocs (private)
 examples/vite            a Vite app with formdef from npm, outside the workspace; npm, not pnpm
