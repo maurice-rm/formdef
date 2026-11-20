@@ -1,9 +1,11 @@
 import { answerItemsOf } from '../answer-items-of'
 import { conditionsOf } from '../conditions-of'
+import { DOCUMENT_PATH } from '../document-path'
 import type { DocumentNode, FormDocument } from '../form-document'
 import { isLeaf } from '../is-leaf'
 import { isStep } from '../is-step'
 import { nodesOf } from '../nodes-of'
+import { pathTo } from '../path-to'
 import { placeholdersIn } from '../placeholders-in'
 import type { Position } from '../position'
 import { repeatsOf } from '../repeats-of'
@@ -11,11 +13,14 @@ import { fieldsNamed } from './fields-named'
 import { fieldsReadBy } from './fields-read-by'
 import { nodeAt } from './node-at'
 
-/** A condition, placeholder or expression that names a field of a node, as {@link dependentsOf} lists it. */
+/**
+ * A condition, placeholder, expression or jump that names a field or step of a node, as
+ * {@link dependentsOf} lists it.
+ */
 export type Dependent = {
-  /** Where the condition, text or expression sits, as {@link checkDocument} names paths. */
+  /** Where the condition, text, expression or jump sits, as {@link checkDocument} names paths. */
   path: string
-  /** The key of the field or computed value it names. */
+  /** The key of the field, computed value, repeat or step it names. */
   field: string
 }
 
@@ -36,14 +41,14 @@ const namedKeysUnder = (node: DocumentNode): string[] => {
 
 /**
  * Lists the conditions, placeholders and expressions that name a field, computed value or repeat of
- * a step or item, or the item itself, and would lose it when the node is removed: one entry per
- * condition and key named, in document order, then one per placeholder, then one per expression.
- * Those inside the node go with it and are left out. A builder shows them before it removes the
- * node.
+ * a step or item, or the item itself, and the jumps to a step, which would lose it when the node is
+ * removed: one entry per condition and key named, in document order, then one per placeholder,
+ * then one per expression, then one per jump. Those inside the node go with it and are left out. A
+ * builder shows them before it removes the node.
  *
  * @param document - The document.
  * @param position - Where the node sits.
- * @returns The conditions that depend on the node's fields; empty when none do.
+ * @returns What depends on the node's fields or on the step itself; empty when nothing does.
  * @throws When no node sits at the position.
  *
  * @example
@@ -75,5 +80,19 @@ export function dependentsOf(document: FormDocument, position: Position): Depend
             .map((field) => ({ path: `${path}.expression`, field }))
         : [],
     )
-  return [...fromConditions, ...fromPlaceholders, ...fromExpressions]
+  return [...fromConditions, ...fromPlaceholders, ...fromExpressions, ...jumpsTo(document, node)]
+}
+
+const jumpsTo = (document: FormDocument, node: DocumentNode): Dependent[] => {
+  if (!isStep(node)) {
+    return []
+  }
+  return (document.steps ?? []).flatMap((step, stepIndex) => {
+    const stepPath = pathTo.entry(DOCUMENT_PATH, 'steps', stepIndex)
+    return (step.next ?? []).flatMap((jump, jumpIndex) =>
+      jump.step === node.key
+        ? [{ path: `${stepPath}.next[${jumpIndex}].step`, field: node.key }]
+        : [],
+    )
+  })
 }

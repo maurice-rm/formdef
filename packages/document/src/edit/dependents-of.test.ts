@@ -222,6 +222,26 @@ describe('dependentsOf', () => {
     expect(dependentsOf(withRepeat, [0])).toEqual([dependent])
   })
 
+  it('lists the jumps of other steps to a step that is removed', () => {
+    const withJump: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'Contact',
+          next: [{ when: { field: 'f1', op: 'isFilled' }, step: 's3' }],
+          items: [field('f1')],
+        },
+        { key: 's2', label: 'House', items: [field('f2')] },
+        { key: 's3', label: 'Heating', items: [field('f3')] },
+      ],
+    }
+
+    expect(dependentsOf(withJump, [2])).toEqual([
+      { path: 'document.steps[0].next[0].step', field: 's3' },
+    ])
+  })
+
   it('refuses a position that holds nothing', () => {
     expect(() => dependentsOf(document, [2])).toThrow(
       'formdef: position [2]: there is nothing here.',

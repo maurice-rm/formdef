@@ -152,10 +152,12 @@ Everything else, such as a key taken already or a condition whose operator no lo
 
 ### Before removing
 
-`removeNode` leaves the conditions and placeholders elsewhere that name a removed field as they
-are, and `checkDocument` then reports them as `unknownField`. `dependentsOf` lists them
-beforehand: one entry per condition and field named, then one per placeholder, with the `path` of
-the condition or text and the `field`. Those inside the node go with it and are not listed.
+`removeNode` leaves the conditions, placeholders and expressions elsewhere that name a removed
+field as they are, and `checkDocument` then reports them as `unknownField`; a jump to a removed
+step it reports as `unknownStep`. `dependentsOf` lists them beforehand: one entry per condition
+and field named, then one per placeholder, one per expression and one per jump, with the `path`
+where it sits and the `field`, or step, it names. Those inside the node go with it and are not
+listed.
 
 ```ts
 import { dependentsOf, removeNode, type Dependent, type FormDocument, type Position } from '@formdef/document'
