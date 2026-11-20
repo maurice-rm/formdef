@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-floors=$(jq -r '[.items[].dependencies[]? | select(startswith("@formdef/core@>=")) | ltrimstr("@formdef/core@>=")] | unique | .[]' packages/shadcn/registry.json)
+# The minimum versions of a package the registry's items require, such as `0.4.0` of `@formdef/core@>=0.4.0`.
+floors_of() {
+  jq -r --arg prefix "$1@>=" '[.items[].dependencies[]? | select(startswith($prefix)) | ltrimstr($prefix)] | unique | .[]' packages/shadcn/registry.json
+}
 
 is_published() {
   jq -e --arg version "$2" '(if type == "array" then . else [.] end) | index($version) != null' <<< "$1" > /dev/null
@@ -34,11 +37,10 @@ for package in core document; do
   pending=$(grep -lE "^['\"]$name['\"]:" .changeset/*.md || true)
   [[ -z $pending ]] || not_yet "Changesets for $name wait for a release: $(tr '\n' ' ' <<< "$pending")"
   is_published "$published" "$version" || not_yet "$name $version is not on npm yet."
-  [[ $package != core ]] || core_published=$published
-done
-
-for floor in $floors; do
-  is_published "$core_published" "$floor" || not_yet "The registry needs @formdef/core $floor, which is not on npm yet."
+  floors=$(floors_of "$name")
+  for floor in $floors; do
+    is_published "$published" "$floor" || not_yet "The registry needs $name $floor, which is not on npm yet."
+  done
 done
 
 echo "Everything main documents is on npm." >&2

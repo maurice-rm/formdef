@@ -1,9 +1,8 @@
 /**
  * The version of the form document format this release reads and writes.
  *
- * Every form document carries the version it was written with. Reading a document of an older
- * version upgrades it to this one; a newer version is refused, since this release cannot know its
- * shape.
+ * Every form document carries the version it was written with. A newer version is refused, since
+ * this release cannot know its shape.
  *
  * @example
  * ```ts

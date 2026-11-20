@@ -13,7 +13,12 @@ const run = promisify(execFile)
 const ROOT = join(import.meta.dirname, '../../..')
 const SHADCN_PACKAGE = join(ROOT, 'packages/shadcn')
 const REGISTRY_FILES = join(ROOT, 'apps/docs/public')
-const PACKAGES = [join(ROOT, 'packages/core'), join(ROOT, 'packages/document')]
+const PACKAGES = [
+  { name: '@formdef/core', folder: join(ROOT, 'packages/core') },
+  { name: '@formdef/document', folder: join(ROOT, 'packages/document') },
+]
+const FLOOR = /^(@?[^@]+)@>=(\d+\.\d+\.\d+)$/
+const RAISED_TARBALL = 'raised.tgz'
 
 const PROJECT = 'app'
 const TEMPLATE = 'vite'
@@ -29,7 +34,7 @@ const OUTPUT_LIMIT = 64 * 1024 * 1024
 const NPM_SETTING = 'npm_'
 
 type RegistryFile = { path: string; target: string }
-type RegistryItem = { name: string; files: RegistryFile[] }
+type RegistryItem = { name: string; files: RegistryFile[]; dependencies?: string[] }
 type Aliases = Record<string, string>
 type PackedPackage = { tarball: Buffer; manifest: { name: string; version: string } }
 
@@ -202,7 +207,46 @@ const packageServer = (packages: readonly PackedPackage[]): Server => {
   return server
 }
 
-const packPackage = async (folder: string, into: string): Promise<PackedPackage> => {
+const isBelow = (version: string, floor: string): boolean => {
+  const [major = 0, minor = 0, patch = 0] = version.split('.').map(Number)
+  const [floorMajor = 0, floorMinor = 0, floorPatch = 0] = floor.split('.').map(Number)
+  if (major !== floorMajor) {
+    return major < floorMajor
+  }
+  return minor === floorMinor ? patch < floorPatch : minor < floorMinor
+}
+
+const floorOf = (items: readonly RegistryItem[], name: string): string | undefined =>
+  items
+    .flatMap((item) => item.dependencies ?? [])
+    .map((declaration) => FLOOR.exec(declaration))
+    .filter((match) => match?.[1] === name)
+    .map((match) => match?.[2] ?? '')
+    .reduce<string | undefined>(
+      (highest, floor) => (highest === undefined || isBelow(highest, floor) ? floor : highest),
+      undefined,
+    )
+
+// A package not released yet still carries the version before its first changeset, below the
+// minimum the registry already names; the probe serves it at that minimum, as the release will.
+const raiseVersion = async (
+  packed: PackedPackage & { path: string },
+  version: string,
+): Promise<PackedPackage> => {
+  const folder = dirname(packed.path)
+  await runIn(folder, 'tar', ['-xzf', packed.path])
+  const manifest = { ...packed.manifest, version }
+  await writeFile(join(folder, 'package/package.json'), JSON.stringify(manifest, null, 2))
+  await runIn(folder, 'tar', ['-czf', RAISED_TARBALL, 'package'])
+
+  return { tarball: await readFile(join(folder, RAISED_TARBALL)), manifest }
+}
+
+const packPackage = async (
+  folder: string,
+  into: string,
+  floor: string | undefined,
+): Promise<PackedPackage> => {
   const destination = await mkdtemp(join(into, 'pack-'))
   await runIn(folder, 'pnpm', ['pack', '--pack-destination', destination])
   const file = (await readdir(destination)).find((name) => name.endsWith('.tgz'))
@@ -213,8 +257,11 @@ const packPackage = async (folder: string, into: string): Promise<PackedPackage>
   const manifest = JSON.parse(
     await runIn(destination, 'tar', ['-xzOf', path, 'package/package.json']),
   )
+  const packed = { tarball: await readFile(path), manifest, path }
 
-  return { tarball: await readFile(path), manifest }
+  return floor !== undefined && isBelow(manifest.version, floor)
+    ? raiseVersion(packed, floor)
+    : packed
 }
 
 const landedPathOf = (target: string, aliases: Aliases): string => {
@@ -305,7 +352,7 @@ const probe = async (folder: string): Promise<void> => {
   const items = await readItems()
   const version = await shadcnVersion()
   const packed = await Promise.all(
-    PACKAGES.map((packageFolder) => packPackage(packageFolder, folder)),
+    PACKAGES.map((entry) => packPackage(entry.folder, folder, floorOf(items, entry.name))),
   )
   const registry = registryServer()
   const packages = packageServer(packed)

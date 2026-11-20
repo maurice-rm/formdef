@@ -52,8 +52,7 @@ a field may be is decided in code, once: by the project's [field kinds](/documen
 ```
 
 - `format` is the version of the format the document was written with; `FORMAT_VERSION` is the
-  one this release writes. A document of an older format is upgraded when it is read, a newer one
-  is refused.
+  one this release writes. A document of a newer format is refused when it is read.
 - A document holds either `items`, a plain form, or `steps`, filled in one at a time. A step has a
   `key`, a `label`, an optional `description` under the label in the stepper, an optional
   `visibleWhen`, and its `items`.

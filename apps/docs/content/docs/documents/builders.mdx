@@ -13,9 +13,9 @@ reports.
 There are two checks, for two questions:
 
 - **`readDocument` checks the shape.** Every key and every value sits where the format expects
-  it, and nothing is there that the format does not know. It returns a copy in the current format,
-  upgraded from an older one, and throws when the input is no form document, naming the path of
-  the first problem, or when its format is newer than this release reads. Use it on everything
+  it, and nothing is there that the format does not know. It returns a copy, and throws when the
+  input is no form document, naming the path of the first problem, or when its format is newer
+  than this release reads. Use it on everything
   that comes from storage or a request.
 - **`checkDocument` checks the document as a form,** against the field kinds, and returns every
   problem in document order; the list is empty when the document is sound. A builder lists the

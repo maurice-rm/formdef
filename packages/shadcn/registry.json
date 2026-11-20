@@ -30,7 +30,7 @@
       "type": "registry:lib",
       "title": "formdef field kinds",
       "description": "Field kinds for form documents and form builders, one or two per widget: short and long text, email, a number with a unit, a whole number, a checkbox, single and multiple choice, a dropdown and a date.",
-      "dependencies": ["@formdef/document"],
+      "dependencies": ["@formdef/document@>=0.1.0"],
       "files": [
         {
           "path": "lib/formdef/field-kinds.ts",

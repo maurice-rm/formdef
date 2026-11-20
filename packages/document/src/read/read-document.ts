@@ -24,8 +24,7 @@ const checkFormat = (value: unknown): void => {
 
 /**
  * Reads a form document from storage, a request or a builder, and checks its shape: every key and
- * every value where the format expects it, and nothing the format does not know. A document of an
- * older format is upgraded to the current one.
+ * every value where the format expects it, and nothing the format does not know.
  *
  * It checks the shape only. Whether the document makes sense as a form, such as unique keys or
  * conditions on fields that exist, is a separate check.

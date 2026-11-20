@@ -71,8 +71,8 @@ first deploy, and it may be empty.
 A push to `main` that changes `apps/docs` or `packages/shadcn` deploys too, so a fix to a widget does
 not wait for a release of the core. It deploys only what npm already serves
 (`.github/deploy/released.sh`): no changeset for `@formdef/core` or `@formdef/document` is
-waiting, the versions of both on `main` are published, and so is every version of `@formdef/core`
-the registry requires. Otherwise the site would document, or the registry import, a package that is
+waiting, the versions of both on `main` are published, and so is every minimum version of them the
+registry requires. Otherwise the site would document, or the registry import, a package that is
 not on npm yet; the next release deploys it instead.
 
 The same build renders the images for GitHub: the README banner, light and dark, at
