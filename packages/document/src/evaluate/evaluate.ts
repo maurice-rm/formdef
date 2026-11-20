@@ -40,13 +40,15 @@ export type ShownField = {
 }
 
 /** A computed value that counts for the values given, with what it came to. */
-type ShownComputed = {
+export type ShownComputed = {
   computed: ComputedItem
   valueType: ValueType
   /** Where the value sits among the answers: its step, its repeat and entry, and its key. */
   path: ValuePath
   /** What it came to; `undefined` when it is empty. */
   value: Computed | undefined
+  /** The answers as the value reads them where it sits, its own among them when filled. */
+  answers: Answers
 }
 
 /** A repeat that shows for the values given, with its entries. */
@@ -144,7 +146,13 @@ const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk)
 const walkComputed = (computed: ComputedItem, container: Container, walk: EvaluationWalk): void => {
   const valueType = valueTypeNamed(walk.catalog, computed.valueType)
   const value = compute(computed.expression, walk.answers)
-  walk.computed.push({ computed, valueType, path: [...container.path, computed.key], value })
+  walk.computed.push({
+    computed,
+    valueType,
+    path: [...container.path, computed.key],
+    value,
+    answers: walk.answers,
+  })
   if (value !== undefined && valueType.isFilled(value)) {
     walk.filled.set(computed.key, {
       value,

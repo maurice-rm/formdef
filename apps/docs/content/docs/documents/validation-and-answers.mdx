@@ -185,6 +185,12 @@ and `{ items }` without. An item is a section, with its `label` and `items`, or 
 A computed value that counts is an item of `type: 'computed'` with its `key`, its `label` and the
 `answer` it came to, `undefined` while it is empty.
 
+A [repeat](/documents#repeats) that shows is an item of `type: 'repeat'` with its `key`, its `label`
+and its `entries`, an empty list when nobody added one. Each entry has its `number`, from 1, its
+`label` when the repeat has an `entryLabel`, such as `Person 2`, and its `items`, read from that
+entry: a question that names an answer of the entry, such as `Since when does {f2} work`, names
+that entry's.
+
 The answer carries its `valueType`: `text`, `decimal` and `date` the `value` as entered, `number`
 the number, `boolean` `true` (an unticked checkbox has no answer), `choice` the chosen option's
 `value` and `label`, and `choices` the chosen options as `values`. An answer of a

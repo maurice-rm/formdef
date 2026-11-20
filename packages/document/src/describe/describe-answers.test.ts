@@ -3,7 +3,7 @@ import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import type { Condition } from '../condition'
-import type { FieldItem, FormDocument } from '../form-document'
+import type { DocumentItem, FieldItem, FormDocument, RepeatItem } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineBlockKind } from '../kinds/define-block-kind'
 import { defineFieldKind } from '../kinds/define-field-kind'
@@ -478,6 +478,90 @@ describe('describeAnswers', () => {
     })
     expect(describeAnswers(translated, catalog, { values, language: 'fr' })).toMatchObject({
       steps: [{ label: 'Gebäude' }],
+    })
+  })
+})
+
+describe('describeAnswers with repeats', () => {
+  const residents = (extra: Partial<RepeatItem> = {}): RepeatItem => ({
+    type: 'repeat',
+    key: 'residents',
+    label: { de: 'Bewohner', en: 'Residents' },
+    addLabel: { de: 'Hinzufügen', en: 'Add' },
+    removeLabel: { de: 'Entfernen {n}', en: 'Remove {n}' },
+    items: [
+      field('name', 'text', { label: { de: 'Name', en: 'Name' } }),
+      field('works', 'consent', { label: { de: 'Berufstätig', en: 'Works' } }),
+      field('since', 'text', {
+        label: { de: 'Seit wann arbeitet {name}', en: 'Since when does {name} work' },
+        visibleWhen: { field: 'works', op: 'isTrue' },
+      }),
+    ],
+    ...extra,
+  })
+  const describeOf = (items: DocumentItem[], values: unknown, language?: string) =>
+    describeAnswers({ format: 1, languages: ['de', 'en'], items }, catalog, {
+      values,
+      ...(language === undefined ? {} : { language }),
+    })
+
+  it('describes each entry by its number and what shows in it, read from that entry', () => {
+    const values = {
+      residents: [
+        { name: 'Ada', works: true, since: '2020' },
+        { name: 'Max', works: false, since: '2019' },
+      ],
+    }
+
+    expect(describeOf([residents()], values, 'en')).toEqual({
+      items: [
+        {
+          type: 'repeat',
+          key: 'residents',
+          label: 'Residents',
+          entries: [
+            {
+              number: 1,
+              items: [
+                expect.objectContaining({
+                  key: 'name',
+                  answer: { valueType: 'text', value: 'Ada' },
+                }),
+                expect.objectContaining({ key: 'works' }),
+                expect.objectContaining({ key: 'since', label: 'Since when does Ada work' }),
+              ],
+            },
+            {
+              number: 2,
+              items: [
+                expect.objectContaining({
+                  key: 'name',
+                  answer: { valueType: 'text', value: 'Max' },
+                }),
+                expect.objectContaining({ key: 'works', answer: undefined }),
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
+
+  it("titles each entry by the repeat's entry label, its number filled in, in the language", () => {
+    const repeat = residents({ entryLabel: { de: 'Person {n}', en: 'Resident {n}' } })
+
+    expect(describeOf([repeat], { residents: [{}, {}] }, 'de')).toMatchObject({
+      items: [{ label: 'Bewohner', entries: [{ label: 'Person 1' }, { label: 'Person 2' }] }],
+    })
+  })
+
+  it('keeps a repeat that shows without entries, and leaves out one that does not show', () => {
+    expect(describeOf([residents()], {})).toEqual({
+      items: [{ type: 'repeat', key: 'residents', label: 'Bewohner', entries: [] }],
+    })
+    const hidden = residents({ visibleWhen: { field: 'flats', op: 'isFilled' } })
+    expect(describeOf([field('flats', 'count'), hidden], {})).toEqual({
+      items: [expect.objectContaining({ key: 'flats' })],
     })
   })
 })
