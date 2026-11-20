@@ -60,6 +60,8 @@ export type ShownRepeat = {
   value: unknown
   /** How many entries it holds; 0 when its value is no list. */
   entries: number
+  /** The answers each entry reads, by the entry's index: those before the repeat and its own. */
+  entryAnswers: Answers[]
   /** How many fields and repeats that show come before it, to keep their issues in order. */
   order: number
 }
@@ -211,10 +213,20 @@ const walkRepeat = (repeat: RepeatItem, container: Container, walk: EvaluationWa
   const value = container.values[repeat.key]
   const entries: readonly unknown[] = Array.isArray(value) ? value : []
   const path = [...container.path, repeat.key]
-  walk.repeats.push({ repeat, path, value, entries: entries.length, order: nextOrder(walk) })
+  const entryAnswers: Answers[] = []
+  walk.repeats.push({
+    repeat,
+    path,
+    value,
+    entries: entries.length,
+    entryAnswers,
+    order: nextOrder(walk),
+  })
   entries.forEach((entry, index) => {
     const filled = new Map(walk.filled)
-    const entryWalk = { ...walk, filled, answers: answersOver(filled, walk.valueTypes) }
+    const answers = answersOver(filled, walk.valueTypes)
+    entryAnswers.push(answers)
+    const entryWalk = { ...walk, filled, answers }
     walkItems(repeat.items, { values: objectOf(entry), path: [...path, index] }, entryWalk)
   })
 }

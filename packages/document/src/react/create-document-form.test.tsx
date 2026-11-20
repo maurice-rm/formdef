@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // The other tests run without a DOM, as the root entry runs on a server.
 import {
+  type ArrayFrameProps,
   createRegistry,
   type FieldOf,
   type RowProps,
@@ -13,7 +14,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
+import type { DocumentItem, FieldItem, FormDocument, RepeatItem } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineBlockKind } from '../kinds/define-block-kind'
 import { defineDisplayKind } from '../kinds/define-display-kind'
@@ -1021,5 +1022,142 @@ describe('createDocumentForm with displays', () => {
     render(<Form />)
 
     expect(screen.getByRole('region', { name: 'Stepper' }).dataset.variant).toBe('circles')
+  })
+})
+
+const LabelledFrame = ({
+  label,
+  min,
+  max,
+  tone,
+  renderItem,
+  keys,
+}: ArrayFrameProps<unknown> & {
+  label?: string
+  min?: number
+  max?: number
+  tone?: string
+}): ReactNode => (
+  <fieldset aria-label={label} data-min={min} data-max={max} data-tone={tone}>
+    {keys.map((key, index) => (
+      <div key={key}>{renderItem(index)}</div>
+    ))}
+  </fieldset>
+)
+
+describe('createDocumentForm with repeats', () => {
+  const works = field('works', 'choice', {
+    label: 'Works',
+    settings: {
+      options: [
+        { value: 'yes', label: 'Yes' },
+        { value: 'no', label: 'No' },
+      ],
+    },
+  })
+  const since = field('since', 'text', {
+    label: 'Since when does {name} work',
+    visibleWhen: { field: 'works', op: 'equals', value: 'yes' },
+  })
+  const residents = (extra: Partial<RepeatItem> = {}): RepeatItem => ({
+    type: 'repeat',
+    key: 'residents',
+    label: 'Residents',
+    addLabel: 'Add person',
+    removeLabel: 'Remove person {n}',
+    items: [field('name', 'text', { label: 'Name' }), works, since],
+    ...extra,
+  })
+
+  it('starts with as many empty entries as its min, and adds and removes entries', async () => {
+    const Form = createDocumentForm(plain(residents({ min: 1 })), catalog)
+    render(<Form />)
+
+    expect(screen.getAllByLabelText('Name')).toHaveLength(1)
+
+    await click('Add person')
+    expect(screen.getAllByLabelText('Name')).toHaveLength(2)
+
+    await click('Remove person 2')
+    expect(screen.getAllByLabelText('Name')).toHaveLength(1)
+  })
+
+  it('shows a field of an entry and fills its placeholders by the answers of that entry', async () => {
+    const Form = createDocumentForm(plain(residents({ min: 2 })), catalog)
+    render(<Form />)
+    const [firstName] = screen.getAllByLabelText('Name')
+    const [firstWorks] = screen.getAllByLabelText('Works')
+
+    await act(async () => {
+      fireEvent.change(firstName as HTMLElement, { target: { value: 'Ada' } })
+      fireEvent.change(firstWorks as HTMLElement, { target: { value: 'yes' } })
+    })
+
+    expect(screen.getAllByLabelText(/^Since when/)).toHaveLength(1)
+    expect(screen.getByLabelText('Since when does Ada work')).toBeDefined()
+  })
+
+  it('reads a field before the repeat in the conditions of each entry', async () => {
+    const flats = field('flats', 'text', { label: 'Flats', visibleWhen: isApartmentBlock })
+    const Form = createDocumentForm(
+      plain(houseType, residents({ min: 2, items: [flats] })),
+      catalog,
+    )
+    render(<Form />)
+
+    expect(screen.queryAllByLabelText('Flats')).toHaveLength(0)
+    await choose('House type', 'o2')
+    expect(screen.getAllByLabelText('Flats')).toHaveLength(2)
+  })
+
+  it('submits the answers of each entry as a list', async () => {
+    const onSubmit = vi.fn()
+    const Form = createDocumentForm(
+      plain(residents({ min: 1, items: [field('name', 'text', { label: 'Name' })] })),
+      catalog,
+    )
+    render(<Form aria-label="Household" options={{ onSubmit: ({ value }) => onSubmit(value) }} />)
+
+    await type('Name', 'Ada')
+    await act(async () => {
+      fireEvent.submit(screen.getByRole('form', { name: 'Household' }))
+    })
+
+    expect(onSubmit).toHaveBeenCalledWith({ residents: [{ name: 'Ada' }] })
+  })
+
+  it("gives a registered array frame the repeat's label, bounds and display", () => {
+    const framed = createRegistry({
+      fieldContext,
+      formContext,
+      widgets: { text: TextField },
+      structure: { arrayFrame: LabelledFrame },
+    })
+    const text = defineFieldKind(framed, {
+      name: 'text',
+      label: 'Text',
+      widget: 'text',
+      valueType: valueTypes.text,
+    })
+    const cards = defineDisplayKind(framed, {
+      name: 'cards',
+      label: 'Cards',
+      appliesTo: 'repeat',
+      props: () => ({ tone: 'muted' }),
+    })
+    const repeat = residents({
+      min: 1,
+      max: 4,
+      display: { kind: 'cards' },
+      items: [field('name', 'text', { label: 'Name' })],
+    })
+    const Form = createDocumentForm(
+      plain(repeat),
+      createCatalog(framed, { fields: [text], displays: [cards] }),
+    )
+    render(<Form />)
+
+    const frame = screen.getByRole('group', { name: 'Residents' })
+    expect(frame.dataset).toMatchObject({ min: '1', max: '4', tone: 'muted' })
   })
 })
