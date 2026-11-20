@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 
 type StepperStepProps = {
-  description?: string | undefined
+  description?: React.ReactNode
   icon?: React.ReactNode
 }
 

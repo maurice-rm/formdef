@@ -1,4 +1,5 @@
 import { FieldApi, FormApi } from '@tanstack/react-form'
+import { createElement } from 'react'
 import { describe, expect, it } from 'vitest'
 
 import { fieldId } from './field-id'
@@ -131,6 +132,17 @@ describe('fieldParts', () => {
         undefined,
       )
       expect(fieldParts(field, { description: '' }).control['aria-describedby']).toBe(undefined)
+    })
+
+    it('points at a description of React elements, and not at nothing to render', () => {
+      const field = emailField()
+      const formatted = createElement('strong', null, 'Required by law')
+
+      expect(fieldParts(field, { description: formatted }).control['aria-describedby']).toBe(
+        `${fieldId(FORM_ID, 'email')}-description`,
+      )
+      expect(fieldParts(field, { description: null }).control['aria-describedby']).toBe(undefined)
+      expect(fieldParts(field, { description: false }).control['aria-describedby']).toBe(undefined)
     })
 
     it('points at the description and the error together', () => {

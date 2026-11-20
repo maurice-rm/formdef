@@ -16,7 +16,7 @@ import {
   FieldSet,
 } from '@/components/ui/field'
 import { blurLeaving } from '@/lib/formdef/blur-leaving'
-import type { FieldLabels } from '@/lib/formdef/field-labels'
+import { type FieldLabels, hasDescription } from '@/lib/formdef/field-labels'
 import { type Option, optionId } from '@/lib/formdef/options'
 
 type Attrs = Pick<ComponentProps<typeof Checkbox>, 'className' | 'disabled' | 'readOnly'>
@@ -73,7 +73,7 @@ export const CheckboxGroupField = ({
           {options.map((option) => {
             const id = optionId(group.id, option.value)
             const descriptionId = `${id}${DESCRIPTION_SUFFIX}`
-            const hasDescription = option.description !== undefined && option.description !== ''
+            const isDescribed = hasDescription(option.description)
 
             return (
               <Field
@@ -88,7 +88,7 @@ export const CheckboxGroupField = ({
                   disabled={attrs.disabled === true || option.disabled === true}
                   aria-invalid={ariaInvalid}
                   aria-errormessage={ariaErrorMessage}
-                  aria-describedby={hasDescription ? descriptionId : undefined}
+                  aria-describedby={isDescribed ? descriptionId : undefined}
                   checked={values.includes(option.value)}
                   onCheckedChange={(isChecked) => toggle(option.value, isChecked)}
                 />
@@ -96,7 +96,7 @@ export const CheckboxGroupField = ({
                   <FieldLabel htmlFor={id} className="font-normal">
                     {option.label}
                   </FieldLabel>
-                  {hasDescription && (
+                  {isDescribed && (
                     <FieldDescription id={descriptionId}>{option.description}</FieldDescription>
                   )}
                 </FieldContent>

@@ -2,11 +2,11 @@ import type { FieldParts } from '@formdef/core'
 import type { ReactNode } from 'react'
 
 import { FieldDescription, FieldError } from '@/components/ui/field'
-import type { DescriptionPosition } from '@/lib/formdef/field-labels'
+import { type DescriptionPosition, hasDescription } from '@/lib/formdef/field-labels'
 
 type FieldNotesProps = {
   parts: FieldParts
-  description?: string | undefined
+  description?: ReactNode
   descriptionPosition?: DescriptionPosition | undefined
   children?: ReactNode
 }
@@ -17,7 +17,7 @@ export const FieldNotes = ({
   descriptionPosition = 'beforeControl',
   children,
 }: FieldNotesProps) => {
-  const hint = description !== undefined && description !== '' && (
+  const hint = hasDescription(description) && (
     <FieldDescription id={parts.descriptionId}>{description}</FieldDescription>
   )
   const isHintFirst = descriptionPosition === 'beforeControl'

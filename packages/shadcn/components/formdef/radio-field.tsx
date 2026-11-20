@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { blurLeaving } from '@/lib/formdef/blur-leaving'
-import type { FieldLabels } from '@/lib/formdef/field-labels'
+import { type FieldLabels, hasDescription } from '@/lib/formdef/field-labels'
 import { type Option, optionId } from '@/lib/formdef/options'
 
 type Attrs = Pick<
@@ -52,7 +52,7 @@ export const RadioField = ({
   const item = (option: Option) => {
     const id = optionId(group.id, option.value)
     const titleId = `${id}${TITLE_SUFFIX}`
-    const hasDescription = option.description !== undefined && option.description !== ''
+    const isDescribed = hasDescription(option.description)
     const radio = (
       <RadioGroupItem
         id={id}
@@ -60,7 +60,7 @@ export const RadioField = ({
         disabled={option.disabled}
         aria-labelledby={variant === 'card' ? titleId : undefined}
         aria-invalid={group['aria-invalid']}
-        aria-describedby={hasDescription ? `${id}${DESCRIPTION_SUFFIX}` : undefined}
+        aria-describedby={isDescribed ? `${id}${DESCRIPTION_SUFFIX}` : undefined}
       />
     )
     const text = (
@@ -72,7 +72,7 @@ export const RadioField = ({
             {option.label}
           </FieldLabel>
         )}
-        {hasDescription && (
+        {isDescribed && (
           <FieldDescription id={`${id}${DESCRIPTION_SUFFIX}`}>
             {option.description}
           </FieldDescription>

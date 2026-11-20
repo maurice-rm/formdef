@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import { errorsOf } from './errors-of'
 import { fieldId } from './field-id'
 import type { FieldApiOf } from './field-of'
@@ -40,6 +42,11 @@ export interface FieldParts {
   errors: string[]
 }
 
+// React renders nothing for these, so no element carries the description's id.
+function rendersSomething(node: ReactNode): boolean {
+  return node !== undefined && node !== null && typeof node !== 'boolean' && node !== ''
+}
+
 function idrefsOf(ids: (string | undefined)[]): string | undefined {
   const present = ids.filter((id) => id !== undefined)
 
@@ -52,7 +59,7 @@ function idrefsOf(ids: (string | undefined)[]): string | undefined {
  */
 export function fieldPartsFor<TValue>(
   field: FieldApiOf<TValue>,
-  options: { description?: string | undefined; wasSubmitted: boolean },
+  options: { description?: ReactNode; wasSubmitted: boolean },
 ): FieldParts {
   const id = fieldId(field.form.formId, field.name)
   const descriptionId = `${id}${DESCRIPTION_SUFFIX}`
@@ -60,7 +67,7 @@ export function fieldPartsFor<TValue>(
   const isErrorDue = hasDueError(field.state.meta, options.wasSubmitted)
   const errors = errorsOf(field)
   const isErrorNamed = isErrorDue && errors.length > 0
-  const hasDescription = options.description !== undefined && options.description !== ''
+  const hasDescription = rendersSomething(options.description)
 
   return {
     control: {
@@ -98,8 +105,8 @@ export function fieldPartsFor<TValue>(
  * @typeParam TValue - The value type of the field.
  * @param field - The field the widget renders.
  * @param options - What the widget renders besides the control.
- * @param options.description - The description the widget renders below its label, if any. Only
- *   whether it is a non-empty string is read.
+ * @param options.description - The description the widget renders below its label, if any: text
+ *   or React elements, such as a formatted text. Only whether it renders something is read.
  * @defaultValue `options.description`: `undefined`, no description is rendered.
  * @returns The props for the control, the ids for the description and error elements, whether an
  *   error is due, and the error texts.
@@ -122,7 +129,7 @@ export function fieldPartsFor<TValue>(
  */
 export function fieldParts<TValue>(
   field: FieldApiOf<TValue>,
-  options: { description?: string | undefined } = {},
+  options: { description?: ReactNode } = {},
 ): FieldParts {
   return fieldPartsFor(field, {
     ...options,

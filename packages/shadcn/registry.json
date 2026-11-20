@@ -8,7 +8,7 @@
       "type": "registry:lib",
       "title": "formdef setup",
       "description": "The wiring every formdef form needs: the TanStack contexts in one file, the registry that names your widgets in another.",
-      "dependencies": ["@formdef/core@>=0.4.0", "@tanstack/react-form@>=1.33.5 <1.34.0"],
+      "dependencies": ["@formdef/core@>=0.5.0", "@tanstack/react-form@>=1.33.5 <1.34.0"],
       "registryDependencies": ["field"],
       "files": [
         {
@@ -46,7 +46,7 @@
       "type": "registry:component",
       "title": "Text field",
       "description": "A formdef widget for string values, built on shadcn's Field and Input, with optional addons in an input group.",
-      "dependencies": ["@formdef/core@>=0.4.0"],
+      "dependencies": ["@formdef/core@>=0.5.0"],
       "registryDependencies": ["field", "input", "input-group"],
       "files": [
         {
@@ -93,7 +93,7 @@
       "type": "registry:component",
       "title": "Textarea field",
       "description": "A formdef widget for longer string values, built on shadcn's Field and Textarea, with optional addons in an input group.",
-      "dependencies": ["@formdef/core@>=0.4.0"],
+      "dependencies": ["@formdef/core@>=0.5.0"],
       "registryDependencies": ["field", "input-group", "textarea"],
       "files": [
         {
@@ -140,7 +140,7 @@
       "type": "registry:component",
       "title": "Password field",
       "description": "A formdef widget for passwords, built on shadcn's Field and InputGroup, with a button that shows and hides the value.",
-      "dependencies": ["@formdef/core@>=0.4.0", "lucide-react"],
+      "dependencies": ["@formdef/core@>=0.5.0", "lucide-react"],
       "registryDependencies": ["field", "input-group"],
       "files": [
         {
@@ -182,7 +182,7 @@
       "type": "registry:component",
       "title": "Number field",
       "description": "A formdef widget for optional number values, built on shadcn's Field and Input; an empty input is undefined.",
-      "dependencies": ["@formdef/core@>=0.4.0"],
+      "dependencies": ["@formdef/core@>=0.5.0"],
       "registryDependencies": ["field", "input"],
       "files": [
         {
@@ -224,7 +224,7 @@
       "type": "registry:component",
       "title": "Checkbox field",
       "description": "A formdef widget for a boolean, built on shadcn's Field and Checkbox, with its label beside the box.",
-      "dependencies": ["@formdef/core@>=0.4.0"],
+      "dependencies": ["@formdef/core@>=0.5.0"],
       "registryDependencies": ["checkbox", "field"],
       "files": [
         {
@@ -256,7 +256,7 @@
       "type": "registry:component",
       "title": "Switch field",
       "description": "A formdef widget for a boolean, built on shadcn's Field and Switch, as a split row, a list row or a card.",
-      "dependencies": ["@formdef/core@>=0.4.0"],
+      "dependencies": ["@formdef/core@>=0.5.0"],
       "registryDependencies": ["field", "switch"],
       "files": [
         {
@@ -288,7 +288,7 @@
       "type": "registry:component",
       "title": "Radio field",
       "description": "A formdef widget for one choice among options, built on shadcn's FieldSet and RadioGroup, as a list or as cards.",
-      "dependencies": ["@formdef/core@>=0.4.0"],
+      "dependencies": ["@formdef/core@>=0.5.0"],
       "registryDependencies": ["field", "radio-group"],
       "files": [
         {
@@ -330,7 +330,7 @@
       "type": "registry:component",
       "title": "Select field",
       "description": "A formdef widget for one choice among options, built on shadcn's Field and Select; a value the options do not carry stays in the form.",
-      "dependencies": ["@formdef/core@>=0.4.0"],
+      "dependencies": ["@formdef/core@>=0.5.0"],
       "registryDependencies": ["field", "select"],
       "files": [
         {
@@ -377,7 +377,7 @@
       "type": "registry:component",
       "title": "Checkbox group field",
       "description": "A formdef widget for several choices among options, built on shadcn's FieldSet and Checkbox; values the options do not carry stay in the form.",
-      "dependencies": ["@formdef/core@>=0.4.0"],
+      "dependencies": ["@formdef/core@>=0.5.0"],
       "registryDependencies": ["checkbox", "field"],
       "files": [
         {
@@ -419,7 +419,7 @@
       "type": "registry:component",
       "title": "Combobox field",
       "description": "A formdef widget for one choice among many options, built on shadcn's Field and Combobox, filtered by what is typed.",
-      "dependencies": ["@base-ui/react", "@formdef/core@>=0.4.0", "lucide-react"],
+      "dependencies": ["@base-ui/react", "@formdef/core@>=0.5.0", "lucide-react"],
       "registryDependencies": ["combobox", "field", "input-group"],
       "files": [
         {
@@ -466,7 +466,7 @@
       "type": "registry:component",
       "title": "Multi combobox field",
       "description": "A formdef widget for several choices among many options, built on shadcn's Field and Combobox chips, filtered by what is typed.",
-      "dependencies": ["@base-ui/react", "@formdef/core@>=0.4.0", "lucide-react"],
+      "dependencies": ["@base-ui/react", "@formdef/core@>=0.5.0", "lucide-react"],
       "registryDependencies": ["button", "combobox", "field"],
       "files": [
         {
@@ -513,7 +513,7 @@
       "type": "registry:component",
       "title": "Date field",
       "description": "A formdef widget for an ISO date string, built on shadcn's Calendar in a Popover; the day stays the day in every time zone.",
-      "dependencies": ["@formdef/core@>=0.4.0", "cn", "lucide-react"],
+      "dependencies": ["@formdef/core@>=0.5.0", "cn", "lucide-react"],
       "registryDependencies": ["button", "calendar", "field", "popover"],
       "files": [
         {
@@ -565,7 +565,7 @@
       "type": "registry:component",
       "title": "Date range field",
       "description": "A formdef widget for a range of ISO date strings, built on shadcn's Calendar in a Popover.",
-      "dependencies": ["@formdef/core@>=0.4.0", "cn", "lucide-react"],
+      "dependencies": ["@formdef/core@>=0.5.0", "cn", "lucide-react"],
       "registryDependencies": ["button", "calendar", "field", "popover"],
       "files": [
         {
@@ -617,7 +617,7 @@
       "type": "registry:component",
       "title": "Date and time field",
       "description": "A formdef widget for a local ISO date-time string, built on shadcn's Calendar in a Popover and a time input.",
-      "dependencies": ["@formdef/core@>=0.4.0", "cn", "lucide-react"],
+      "dependencies": ["@formdef/core@>=0.5.0", "cn", "lucide-react"],
       "registryDependencies": ["button", "calendar", "field", "input-group", "popover"],
       "files": [
         {
@@ -669,7 +669,7 @@
       "type": "registry:component",
       "title": "Tags field",
       "description": "A formdef widget for a list of free-text tags with optional suggestions, built on shadcn's Field and Combobox chips.",
-      "dependencies": ["@base-ui/react", "@formdef/core@>=0.4.0", "lucide-react"],
+      "dependencies": ["@base-ui/react", "@formdef/core@>=0.5.0", "lucide-react"],
       "registryDependencies": ["button", "combobox", "field"],
       "files": [
         {
@@ -711,13 +711,18 @@
       "type": "registry:component",
       "title": "Section",
       "description": "A formdef structure slot that renders a titled group as a fieldset, with an optional description.",
-      "dependencies": ["@formdef/core@>=0.4.0", "cn"],
+      "dependencies": ["@formdef/core@>=0.5.0", "cn"],
       "registryDependencies": ["field"],
       "files": [
         {
           "path": "components/formdef/section.tsx",
           "type": "registry:component",
           "target": "@components/formdef/section.tsx"
+        },
+        {
+          "path": "lib/formdef/field-labels.ts",
+          "type": "registry:lib",
+          "target": "@lib/formdef/field-labels.ts"
         }
       ],
       "docs": "Register it in lib/formdef: structure: { section: Section }. A layout entry { section: 'Address', layout: [...] } renders through it, and its props take description and variant: 'label' for a section inside another.",
@@ -728,7 +733,7 @@
       "type": "registry:component",
       "title": "Row",
       "description": "A formdef structure slot that places its fields side by side once its own container has room.",
-      "dependencies": ["@formdef/core@>=0.4.0", "cn"],
+      "dependencies": ["@formdef/core@>=0.5.0", "cn"],
       "registryDependencies": [],
       "files": [
         {
@@ -745,7 +750,7 @@
       "type": "registry:component",
       "title": "Array frame",
       "description": "A formdef structure slot that frames every array: its items, a remove button beside each, an add button and the errors about the whole list.",
-      "dependencies": ["@formdef/core@>=0.4.0", "lucide-react"],
+      "dependencies": ["@formdef/core@>=0.5.0", "lucide-react"],
       "registryDependencies": ["button", "field"],
       "files": [
         {
@@ -772,7 +777,7 @@
       "type": "registry:component",
       "title": "Stepper",
       "description": "A formdef structure slot that frames a form of steps in one of four variants: circles, a rail, segments or a compact bar, with the current step under its heading and the buttons back and next.",
-      "dependencies": ["@formdef/core@>=0.4.0", "class-variance-authority", "cn", "lucide-react"],
+      "dependencies": ["@formdef/core@>=0.5.0", "class-variance-authority", "cn", "lucide-react"],
       "registryDependencies": ["button", "progress"],
       "files": [
         {
