@@ -281,6 +281,27 @@ const plainConfig = (items: readonly DocumentItem[], build: Build): Parts => ({
   ...levelOf(items, build),
 })
 
+// Every condition and derived prop of a render reads the same values object, which the form
+// replaces on each change, so one evaluation per values object serves them all.
+const evaluationsOf = (
+  document: FormDocument,
+  { catalog, language }: Pick<Build, 'catalog' | 'language'>,
+): Build['evaluationOf'] => {
+  const evaluations = new WeakMap<object, Evaluation>()
+  return (values) => {
+    if (typeof values !== 'object' || values === null) {
+      return evaluate(document, catalog, { values, language })
+    }
+    const known = evaluations.get(values)
+    if (known !== undefined) {
+      return known
+    }
+    const evaluation = evaluate(document, catalog, { values, language })
+    evaluations.set(values, evaluation)
+    return evaluation
+  }
+}
+
 /**
  * Builds the form config of a document: a field entry per field, with its field kind's widget
  * and the props its settings give for the answers, a layout of its rows and sections, an array
@@ -294,12 +315,13 @@ export function documentConfig(
   catalog: Catalog<unknown, ValueType>,
   { schema, language }: { schema: DocumentValidator; language: string | undefined },
 ): DocumentConfig {
+  const evaluationOf = evaluationsOf(document, { catalog, language })
   const build: Build = {
     catalog,
     language,
     path: [],
-    evaluationOf: (values) => evaluate(document, catalog, { values, language }),
-    answersOf: (values) => evaluate(document, catalog, { values, language }).answers,
+    evaluationOf,
+    answersOf: (values) => evaluationOf(values).answers,
   }
   const parts =
     document.steps === undefined
