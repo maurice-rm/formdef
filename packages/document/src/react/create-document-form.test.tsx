@@ -10,6 +10,7 @@ import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { setting } from '../kinds/setting'
+import { valueTypes } from '../kinds/value-types'
 import { createDocumentForm } from './create-document-form'
 
 type Option = { value: string; label: string }
@@ -96,12 +97,17 @@ const registry = createRegistry({
 })
 
 const fieldKinds = [
-  defineFieldKind(registry, { name: 'text', label: 'Text', widget: 'text', valueType: 'text' }),
+  defineFieldKind(registry, {
+    name: 'text',
+    label: 'Text',
+    widget: 'text',
+    valueType: valueTypes.text,
+  }),
   defineFieldKind(registry, {
     name: 'measure',
     label: 'Measure',
     widget: 'text',
-    valueType: 'decimal',
+    valueType: valueTypes.decimal,
     settings: { unit: setting.text({ label: 'Unit', required: true, varies: true }) },
     props: ({ unit }) => ({ suffix: unit }),
   }),
@@ -109,7 +115,7 @@ const fieldKinds = [
     name: 'choice',
     label: 'Choice',
     widget: 'choice',
-    valueType: 'choice',
+    valueType: valueTypes.choice,
     settings: { options: setting.options({ label: 'Options' }) },
     props: ({ options }) => ({ options }),
   }),

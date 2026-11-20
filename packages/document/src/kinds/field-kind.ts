@@ -19,7 +19,7 @@ export type FieldKind<TRegistry> = {
   readonly label: string
   /** The name of the widget that renders fields of this kind. */
   readonly widget: string
-  /** What kind of answer a field of this kind gives. */
+  /** What kind of answer a field of this kind gives; one of the catalog's value types. */
   readonly valueType: ValueType
   /** The settings a person may change on a field of this kind, by name. */
   readonly settings: Readonly<Record<string, Setting<unknown>>>

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import type { FieldItem, FormDocument } from '../form-document'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { setting } from '../kinds/setting'
+import { valueTypes } from '../kinds/value-types'
 import { changeKind } from './change-kind'
 
 const TextWidget = (_: FieldOf<string> & { label?: string }) => null
@@ -15,7 +16,7 @@ const measure = defineFieldKind(registry, {
   name: 'measure',
   label: 'Measure',
   widget: 'text',
-  valueType: 'decimal',
+  valueType: valueTypes.decimal,
   settings: {
     unit: setting.text({ label: 'Unit', required: true }),
     min: setting.number({ label: 'Minimum' }),

@@ -2,6 +2,7 @@ import { DOCUMENT_PATH } from '../document-path'
 import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
+import type { ValueType } from '../kinds/value-type'
 import { pathTo } from '../path-to'
 import { checkCondition } from './check-condition'
 import { checkSettings } from './check-settings'
@@ -133,7 +134,10 @@ const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
  * if (problems.length > 0) showProblems(problems)
  * ```
  */
-export function checkDocument(document: FormDocument, catalog: Catalog<unknown>): Problem[] {
+export function checkDocument(
+  document: FormDocument,
+  catalog: Catalog<unknown, ValueType>,
+): Problem[] {
   const items =
     document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
   const walk: CheckWalk = {

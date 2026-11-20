@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 
 import type { FormDocument } from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
+import type { ValueType } from '../kinds/value-type'
 import {
   createValidator,
   type DocumentValidator,
@@ -63,7 +64,7 @@ type CreatesForms = {
  */
 export function createDocumentForm(
   document: FormDocument,
-  catalog: Catalog<unknown>,
+  catalog: Catalog<unknown, ValueType>,
   options: DocumentFormOptions = {},
 ): DocumentForm {
   const schema = createValidator(document, catalog, options)

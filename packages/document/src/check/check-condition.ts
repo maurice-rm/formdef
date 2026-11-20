@@ -1,8 +1,8 @@
 import type { Comparison, Condition } from '../condition'
 import { isIsoDate } from '../is-iso-date'
-import { isChoice } from '../kinds/is-choice'
 import { optionValuesOf } from '../kinds/option-values-of'
 import type { ValueType } from '../kinds/value-type'
+import { valueTypes } from '../kinds/value-types'
 import type { Operator } from '../operators'
 import type { CheckWalk, EarlierField } from './check-walk'
 import { report } from './report'
@@ -20,15 +20,21 @@ const NUMBER_OPERATORS: readonly Operator[] = [
   ...FILL_OPERATORS,
 ]
 
-const OPERATORS: Record<ValueType, readonly Operator[]> = {
-  text: FILL_OPERATORS,
-  choice: ['equals', 'notEquals', 'in', 'notIn', ...FILL_OPERATORS],
-  choices: ['includes', 'excludes', ...FILL_OPERATORS],
-  boolean: ['isTrue', 'isFalse', ...FILL_OPERATORS],
-  number: NUMBER_OPERATORS,
-  decimal: NUMBER_OPERATORS,
-  date: ['equals', 'before', 'onOrBefore', 'after', 'onOrAfter', ...FILL_OPERATORS],
-}
+const OPERATORS: ReadonlyMap<ValueType, readonly Operator[]> = new Map<
+  ValueType,
+  readonly Operator[]
+>([
+  [valueTypes.text, FILL_OPERATORS],
+  [valueTypes.choice, ['equals', 'notEquals', 'in', 'notIn', ...FILL_OPERATORS]],
+  [valueTypes.choices, ['includes', 'excludes', ...FILL_OPERATORS]],
+  [valueTypes.boolean, ['isTrue', 'isFalse', ...FILL_OPERATORS]],
+  [valueTypes.number, NUMBER_OPERATORS],
+  [valueTypes.decimal, NUMBER_OPERATORS],
+  [valueTypes.date, ['equals', 'before', 'onOrBefore', 'after', 'onOrAfter', ...FILL_OPERATORS]],
+])
+
+const operatorsOf = (valueType: ValueType): readonly Operator[] =>
+  OPERATORS.get(valueType) ?? FILL_OPERATORS
 
 const checkOption = (
   value: unknown,
@@ -63,15 +69,16 @@ const checkComparedValue = (comparison: Comparison, earlier: EarlierField, at: A
   const { valueType } = earlier.kind
   const { walk, path } = at
 
-  if (isChoice(valueType)) {
+  if (valueType.readsOptions) {
     checkComparedOptions(comparison, earlier, at)
     return
   }
-  if ((valueType === 'number' || valueType === 'decimal') && typeof comparison.value !== 'number') {
+  const isNumeric = valueType === valueTypes.number || valueType === valueTypes.decimal
+  if (isNumeric && typeof comparison.value !== 'number') {
     report(walk, { code: 'valueMismatch', path: `${path}.value`, params: { expected: 'number' } })
     return
   }
-  if (valueType === 'date' && !isIsoDate(comparison.value)) {
+  if (valueType === valueTypes.date && !isIsoDate(comparison.value)) {
     report(walk, { code: 'valueMismatch', path: `${path}.value`, params: { expected: 'date' } })
   }
 }
@@ -92,8 +99,12 @@ const checkComparison = (comparison: Comparison, path: string, walk: CheckWalk):
   }
 
   const { valueType } = earlier.kind
-  if (!OPERATORS[valueType].includes(op)) {
-    report(walk, { code: 'operatorMismatch', path: `${path}.op`, params: { op, valueType } })
+  if (!operatorsOf(valueType).includes(op)) {
+    report(walk, {
+      code: 'operatorMismatch',
+      path: `${path}.op`,
+      params: { op, valueType: valueType.name },
+    })
     return
   }
   checkComparedValue(comparison, earlier, { walk, path })

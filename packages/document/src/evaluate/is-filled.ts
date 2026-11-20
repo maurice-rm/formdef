@@ -2,21 +2,9 @@ import type { ValueType } from '../kinds/value-type'
 import { isMissing } from './is-missing'
 
 /**
- * Whether a field holds an answer: neither missing nor blank text, nor no choice. A boolean is
- * filled when it is true, so a required boolean, such as a consent, has to be checked.
+ * Whether a field holds an answer: a value of its value type that the value type counts as
+ * filled, such as text that is not blank or a boolean that is true.
  */
 export function isFilled(value: unknown, valueType: ValueType): boolean {
-  if (isMissing(value)) {
-    return false
-  }
-  if (valueType === 'boolean') {
-    return value === true
-  }
-  if (typeof value === 'string') {
-    return value.trim() !== ''
-  }
-  if (Array.isArray(value)) {
-    return value.length > 0
-  }
-  return !Number.isNaN(value)
+  return !isMissing(value) && valueType.fits(value) && valueType.isFilled(value)
 }

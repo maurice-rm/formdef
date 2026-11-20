@@ -5,7 +5,9 @@ import { describe, expect, it } from 'vitest'
 import type { FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineFieldKind } from '../kinds/define-field-kind'
+import { defineValueType } from '../kinds/define-value-type'
 import { setting } from '../kinds/setting'
+import { valueTypes } from '../kinds/value-types'
 import { checkDocument } from './check-document'
 
 type Option = { value: string; label: string }
@@ -34,14 +36,14 @@ const fieldKinds = [
     name: 'text',
     label: 'Text',
     widget: 'text',
-    valueType: 'text',
+    valueType: valueTypes.text,
     settings: { placeholder: setting.text({ label: 'Placeholder', maxLength: 10 }) },
   }),
   defineFieldKind(registry, {
     name: 'measure',
     label: 'Measure',
     widget: 'text',
-    valueType: 'decimal',
+    valueType: valueTypes.decimal,
     settings: {
       unit: setting.text({ label: 'Unit', required: true, varies: true }),
       min: setting.number({ label: 'Minimum', integer: true }),
@@ -52,20 +54,25 @@ const fieldKinds = [
     name: 'count',
     label: 'Count',
     widget: 'number',
-    valueType: 'number',
+    valueType: valueTypes.number,
   }),
-  defineFieldKind(registry, { name: 'date', label: 'Date', widget: 'text', valueType: 'date' }),
+  defineFieldKind(registry, {
+    name: 'date',
+    label: 'Date',
+    widget: 'text',
+    valueType: valueTypes.date,
+  }),
   defineFieldKind(registry, {
     name: 'yesNo',
     label: 'Yes or no',
     widget: 'check',
-    valueType: 'boolean',
+    valueType: valueTypes.boolean,
   }),
   defineFieldKind(registry, {
     name: 'choice',
     label: 'One choice',
     widget: 'choice',
-    valueType: 'choice',
+    valueType: valueTypes.choice,
     settings: { options: setting.options({ label: 'Choices', minCount: 2 }) },
     props: ({ options }) => ({ options }),
   }),
@@ -73,7 +80,7 @@ const fieldKinds = [
     name: 'choices',
     label: 'Several choices',
     widget: 'choices',
-    valueType: 'choices',
+    valueType: valueTypes.choices,
     settings: { options: setting.options({ label: 'Choices' }) },
     props: ({ options }) => ({ options }),
   }),
@@ -499,6 +506,52 @@ describe('checkDocument', () => {
       'notVarying document.items[1].settings.placeholder',
       'unknownField document.items[2].settings.unit.cases[0].when.field',
       'settingMismatch document.items[2].settings.unit.cases[0].value',
+    ])
+  })
+
+  it("lets a condition ask only whether a field of a project's value type is filled", () => {
+    const postalCode = defineValueType({
+      name: 'postalCode',
+      emptyValue: '',
+      fits: (value): value is string => typeof value === 'string',
+      describe: (value) => ({ value }),
+    })
+    const withPostalCode = createCatalog(registry, {
+      valueTypes: [postalCode],
+      fields: [
+        ...fieldKinds,
+        defineFieldKind(registry, {
+          name: 'postal',
+          label: 'Postal code',
+          widget: 'text',
+          valueType: postalCode,
+        }),
+      ],
+    })
+    const document = plain(
+      { type: 'field', key: 'f1', kind: 'postal', label: 'Postal code' },
+      {
+        type: 'field',
+        key: 'f2',
+        kind: 'text',
+        label: 'A',
+        visibleWhen: { field: 'f1', op: 'isFilled' },
+      },
+      {
+        type: 'field',
+        key: 'f3',
+        kind: 'text',
+        label: 'B',
+        visibleWhen: { field: 'f1', op: 'equals', value: '53111' },
+      },
+    )
+
+    expect(checkDocument(document, withPostalCode)).toEqual([
+      {
+        code: 'operatorMismatch',
+        path: 'document.items[2].visibleWhen.op',
+        params: { op: 'equals', valueType: 'postalCode' },
+      },
     ])
   })
 })

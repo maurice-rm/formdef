@@ -1,8 +1,9 @@
-import type { FieldItem } from '../form-document'
-import { optionsOf } from './options-of'
 import type { SettingOption } from './setting'
 
-/** The option of a choice field with this value, or `undefined` when it has none. */
-export function optionOf(field: FieldItem, value: unknown): SettingOption | undefined {
-  return optionsOf(field).find((option) => option.value === value)
+/** The option of these options with this value, or `undefined` when there is none. */
+export function optionOf(
+  options: readonly SettingOption[],
+  value: unknown,
+): SettingOption | undefined {
+  return options.find((option) => option.value === value)
 }

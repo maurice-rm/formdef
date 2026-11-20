@@ -23,13 +23,13 @@ const registry = createRegistry({
   widgets: { text: TextField, select: SelectField },
 })
 // ---cut---
-import { createCatalog, defineFieldKind, rule, setting } from '@formdef/document'
+import { createCatalog, defineFieldKind, rule, setting, valueTypes } from '@formdef/document'
 
 const area = defineFieldKind(registry, {
   name: 'area',
   label: 'Area',
   widget: 'text',
-  valueType: 'decimal',
+  valueType: valueTypes.decimal,
   settings: {
     unit: setting.text({ label: 'Unit', required: true, varies: true }),
     min: setting.number({ label: 'Smallest value' }),
@@ -45,7 +45,7 @@ const dropdown = defineFieldKind(registry, {
   name: 'dropdown',
   label: 'Dropdown',
   widget: 'select',
-  valueType: 'choice',
+  valueType: valueTypes.choice,
   settings: { options: setting.options({ label: 'Options', minCount: 2 }) },
   props: ({ options }) => ({ options }),
 })
@@ -56,23 +56,76 @@ export const catalog = createCatalog(registry, { fields: [area, dropdown] })
 - `name` is what a document's `kind` names; `label` is the name a builder lists. A document stores
   the name, so a field kind keeps it once documents use it.
 - `widget` names a widget of the registry. The same registry renders the documents.
-- `valueType` is the kind of answer: `text`, `choice`, `choices`, `boolean`, `number`, `decimal`
-  or `date`. It has to fit the widget's value: a `string` widget serves `text`, `choice`,
-  `decimal` (written as text, such as `120,5`) and `date` (an ISO string), a `string[]` widget
-  `choices`. The value type decides the operators a [condition](/documents#conditions) may compare
-  the field with and how its answer is described.
-- A `choice` or `choices` field kind reads its options from a setting named `options`; without one,
-  these value types do not compile.
+- `valueType` is the kind of answer, one of the [value types](#value-types) of the catalog, such
+  as `valueTypes.decimal`. Every value the widget gives has to be an answer of it: a `string`
+  widget serves `text`, `choice`, `decimal` (written as text, such as `120,5`) and `date` (an ISO
+  string), a `string[]` widget `choices`. The value type decides the operators a
+  [condition](/documents#conditions) may compare the field with and how its answer is described.
+- A field kind of a value type that reads options, such as `choice` or `choices`, reads them from a
+  setting named `options`; without one, it does not compile.
 - `props` builds the widget's props from the values of the settings. The field's label,
   description and whether it is required reach the widget on their own, as `label`,
   `description` and `required`, so `props` leaves them out. It is optional unless the widget needs a prop.
 - `rules` builds the [rules](#rules) from the values of the settings.
 - `createCatalog` collects the field kinds of one registry in a **catalog**, which rendering,
-  checking, validating and describing a document take. It throws when two field kinds share a name
-  or one was defined with another registry.
+  checking, validating and describing a document take. It throws when two field kinds share a name,
+  one was defined with another registry, or its value type is not one of the catalog's.
 
 The field kinds file stays without `'use client'`: a server imports it to
 [validate the answers](/documents/validation-and-answers) with the same catalog.
+
+## Value types
+
+A value type is the kind of answer a field gives. Every catalog holds the built-in ones,
+`valueTypes.text`, `choice`, `choices`, `boolean`, `number`, `decimal` and `date`. An answer that
+fits none of them, such as an address as one object, gets a value type of its own:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { createCatalog, defineFieldKind, defineValueType } from '@formdef/document'
+type Address = { street: string; city: string }
+declare const AddressField: (props: FieldOf<Address> & { label?: string }) => null
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({ fieldContext, formContext, widgets: { address: AddressField } })
+// ---cut---
+const isAddress = (value: unknown): value is Address =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as Address).street === 'string' &&
+  typeof (value as Address).city === 'string'
+
+const address = defineValueType({
+  name: 'address',
+  emptyValue: { street: '', city: '' },
+  fits: isAddress,
+  isFilled: ({ street, city }) => street.trim() !== '' && city.trim() !== '',
+  describe: ({ street, city }) => ({ street, city }),
+})
+
+const postalAddress = defineFieldKind(registry, {
+  name: 'postalAddress',
+  label: 'Postal address',
+  widget: 'address',
+  valueType: address,
+})
+
+export const catalog = createCatalog(registry, { valueTypes: [address], fields: [postalAddress] })
+```
+
+- `name` is unique in the catalog; the built-in value types hold theirs.
+- `emptyValue` is the value a field starts with, which counts as no answer.
+- `fits` tells a value of the right shape, such as one that comes with a request. The validator
+  reports a value that does not fit as `type`.
+- `isFilled` tells whether a value of the right shape is an answer, for `required` and for the
+  operators `isFilled` and `isEmpty`. Without it, every value of the right shape is one.
+- `describe` gives the answer as [`describeAnswers`](/documents/validation-and-answers#describing-answers)
+  shows it, next to the value type's name; it receives the field's options. `undefined` leaves the
+  answer out.
+- `readsOptions: true` makes the value type choose among the field's options: its field kinds need
+  a setting `options`, and the validator refuses an answer that is no option.
+
+A condition compares a field of a project's value type with `isFilled` and `isEmpty`.
 
 ## Settings
 
@@ -121,7 +174,7 @@ names a code of its own:
 ```tsx
 import { createRegistry } from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
-import { defineFieldKind, rule } from '@formdef/document'
+import { defineFieldKind, rule, valueTypes } from '@formdef/document'
 import { TextField } from '@/components/formdef/text-field'
 const { fieldContext, formContext } = createFormHookContexts()
 const registry = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
@@ -132,7 +185,7 @@ const postalCode = defineFieldKind(registry, {
   name: 'postalCode',
   label: 'Postal code',
   widget: 'text',
-  valueType: 'text',
+  valueType: valueTypes.text,
   rules: () => [
     rule.custom({ code: 'postalCode', passes: (value: string) => POSTAL_CODE.test(value) }),
   ],

@@ -1,0 +1,62 @@
+import { describe, expect, it } from 'vitest'
+
+import { valueTypes } from './value-types'
+
+const OPTIONS = [
+  { value: 'o1', label: 'Detached' },
+  { value: 'o2', label: 'Apartment block' },
+]
+
+describe('valueTypes', () => {
+  it('start each field with the empty value the shadcn widgets declare', () => {
+    expect(valueTypes.text.emptyValue).toBe('')
+    expect(valueTypes.choice.emptyValue).toBe('')
+    expect(valueTypes.choices.emptyValue).toEqual([])
+    expect(valueTypes.boolean.emptyValue).toBe(false)
+    expect(valueTypes.number.emptyValue).toBeUndefined()
+    expect(valueTypes.decimal.emptyValue).toBe('')
+    expect(valueTypes.date.emptyValue).toBe('')
+  })
+
+  it('recognise values of their shape', () => {
+    expect(valueTypes.text.fits('Ada')).toBe(true)
+    expect(valueTypes.text.fits(1)).toBe(false)
+    expect(valueTypes.choices.fits(['o1'])).toBe(true)
+    expect(valueTypes.choices.fits(['o1', 2])).toBe(false)
+    expect(valueTypes.boolean.fits(false)).toBe(true)
+    expect(valueTypes.number.fits(Number.NaN)).toBe(false)
+    expect(valueTypes.number.fits(Number.POSITIVE_INFINITY)).toBe(false)
+    expect(valueTypes.decimal.fits('120,5')).toBe(true)
+    expect(valueTypes.date.fits('2026-01-31')).toBe(true)
+    expect(valueTypes.date.fits('2026-01-31T09:30:00Z')).toBe(true)
+    expect(valueTypes.date.fits('2026-02-31')).toBe(false)
+    expect(valueTypes.date.fits('2026-01-31 09:30')).toBe(false)
+  })
+
+  it('count blank text, no choice and an unticked boolean as empty', () => {
+    expect(valueTypes.text.isFilled('  ')).toBe(false)
+    expect(valueTypes.choice.isFilled('')).toBe(false)
+    expect(valueTypes.choices.isFilled([])).toBe(false)
+    expect(valueTypes.boolean.isFilled(false)).toBe(false)
+    expect(valueTypes.boolean.isFilled(true)).toBe(true)
+    expect(valueTypes.number.isFilled(0)).toBe(true)
+  })
+
+  it('read options for choices only', () => {
+    const readers = Object.values(valueTypes).filter((valueType) => valueType.readsOptions)
+
+    expect(readers.map((valueType) => valueType.name)).toEqual(['choice', 'choices'])
+  })
+
+  it('describe a choice by its option, and leave out one that is no option', () => {
+    expect(valueTypes.choice.describe('o2', OPTIONS)).toEqual(OPTIONS[1])
+    expect(valueTypes.choice.describe('o9', OPTIONS)).toBeUndefined()
+    expect(valueTypes.choices.describe(['o2', 'o1'], OPTIONS)).toEqual({
+      values: [OPTIONS[1], OPTIONS[0]],
+    })
+    expect(valueTypes.choices.describe(['o1', 'o9'], OPTIONS)).toBeUndefined()
+    expect(valueTypes.number.describe(3, [])).toEqual({ value: 3 })
+    expect(valueTypes.boolean.describe(true, [])).toEqual({ value: true })
+    expect(valueTypes.decimal.describe('120,5', [])).toEqual({ value: '120,5' })
+  })
+})

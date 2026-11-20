@@ -1,13 +1,13 @@
 import { refuseProblems } from '../check/refuse-problems'
 import type { DocumentValues } from '../document-values'
 import { evaluate, type ShownField } from '../evaluate/evaluate'
-import { fitsValueType } from '../evaluate/fits-value-type'
 import { isFilled } from '../evaluate/is-filled'
 import { isMissing } from '../evaluate/is-missing'
 import type { FormDocument, JsonValue } from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
-import { isChoice } from '../kinds/is-choice'
 import { optionOf } from '../kinds/option-of'
+import { optionsOf } from '../kinds/options-of'
+import type { ValueType } from '../kinds/value-type'
 import { nestValues } from '../nest-values'
 import { DEFAULT_MESSAGES, FALLBACK_MESSAGE, type Messages } from './messages'
 
@@ -76,18 +76,20 @@ const VENDOR = 'formdef'
 
 const fitsOptions = ({ field, value }: ShownField): boolean => {
   const choices: unknown[] = Array.isArray(value) ? value : [value]
-  return choices.every((choice) => optionOf(field, choice) !== undefined)
+  const options = optionsOf(field)
+  return choices.every((choice) => optionOf(options, choice) !== undefined)
 }
 
 const failureOf = (shown: ShownField): Failure | undefined => {
   const { kind, value } = shown
-  if (!isMissing(value) && !fitsValueType(value, kind.valueType)) {
-    return { code: 'type', params: { expected: kind.valueType } }
+  const { valueType } = kind
+  if (!isMissing(value) && !valueType.fits(value)) {
+    return { code: 'type', params: { expected: valueType.name } }
   }
-  if (!isFilled(value, kind.valueType)) {
+  if (!isFilled(value, valueType)) {
     return shown.isRequired ? { code: 'required', params: {} } : undefined
   }
-  if (isChoice(kind.valueType) && !fitsOptions(shown)) {
+  if (valueType.readsOptions && !fitsOptions(shown)) {
     return { code: 'option', params: {} }
   }
   const failed = kind
@@ -129,7 +131,7 @@ const answersOf = (shown: readonly ShownField[]): DocumentValues =>
  */
 export function createValidator(
   document: FormDocument,
-  catalog: Catalog<unknown>,
+  catalog: Catalog<unknown, ValueType>,
   options: ValidatorOptions = {},
 ): DocumentValidator {
   refuseProblems(document, catalog)

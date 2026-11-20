@@ -6,7 +6,9 @@ import type { Condition } from '../condition'
 import type { FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineFieldKind } from '../kinds/define-field-kind'
+import { defineValueType } from '../kinds/define-value-type'
 import { setting } from '../kinds/setting'
+import { valueTypes } from '../kinds/value-types'
 import { describeAnswers } from './describe-answers'
 
 type Option = { value: string; label: string }
@@ -31,12 +33,17 @@ const registry = createRegistry({
 })
 
 const fieldKinds = [
-  defineFieldKind(registry, { name: 'text', label: 'Text', widget: 'text', valueType: 'text' }),
+  defineFieldKind(registry, {
+    name: 'text',
+    label: 'Text',
+    widget: 'text',
+    valueType: valueTypes.text,
+  }),
   defineFieldKind(registry, {
     name: 'measure',
     label: 'Measure',
     widget: 'text',
-    valueType: 'decimal',
+    valueType: valueTypes.decimal,
     settings: { unit: setting.text({ label: 'Unit', required: true, varies: true }) },
     props: ({ unit }) => ({ suffix: unit }),
   }),
@@ -44,19 +51,19 @@ const fieldKinds = [
     name: 'count',
     label: 'Count',
     widget: 'number',
-    valueType: 'number',
+    valueType: valueTypes.number,
   }),
   defineFieldKind(registry, {
     name: 'consent',
     label: 'Consent',
     widget: 'check',
-    valueType: 'boolean',
+    valueType: valueTypes.boolean,
   }),
   defineFieldKind(registry, {
     name: 'choice',
     label: 'Choice',
     widget: 'choice',
-    valueType: 'choice',
+    valueType: valueTypes.choice,
     settings: { options: setting.options({ label: 'Options' }) },
     props: ({ options }) => ({ options }),
   }),
@@ -64,7 +71,7 @@ const fieldKinds = [
     name: 'choices',
     label: 'Choices',
     widget: 'choices',
-    valueType: 'choices',
+    valueType: valueTypes.choices,
     settings: { options: setting.options({ label: 'Options' }) },
     props: ({ options }) => ({ options }),
   }),
@@ -238,6 +245,66 @@ describe('describeAnswers', () => {
         expect.objectContaining({ key: 'house', answer: undefined }),
         expect.objectContaining({ key: 'flats', answer: undefined }),
       ],
+    })
+  })
+
+  it("describes an answer of a project's value type in the shape it defines", () => {
+    const postalCode = defineValueType({
+      name: 'postalCode',
+      emptyValue: '',
+      fits: (value): value is string => typeof value === 'string',
+      isFilled: (value) => value.length === 5,
+      describe: (value) => ({ code: value, region: value.slice(0, 1) }),
+    })
+    const withPostalCode = createCatalog(registry, {
+      valueTypes: [postalCode],
+      fields: [
+        defineFieldKind(registry, {
+          name: 'postal',
+          label: 'Postal code',
+          widget: 'text',
+          valueType: postalCode,
+        }),
+      ],
+    })
+    const document: FormDocument = {
+      format: 1,
+      items: [field('home', 'postal'), field('work', 'postal')],
+    }
+
+    expect(describeAnswers(document, withPostalCode, { home: '53111', work: '531' })).toEqual({
+      items: [
+        expect.objectContaining({
+          key: 'home',
+          answer: { valueType: 'postalCode', code: '53111', region: '5' },
+        }),
+        expect.objectContaining({ key: 'work', answer: undefined }),
+      ],
+    })
+  })
+
+  it("keeps the value type's name when its description holds a key of that name", () => {
+    const tagged = defineValueType({
+      name: 'tagged',
+      emptyValue: '',
+      fits: (value): value is string => typeof value === 'string',
+      describe: (value) => ({ valueType: 'text', value }),
+    })
+    const withTagged = createCatalog(registry, {
+      valueTypes: [tagged],
+      fields: [
+        defineFieldKind(registry, {
+          name: 'tagged',
+          label: 'Tagged',
+          widget: 'text',
+          valueType: tagged,
+        }),
+      ],
+    })
+    const document: FormDocument = { format: 1, items: [field('f1', 'tagged')] }
+
+    expect(describeAnswers(document, withTagged, { f1: 'x' })).toEqual({
+      items: [expect.objectContaining({ answer: { valueType: 'tagged', value: 'x' } })],
     })
   })
 

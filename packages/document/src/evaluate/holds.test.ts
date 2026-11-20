@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Condition } from '../condition'
-import type { Answers } from './answers'
+import { valueTypes } from '../kinds/value-types'
+import type { Answer, Answers } from './answers'
 import { holds } from './holds'
 
-const answers: Answers = new Map([
-  ['house', { value: 'o2', valueType: 'choice' }],
-  ['rooms', { value: ['o1', 'o3'], valueType: 'choices' }],
-  ['heated', { value: true, valueType: 'boolean' }],
-  ['flats', { value: 6, valueType: 'number' }],
-  ['area', { value: '120,5', valueType: 'decimal' }],
-  ['built', { value: '1978-05-02T10:00', valueType: 'date' }],
+const answers: Answers = new Map<string, Answer>([
+  ['house', { value: 'o2', valueType: valueTypes.choice }],
+  ['rooms', { value: ['o1', 'o3'], valueType: valueTypes.choices }],
+  ['heated', { value: true, valueType: valueTypes.boolean }],
+  ['flats', { value: 6, valueType: valueTypes.number }],
+  ['area', { value: '120,5', valueType: valueTypes.decimal }],
+  ['built', { value: '1978-05-02T10:00', valueType: valueTypes.date }],
 ])
 
 const holdsOf = (condition: Condition): boolean => holds(condition, answers)

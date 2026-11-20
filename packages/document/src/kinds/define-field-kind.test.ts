@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { defineFieldKind } from './define-field-kind'
 import { rule } from './rule'
 import { setting } from './setting'
+import { valueTypes } from './value-types'
 
 type Option = { value: string; label: string }
 
@@ -24,7 +25,7 @@ const measure = defineFieldKind(registry, {
   name: 'measure',
   label: 'Measure with unit',
   widget: 'text',
-  valueType: 'decimal',
+  valueType: valueTypes.decimal,
   settings: {
     unit: setting.text({ label: 'Unit', required: true, varies: true }),
     min: setting.number({ label: 'Minimum' }),
@@ -37,14 +38,14 @@ const text = defineFieldKind(registry, {
   name: 'text',
   label: 'Short text',
   widget: 'text',
-  valueType: 'text',
+  valueType: valueTypes.text,
 })
 
 const choice = defineFieldKind(registry, {
   name: 'choice',
   label: 'One choice',
   widget: 'choice',
-  valueType: 'choice',
+  valueType: valueTypes.choice,
   settings: { options: setting.options({ label: 'Choices', minCount: 2 }) },
   props: ({ options }) => ({ options }),
 })
@@ -72,7 +73,7 @@ describe('defineFieldKind', () => {
   })
 
   it('keeps the value type, which checks and answers read', () => {
-    expect(choice.valueType).toBe('choice')
-    expect(measure.valueType).toBe('decimal')
+    expect(choice.valueType).toBe(valueTypes.choice)
+    expect(measure.valueType).toBe(valueTypes.decimal)
   })
 })

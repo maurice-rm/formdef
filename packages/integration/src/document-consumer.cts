@@ -13,7 +13,7 @@ const text = document.defineFieldKind(registry, {
   name: 'text',
   label: 'Short text',
   widget: 'text',
-  valueType: 'text',
+  valueType: document.valueTypes.text,
 })
 
 export const catalog = document.createCatalog(registry, { fields: [text] })

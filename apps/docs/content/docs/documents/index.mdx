@@ -126,6 +126,7 @@ Which operators fit a field follows from the value type of its field kind:
 | | `isFilled`, `isEmpty` | none |
 | `date` | `equals`, `before`, `onOrBefore`, `after`, `onOrAfter` | a date as an ISO string, such as `2026-05-01` |
 | | `isFilled`, `isEmpty` | none |
+| a [value type of your own](/documents/field-kinds#value-types) | `isFilled`, `isEmpty` | none |
 
 - An empty field equals nothing and comes in no order, so of the comparisons only `notEquals`,
   `notIn` and `excludes` hold for it.

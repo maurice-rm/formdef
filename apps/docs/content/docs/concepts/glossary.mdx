@@ -41,7 +41,7 @@ formdef uses one word per concept, in the code, in error messages and here.
 | **setting** | A value of a field in a form document that a person may change, such as a unit, declared by its field kind with `setting.*`. |
 | **item (form document)** | One field, row or section of a form document, under `items`; not an element of an array. |
 | **document path** | Where a place sits in a form document, such as `document.steps[0].items[2].visibleWhen`, as problems and errors name it; not the path of a field. |
-| **value type** | The kind of answer a field kind gives: `text`, `choice`, `choices`, `boolean`, `number`, `decimal` or `date`. |
+| **value type** | The kind of answer a field kind gives: one of the built-in `valueTypes`, `text`, `choice`, `choices`, `boolean`, `number`, `decimal` and `date`, or a project's own, defined with `defineValueType` and held by the catalog. |
 | **answers** | The values of a form document's fields that show, as the validator returns them and `describeAnswers` describes them. |
 | **condition** | When something applies, depending on the values: a `visibleWhen` in a config, a function of the values; in a form document, a comparison of one earlier field, or several combined with `all` or `any`, which decides whether a step, section, row or field shows, whether a field is required, and which case of a setting applies. |
 | **rule** | A check of a value: in a config, a validator or a refinement of the schema; in a form document, a fixed check of a field kind on a filled value, built with `rule.*`, which carries a code and the params its error text names. |

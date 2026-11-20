@@ -1,5 +1,6 @@
 import type { Comparison, Condition } from '../condition'
 import { dayOf } from '../day-of'
+import { valueTypes } from '../kinds/value-types'
 import { numberOf } from '../number-of'
 import type { Answer, Answers } from './answers'
 
@@ -13,10 +14,10 @@ const isAtLeast: Order = (answer, compared) => answer >= compared
 
 const comparableOf = (value: unknown, { valueType }: Answer): Comparable => {
   const plain = value as Comparable
-  if (valueType === 'decimal') {
+  if (valueType === valueTypes.decimal) {
     return numberOf(plain)
   }
-  if (valueType === 'date') {
+  if (valueType === valueTypes.date) {
     return dayOf(String(plain))
   }
   return plain

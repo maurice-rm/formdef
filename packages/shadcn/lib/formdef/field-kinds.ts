@@ -1,4 +1,4 @@
-import { createCatalog, defineFieldKind, rule, setting } from '@formdef/document'
+import { createCatalog, defineFieldKind, rule, setting, valueTypes } from '@formdef/document'
 
 import { registry } from '@/lib/formdef'
 
@@ -15,7 +15,7 @@ const text = defineFieldKind(registry, {
   name: 'text',
   label: 'Short text',
   widget: 'text',
-  valueType: 'text',
+  valueType: valueTypes.text,
   settings: { placeholder, maxLength },
   props: (settings) => ({ placeholder: settings.placeholder, maxLength: settings.maxLength }),
   rules: (settings) => [rule.maxLength(settings.maxLength)],
@@ -25,7 +25,7 @@ const email = defineFieldKind(registry, {
   name: 'email',
   label: 'Email address',
   widget: 'text',
-  valueType: 'text',
+  valueType: valueTypes.text,
   settings: { placeholder },
   props: (settings) => ({
     type: 'email',
@@ -39,7 +39,7 @@ const longText = defineFieldKind(registry, {
   name: 'longText',
   label: 'Long text',
   widget: 'textarea',
-  valueType: 'text',
+  valueType: valueTypes.text,
   settings: { placeholder, maxLength },
   props: (settings) => ({ placeholder: settings.placeholder, maxLength: settings.maxLength }),
   rules: (settings) => [rule.maxLength(settings.maxLength)],
@@ -49,7 +49,7 @@ const decimal = defineFieldKind(registry, {
   name: 'decimal',
   label: 'Number with unit',
   widget: 'text',
-  valueType: 'decimal',
+  valueType: valueTypes.decimal,
   settings: {
     unit: setting.text({ label: 'Unit', varies: true }),
     min: setting.number({ label: 'Smallest value' }),
@@ -66,7 +66,7 @@ const number = defineFieldKind(registry, {
   name: 'number',
   label: 'Whole number',
   widget: 'number',
-  valueType: 'number',
+  valueType: valueTypes.number,
   settings: {
     min: setting.number({ label: 'Smallest value', integer: true }),
     max: setting.number({ label: 'Largest value', integer: true }),
@@ -79,14 +79,14 @@ const checkbox = defineFieldKind(registry, {
   name: 'checkbox',
   label: 'Checkbox',
   widget: 'checkbox',
-  valueType: 'boolean',
+  valueType: valueTypes.boolean,
 })
 
 const radio = defineFieldKind(registry, {
   name: 'radio',
   label: 'Single choice',
   widget: 'radio',
-  valueType: 'choice',
+  valueType: valueTypes.choice,
   settings: { options },
   props: (settings) => ({ options: settings.options }),
 })
@@ -95,7 +95,7 @@ const select = defineFieldKind(registry, {
   name: 'select',
   label: 'Dropdown',
   widget: 'select',
-  valueType: 'choice',
+  valueType: valueTypes.choice,
   settings: { options, placeholder },
   props: (settings) => ({ options: settings.options, placeholder: settings.placeholder }),
 })
@@ -104,7 +104,7 @@ const checkboxes = defineFieldKind(registry, {
   name: 'checkboxes',
   label: 'Multiple choice',
   widget: 'checkboxes',
-  valueType: 'choices',
+  valueType: valueTypes.choices,
   settings: {
     options,
     minCount: setting.number({ label: 'Fewest choices', integer: true }),
@@ -118,7 +118,7 @@ const date = defineFieldKind(registry, {
   name: 'date',
   label: 'Date',
   widget: 'date',
-  valueType: 'date',
+  valueType: valueTypes.date,
   settings: {
     earliest: setting.date({ label: 'Earliest date' }),
     latest: setting.date({ label: 'Latest date' }),

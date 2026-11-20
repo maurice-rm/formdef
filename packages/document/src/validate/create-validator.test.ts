@@ -6,8 +6,10 @@ import type { Condition } from '../condition'
 import type { DocumentItem, FieldItem, FormDocument } from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineFieldKind } from '../kinds/define-field-kind'
+import { defineValueType } from '../kinds/define-value-type'
 import { rule } from '../kinds/rule'
 import { setting } from '../kinds/setting'
+import { valueTypes } from '../kinds/value-types'
 import { createValidator, type ValidationResult } from './create-validator'
 
 type Option = { value: string; label: string }
@@ -36,7 +38,7 @@ const fieldKinds = [
     name: 'text',
     label: 'Text',
     widget: 'text',
-    valueType: 'text',
+    valueType: valueTypes.text,
     settings: { maxLength: setting.number({ label: 'Most characters', integer: true }) },
     rules: ({ maxLength }) => [rule.maxLength(maxLength)],
   }),
@@ -44,7 +46,7 @@ const fieldKinds = [
     name: 'measure',
     label: 'Measure',
     widget: 'text',
-    valueType: 'decimal',
+    valueType: valueTypes.decimal,
     settings: { min: setting.number({ label: 'Minimum', varies: true }) },
     rules: ({ min }) => [rule.decimal(), rule.min(min)],
   }),
@@ -52,7 +54,7 @@ const fieldKinds = [
     name: 'postcode',
     label: 'Postcode',
     widget: 'text',
-    valueType: 'text',
+    valueType: valueTypes.text,
     rules: () => [
       rule.custom({ code: 'postcode', passes: (value: string) => /^\d{5}$/.test(value) }),
     ],
@@ -61,20 +63,25 @@ const fieldKinds = [
     name: 'count',
     label: 'Count',
     widget: 'number',
-    valueType: 'number',
+    valueType: valueTypes.number,
   }),
-  defineFieldKind(registry, { name: 'date', label: 'Date', widget: 'text', valueType: 'date' }),
+  defineFieldKind(registry, {
+    name: 'date',
+    label: 'Date',
+    widget: 'text',
+    valueType: valueTypes.date,
+  }),
   defineFieldKind(registry, {
     name: 'consent',
     label: 'Consent',
     widget: 'check',
-    valueType: 'boolean',
+    valueType: valueTypes.boolean,
   }),
   defineFieldKind(registry, {
     name: 'choice',
     label: 'Choice',
     widget: 'choice',
-    valueType: 'choice',
+    valueType: valueTypes.choice,
     settings: { options: setting.options({ label: 'Options' }) },
     props: ({ options }) => ({ options }),
   }),
@@ -82,7 +89,7 @@ const fieldKinds = [
     name: 'choices',
     label: 'Choices',
     widget: 'choices',
-    valueType: 'choices',
+    valueType: valueTypes.choices,
     settings: { options: setting.options({ label: 'Options' }) },
     props: ({ options }) => ({ options }),
   }),
@@ -262,6 +269,42 @@ describe('createValidator', () => {
       'Pflichtfeld',
       'Enter at most 3 characters.',
       'This value is not valid.',
+    ])
+  })
+
+  it("checks an answer of a project's value type by its shape and when it counts as filled", () => {
+    const postalCode = defineValueType({
+      name: 'postalCode',
+      emptyValue: '',
+      fits: (value): value is string => typeof value === 'string',
+      isFilled: (value) => value.trim() !== '',
+      describe: (value) => ({ value }),
+    })
+    const withPostalCode = createCatalog(registry, {
+      valueTypes: [postalCode],
+      fields: [
+        defineFieldKind(registry, {
+          name: 'postal',
+          label: 'Postal code',
+          widget: 'text',
+          valueType: postalCode,
+        }),
+      ],
+    })
+    const document = plain(
+      field('f1', 'postal', { required: true }),
+      field('f2', 'postal', { required: true }),
+      field('f3', 'postal'),
+    )
+    const result = createValidator(document, withPostalCode)['~standard'].validate({
+      f1: ' ',
+      f2: 53111,
+      f3: '53111',
+    })
+
+    expect(result.issues?.map(({ path, code, params }) => [path, code, params])).toEqual([
+      [['f1'], 'required', {}],
+      [['f2'], 'type', { expected: 'postalCode' }],
     ])
   })
 

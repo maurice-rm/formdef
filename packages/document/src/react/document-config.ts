@@ -1,7 +1,6 @@
 import type { Condition } from '../condition'
 import type { DocumentValues } from '../document-values'
 import type { Answers } from '../evaluate/answers'
-import { emptyValueOf } from '../evaluate/empty-value-of'
 import { evaluate } from '../evaluate/evaluate'
 import { holds } from '../evaluate/holds'
 import { isRequired } from '../evaluate/is-required'
@@ -10,6 +9,7 @@ import { fieldsOf } from '../fields-of'
 import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
 import type { Catalog } from '../kinds/create-catalog'
 import { kindOf } from '../kinds/kind-of'
+import type { ValueType } from '../kinds/value-type'
 import { nestValues } from '../nest-values'
 import type { DocumentValidator } from '../validate/create-validator'
 
@@ -27,7 +27,7 @@ type Level = Pick<DocumentConfig, 'fields' | 'layout'>
 type Parts = Omit<DocumentConfig, 'schema'>
 
 type Build = {
-  catalog: Catalog<unknown>
+  catalog: Catalog<unknown, ValueType>
   answersOf: (values: unknown) => Answers
 }
 
@@ -75,7 +75,7 @@ const emptyValuesOf = (
 ): { path: readonly string[]; value: unknown }[] =>
   fieldsOf(items).map((field) => ({
     path: [...path, field.key],
-    value: emptyValueOf(kindOf(build.catalog, field).valueType),
+    value: kindOf(build.catalog, field).valueType.emptyValue,
   }))
 
 const stepEntry = (step: DocumentStep, build: Build): Entry => ({
@@ -106,7 +106,7 @@ const plainConfig = (items: readonly DocumentItem[], build: Build): Parts => ({
  */
 export function documentConfig(
   document: FormDocument,
-  catalog: Catalog<unknown>,
+  catalog: Catalog<unknown, ValueType>,
   schema: DocumentValidator,
 ): DocumentConfig {
   const build: Build = {

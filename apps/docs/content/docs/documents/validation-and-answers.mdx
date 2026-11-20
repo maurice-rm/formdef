@@ -122,8 +122,11 @@ and `{ items }` without. An item is a section, with its `label` and `items`, or 
 
 The answer carries its `valueType`: `text`, `decimal` and `date` the `value` as entered, `number`
 the number, `boolean` `true` (an unticked checkbox has no answer), `choice` the chosen option's
-`value` and `label`, and `choices` the chosen options as `values`. The fields of a row stand one
-after another, and a step or section with nothing that shows is left out.
+`value` and `label`, and `choices` the chosen options as `values`. An answer of a
+[value type of your own](/documents/field-kinds#value-types) carries what its `describe` returns;
+`describeAnswers` reads the value types from the catalog's type, so a `switch` on `valueType` knows
+their shapes. The fields of a row stand one after another, and a step or section with nothing that
+shows is left out.
 
 Formatting is the project's, such as a boolean as yes or a decimal with its unit:
 

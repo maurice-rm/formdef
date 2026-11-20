@@ -4,6 +4,7 @@ import {
   createCatalog,
   createValidator,
   defineFieldKind,
+  defineValueType,
   describeAnswers,
   type FormDocument,
   insertNode,
@@ -11,6 +12,7 @@ import {
   readDocument,
   rule,
   setting,
+  valueTypes,
 } from '@formdef/document'
 import { createDocumentForm, type DocumentForm } from '@formdef/document/react'
 import { createFormHookContexts } from '@tanstack/react-form'
@@ -27,7 +29,7 @@ const text = defineFieldKind(registry, {
   name: 'text',
   label: 'Short text',
   widget: 'text',
-  valueType: 'text',
+  valueType: valueTypes.text,
   settings: { placeholder: setting.text({ label: 'Placeholder' }) },
   props: ({ placeholder }) => ({ placeholder }),
   rules: () => [rule.maxLength(80)],
@@ -38,10 +40,24 @@ defineFieldKind(registry, {
   label: 'Count',
   widget: 'text',
   // @ts-expect-error a text widget gives no number
-  valueType: 'number',
+  valueType: valueTypes.number,
 })
 
-export const catalog = createCatalog(registry, { fields: [text] })
+const postalCode = defineValueType({
+  name: 'postalCode',
+  emptyValue: '',
+  fits: (value): value is string => typeof value === 'string',
+  describe: (value) => ({ code: value }),
+})
+
+const postal = defineFieldKind(registry, {
+  name: 'postal',
+  label: 'Postal code',
+  widget: 'text',
+  valueType: postalCode,
+})
+
+export const catalog = createCatalog(registry, { valueTypes: [postalCode], fields: [text, postal] })
 
 export const document: FormDocument = readDocument({
   format: 1,

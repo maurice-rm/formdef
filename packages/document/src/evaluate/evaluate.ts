@@ -4,8 +4,8 @@ import { isPlainObject } from '../is-plain-object'
 import type { Catalog } from '../kinds/create-catalog'
 import type { FieldKind } from '../kinds/field-kind'
 import { kindOf } from '../kinds/kind-of'
+import type { ValueType } from '../kinds/value-type'
 import type { Answer, Answers } from './answers'
-import { fitsValueType } from './fits-value-type'
 import { holds } from './holds'
 import { isFilled } from './is-filled'
 import { isRequired } from './is-required'
@@ -30,7 +30,7 @@ export type Evaluation = {
 }
 
 type EvaluationWalk = {
-  catalog: Catalog<unknown>
+  catalog: Catalog<unknown, ValueType>
   answers: Map<string, Answer>
   shown: ShownField[]
 }
@@ -58,7 +58,7 @@ const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk)
     isRequired: isRequired(field, walk.answers),
     settings: resolveSettings(field, walk.answers),
   })
-  if (isFilled(value, kind.valueType) && fitsValueType(value, kind.valueType)) {
+  if (isFilled(value, kind.valueType)) {
     walk.answers.set(field.key, { value, valueType: kind.valueType })
   }
 }
@@ -89,7 +89,7 @@ const walkItems = (
  */
 export function evaluate(
   document: FormDocument,
-  catalog: Catalog<unknown>,
+  catalog: Catalog<unknown, ValueType>,
   values: unknown,
 ): Evaluation {
   const walk: EvaluationWalk = { catalog, answers: new Map(), shown: [] }
