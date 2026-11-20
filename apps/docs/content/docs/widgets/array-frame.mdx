@@ -50,6 +50,7 @@ beside it, and an add button below. Its own props arrive through the array entry
 | `min` | Disables the remove buttons while the list has this many items or fewer. |
 | `max` | Disables the add button once the list has this many items. |
 | `variant` | `'label'` sets the legend in the size of a field label. |
+| `itemLabel` | A function of an item's index that returns its title, such as `Contact 2`; each item then renders as a group named by its title. |
 
 `min` and `max` only steer the buttons. The rule itself belongs in the schema, and its message,
 such as the `min(1)` above, shows below the list.

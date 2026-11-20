@@ -1030,6 +1030,7 @@ const LabelledFrame = ({
   min,
   max,
   tone,
+  itemLabel,
   renderItem,
   keys,
 }: ArrayFrameProps<unknown> & {
@@ -1037,10 +1038,13 @@ const LabelledFrame = ({
   min?: number
   max?: number
   tone?: string
+  itemLabel?: (index: number) => string
 }): ReactNode => (
   <fieldset aria-label={label} data-min={min} data-max={max} data-tone={tone}>
     {keys.map((key, index) => (
-      <div key={key}>{renderItem(index)}</div>
+      <section key={key} aria-label={itemLabel?.(index)}>
+        {renderItem(index)}
+      </section>
     ))}
   </fieldset>
 )
@@ -1146,8 +1150,9 @@ describe('createDocumentForm with repeats', () => {
       props: () => ({ tone: 'muted' }),
     })
     const repeat = residents({
-      min: 1,
+      min: 2,
       max: 4,
+      entryLabel: 'Person {n}',
       display: { kind: 'cards' },
       items: [field('name', 'text', { label: 'Name' })],
     })
@@ -1158,6 +1163,7 @@ describe('createDocumentForm with repeats', () => {
     render(<Form />)
 
     const frame = screen.getByRole('group', { name: 'Residents' })
-    expect(frame.dataset).toMatchObject({ min: '1', max: '4', tone: 'muted' })
+    expect(frame.dataset).toMatchObject({ min: '2', max: '4', tone: 'muted' })
+    expect(screen.getByRole('region', { name: 'Person 2' })).toBeDefined()
   })
 })

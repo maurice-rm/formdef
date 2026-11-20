@@ -18,7 +18,18 @@ type ArrayFrameFrameProps = ArrayFrameProps<unknown> &
     variant?: LegendVariant | undefined
     min?: number | undefined
     max?: number | undefined
+    itemLabel?: ((index: number) => string) | undefined
   }
+
+const Item = ({ label, children }: { label: string | undefined; children: ReactNode }) =>
+  label === undefined ? (
+    children
+  ) : (
+    <FieldSet>
+      <FieldLegend variant="label">{label}</FieldLegend>
+      {children}
+    </FieldSet>
+  )
 
 export const ArrayFrame = ({
   field,
@@ -33,6 +44,7 @@ export const ArrayFrame = ({
   variant = 'legend',
   min,
   max,
+  itemLabel,
   className,
 }: ArrayFrameFrameProps) => {
   const parts = useFieldParts(field)
@@ -68,7 +80,9 @@ export const ArrayFrame = ({
       <FieldGroup>
         {keys.map((key, index) => (
           <div key={key} data-slot="array-item" className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">{renderItem(index)}</div>
+            <div className="min-w-0 flex-1">
+              <Item label={itemLabel?.(index)}>{renderItem(index)}</Item>
+            </div>
             <Button
               ref={(button) => {
                 removeButtons.current[index] = button

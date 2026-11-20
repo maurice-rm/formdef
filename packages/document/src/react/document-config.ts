@@ -207,19 +207,24 @@ const entryAnswersOf = (repeat: RepeatItem, build: Build): Build['answersOf'] =>
   }
 }
 
+const numberedTextOf = (text: Text, build: Build) => (index: number) =>
+  resolveNumberedText(text, { language: build.language, number: index + 1 })
+
 const frameProps = (repeat: RepeatItem, build: Build): Entry => ({
   ...displayPropsOf(repeat.display, build),
   label: textOf(repeat.label, build),
   ...(repeat.min === undefined ? {} : { min: repeat.min }),
   ...(repeat.max === undefined ? {} : { max: repeat.max }),
+  ...(repeat.entryLabel === undefined
+    ? {}
+    : { itemLabel: numberedTextOf(repeat.entryLabel, build) }),
 })
 
 const repeatEntry = (repeat: RepeatItem, build: Build): Entry => ({
   item: levelOf(repeat.items, { ...build, answersOf: entryAnswersOf(repeat, build) }),
   newItem: () => newEntryOf(repeat, build),
   addLabel: textOf(repeat.addLabel, build),
-  removeLabel: (_entry: unknown, index: number) =>
-    resolveNumberedText(repeat.removeLabel, { language: build.language, number: index + 1 }),
+  removeLabel: (_entry: unknown, index: number) => numberedTextOf(repeat.removeLabel, build)(index),
   props: frameProps(repeat, build),
   ...visibility(repeat, build),
 })

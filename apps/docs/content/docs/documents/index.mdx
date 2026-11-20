@@ -351,7 +351,9 @@ resident:
   `{ "r1": [{ "f2": "Ada" }, { "f2": "Max" }] }`.
 - `createDocumentForm` renders a repeat through the registry's
   [array frame](/guides/arrays#a-frame-of-your-own), with `addLabel` and `removeLabel` on its
-  controls, and gives the frame the props `label`, `min` and `max`, next to those of its `display`.
+  controls, and gives the frame the props `label`, `min` and `max`, with an `entryLabel` also
+  `itemLabel`, a function of an entry's index that returns its title, next to those of its
+  `display`.
   The form starts with as many empty entries as `min` asks for.
 - `checkDocument` reports a field inside a repeat named from outside it as `repeatField`, a repeat
   inside a repeat as `nestedRepeat`, and a `min` above `max` as `minAboveMax`.

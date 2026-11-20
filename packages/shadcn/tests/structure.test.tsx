@@ -165,6 +165,17 @@ describe('ArrayFrame', () => {
     ])
   })
 
+  it('renders each item as a group named by its title, when the frame names its items', () => {
+    const Form = contactsForm([ADA, GRACE], {
+      itemLabel: (index: number) => `Contact ${index + 1}`,
+    })
+    render(<Form />)
+
+    const second = screen.getByRole('group', { name: 'Contact 2' })
+    expect(within(second).getByLabelText<HTMLInputElement>('Name').value).toBe('Grace')
+    expect(screen.queryByRole('group', { name: 'Contact 3' })).toBeNull()
+  })
+
   it('disables removing at min and adding at max', () => {
     const Bounded = contactsForm([ADA, GRACE], { min: 2, max: 2 })
     render(<Bounded />)
