@@ -18,13 +18,10 @@ import type {
   FieldItem,
   FormDocument,
 } from '../form-document'
-import { isPlainObject } from '../is-plain-object'
-import type { JsonValue } from '../json-value'
 import { blockKindOf } from '../kinds/block-kind-of'
 import type { Catalog } from '../kinds/create-catalog'
 import { displayKindOf } from '../kinds/display-kind-of'
 import { kindOf } from '../kinds/kind-of'
-import type { Setting } from '../kinds/setting'
 import type { ValueType } from '../kinds/value-type'
 import { nestValues } from '../nest-values'
 import { resolveFixedText } from '../resolve-fixed-text'
@@ -32,6 +29,7 @@ import type { Text } from '../text'
 import type { DocumentValidator } from '../validate/create-validator'
 import type { VaryingText } from '../varying-text'
 import { formatText, formatTextWithoutLinks } from './format-text'
+import { withFormattedTexts } from './with-formatted-texts'
 
 type Entry = Readonly<Record<string, unknown>>
 
@@ -97,34 +95,6 @@ const slotProps = (
     }),
   }
 }
-
-const formatOption = (option: unknown): unknown =>
-  isPlainObject(option) && typeof option.description === 'string'
-    ? { ...option, description: formatText(option.description) }
-    : option
-
-const formatSetting = (value: JsonValue, setting: Setting<unknown> | undefined): unknown => {
-  if (setting?.formatted === true && typeof value === 'string') {
-    return formatText(value)
-  }
-  if (setting?.type === 'options' && Array.isArray(value)) {
-    return value.map(formatOption)
-  }
-  return value
-}
-
-// The settings are resolved to strings; formatted texts and the descriptions of options render
-// formatted.
-const withFormattedTexts = (
-  settings: Readonly<Record<string, JsonValue>>,
-  kind: { readonly settings: Readonly<Record<string, Setting<unknown>>> },
-): Readonly<Record<string, unknown>> =>
-  Object.fromEntries(
-    Object.entries(settings).map(([name, value]) => [
-      name,
-      formatSetting(value, kind.settings[name]),
-    ]),
-  )
 
 const visibility = (item: { visibleWhen?: Condition }, build: Build): Entry => {
   const condition = item.visibleWhen
