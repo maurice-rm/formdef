@@ -4,7 +4,7 @@ import type { JsonValue } from '../json-value'
 import type { FieldKind } from '../kinds/field-kind'
 import { isOption } from '../kinds/is-option'
 import type { SettingType } from '../kinds/setting'
-import { resolveText } from '../resolve-text'
+import type { Text } from '../text'
 import type { Answers } from './answers'
 import { resolveVaryingText } from './resolve-varying-text'
 import { valueFor } from './value-for'
@@ -29,7 +29,7 @@ const resolveTexts = (
   { type, context }: { type: SettingType | undefined; context: Context },
 ): JsonValue => {
   if (type === 'text') {
-    return resolveText(value as string, context.language)
+    return resolveVaryingText(value as Text, context)
   }
   if (type === 'options' && Array.isArray(value)) {
     return value.map((option) => resolveOption(option, context))

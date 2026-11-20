@@ -86,6 +86,24 @@ describe('dependentsOf', () => {
     ])
   })
 
+  it('lists the texts and settings whose placeholders name a field', () => {
+    const texts: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        field('f2', {
+          label: { de: 'Danke, {f1}', en: 'Thanks' },
+          settings: { placeholder: 'As {f1}' },
+        }),
+      ],
+    }
+
+    expect(dependentsOf(texts, [0])).toEqual([
+      { path: 'document.items[1].label.de', field: 'f1' },
+      { path: 'document.items[1].settings.placeholder', field: 'f1' },
+    ])
+  })
+
   it('refuses a position that holds nothing', () => {
     expect(() => dependentsOf(document, [2])).toThrow(
       'formdef: position [2]: there is nothing here.',

@@ -2,6 +2,7 @@ import { conditionsOf } from '../conditions-of'
 import { fieldsOf } from '../fields-of'
 import type { FieldItem, FormDocument } from '../form-document'
 import { isField } from '../is-field'
+import { placeholdersIn } from '../placeholders-in'
 import type { Position } from '../position'
 import { fieldsNamed } from './fields-named'
 import { nodeAt } from './node-at'
@@ -18,10 +19,10 @@ const isWithin = (position: Position, ancestor: Position): boolean =>
   ancestor.every((index, depth) => position[depth] === index)
 
 /**
- * Lists the conditions that name a field of a step or item, or the field itself, and would lose
- * it when the node is removed: one entry per condition and field named, in document order.
- * Conditions inside the node go with it and are left out. A builder shows them before it removes
- * the node.
+ * Lists the conditions and placeholders that name a field of a step or item, or the field itself,
+ * and would lose it when the node is removed: one entry per condition and field named, in
+ * document order, then one per placeholder. Those inside the node go with it and are left out. A
+ * builder shows them before it removes the node.
  *
  * @param document - The document.
  * @param position - Where the node sits.
@@ -39,11 +40,15 @@ export function dependentsOf(document: FormDocument, position: Position): Depend
   const fields: FieldItem[] = isField(node) ? [node] : fieldsOf(node.items)
   const keys = new Set(fields.map((field) => field.key))
 
-  return conditionsOf(document)
+  const fromConditions = conditionsOf(document)
     .filter((entry) => !isWithin(entry.position, position))
     .flatMap(({ condition, path }) =>
       fieldsNamed(condition)
         .filter((field) => keys.has(field))
         .map((field) => ({ path, field })),
     )
+  const fromPlaceholders = placeholdersIn(document)
+    .filter((entry) => !isWithin(entry.position, position) && keys.has(entry.field))
+    .map(({ path, field }) => ({ path, field }))
+  return [...fromConditions, ...fromPlaceholders]
 }

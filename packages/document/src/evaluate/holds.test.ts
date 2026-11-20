@@ -46,7 +46,7 @@ const answers: Answers = {
   get: (key) => {
     const valueType = VALUE_TYPES.get(key)
     return VALUES.has(key) && valueType !== undefined
-      ? { value: VALUES.get(key), valueType }
+      ? { value: VALUES.get(key), valueType, text: '' }
       : undefined
   },
   valueTypeOf: (key) => VALUE_TYPES.get(key),

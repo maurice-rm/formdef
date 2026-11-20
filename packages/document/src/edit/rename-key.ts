@@ -6,6 +6,9 @@ import { isStep } from '../is-step'
 import type { JsonValue } from '../json-value'
 import { looksVarying } from '../looks-varying'
 import { mapOptionLists } from '../map-option-lists'
+import { mapStrings } from '../map-strings'
+import { OWN_TEXT_KEYS } from '../own-text-keys'
+import { renamePlaceholder } from '../rename-placeholder'
 
 type Rename = { from: string; to: string }
 
@@ -62,11 +65,20 @@ const renameInField = (field: FieldItem, rename: Rename): FieldItem => ({
       }),
 })
 
+const renamePlaceholdersIn = <TNode extends DocumentNode>(node: TNode, rename: Rename): TNode => {
+  const texts = node as Partial<Record<string, unknown>>
+  const renamed = OWN_TEXT_KEYS.filter((name) => texts[name] !== undefined).map((name) => [
+    name,
+    mapStrings(texts[name], (text) => renamePlaceholder(text, rename)),
+  ])
+  return { ...node, ...Object.fromEntries(renamed) }
+}
+
 const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
   const visibility =
     node.visibleWhen === undefined ? {} : { visibleWhen: renameIn(node.visibleWhen, rename) }
   if (isField(node)) {
-    const field = { ...renameInField(node, rename), ...visibility }
+    const field = renamePlaceholdersIn({ ...renameInField(node, rename), ...visibility }, rename)
     return field.key === rename.from ? { ...field, key: rename.to } : field
   }
   const items = node.items.map((child) => renameInNode(child, rename))
@@ -74,13 +86,16 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
     'description' in node && node.description !== undefined
       ? { description: renameInCases(node.description, rename) }
       : {}
-  const renamed = { ...node, ...visibility, ...description, items } as DocumentNode
+  const renamed = renamePlaceholdersIn(
+    { ...node, ...visibility, ...description, items } as DocumentNode,
+    rename,
+  )
   return isStep(renamed) && renamed.key === rename.from ? { ...renamed, key: rename.to } : renamed
 }
 
 /**
- * Renames the key of a step or field in a form document, and the field in every condition that
- * names it, leaving the document given as it was. A step and a field that share the key are both
+ * Renames the key of a step or field in a form document, and the field in every condition and
+ * placeholder that names it, leaving the document given as it was. A step and a field that share the key are both
  * renamed. A key that is taken already, or not a plain name, {@link checkDocument} reports
  * afterwards.
  *

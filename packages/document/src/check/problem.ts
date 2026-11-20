@@ -21,7 +21,11 @@ import type { JsonValue } from '../json-value'
  * - `notVarying`: a setting that follows an answer, which its field kind does not allow;
  * - `settingLimit`: a setting outside its constraints, such as too long or too few options;
  * - `missingTranslation`: a translated text that leaves out a language of the document;
- * - `unknownLanguage`: a translation into a language the document does not name.
+ * - `unknownLanguage`: a translation into a language the document does not name;
+ * - `fixedText`: a placeholder in the label of a step or section, which names no answers.
+ *
+ * A placeholder on a field that does not exist or comes later is reported as `unknownField` or
+ * `laterField`, like a condition.
  */
 export type ProblemCode =
   | 'duplicateKey'
@@ -43,6 +47,7 @@ export type ProblemCode =
   | 'settingLimit'
   | 'missingTranslation'
   | 'unknownLanguage'
+  | 'fixedText'
 
 /**
  * One problem {@link checkDocument} found in a form document: what it is about, where, and what an

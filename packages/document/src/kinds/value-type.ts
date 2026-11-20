@@ -34,4 +34,6 @@ export type ValueType<
    * choice that is no option of the field.
    */
   describe(value: TValue, options: readonly SettingOption[]): TDescribed | undefined
+  /** Writes an answer as text, for a placeholder that names its field, given the field's options. */
+  toText(value: TValue, options: readonly SettingOption[]): string
 }

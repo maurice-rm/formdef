@@ -1,26 +1,29 @@
+import { placeholdersOf } from '../placeholders-of'
 import type { Text } from '../text'
+import { translationsOf } from '../translations-of'
+import { checkTranslations } from './check-translations'
 import type { CheckWalk } from './check-walk'
 import { report } from './report'
 
-const NO_LANGUAGES: readonly string[] = []
+type At = { walk: CheckWalk; path: string }
+
+const checkPlaceholders = (text: string, { walk, path }: At): void => {
+  for (const field of placeholdersOf(text)) {
+    if (!walk.allFieldKeys.has(field)) {
+      report(walk, { code: 'unknownField', path, params: { field } })
+    } else if (!walk.earlier.has(field)) {
+      report(walk, { code: 'laterField', path, params: { field } })
+    }
+  }
+}
 
 /**
- * Checks a text against the document's languages: translations into a language it does not
- * name, and languages a translated text leaves out. A string holds for every language.
+ * Checks a text against the document's languages, and its placeholders against the fields before
+ * it: each names a field that exists and comes earlier.
  */
-export function checkText(text: Text, { walk, path }: { walk: CheckWalk; path: string }): void {
-  if (typeof text === 'string') {
-    return
-  }
-  const languages = walk.languages ?? NO_LANGUAGES
-  for (const language of Object.keys(text)) {
-    if (!languages.includes(language)) {
-      report(walk, { code: 'unknownLanguage', path: `${path}.${language}`, params: { language } })
-    }
-  }
-  for (const language of languages) {
-    if (!Object.hasOwn(text, language)) {
-      report(walk, { code: 'missingTranslation', path, params: { language } })
-    }
+export function checkText(text: Text, at: At): void {
+  checkTranslations(text, at)
+  for (const translation of translationsOf(text, at.path)) {
+    checkPlaceholders(translation.text, { walk: at.walk, path: translation.path })
   }
 }

@@ -75,6 +75,17 @@ describe('valueTypes', () => {
     expect(readers.map((valueType) => valueType.name)).toEqual(['choice', 'choices'])
   })
 
+  it('write an answer as text for a placeholder', () => {
+    expect(valueTypes.text.toText('Ada', [])).toBe('Ada')
+    expect(valueTypes.decimal.toText('120,5', [])).toBe('120,5')
+    expect(valueTypes.date.toText('2026-01-31', [])).toBe('2026-01-31')
+    expect(valueTypes.number.toText(6, [])).toBe('6')
+    expect(valueTypes.choice.toText('o2', OPTIONS)).toBe('Apartment block')
+    expect(valueTypes.choice.toText('o9', OPTIONS)).toBe('')
+    expect(valueTypes.choices.toText(['o2', 'o1'], OPTIONS)).toBe('Apartment block, Detached')
+    expect(valueTypes.boolean.toText(true, [])).toBe('')
+  })
+
   it('describe a choice by its option, and leave out one that is no option', () => {
     expect(valueTypes.choice.describe('o2', OPTIONS)).toEqual(OPTIONS[1])
     expect(valueTypes.choice.describe('o9', OPTIONS)).toBeUndefined()

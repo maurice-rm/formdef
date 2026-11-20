@@ -1,11 +1,11 @@
 import type { Condition } from './condition'
-import { DOCUMENT_PATH } from './document-path'
 import type { DocumentNode, FieldItem, FormDocument, Varying } from './form-document'
 import { isField } from './is-field'
 import { isPlainObject } from './is-plain-object'
 import { isVarying } from './is-varying'
 import type { JsonValue } from './json-value'
 import { looksVarying } from './looks-varying'
+import { nodesOf } from './nodes-of'
 import { optionListsOf } from './option-lists-of'
 import { pathTo } from './path-to'
 import type { Position } from './position'
@@ -65,27 +65,12 @@ const ownConditions = (node: DocumentNode, path: string): Placed[] => {
   return [...own, ...required, ...textCases(node, path), ...settingCases(node, path)]
 }
 
-const conditionsBelow = (
-  node: DocumentNode,
-  position: Position,
-  path: string,
-): PlacedCondition[] => [
-  ...ownConditions(node, path).map((entry) => ({ ...entry, position })),
-  ...(isField(node)
-    ? []
-    : node.items.flatMap((child, index) =>
-        conditionsBelow(child, [...position, index], pathTo.entry(path, 'items', index)),
-      )),
-]
-
 /**
  * Every condition of a document, in document order: visibility, required, texts that follow an
- * answer, the texts of options, and settings that follow an answer.
+ * answer, and settings that follow an answer with the texts of their options.
  */
 export function conditionsOf(document: FormDocument): PlacedCondition[] {
-  const [nodes, list]: [readonly DocumentNode[], 'steps' | 'items'] =
-    document.steps === undefined ? [document.items, 'items'] : [document.steps, 'steps']
-  return nodes.flatMap((node, index) =>
-    conditionsBelow(node, [index], pathTo.entry(DOCUMENT_PATH, list, index)),
+  return nodesOf(document).flatMap(({ node, position, path }) =>
+    ownConditions(node, path).map((entry) => ({ ...entry, position })),
   )
 }

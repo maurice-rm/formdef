@@ -59,8 +59,8 @@ and the `params` an error text names. The text is the project's, keyed by the co
 | `overlappingKey` | a step key that starts with another step's key, such as `s10` after `s1` | `key`, `start` |
 | `duplicateOption` | an option value used twice in one field | `value` |
 | `unknownKind` | a field of a field kind that is not registered | `kind` |
-| `unknownField` | a condition on a field the document does not hold | `field` |
-| `laterField` | a condition on a field that comes later, or on the field itself | `field` |
+| `unknownField` | a condition or placeholder on a field the document does not hold | `field` |
+| `laterField` | a condition or placeholder on a field that comes later, or on the field itself | `field` |
 | `operatorMismatch` | an operator the value type of the field compared does not have | `op`, `valueType` |
 | `unknownOption` | a compared value, or a setting of one option or several, that is no option of the field | `field`, `value` |
 | `valueMismatch` | a compared value of the wrong type, such as text for a number, left out, or given to an operator that compares with nothing | `expected`, the setting type, or `nothing` |
@@ -73,6 +73,7 @@ and the `params` an error text names. The text is the project's, keyed by the co
 | `settingLimit` | a setting outside its constraints, such as too long or too few options | `setting` and the constraint, such as `minCount` |
 | `missingTranslation` | a translated text that leaves out one of the document's languages | `language` |
 | `unknownLanguage` | a translation into a language the document does not name | `language` |
+| `fixedText` | a placeholder in the label of a step or section, which names no answers | `field` |
 
 ## Positions
 
@@ -90,7 +91,7 @@ second step.
 | `moveNode(document, from, to)` | Moves a step or item. `to` is counted in the document after the node was taken out, as a drag and drop list reports it. |
 | `updateNode(document, position, update)` | Replaces a step or item with what `update` returns, such as the field with a new label. |
 | `changeKind(document, position, kind)` | Gives a field another field kind. It keeps the settings the new kind has, by name, and drops the others. |
-| `renameKey(document, from, to)` | Renames a step or field key, and the field in every condition that names it. |
+| `renameKey(document, from, to)` | Renames a step or field key, and the field in every condition and placeholder that names it. |
 
 ```ts
 import { checkDocument, createKey, insertNode, updateNode, type FormDocument } from '@formdef/document'
@@ -114,10 +115,10 @@ Everything else, such as a key taken already or a condition whose operator no lo
 
 ### Before removing
 
-`removeNode` leaves the conditions elsewhere that name a removed field as they are, and
-`checkDocument` then reports them as `unknownField`. `dependentsOf` lists them beforehand: one
-entry per condition and field named, with the condition's `path` and the `field`. Conditions
-inside the node go with it and are not listed.
+`removeNode` leaves the conditions and placeholders elsewhere that name a removed field as they
+are, and `checkDocument` then reports them as `unknownField`. `dependentsOf` lists them
+beforehand: one entry per condition and field named, then one per placeholder, with the `path` of
+the condition or text and the `field`. Those inside the node go with it and are not listed.
 
 ```ts
 import { dependentsOf, removeNode, type Dependent, type FormDocument, type Position } from '@formdef/document'

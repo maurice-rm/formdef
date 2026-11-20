@@ -73,6 +73,13 @@ export type ValueTypeDefinition<
    */
   describe: (value: TValue, options: readonly SettingOption[]) => TDescribed | undefined
   /**
+   * Writes an answer as text, given the field's options, for a placeholder `{key}` that names the
+   * field.
+   *
+   * @defaultValue an empty text
+   */
+  toText?: (value: TValue, options: readonly SettingOption[]) => string
+  /**
    * The operators a condition may compare a field of this type with, by name; `isFilled` and
    * `isEmpty` come with every value type.
    *
@@ -87,6 +94,7 @@ const FILL_OPERATORS: Readonly<Record<FillOperator, Operator>> = {
 }
 
 const IS_FILLED = (): boolean => true
+const NO_TEXT = (): string => ''
 
 const collectOperators = (
   name: string,
@@ -143,7 +151,7 @@ export function defineValueType<
 >(
   definition: ValueTypeDefinition<TValue, TName, TDescribed, TReadsOptions, TCompared>,
 ): ValueType<TValue, TName, TDescribed> & { readonly readsOptions: TReadsOptions } {
-  const { name, emptyValue, fits, isFilled = IS_FILLED, describe } = definition
+  const { name, emptyValue, fits, isFilled = IS_FILLED, describe, toText = NO_TEXT } = definition
   const readsOptions = (definition.readsOptions ?? false) as TReadsOptions
   // Each operator's compared value is typed by its own setting; at runtime it is checked data.
   const own = (definition.operators ?? {}) as Readonly<Record<string, Operator>>
@@ -156,5 +164,6 @@ export function defineValueType<
     fits,
     isFilled,
     describe,
+    toText,
   }
 }

@@ -349,6 +349,17 @@ describe('describeAnswers', () => {
     })
   })
 
+  it('describes a question with its placeholders filled', () => {
+    const document: FormDocument = {
+      format: 1,
+      items: [house, field('flats', 'count', { label: 'Flats in the {house}' })],
+    }
+
+    expect(describeAnswers(document, catalog, { values: { house: 'o2', flats: 6 } })).toMatchObject(
+      { items: [{}, { label: 'Flats in the Apartment block' }] },
+    )
+  })
+
   it('describes the questions, sections and options in the language chosen', () => {
     const translated: FormDocument = {
       format: 1,

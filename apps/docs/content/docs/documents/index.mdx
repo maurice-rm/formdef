@@ -116,7 +116,18 @@ for the whole form.
 ```
 
 A condition of a text names a field that comes earlier, as every condition does. The case is
-chosen first, then the language.
+chosen first, then the language, then the placeholders.
+
+### Placeholders
+
+A text may name the answer of an earlier field as `{key}`, such as `"Thank you, {f1}."`. The
+placeholder takes the answer as its value type writes it: text, a decimal or a date as entered, a
+number, the label of the option chosen, the labels of several joined with commas. An answer that
+is empty or does not show, and a boolean, give nothing. `{{` and `}}` write a brace.
+
+Placeholders work in every text that may follow an answer, and in text settings. The labels of
+steps and sections name no answers; `checkDocument` reports a placeholder there as `fixedText`, and
+one on a field that does not exist or comes later as `unknownField` or `laterField`.
 
 ### Languages
 

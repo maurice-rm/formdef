@@ -10,7 +10,7 @@ import type { SettingOption } from '../kinds/setting'
 import type { ValueType } from '../kinds/value-type'
 import type { BuiltInValueType } from '../kinds/value-types'
 import { languageOf } from '../language-of'
-import { resolveText } from '../resolve-text'
+import { resolveFixedText } from '../resolve-fixed-text'
 
 type DescribedOf<TValueType> =
   TValueType extends ValueType<unknown, infer TName, infer TDescribed>
@@ -163,7 +163,8 @@ const describeItems = (items: readonly DocumentItem[], described: Described): An
     if (item.type === 'row' || inner.length === 0) {
       return inner
     }
-    return [{ type: 'section', label: resolveText(item.label, described.language), items: inner }]
+    const label = resolveFixedText(item.label, described.language)
+    return [{ type: 'section', label, items: inner }]
   })
 
 const describeDocument = (
@@ -176,7 +177,7 @@ const describeDocument = (
   return {
     steps: document.steps.flatMap((step) => {
       const items = describeItems(step.items, described)
-      const label = resolveText(step.label, described.language)
+      const label = resolveFixedText(step.label, described.language)
       return items.length === 0 ? [] : [{ key: step.key, label, items }]
     }),
   }

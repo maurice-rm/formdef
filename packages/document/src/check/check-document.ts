@@ -4,8 +4,10 @@ import type { DocumentItem, DocumentStep, FieldItem, FormDocument } from '../for
 import type { Catalog } from '../kinds/create-catalog'
 import type { ValueType } from '../kinds/value-type'
 import { pathTo } from '../path-to'
+import type { Text } from '../text'
 import type { VaryingText } from '../varying-text'
 import { checkCondition } from './check-condition'
+import { checkFixedText } from './check-fixed-text'
 import { checkSettings } from './check-settings'
 import { checkVaryingText } from './check-varying-text'
 import type { CheckWalk } from './check-walk'
@@ -37,14 +39,19 @@ const checkOverlap = (key: string, stepKeys: readonly string[], { walk, path }: 
   report(walk, { code: 'overlappingKey', path: `${path}.key`, params: { key, start } })
 }
 
-const checkTexts = (
-  { label, description }: { label: VaryingText; description?: VaryingText | undefined },
-  { walk, path }: At,
-): void => {
-  checkVaryingText(label, { walk, path: `${path}.label` })
+const checkDescription = (description: VaryingText | undefined, { walk, path }: At): void => {
   if (description !== undefined) {
     checkVaryingText(description, { walk, path: `${path}.description` })
   }
+}
+
+// The stepper and the section show these labels for the whole form, so they name no answers.
+const checkHeading = (
+  { label, description }: { label: Text; description?: VaryingText | undefined },
+  { walk, path }: At,
+): void => {
+  checkFixedText(label, { walk, path: `${path}.label` })
+  checkDescription(description, { walk, path })
 }
 
 const checkVisibleWhen = (
@@ -62,7 +69,8 @@ const checkField = (field: FieldItem, { walk, path }: At, seenKeys: Set<string>)
   }
   seenKeys.add(field.key)
   checkKey(field.key, { walk, path })
-  checkTexts(field, { walk, path })
+  checkVaryingText(field.label, { walk, path: `${path}.label` })
+  checkDescription(field.description, { walk, path })
 
   const kind = walk.kindNamed(field.kind)
   if (kind === undefined) {
@@ -95,7 +103,7 @@ const checkItem = (item: DocumentItem, level: Level): void => {
     return
   }
   if (item.type === 'section') {
-    checkTexts(item, at)
+    checkHeading(item, at)
   }
   checkVisibleWhen(item, at)
   if (item.type === 'section' && level.sections + 1 > MOST_SECTION_LEVELS) {
@@ -121,7 +129,7 @@ const checkSteps = (steps: readonly DocumentStep[], walk: CheckWalk): void => {
     stepKeys.add(step.key)
     checkKey(step.key, { walk, path })
     checkOverlap(step.key, allStepKeys, { walk, path })
-    checkTexts(step, { walk, path })
+    checkHeading(step, { walk, path })
     checkVisibleWhen(step, { walk, path })
     checkItems(step.items, {
       at: { walk, path: `${path}.items` },

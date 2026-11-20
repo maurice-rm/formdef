@@ -130,6 +130,8 @@ export const catalog = createCatalog(registry, { valueTypes: [address], fields: 
   answer out.
 - `readsOptions: true` makes the value type choose among the field's options: its field kinds need
   a setting `options`, and the validator refuses an answer that is no option.
+- `toText` writes an answer as text for a [placeholder](/documents#placeholders) that names the
+  field, given the field's options. Without it, a placeholder gives nothing.
 - `operators` are what a [condition](/documents#conditions) may compare a field of this type with,
   by name. `compares` is the [setting](#settings) the compared `value` is, which a builder renders
   the input for and `checkDocument` checks; leave it out for an operator that compares with

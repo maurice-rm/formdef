@@ -33,6 +33,25 @@ describe('defineValueType', () => {
     expect(address.readsOptions).toBe(false)
   })
 
+  it('writes an answer as text for a placeholder, or as nothing when it says nothing', () => {
+    const address = defineValueType({
+      name: 'address',
+      emptyValue: undefined,
+      fits: isAddress,
+      describe: (value) => ({ city: value.city }),
+      toText: (value) => `${value.street}, ${value.city}`,
+    })
+    const silent = defineValueType({
+      name: 'silent',
+      emptyValue: undefined,
+      fits: isAddress,
+      describe: (value) => ({ city: value.city }),
+    })
+
+    expect(address.toText({ street: 'Main St', city: 'Bonn' }, [])).toBe('Main St, Bonn')
+    expect(silent.toText({ street: 'Main St', city: 'Bonn' }, [])).toBe('')
+  })
+
   it('counts every value of the right shape as filled when it says nothing else', () => {
     const rating = defineValueType({
       name: 'rating',

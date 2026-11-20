@@ -4,6 +4,8 @@ import type { ValueType } from '../kinds/value-type'
 export type Answer = {
   value: unknown
   valueType: ValueType
+  /** The answer as text, for a placeholder that names its field. */
+  text: string
 }
 
 /**

@@ -863,6 +863,56 @@ describe('checkDocument with languages', () => {
     ])
   })
 
+  it('reports a placeholder on a field that does not exist or comes later', () => {
+    const document: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'One {f1}',
+          description: 'For {f9}',
+          items: [
+            {
+              type: 'field',
+              key: 'f1',
+              kind: 'choice',
+              label: 'House of {f1}',
+              settings: {
+                options: [
+                  { value: 'o1', label: 'For {f2}' },
+                  { value: 'o2', label: 'Two {{f9}}' },
+                ],
+              },
+            },
+            {
+              type: 'field',
+              key: 'f2',
+              kind: 'text',
+              label: { de: 'Danke, {f1}', en: 'Thanks, {f8}' },
+              settings: { placeholder: 'As {f1}' },
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(checkDocument({ ...document, languages: ['de', 'en'] }, catalog)).toEqual([
+      { code: 'fixedText', path: 'document.steps[0].label', params: { field: 'f1' } },
+      { code: 'unknownField', path: 'document.steps[0].description', params: { field: 'f9' } },
+      { code: 'laterField', path: 'document.steps[0].items[0].label', params: { field: 'f1' } },
+      {
+        code: 'laterField',
+        path: 'document.steps[0].items[0].settings.options[0].label',
+        params: { field: 'f2' },
+      },
+      {
+        code: 'unknownField',
+        path: 'document.steps[0].items[1].label.en',
+        params: { field: 'f8' },
+      },
+    ])
+  })
+
   it('refuses an option whose label is empty in a language', () => {
     const document: FormDocument = {
       format: 1,

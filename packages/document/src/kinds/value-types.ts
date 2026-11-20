@@ -39,6 +39,8 @@ type Chosen = {
 /** One of the built-in value types, which every catalog holds. */
 export type BuiltInValueType = (typeof valueTypes)[keyof typeof valueTypes]
 
+const LIST_SEPARATOR = ', '
+
 // An ISO time after the day: hours and minutes, optional seconds and fraction, optional offset.
 const ISO_TIME = /^T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?(Z|[+-]([01]\d|2[0-3]):[0-5]\d)?$/
 
@@ -122,12 +124,18 @@ const includesOption = {
     answer?.includes(compared) === true,
 }
 
+const asWritten = (value: string): string => value
+
+const labelOf = (options: readonly SettingOption[], value: string): string =>
+  optionOf(options, value)?.label ?? ''
+
 const text: BuiltIn<string, 'text', Written> = defineValueType({
   name: 'text',
   emptyValue: '',
   fits: isText,
   isFilled: isNotBlank,
   describe: describeText,
+  toText: asWritten,
 })
 
 const choice: BuiltIn<string, 'choice', SettingOption, true> = defineValueType({
@@ -137,6 +145,7 @@ const choice: BuiltIn<string, 'choice', SettingOption, true> = defineValueType({
   fits: isText,
   isFilled: isNotBlank,
   describe: (value, options): SettingOption | undefined => optionOf(options, value),
+  toText: (value, options) => labelOf(options, value),
   operators: {
     equals: isChosen,
     notEquals: negated(isChosen),
@@ -156,6 +165,11 @@ const choices: BuiltIn<readonly string[], 'choices', Chosen, true> = defineValue
     const known = chosen.filter((option) => option !== undefined)
     return known.length === chosen.length ? { values: known } : undefined
   },
+  toText: (value, options) =>
+    value
+      .map((entry) => labelOf(options, entry))
+      .filter((label) => label !== '')
+      .join(LIST_SEPARATOR),
   operators: { includes: includesOption, excludes: negated(includesOption) },
 })
 
@@ -176,6 +190,7 @@ const number: BuiltIn<number, 'number', Counted> = defineValueType({
   emptyValue: undefined,
   fits: (value): value is number => typeof value === 'number' && Number.isFinite(value),
   describe: (value): Counted => ({ value }),
+  toText: String,
   operators: numericOperators<number>((value) => value),
 })
 
@@ -185,6 +200,7 @@ const decimal: BuiltIn<string, 'decimal', Written> = defineValueType({
   fits: isText,
   isFilled: isNotBlank,
   describe: describeText,
+  toText: asWritten,
   operators: numericOperators<string>(numberOf),
 })
 
@@ -194,6 +210,7 @@ const date: BuiltIn<string, 'date', Written> = defineValueType({
   fits: isDate,
   isFilled: isNotBlank,
   describe: describeText,
+  toText: asWritten,
   operators: {
     equals: byDay(isSame),
     before: byDay(isLess),

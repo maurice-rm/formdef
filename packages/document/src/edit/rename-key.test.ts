@@ -103,6 +103,45 @@ describe('renameKey', () => {
     expect(renamed.match(/"field":"house"/g)).toHaveLength(5)
   })
 
+  it('renames the key in placeholders of texts and settings', () => {
+    const texts: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'Building',
+          description: { de: 'Für {f1}', en: 'For {f1}' },
+          items: [
+            field('f1'),
+            field('f2', {
+              label: { cases: [{ when: isBlock, value: 'Hi {f1}' }], otherwise: '{f1}!' },
+              settings: { placeholder: 'As {f1}', options: [{ value: 'o1', label: '{f1}' }] },
+            }),
+          ],
+        },
+      ],
+    }
+
+    const renamed = JSON.stringify(renameKey(texts, 'f1', 'name'))
+
+    expect(renamed).not.toContain('{f1}')
+    expect(renamed.match(/\{name\}/g)).toHaveLength(6)
+  })
+
+  it("leaves an option's value as it is, since it is a key and no text", () => {
+    const options: FormDocument = {
+      format: 1,
+      items: [
+        field('f1'),
+        field('f2', { settings: { options: [{ value: '{f1}', label: 'One' }] } }),
+      ],
+    }
+
+    expect(renameKey(options, 'f1', 'name').items?.[1]).toEqual(
+      field('f2', { settings: { options: [{ value: '{f1}', label: 'One' }] } }),
+    )
+  })
+
   it('renames a step key', () => {
     expect(renameKey(document, 's2', 'heating').steps?.map(({ key }) => key)).toEqual([
       's1',

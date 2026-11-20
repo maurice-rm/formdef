@@ -245,6 +245,31 @@ describe('createDocumentForm without steps', () => {
     expect(screen.getByRole('option', { name: 'Central' })).toBeDefined()
   })
 
+  it('fills placeholders with earlier answers as they change', async () => {
+    const Form = createDocumentForm(
+      plain(
+        houseType,
+        field('name', 'text', { label: 'Name' }),
+        field('area', 'measure', {
+          label: 'Area of the {house}',
+          description: 'Owned by {name}.',
+          settings: { unit: 'm² ({{approx}})' },
+        }),
+      ),
+      catalog,
+    )
+    render(<Form />)
+
+    expect(screen.getByLabelText('Area of the')).toBeDefined()
+
+    await choose('House type', 'o2')
+    await type('Name', 'Ada')
+
+    expect(screen.getByLabelText('Area of the Apartment block')).toBeDefined()
+    expect(screen.getByText('Owned by Ada.')).toBeDefined()
+    expect(screen.getByText('in m² ({approx})')).toBeDefined()
+  })
+
   it('renders in the first language without one chosen', () => {
     const translated: FormDocument = {
       format: 1,
@@ -404,6 +429,17 @@ describe('createDocumentForm with steps', () => {
     ])
     expect(screen.getByLabelText('House type')).toBeDefined()
     expect(screen.queryByLabelText('Name *')).toBeNull()
+  })
+
+  it('writes {{ and }} as braces in the label of a step', () => {
+    const braced: FormDocument = {
+      format: 1,
+      steps: [{ key: 'building', label: 'Building {{A}}', items: [houseType] }],
+    }
+    const Form = createDocumentForm(braced, catalog)
+    render(<Form />)
+
+    expect(screen.getByText('Building {A}')).toBeDefined()
   })
 
   it('updates a step description that follows an answer', async () => {

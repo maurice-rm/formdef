@@ -12,7 +12,7 @@ import type { Catalog } from '../kinds/create-catalog'
 import { kindOf } from '../kinds/kind-of'
 import type { ValueType } from '../kinds/value-type'
 import { nestValues } from '../nest-values'
-import { resolveText } from '../resolve-text'
+import { resolveFixedText } from '../resolve-fixed-text'
 import type { Text } from '../text'
 import type { DocumentValidator } from '../validate/create-validator'
 import type { VaryingText } from '../varying-text'
@@ -36,7 +36,7 @@ type Build = {
   answersOf: (values: unknown) => Answers
 }
 
-const textOf = (text: Text, build: Build): string => resolveText(text, build.language)
+const textOf = (text: Text, build: Build): string => resolveFixedText(text, build.language)
 
 const varyingOf = (text: VaryingText, { build, answers }: { build: Build; answers: Answers }) =>
   resolveVaryingText(text, { answers, language: build.language })

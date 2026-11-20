@@ -6,6 +6,8 @@ import type { JsonValue } from '../json-value'
 import type { Catalog } from '../kinds/create-catalog'
 import type { FieldKind } from '../kinds/field-kind'
 import { kindOf } from '../kinds/kind-of'
+import { optionsOf } from '../kinds/options-of'
+import type { SettingOption } from '../kinds/setting'
 import type { ValueType } from '../kinds/value-type'
 import type { Answer, Answers } from './answers'
 import { holds } from './holds'
@@ -61,16 +63,19 @@ const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk)
   const kind = kindOf(walk.catalog, field)
   const value = container.values[field.key]
 
+  const settings = resolveSettings(field, kind, { answers: walk.answers, language: walk.language })
   walk.shown.push({
     field,
     kind,
     path: [...container.path, field.key],
     value,
     isRequired: isRequired(field, walk.answers),
-    settings: resolveSettings(field, kind, { answers: walk.answers, language: walk.language }),
+    settings,
   })
   if (isFilled(value, kind.valueType)) {
-    walk.filled.set(field.key, { value, valueType: kind.valueType })
+    // The settings of a field that shows are resolved, so their options hold strings.
+    const text = kind.valueType.toText(value, optionsOf(settings) as SettingOption[])
+    walk.filled.set(field.key, { value, valueType: kind.valueType, text })
   }
 }
 
