@@ -1,10 +1,12 @@
 import type { Condition } from '../condition'
+import { failAt } from '../fail-at'
 import type {
   BlockItem,
   Check,
   ComputedItem,
   DocumentItem,
   FieldItem,
+  RepeatItem,
   RowItem,
   SectionItem,
 } from '../form-document'
@@ -25,7 +27,7 @@ import { readVaryingText } from './read-varying-text'
 import { readVisibleWhen } from './read-visible-when'
 import { withOptional } from './with-optional'
 
-const ITEM_TYPES = ['field', 'block', 'computed', 'section', 'row'] as const
+const ITEM_TYPES = ['field', 'block', 'computed', 'section', 'row', 'repeat'] as const
 const ROW_ITEM_TYPES = ['field', 'block', 'computed'] as const
 
 const FIELD_KEYS = [
@@ -45,6 +47,19 @@ const BLOCK_KEYS = ['type', 'key', 'kind', 'visibleWhen', 'settings']
 const COMPUTED_KEYS = ['type', 'key', 'label', 'valueType', 'expression', 'visibleWhen']
 const ROW_KEYS = ['type', 'visibleWhen', 'display', 'items']
 const SECTION_KEYS = ['type', 'label', 'description', 'visibleWhen', 'display', 'items']
+const REPEAT_KEYS = [
+  'type',
+  'key',
+  'label',
+  'addLabel',
+  'removeLabel',
+  'entryLabel',
+  'min',
+  'max',
+  'visibleWhen',
+  'display',
+  'items',
+]
 
 const readRequired = (value: unknown, path: string): boolean | Condition =>
   typeof value === 'boolean' ? value : readCondition(value, path)
@@ -168,12 +183,48 @@ const readSection = (shape: Shape, path: string): SectionItem => {
   }
 }
 
+const readEntryCount = (value: unknown, path: string): number | undefined => {
+  if (value === undefined) {
+    return undefined
+  }
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+    failAt(path, 'expected a whole number of 0 or more.')
+  }
+  return value
+}
+
+const readRepeat = (shape: Shape, path: string): RepeatItem => {
+  readOnlyKeys(shape, REPEAT_KEYS, path)
+
+  return {
+    type: 'repeat',
+    key: readText(shape.key, `${path}.key`),
+    label: readTranslatableText(shape.label, `${path}.label`),
+    addLabel: readTranslatableText(shape.addLabel, `${path}.addLabel`),
+    removeLabel: readTranslatableText(shape.removeLabel, `${path}.removeLabel`),
+    ...withOptional(
+      'entryLabel',
+      shape.entryLabel === undefined
+        ? undefined
+        : readTranslatableText(shape.entryLabel, `${path}.entryLabel`),
+    ),
+    ...withOptional('min', readEntryCount(shape.min, `${path}.min`)),
+    ...withOptional('max', readEntryCount(shape.max, `${path}.max`)),
+    ...readVisibleWhen(shape, path),
+    ...readDisplay(shape, path),
+    items: readItems(shape.items, `${path}.items`),
+  }
+}
+
 const readItem = (value: unknown, path: string): DocumentItem => {
   const shape = readShape(value, path)
   const type = readOneOf(shape.type, ITEM_TYPES, `${path}.type`)
 
   if (type === 'row') {
     return readRow(shape, path)
+  }
+  if (type === 'repeat') {
+    return readRepeat(shape, path)
   }
   return type === 'section' ? readSection(shape, path) : readLeaf(shape, { type, path })
 }

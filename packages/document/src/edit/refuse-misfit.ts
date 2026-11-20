@@ -8,7 +8,8 @@ import type { Parent } from './parent'
 
 /**
  * Checks that a parent may hold a node: a document with steps holds steps, a row holds fields,
- * blocks and computed values, and the rest hold those, rows and sections.
+ * blocks and computed values, and the rest hold those, rows, sections and repeats; a repeat inside
+ * a repeat is left to {@link checkDocument}, as sections nested too deep are.
  *
  * @throws When it may not.
  */

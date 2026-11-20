@@ -8,6 +8,7 @@ import type {
   FormDocument,
   Intro,
   Jump,
+  RepeatItem,
 } from '../form-document'
 import { jumpEndingsOf } from '../jump-endings-of'
 import type { Catalog } from '../kinds/create-catalog'
@@ -21,6 +22,7 @@ import { checkCondition } from './check-condition'
 import { checkDisplay } from './check-display'
 import { checkFixedText } from './check-fixed-text'
 import { checkMessages } from './check-messages'
+import { checkNumberedText } from './check-numbered-text'
 import { checkSettings } from './check-settings'
 import { checkVaryingText } from './check-varying-text'
 import type { CheckWalk } from './check-walk'
@@ -29,7 +31,7 @@ import { report } from './report'
 
 type At = { walk: CheckWalk; path: string }
 
-type Level = { at: At; seenKeys: Set<string>; sections: number }
+type Level = { at: At; seenKeys: Set<string>; sections: number; isInRepeat: boolean }
 
 const MOST_SECTION_LEVELS = 2
 
@@ -173,8 +175,49 @@ const checkIntro = (
   checkFixedText(intro.start, { walk, path: `${path}.start` })
 }
 
+const checkRepeatOwn = (repeat: RepeatItem, level: Level): void => {
+  const { at, seenKeys } = level
+  checkLeafKey(repeat.key, at, seenKeys)
+  checkFixedText(repeat.label, { walk: at.walk, path: `${at.path}.label` })
+  checkFixedText(repeat.addLabel, { walk: at.walk, path: `${at.path}.addLabel` })
+  checkNumberedText(repeat.removeLabel, { walk: at.walk, path: `${at.path}.removeLabel` })
+  if (repeat.entryLabel !== undefined) {
+    checkNumberedText(repeat.entryLabel, { walk: at.walk, path: `${at.path}.entryLabel` })
+  }
+  if (repeat.min !== undefined && repeat.max !== undefined && repeat.min > repeat.max) {
+    report(at.walk, {
+      code: 'minAboveMax',
+      path: `${at.path}.min`,
+      params: { min: repeat.min, max: repeat.max },
+    })
+  }
+  if (level.isInRepeat) {
+    report(at.walk, { code: 'nestedRepeat', path: at.path })
+  }
+  checkVisibleWhen(repeat, at)
+  checkDisplay(repeat.display, 'repeat', at)
+}
+
+// Inside a repeat, its fields read the same entry; past it, no entry is meant, so none is named.
+const checkRepeat = (repeat: RepeatItem, level: Level): void => {
+  checkRepeatOwn(repeat, level)
+  checkItems(repeat.items, {
+    ...level,
+    at: { ...level.at, path: `${level.at.path}.items` },
+    isInRepeat: true,
+  })
+  for (const { key } of answerItemsOf(repeat.items)) {
+    level.at.walk.earlier.delete(key)
+    level.at.walk.repeatFieldKeys.add(key)
+  }
+}
+
 const checkItem = (item: DocumentItem, level: Level): void => {
   const { at, seenKeys } = level
+  if (item.type === 'repeat') {
+    checkRepeat(item, level)
+    return
+  }
   if (item.type === 'field') {
     checkField(item, at, seenKeys)
     return
@@ -198,8 +241,8 @@ const checkItem = (item: DocumentItem, level: Level): void => {
     report(at.walk, { code: 'tooDeep', path: at.path })
   }
   checkItems(item.items, {
+    ...level,
     at: { ...at, path: `${at.path}.items` },
-    seenKeys,
     sections: item.type === 'section' ? level.sections + 1 : level.sections,
   })
 }
@@ -295,6 +338,7 @@ const checkSteps = (
       at: { walk, path: `${path}.items` },
       seenKeys,
       sections: 0,
+      isInRepeat: false,
     })
     checkJumps(step.next, {
       at: { walk, path },
@@ -307,11 +351,11 @@ const checkSteps = (
 
 /**
  * Checks a form document as a form, once {@link readDocument} has checked its shape, and reports
- * every problem in document order: keys used twice, conditions on fields that do not exist or come
- * later, operators and compared values that do not fit the field compared, empty steps, sections
- * and rows, sections nested too deep, unknown field, block and display kinds, displays where their
- * kind does not apply, and settings that are unknown, missing, of the wrong type or outside their
- * constraints.
+ * every problem in document order: keys used twice, conditions on fields that do not exist, come
+ * later or sit in a repeat they are outside of, operators and compared values that do not fit the
+ * field compared, empty steps, sections, rows and repeats, sections nested too deep, a repeat in a
+ * repeat, unknown field, block and display kinds, displays where their kind does not apply, and
+ * settings that are unknown, missing, of the wrong type or outside their constraints.
  *
  * A builder lists the problems while a document is edited; rendering refuses a document that has
  * any.
@@ -340,6 +384,7 @@ export function checkDocument(
     languages: document.languages,
     allFieldKeys: new Set(answerItemsOf(items).map((item) => item.key)),
     earlier: new Map(),
+    repeatFieldKeys: new Set(),
     problems: [],
   }
 
@@ -354,6 +399,7 @@ export function checkDocument(
       at: { walk, path: `${DOCUMENT_PATH}.items` },
       seenKeys,
       sections: 0,
+      isInRepeat: false,
     })
   } else {
     const endingKeys = new Set((document.endings ?? []).map((ending) => ending.key))

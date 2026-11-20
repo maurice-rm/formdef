@@ -147,6 +147,9 @@ const renameInEnding = (ending: Ending, rename: Rename): Ending => ({
   items: ending.items.map((block) => renameInNode(block, rename) as BlockItem),
 })
 
+const withRenamedKey = <TNode extends DocumentNode>(node: TNode, rename: Rename): TNode =>
+  'key' in node && node.key === rename.from ? { ...node, key: rename.to } : node
+
 const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
   const visibility =
     node.visibleWhen === undefined ? {} : { visibleWhen: renameIn(node.visibleWhen, rename) }
@@ -156,8 +159,7 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
       : node.type === 'computed'
         ? renameInComputed(node, rename)
         : { ...node, ...renameInSettings(node, rename) }
-    const leaf = renamePlaceholdersIn({ ...own, ...visibility }, rename)
-    return leaf.key === rename.from ? { ...leaf, key: rename.to } : leaf
+    return withRenamedKey(renamePlaceholdersIn({ ...own, ...visibility }, rename), rename)
   }
   const items = node.items.map((child) => renameInNode(child, rename))
   const description =
@@ -174,11 +176,11 @@ const renameInNode = (node: DocumentNode, rename: Rename): DocumentNode => {
     { ...node, ...visibility, ...description, ...jumps, items } as DocumentNode,
     rename,
   )
-  return isStep(renamed) && renamed.key === rename.from ? { ...renamed, key: rename.to } : renamed
+  return withRenamedKey(renamed, rename)
 }
 
 /**
- * Renames the key of a step, field, block, computed value or ending in a form document, and the key
+ * Renames the key of a step, field, block, computed value, repeat or ending in a form document, and the key
  * in every condition, expression, jump and placeholder that names it, endings included, leaving the
  * document given as it was. Keys of different kinds that are the same are all renamed. A key that is taken already, or not a plain name, {@link checkDocument} reports
  * afterwards.

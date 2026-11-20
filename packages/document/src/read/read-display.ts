@@ -20,7 +20,7 @@ const readDisplayAt = (value: unknown, path: string): Display => {
   }
 }
 
-/** Reads the `display` of the form, a step, a section or a row, when it has one. */
+/** Reads the `display` of the form, a step, a section, a row or a repeat, when it has one. */
 export function readDisplay(shape: Shape, path: string): Partial<Record<'display', Display>> {
   return withOptional(
     'display',

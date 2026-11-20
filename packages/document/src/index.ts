@@ -38,6 +38,7 @@ export type {
   FormDocument,
   Intro,
   Jump,
+  RepeatItem,
   RowItem,
   SectionItem,
   Varying,

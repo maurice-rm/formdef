@@ -3,7 +3,14 @@ import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import type { Expression } from '../expression'
-import type { ComputedItem, DocumentStep, FieldItem, FormDocument } from '../form-document'
+import type {
+  ComputedItem,
+  DocumentItem,
+  DocumentStep,
+  FieldItem,
+  FormDocument,
+  RepeatItem,
+} from '../form-document'
 import { createCatalog } from '../kinds/create-catalog'
 import { defineBlockKind } from '../kinds/define-block-kind'
 import { defineDisplayKind } from '../kinds/define-display-kind'
@@ -1579,6 +1586,127 @@ describe('checkDocument with computed values', () => {
       'resultMismatch document.items[1].valueType',
       'resultMismatch document.items[2].expression',
       'duplicateKey document.items[3].key',
+    ])
+  })
+})
+
+describe('checkDocument with repeats', () => {
+  const name: FieldItem = { type: 'field', key: 'f2', kind: 'text', label: 'Name' }
+  const works: FieldItem = { type: 'field', key: 'f3', kind: 'yesNo', label: 'Works' }
+  const since: FieldItem = {
+    type: 'field',
+    key: 'f4',
+    kind: 'date',
+    label: 'Since',
+    visibleWhen: { field: 'f3', op: 'isTrue' },
+  }
+  const repeat = (items: DocumentItem[], extra: Partial<RepeatItem> = {}): RepeatItem => ({
+    type: 'repeat',
+    key: 'r1',
+    label: 'Residents',
+    addLabel: 'Add person',
+    removeLabel: 'Remove person {n}',
+    entryLabel: 'Person {n}',
+    items,
+    ...extra,
+  })
+  const document = (...items: DocumentItem[]): FormDocument => ({ format: 1, items })
+
+  it('takes a repeat whose items name fields of the same entry and fields before it', () => {
+    const checked = document(
+      choiceField,
+      repeat([
+        { ...name, visibleWhen: { field: 'f1', op: 'equals', value: 'o1' } },
+        { type: 'section', label: 'Work', items: [works, since] },
+      ]),
+    )
+
+    expect(codesOf(checked)).toEqual([])
+  })
+
+  it('reports a field of a repeat named from outside it or from another repeat', () => {
+    const checked = document(
+      repeat([name]),
+      { ...works, visibleWhen: { field: 'f2', op: 'isFilled' } },
+      repeat([{ ...since, visibleWhen: { field: 'f2', op: 'isFilled' } }], { key: 'r2' }),
+    )
+
+    expect(codesOf(checked)).toEqual([
+      'repeatField document.items[1].visibleWhen.field',
+      'repeatField document.items[2].items[0].visibleWhen.field',
+    ])
+  })
+
+  it('reports a repeat in a repeat, an empty repeat and more entries at least than at most', () => {
+    const checked = document(
+      repeat([name, repeat([works], { key: 'r2' })], { min: 3, max: 2 }),
+      repeat([], { key: 'r3' }),
+    )
+
+    expect(codesOf(checked)).toEqual([
+      'minAboveMax document.items[0].min',
+      'nestedRepeat document.items[0].items[1]',
+      'empty document.items[1].items',
+    ])
+  })
+
+  it('counts the sections around a repeat towards the two levels of sections', () => {
+    const checked = document({
+      type: 'section',
+      label: 'Household',
+      items: [
+        repeat([
+          {
+            type: 'section',
+            label: 'Person',
+            items: [{ type: 'section', label: 'Work', items: [works] }],
+          },
+        ]),
+      ],
+    })
+
+    expect(codesOf(checked)).toEqual(['tooDeep document.items[0].items[0].items[0].items[0]'])
+  })
+
+  it('reports a key taken or not plain, and texts that name answers rather than the number', () => {
+    const checked = document(
+      name,
+      repeat([works], {
+        key: 'f2',
+        label: 'Residents of {f2}',
+        addLabel: 'Add {n}',
+        entryLabel: 'Person {n} of {f2}',
+      }),
+      repeat([{ type: 'field', key: 'f5', kind: 'text', label: 'Job' }], { key: 'r.1' }),
+    )
+
+    expect(codesOf(checked)).toEqual([
+      'duplicateKey document.items[1].key',
+      'fixedText document.items[1].label',
+      'fixedText document.items[1].addLabel',
+      'fixedText document.items[1].entryLabel',
+      'invalidKey document.items[2].key',
+    ])
+  })
+
+  it('reports a display whose kind does not apply to a repeat', () => {
+    const withSection = registry.extendRegistry({ structure: { section: Section } })
+    const card = defineDisplayKind(withSection, {
+      name: 'card',
+      label: 'Card',
+      appliesTo: 'section',
+    })
+    const text = defineFieldKind(withSection, {
+      name: 'text',
+      label: 'Text',
+      widget: 'text',
+      valueType: valueTypes.text,
+    })
+    const withCard = createCatalog(withSection, { fields: [text], displays: [card] })
+    const checked = document(repeat([name], { display: { kind: 'card' } }))
+
+    expect(checkDocument(checked, withCard).map(({ code, path }) => `${code} ${path}`)).toEqual([
+      'misplacedDisplay document.items[0].display.kind',
     ])
   })
 })

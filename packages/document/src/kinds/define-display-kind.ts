@@ -1,4 +1,11 @@
-import type { Registry, RowProps, SectionProps, StepperProps, StepState } from '@formdef/core'
+import type {
+  ArrayFrameProps,
+  Registry,
+  RowProps,
+  SectionProps,
+  StepperProps,
+  StepState,
+} from '@formdef/core'
 import type { ComponentType } from 'react'
 
 import { failAt } from '../fail-at'
@@ -32,6 +39,7 @@ type TargetProps<TStructure, TTarget extends DisplayTarget> = {
   step: OwnProps<StepOf<SlotOf<TStructure, 'stepper'>>, keyof StepState>
   section: OwnProps<PropsOf<SlotOf<TStructure, 'section'>>, keyof SectionProps>
   row: OwnProps<PropsOf<SlotOf<TStructure, 'row'>>, keyof RowProps>
+  repeat: OwnProps<PropsOf<SlotOf<TStructure, 'arrayFrame'>>, keyof ArrayFrameProps<unknown>>
 }[TTarget]
 
 type Settings = Readonly<Record<string, Setting<unknown>>>
@@ -61,7 +69,8 @@ export type DisplayKindDefinition<
   label: string
   /**
    * What the display kind applies to: `form` gives props to the stepper of a form of steps,
-   * `step` to what the stepper shows per step, `section` and `row` to those slots.
+   * `step` to what the stepper shows per step, `section` and `row` to those slots, `repeat` to
+   * the array frame.
    */
   appliesTo: TTarget
   /**
@@ -99,7 +108,7 @@ const refuseUnfitSettings = (settings: Settings): void => {
 }
 
 /**
- * Defines a display kind for form documents: how a form of steps, a step, a section or a row looks,
+ * Defines a display kind for form documents: how a form of steps, a step, a section, a row or a repeat looks,
  * as the props of the structure slot that renders it, built from a display's settings. The
  * compiler checks the props against that slot here, once. A display is fixed for the form: its
  * settings do not follow an answer or name one, but may be translated.

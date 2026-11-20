@@ -1,4 +1,9 @@
-import { createRegistry, type SectionProps, type StepperProps } from '@formdef/core'
+import {
+  type ArrayFrameProps,
+  createRegistry,
+  type SectionProps,
+  type StepperProps,
+} from '@formdef/core'
 import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expectTypeOf, it } from 'vitest'
 
@@ -71,6 +76,24 @@ describe('defineDisplayKind', () => {
       appliesTo: 'row',
       // @ts-expect-error the registry has no row slot
       props: () => ({ className: 'gap-8' }),
+    })
+  })
+
+  it("gives a repeat's display the array frame's own props", () => {
+    const ArrayFrame = (_: ArrayFrameProps<unknown> & { variant?: 'list' | 'cards' }) => null
+    const withFrame = registry.extendRegistry({ structure: { arrayFrame: ArrayFrame } })
+    defineDisplayKind(withFrame, {
+      name: 'cards',
+      label: 'Cards',
+      appliesTo: 'repeat',
+      props: () => ({ variant: 'cards' }),
+    })
+    defineDisplayKind(withFrame, {
+      name: 'table',
+      label: 'Table',
+      appliesTo: 'repeat',
+      // @ts-expect-error the array frame has no variant `table`
+      props: () => ({ variant: 'table' }),
     })
   })
 

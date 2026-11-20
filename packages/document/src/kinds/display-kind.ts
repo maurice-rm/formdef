@@ -2,12 +2,12 @@ import type { Setting } from './setting'
 
 /**
  * What a display kind applies to: the whole form of steps, through the stepper; one step, through
- * what the stepper shows per step; a section; or a row.
+ * what the stepper shows per step; a section; a row; or a repeat, through the array frame.
  */
-export type DisplayTarget = 'form' | 'step' | 'section' | 'row'
+export type DisplayTarget = 'form' | 'step' | 'section' | 'row' | 'repeat'
 
 /**
- * A display kind of a form document: how a form of steps, a step, a section or a row looks. It
+ * A display kind of a form document: how a form of steps, a step, a section, a row or a repeat looks. It
  * builds the props of the structure slot that renders it from a display's settings. Built with
  * {@link defineDisplayKind}, collected with {@link createCatalog}.
  *

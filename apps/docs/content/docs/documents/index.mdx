@@ -58,9 +58,10 @@ a field may be is decided in code, once: by the project's [field kinds](/documen
   `visibleWhen`, optional [jumps](#jumps) under `next`, and its `items`.
 - An item is a **field**, a **block** of content without an answer, a
   [**computed value**](#computed-values), a **row** of fields, blocks and computed values side by
-  side, or a **section**: a `label` over its `items`, and an optional `description` under it. A
-  section inside a section is a group that reads like one question, such as an address; a third
-  level is not allowed.
+  side, a **section**: a `label` over its `items`, and an optional `description` under it, or a
+  [**repeat**](#repeats) of items the person fills in as often as needed. A section inside a
+  section is a group that reads like one question, such as an address; a third level is not
+  allowed.
 - A block has a `key`, the `kind` of a registered [block kind](/documents/field-kinds#block-kinds),
   and optionally `settings` and `visibleWhen`. It gives no answer and is not validated; a condition
   cannot name it.
@@ -76,7 +77,7 @@ a field may be is decided in code, once: by the project's [field kinds](/documen
   step, section, row or field; without one, it always shows.
 - `settings` holds the values of the field kind's [settings](/documents/field-kinds#settings), by
   name, such as the options of a choice or the unit of a number.
-- `display` says how the form of steps, a step, a section or a row looks: the `kind` of a
+- `display` says how the form of steps, a step, a section, a row or a repeat looks: the `kind` of a
   registered [display kind](/documents/field-kinds#display-kinds) and its `settings`, such as
   `{ "kind": "rail" }` at the root for a stepper drawn as a rail. Without one, each renders as its
   slot does.
@@ -306,6 +307,49 @@ each a `key`, an optional `when` and blocks, whose texts may name any answer.
 - `checkDocument` reports a jump to an ending the document does not hold as `unknownEnding`, and a
   fallback before the last ending taken in order as `fallbackNotLast`. Block keys share the keys of
   fields.
+
+## Repeats
+
+A repeat holds items the person fills in as often as needed, one **entry** each, such as one per
+resident:
+
+```json
+{
+  "type": "repeat",
+  "key": "r1",
+  "label": "Residents",
+  "addLabel": "Add person",
+  "removeLabel": "Remove person {n}",
+  "entryLabel": "Person {n}",
+  "min": 1,
+  "max": 6,
+  "items": [
+    { "type": "field", "key": "f2", "kind": "text", "label": "Name" },
+    { "type": "field", "key": "f3", "kind": "yesNo", "label": "Works" },
+    {
+      "type": "field",
+      "key": "f4",
+      "kind": "date",
+      "label": "Working since",
+      "visibleWhen": { "field": "f3", "op": "isTrue" }
+    }
+  ]
+}
+```
+
+- `label`, `addLabel` and `removeLabel` are required; `entryLabel`, the title over each entry,
+  `min`, `max`, `visibleWhen` and `display` are optional. The texts may be translated and name no
+  answers; `removeLabel` and `entryLabel` name the entry's number as `{n}`.
+- `min` and `max` are whole numbers of 0 or more, the fewest and the most entries.
+- Its items are fields, blocks, computed values, rows and sections, within the same two levels of
+  sections, counting those around the repeat. A repeat holds no other repeat.
+- Inside a repeat, a condition, placeholder or expression that names a field of the repeat reads
+  that field of the same entry: above, `f4` shows for each resident who works. It may also name
+  fields before the repeat. Outside the repeat, no entry is meant, so nothing there names a field
+  inside it.
+- The repeat's key shares the keys of fields.
+- `checkDocument` reports a field inside a repeat named from outside it as `repeatField`, a repeat
+  inside a repeat as `nestedRepeat`, and a `min` above `max` as `minAboveMax`.
 
 ## Computed values
 

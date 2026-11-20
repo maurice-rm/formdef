@@ -312,6 +312,30 @@ describe('renameKey', () => {
     })
   })
 
+  it("renames a repeat's key, and the fields inside it with the conditions that name them", () => {
+    const withRepeat: FormDocument = {
+      format: 1,
+      items: [
+        {
+          type: 'repeat',
+          key: 'r1',
+          label: 'Residents',
+          addLabel: 'Add',
+          removeLabel: 'Remove {n}',
+          items: [field('f1'), field('f2', { visibleWhen: { field: 'f1', op: 'isFilled' } })],
+        },
+      ],
+    }
+
+    expect(renameKey(withRepeat, 'r1', 'residents').items?.[0]).toMatchObject({
+      key: 'residents',
+    })
+    expect(renameKey(withRepeat, 'f1', 'name').items?.[0]).toMatchObject({
+      removeLabel: 'Remove {n}',
+      items: [{ key: 'name' }, { visibleWhen: { field: 'name' } }],
+    })
+  })
+
   it('renames a step key', () => {
     expect(renameKey(document, 's2', 'heating').steps?.map(({ key }) => key)).toEqual([
       's1',

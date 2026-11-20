@@ -3,10 +3,10 @@ import type { JsonValue } from '../json-value'
 /**
  * What a problem of a form document is about:
  *
- * - `duplicateKey`: a step key used twice, or a key of fields, blocks and computed values used
- *   twice;
- * - `invalidKey`: a step, field, block or computed value key that is empty or holds a dot or a
- *   bracket;
+ * - `duplicateKey`: a step key used twice, or a key of fields, blocks, computed values and repeats
+ *   used twice;
+ * - `invalidKey`: a step, field, block, computed value or repeat key that is empty or holds a dot
+ *   or a bracket;
  * - `overlappingKey`: a step key that starts with another step's key, such as `s10` after `s1`;
  * - `duplicateOption`: an option value used twice in one field;
  * - `unknownKind`: a field, block or display of a kind that is not registered;
@@ -16,11 +16,15 @@ import type { JsonValue } from '../json-value'
  *   hold;
  * - `laterField`: a condition on, or an expression that reads, a field that comes later, or the
  *   field itself;
+ * - `repeatField`: a condition on, or an expression that reads, a field inside a repeat from
+ *   outside it, where no entry is meant;
  * - `operatorMismatch`: an operator that does not fit the value type of the field compared;
  * - `unknownOption`: a compared value that is no option of the choice compared;
  * - `valueMismatch`: a compared value of the wrong type, such as text for a number;
- * - `empty`: a step, section or row without items;
- * - `tooDeep`: a section inside a section inside a section;
+ * - `empty`: a step, section, row or repeat without items;
+ * - `tooDeep`: a section inside a section inside a section, counting those around a repeat;
+ * - `nestedRepeat`: a repeat inside a repeat;
+ * - `minAboveMax`: a repeat whose fewest entries are more than its most;
  * - `unknownSetting`: a setting the field kind does not have;
  * - `missingSetting`: a required setting left out;
  * - `settingMismatch`: a setting of the wrong type;
@@ -28,8 +32,8 @@ import type { JsonValue } from '../json-value'
  * - `settingLimit`: a setting outside its constraints, such as too long or too few options;
  * - `missingTranslation`: a translated text that leaves out a language of the document;
  * - `unknownLanguage`: a translation into a language the document does not name;
- * - `fixedText`: a placeholder in the label of a step or section, a display's setting or the intro,
- *   which names no answers;
+ * - `fixedText`: a placeholder in the label of a step or section, a display's setting, the intro
+ *   or the texts of a repeat, which name no answers; those of each entry name its number as `{n}`;
  * - `unknownParam`: a placeholder in a field's error text that its issue code has no param for;
  * - `unknownStep`: a jump to a step the document does not hold;
  * - `backwardJump`: a jump to the step itself or an earlier one, which could loop;
@@ -53,11 +57,14 @@ export type ProblemCode =
   | 'misplacedDisplay'
   | 'unknownField'
   | 'laterField'
+  | 'repeatField'
   | 'operatorMismatch'
   | 'unknownOption'
   | 'valueMismatch'
   | 'empty'
   | 'tooDeep'
+  | 'nestedRepeat'
+  | 'minAboveMax'
   | 'unknownSetting'
   | 'missingSetting'
   | 'settingMismatch'

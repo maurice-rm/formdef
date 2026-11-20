@@ -115,6 +115,7 @@ const ENTRIES: readonly Entry[] = [
       'readDocument',
       'removeNode',
       'renameKey',
+      'RepeatItem',
       'RowItem',
       'Rule',
       'rule',

@@ -147,7 +147,56 @@ describe('readDocument', () => {
     const broken = { format: 1, items: [{ type: 'image', key: 'f1' }] }
 
     expect(() => readDocument(broken)).toThrow(
-      'formdef: document.items[0].type: expected one of field, block, computed, section, row.',
+      'formdef: document.items[0].type: expected one of field, block, computed, section, row, repeat.',
+    )
+  })
+
+  it('reads a repeat with its texts, bounds and items, a repeat in it left to checkDocument', () => {
+    const repeat = {
+      type: 'repeat',
+      key: 'r1',
+      label: 'Residents',
+      addLabel: 'Add person',
+      removeLabel: 'Remove person {n}',
+      entryLabel: 'Person {n}',
+      min: 1,
+      max: 6,
+      visibleWhen: { field: 'f1', op: 'isTrue' },
+      items: [
+        { type: 'field', key: 'f2', kind: 'text', label: 'Name' },
+        {
+          type: 'repeat',
+          key: 'r2',
+          label: 'Jobs',
+          addLabel: 'Add',
+          removeLabel: 'Remove',
+          items: [],
+        },
+      ],
+    }
+    const document = { format: 1, items: [repeat] }
+
+    expect(readDocument(document)).toEqual(document)
+  })
+
+  it('refuses a repeat in a row, and bounds that are no whole number of 0 or more', () => {
+    const repeat = {
+      type: 'repeat',
+      key: 'r1',
+      label: 'R',
+      addLabel: 'A',
+      removeLabel: 'D',
+      items: [],
+    }
+
+    expect(() => readDocument({ format: 1, items: [{ type: 'row', items: [repeat] }] })).toThrow(
+      'formdef: document.items[0].items[0].type: expected one of field, block, computed.',
+    )
+    expect(() => readDocument({ format: 1, items: [{ ...repeat, min: 1.5 }] })).toThrow(
+      'formdef: document.items[0].min: expected a whole number of 0 or more.',
+    )
+    expect(() => readDocument({ format: 1, items: [{ ...repeat, max: -1 }] })).toThrow(
+      'formdef: document.items[0].max: expected a whole number of 0 or more.',
     )
   })
 

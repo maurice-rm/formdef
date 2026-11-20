@@ -28,5 +28,7 @@ export type CheckWalk = {
   languages: readonly string[] | undefined
   allFieldKeys: ReadonlySet<string>
   earlier: Map<string, EarlierField>
+  /** The answers inside a repeat already left, which nothing outside the repeat may name. */
+  repeatFieldKeys: Set<string>
   problems: Problem[]
 }

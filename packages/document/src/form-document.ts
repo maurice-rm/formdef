@@ -21,8 +21,8 @@ export type Varying = {
 }
 
 /**
- * How the form, a step, a section or a row looks: a registered display kind with its settings,
- * which are fixed for the form.
+ * How the form, a step, a section, a row or a repeat looks: a registered display kind with its
+ * settings, which are fixed for the form.
  */
 export type Display = {
   /** The name of the display kind. */
@@ -143,8 +143,42 @@ export type SectionItem = {
   items: DocumentItem[]
 }
 
-/** One item of a form document: a field, a block, a computed value, a row or a section. */
-export type DocumentItem = FieldItem | BlockItem | ComputedItem | RowItem | SectionItem
+/**
+ * Items that repeat as entries, as often as the person needs, such as one block per resident. Its
+ * value is a list of entries; inside it, a condition, placeholder or expression that names a
+ * field of the repeat reads that field of the same entry. A repeat holds no other repeat.
+ */
+export type RepeatItem = {
+  /** Marks the item as a repeat. */
+  type: 'repeat'
+  /** The repeat's key, which its list of entries sits under; unique among the keys of fields. */
+  key: string
+  /** The repeat's title. */
+  label: Text
+  /** The label of the button that adds an entry. */
+  addLabel: Text
+  /** The label of the button that removes an entry; `{n}` names the entry's number. */
+  removeLabel: Text
+  /** The title of each entry, such as `Person {n}`; `{n}` names the entry's number. */
+  entryLabel?: Text
+  /**
+   * The fewest entries.
+   *
+   * @defaultValue `0`
+   */
+  min?: number
+  /** The most entries; without it, as many as the person needs. */
+  max?: number
+  /** The condition under which the repeat shows; without it, the repeat always shows. */
+  visibleWhen?: Condition
+  /** How the entries look; without it, as the array frame slot renders them. */
+  display?: Display
+  /** The items of each entry. */
+  items: DocumentItem[]
+}
+
+/** One item of a form document: a field, a block, a computed value, a row, a section or a repeat. */
+export type DocumentItem = FieldItem | BlockItem | ComputedItem | RowItem | SectionItem | RepeatItem
 
 /**
  * A jump from a step, when the person moves on and its condition holds: forward to a later step,
