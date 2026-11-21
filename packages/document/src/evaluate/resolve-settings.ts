@@ -1,6 +1,7 @@
 import type { FieldItem } from '../form-document'
 import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
+import { isFormattedText } from '../kinds/is-formatted-text'
 import { isOption } from '../kinds/is-option'
 import type { Setting } from '../kinds/setting'
 import type { Text } from '../text'
@@ -32,7 +33,7 @@ const resolveTexts = (
   { setting, context }: { setting: Setting<unknown> | undefined; context: Context },
 ): JsonValue => {
   if (setting?.type === 'text') {
-    const resolve = setting.formatted === true ? resolveFormattedText : resolveVaryingText
+    const resolve = isFormattedText(setting) ? resolveFormattedText : resolveVaryingText
     return resolve(value as Text, context)
   }
   if (setting?.type === 'options' && Array.isArray(value)) {

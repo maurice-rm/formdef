@@ -1,5 +1,6 @@
 import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
+import { isFormattedText } from '../kinds/is-formatted-text'
 import type { Setting } from '../kinds/setting'
 import { formatText } from './format-text'
 
@@ -9,7 +10,7 @@ const formatOption = (option: unknown): unknown =>
     : option
 
 const formatSetting = (value: JsonValue, setting: Setting<unknown> | undefined): unknown => {
-  if (setting?.formatted === true && typeof value === 'string') {
+  if (isFormattedText(setting) && typeof value === 'string') {
     return formatText(value)
   }
   if (setting?.type === 'options' && Array.isArray(value)) {
