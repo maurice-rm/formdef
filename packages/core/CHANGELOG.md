@@ -1,5 +1,13 @@
 # @formdef/core
 
+## 0.4.1
+
+### Patch Changes
+
+- [#115](https://github.com/maurice-rm/formdef/pull/115) [`73a1356`](https://github.com/maurice-rm/formdef/commit/73a1356bdf59674b08371228f5d6faf7d3f7c6b8) Thanks [@maurice-rm](https://github.com/maurice-rm)! - The warning about a step held back by fields it does not render now says that what a condition hides must accept every value it can hold. Being optional in the schema is not enough: a value typed before the condition hid the field is still validated.
+
+- [#116](https://github.com/maurice-rm/formdef/pull/116) [`80c348e`](https://github.com/maurice-rm/formdef/commit/80c348ee21082a54547d6c18687b960b70ccdb95) Thanks [@maurice-rm](https://github.com/maurice-rm)! - `props.required` takes `true` on a key the schema makes optional, so a field required only under a condition can be marked, also one whose widget's empty value is `undefined`. It was a type error before.
+
 ## 0.4.0
 
 ### Minor Changes
