@@ -71,7 +71,20 @@ type Rules = {
 
 const DECIMAL = /^-?\d+([.,]\d+)?$/
 const INTEGER = /^-?\d+$/
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const WHITESPACE = /\s/
+const AT = '@'
+const DOT = '.'
+
+// A local part, one `@`, and a domain with a dot that has text on both sides. Written without a
+// regular expression over the parts, whose backtracking a crafted address makes quadratic.
+const isEmailAddress = (value: string): boolean => {
+  const parts = value.split(AT)
+  if (parts.length !== 2 || WHITESPACE.test(value)) {
+    return false
+  }
+  const [local = '', domain = ''] = parts
+  return local !== '' && domain.lastIndexOf(DOT, domain.length - 2) >= 1
+}
 
 const bounded = <TBound, TValue>(
   code: string,
@@ -110,6 +123,6 @@ export const rule: Rules = {
     bounded('earliest', earliest, (value: string, bound) => dayOf(value) >= dayOf(bound)),
   latest: (latest) =>
     bounded('latest', latest, (value: string, bound) => dayOf(value) <= dayOf(bound)),
-  email: () => ({ code: 'email', params: {}, passes: (value) => EMAIL.test(value) }),
+  email: () => ({ code: 'email', params: {}, passes: isEmailAddress }),
   custom: ({ code, params = {}, passes }) => ({ code, params, passes }),
 }

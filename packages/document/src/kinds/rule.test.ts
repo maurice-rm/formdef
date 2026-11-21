@@ -62,6 +62,18 @@ describe('rule', () => {
     expect(rule.email().passes('anna@example.com')).toBe(true)
     expect(rule.email().passes('anna@example')).toBe(false)
     expect(rule.email().passes('anna example.com')).toBe(false)
+    expect(rule.email().passes('anna@.example')).toBe(false)
+    expect(rule.email().passes('anna@example.')).toBe(false)
+    expect(rule.email().passes('anna@mail.example.com')).toBe(true)
+    expect(rule.email().passes('an@na@example.com')).toBe(false)
+  })
+
+  it('checks a long address in linear time, as a server receives any input', () => {
+    const crafted = `!@!.${'!.'.repeat(100_000)} `
+    const started = performance.now()
+
+    expect(rule.email().passes(crafted)).toBe(false)
+    expect(performance.now() - started).toBeLessThan(100)
   })
 
   it('takes a rule of the project’s own, such as a national postal code', () => {
