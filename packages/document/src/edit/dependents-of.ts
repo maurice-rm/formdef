@@ -4,6 +4,7 @@ import { DOCUMENT_PATH } from '../document-path'
 import type { DocumentNode, FormDocument } from '../form-document'
 import { isLeaf } from '../is-leaf'
 import { isStep } from '../is-step'
+import { jumpEndingsOf } from '../jump-endings-of'
 import { nodesOf } from '../nodes-of'
 import { pathTo } from '../path-to'
 import { placeholdersIn } from '../placeholders-in'
@@ -14,13 +15,16 @@ import { fieldsReadBy } from './fields-read-by'
 import { nodeAt } from './node-at'
 
 /**
- * A condition, placeholder, expression or jump that names a field or step of a node, as
- * {@link dependentsOf} lists it.
+ * A condition, placeholder, expression or jump that names a field or step of a node, or an ending
+ * only a step's jumps reach, as {@link dependentsOf} lists it.
  */
 export type Dependent = {
-  /** Where the condition, text, expression or jump sits, as {@link checkDocument} names paths. */
+  /**
+   * Where the condition, text, expression, jump or ending sits, as {@link checkDocument} names
+   * paths.
+   */
   path: string
-  /** The key of the field, computed value, repeat or step it names. */
+  /** The key of the field, computed value, repeat or step it names, or whose jumps reach it. */
   field: string
 }
 
@@ -43,8 +47,10 @@ const namedKeysUnder = (node: DocumentNode): string[] => {
  * Lists the conditions, placeholders and expressions that name a field, computed value or repeat of
  * a step or item, or the item itself, and the jumps to a step, which would lose it when the node is
  * removed: one entry per condition and key named, in document order, then one per placeholder,
- * then one per expression, then one per jump. Those inside the node go with it and are left out. A
- * builder shows them before it removes the node.
+ * then one per expression, then one per jump. Last come the endings only the step's own jumps
+ * reach, which without them take their turn in order: by their condition, or as the fallback.
+ * Those inside the node go with it and are left out. A builder shows them before it removes the
+ * node.
  *
  * @param document - The document.
  * @param position - Where the node sits.
@@ -80,7 +86,27 @@ export function dependentsOf(document: FormDocument, position: Position): Depend
             .map((field) => ({ path: `${path}.expression`, field }))
         : [],
     )
-  return [...fromConditions, ...fromPlaceholders, ...fromExpressions, ...jumpsTo(document, node)]
+  return [
+    ...fromConditions,
+    ...fromPlaceholders,
+    ...fromExpressions,
+    ...jumpsTo(document, node),
+    ...endingsReachedOnlyFrom(document, node),
+  ]
+}
+
+const endingsReachedOnlyFrom = (document: FormDocument, node: DocumentNode): Dependent[] => {
+  if (!isStep(node) || document.steps === undefined) {
+    return []
+  }
+  const ownEnds = new Set((node.next ?? []).flatMap((jump) => jump.end ?? []))
+  const otherSteps = document.steps.filter((step) => step !== node)
+  const otherEnds = jumpEndingsOf({ ...document, steps: otherSteps })
+  return (document.endings ?? []).flatMap((ending, index) =>
+    ownEnds.has(ending.key) && !otherEnds.has(ending.key)
+      ? [{ path: pathTo.entry(DOCUMENT_PATH, 'endings', index), field: node.key }]
+      : [],
+  )
 }
 
 const jumpsTo = (document: FormDocument, node: DocumentNode): Dependent[] => {

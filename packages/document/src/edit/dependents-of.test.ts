@@ -242,6 +242,38 @@ describe('dependentsOf', () => {
     ])
   })
 
+  it('lists the endings only the jumps of a removed step reach', () => {
+    const isFilled = (key: string) => ({ field: key, op: 'isFilled' })
+    const withEndings: FormDocument = {
+      format: 1,
+      steps: [
+        {
+          key: 's1',
+          label: 'House',
+          next: [
+            { when: isFilled('f1'), end: 'apartment' },
+            { when: isFilled('f1'), end: 'shared' },
+          ],
+          items: [field('f1')],
+        },
+        {
+          key: 's2',
+          label: 'Heating',
+          next: [{ when: isFilled('f2'), end: 'shared' }],
+          items: [field('f2')],
+        },
+      ],
+      endings: [
+        { key: 'apartment', items: [] },
+        { key: 'shared', items: [] },
+        { key: 'thanks', items: [] },
+      ],
+    }
+
+    expect(dependentsOf(withEndings, [0])).toEqual([{ path: 'document.endings[0]', field: 's1' }])
+    expect(dependentsOf(withEndings, [1])).toEqual([])
+  })
+
   it('refuses a position that holds nothing', () => {
     expect(() => dependentsOf(document, [2])).toThrow(
       'formdef: position [2]: there is nothing here.',

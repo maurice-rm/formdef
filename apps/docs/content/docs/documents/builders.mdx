@@ -157,8 +157,10 @@ Everything else, such as a key taken already or a condition whose operator no lo
 field as they are, and `checkDocument` then reports them as `unknownField`; a jump to a removed
 step it reports as `unknownStep`. `dependentsOf` lists them beforehand: one entry per condition
 and field named, then one per placeholder, one per expression and one per jump, with the `path`
-where it sits and the `field`, or step, it names. Those inside the node go with it and are not
-listed.
+where it sits and the `field`, or step, it names. Last come the endings only the removed step's
+jumps reach, with the step as `field`: without the jump, such an ending takes its turn in order,
+by its condition or as the fallback, and one without a condition before the last is reported as
+`fallbackNotLast`. Those inside the node go with it and are not listed.
 
 ```ts
 import { dependentsOf, removeNode, type Dependent, type FormDocument, type Position } from '@formdef/document'
