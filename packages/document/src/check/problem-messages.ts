@@ -42,6 +42,7 @@ export const DEFAULT_PROBLEM_MESSAGES: { readonly [Code in ProblemCode]: Message
   settingMismatch: ({ setting, type }) => `The setting ${setting} is no ${type}.`,
   notVarying: ({ setting }) => `The setting ${setting} cannot follow an answer.`,
   settingLimit: ({ setting }) => `The setting ${setting} is outside its limits.`,
+  valueLimit: ({ op }) => `The value ${op} compares with is outside its limits.`,
   missingTranslation: ({ language }) => `This text has no translation into ${language}.`,
   unknownLanguage: ({ language }) =>
     `This text is translated into ${language}, which the form does not name.`,

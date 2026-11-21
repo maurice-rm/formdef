@@ -7,7 +7,9 @@ import type { CheckWalk } from './check-walk'
 import type { EarlierField } from './earlier-field'
 import { earlierFieldNamed } from './earlier-field-named'
 import { fitsSettingType } from './fits-setting-type'
+import { numberLimitBroken } from './number-limit-broken'
 import { report } from './report'
+import type { ValueLimit } from './value-limit'
 
 type At = { walk: CheckWalk; path: string }
 
@@ -30,6 +32,20 @@ const checkComparedValue = (
   if (type === 'option' || type === 'optionList') {
     checkOptionValues(value, { field: earlier.key, options: earlier.optionValues }, at)
   }
+}
+
+const limitBroken = (value: JsonValue, compares: Setting<unknown>): ValueLimit | undefined => {
+  if (typeof value === 'number') {
+    return numberLimitBroken(value, compares)
+  }
+  if (
+    typeof value === 'string' &&
+    compares.maxLength !== undefined &&
+    value.length > compares.maxLength
+  ) {
+    return { maxLength: compares.maxLength }
+  }
+  return undefined
 }
 
 const checkValueFrom = (
@@ -76,6 +92,14 @@ const checkCompared = (
     return
   }
   checkComparedValue(comparison.value, { compares, earlier }, valueAt)
+  const limit = limitBroken(comparison.value, compares)
+  if (limit !== undefined) {
+    report(at.walk, {
+      code: 'valueLimit',
+      path: valueAt.path,
+      params: { op: comparison.op, ...limit },
+    })
+  }
 }
 
 const checkComparison = (comparison: Comparison, path: string, walk: CheckWalk): void => {

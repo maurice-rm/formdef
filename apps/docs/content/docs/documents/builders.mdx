@@ -88,6 +88,7 @@ The codes, and what their texts name:
 | `operatorMismatch` | an operator the value type of the field compared does not have | `op`, `valueType` |
 | `unknownOption` | a compared value, or a setting of one option or several, that is no option of the field | `field`, `value` |
 | `valueMismatch` | a compared value of the wrong type, such as text for a number, left out, or given to an operator that compares with nothing | `expected`, the setting type, or `nothing` |
+| `valueLimit` | a compared value outside the constraints of the operator's setting, such as a number of entries that is no whole number or below 0 | `op` and the constraint, such as `integer` or `min` |
 | `empty` | a step, section, row or repeat without items, or a form of steps without steps | none |
 | `tooDeep` | a section inside a section inside a section, counting those around a repeat | none |
 | `nestedRepeat` | a repeat inside a repeat | none |

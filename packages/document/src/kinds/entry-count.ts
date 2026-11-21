@@ -8,7 +8,7 @@ type Counted = {
   value: number
 }
 
-const NUMBER = setting.number({ label: 'Number', integer: true, required: true })
+const NUMBER = setting.number({ label: 'Number', integer: true, min: 0, required: true })
 
 const countOf = (answer: number | undefined): number => answer ?? 0
 

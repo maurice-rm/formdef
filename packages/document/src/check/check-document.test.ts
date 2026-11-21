@@ -1676,6 +1676,27 @@ describe('checkDocument with repeats', () => {
     ])
   })
 
+  it('reports a number of entries compared with that is no whole number or below 0', () => {
+    const checked = document(
+      repeat([name]),
+      { ...works, visibleWhen: { field: 'r1', op: 'atLeast', value: 2.5 } },
+      { ...since, visibleWhen: { field: 'r1', op: 'atMost', value: -1 } },
+    )
+
+    expect(foundIn(checked)).toEqual([
+      {
+        code: 'valueLimit',
+        path: 'document.items[1].visibleWhen.value',
+        params: { op: 'atLeast', integer: true },
+      },
+      {
+        code: 'valueLimit',
+        path: 'document.items[2].visibleWhen.value',
+        params: { op: 'atMost', min: 0 },
+      },
+    ])
+  })
+
   it('reports a repeat in a repeat, an empty repeat and more entries at least than at most', () => {
     const checked = document(
       repeat([name, repeat([works], { key: 'r2' })], { min: 3, max: 2 }),

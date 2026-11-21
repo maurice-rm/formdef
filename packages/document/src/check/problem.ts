@@ -1,5 +1,5 @@
 import type { Position } from '../position'
-import type { NumberLimit } from './number-limit-broken'
+import type { ValueLimit } from './value-limit'
 
 /**
  * What a problem of a form document is about:
@@ -32,6 +32,8 @@ import type { NumberLimit } from './number-limit-broken'
  * - `settingMismatch`: a setting of the wrong type;
  * - `notVarying`: a setting that follows an answer, which its field kind does not allow;
  * - `settingLimit`: a setting outside its constraints, such as too long or too few options;
+ * - `valueLimit`: a value a condition compares with outside the constraints of the operator's
+ *   setting, such as a number of entries that is no whole number;
  * - `missingTranslation`: a translated text that leaves out a language of the document;
  * - `unknownLanguage`: a translation into a language the document does not name;
  * - `invalidLanguage`: a language of the document that is no language code, such as `en_US`;
@@ -107,7 +109,9 @@ export type ProblemParams = {
   /** The setting that follows an answer, which its kind does not allow. */
   notVarying: NamesSetting
   /** The setting, and the constraint it is outside of. */
-  settingLimit: NamesSetting & ({ minCount: number } | { maxLength: number } | NumberLimit)
+  settingLimit: NamesSetting & ({ minCount: number } | ValueLimit)
+  /** The operator, and the constraint of its setting the compared value is outside of. */
+  valueLimit: { op: string } & ValueLimit
   /** The language a translated text leaves out. */
   missingTranslation: NamesLanguage
   /** The language the document does not name. */
