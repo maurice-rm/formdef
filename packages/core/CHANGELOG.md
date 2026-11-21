@@ -1,5 +1,27 @@
 # @formdef/core
 
+## 0.5.0
+
+### Minor Changes
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - A description may be React elements, such as a formatted text with a link: `useFieldParts` and `fieldParts` take `description` as a `ReactNode`, and the shadcn widgets, options, section, array frame and stepper steps render one. Every registry item now names `@formdef/core@>=0.5.0`.
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - `visibleWhen` and derived `props` take a second argument, `at`, with where the entry renders: its path and, inside an array, the item it belongs to. A function that reads its item and sets `dependsOn` names the array there, such as `contacts`.
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - `ValueOf` reads the value type a widget serves from its `FieldOf`, `unknown` for a widget that takes its field from context, for code that builds on widgets.
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - A step entry may end the form early with `submitsWhen`: while it holds, the step is the last that shows, its `next` submits the form and the steps after it do not show.
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - A form config passes the registered stepper its own props, such as its variant, under `stepper.props`, checked against the stepper.
+
+### Patch Changes
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - `dependsOn` narrows when a condition or derived props read again inside an array item too; before, an entry there read again on every render of its item.
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - When the first invalid field is a radio or checkbox group, whose field id sits on a group that takes no focus, its first option takes the focus after a failed step or submit; before, the focus stayed where it was.
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - A form without steps that fails to submit moves the focus to its first invalid field, as a form of steps already does for a step.
+
 ## 0.4.1
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @formdef/shadcn
 
+## 0.2.0
+
+### Minor Changes
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - `@formdef/array-frame` takes an `itemLabel`, a function of the item's index, and renders each item as a group titled by it, such as `Person 2`; a form document passes it for a repeat with an `entryLabel`.
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - `@formdef/catalog` adds a catalog of kinds for form documents: field kinds for short and long text, email, a number with a unit, a whole number, a checkbox, single and multiple choice, a dropdown and a date; block kinds for a notice and a heading, rendered by the new `@formdef/notice` and `@formdef/heading`; and display kinds for the stepper's rail, segments and compact variants and a section that reads as one question.
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - A description may be React elements, such as a formatted text with a link: `useFieldParts` and `fieldParts` take `description` as a `ReactNode`, and the shadcn widgets, options, section, array frame and stepper steps render one. Every registry item now names `@formdef/core@>=0.5.0`.
+
+- [#131](https://github.com/maurice-rm/formdef/pull/131) [`fb91dd0`](https://github.com/maurice-rm/formdef/commit/fb91dd0e7cfeb1f8306b4916e2662ed93e99ed75) Thanks [@maurice-rm](https://github.com/maurice-rm)! - The `heading` block kind of `@formdef/catalog` takes a `level`, 2 to 6, so a form without steps can start its headings at 2 instead of skipping one; `checkDocument` reports a level outside them.
+
 ## 0.1.0
 
 ### Minor Changes
