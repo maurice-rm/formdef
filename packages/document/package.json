@@ -1,6 +1,6 @@
 {
   "name": "@formdef/document",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Describe a form as data, a form document, and turn it into a formdef form at runtime: for form builders and forms stored in a database.",
   "keywords": [
     "react",
