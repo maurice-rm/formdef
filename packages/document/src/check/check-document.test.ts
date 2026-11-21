@@ -347,6 +347,62 @@ describe('checkDocument', () => {
     ])
   })
 
+  it('reports a compared text, or a translation of it, longer than its setting allows', () => {
+    const code = defineValueType({
+      name: 'code',
+      emptyValue: '',
+      fits: (value): value is string => typeof value === 'string',
+      describe: (value) => ({ value }),
+      operators: {
+        startsWith: {
+          compares: setting.text({ label: 'Start', required: true, maxLength: 3 }),
+          holds: (answer, start) => answer?.startsWith(start) === true,
+        },
+      },
+    })
+    const coded = createCatalog(registry, {
+      valueTypes: [code],
+      fields: [
+        ...fieldKinds,
+        defineFieldKind(registry, { name: 'code', label: 'Code', widget: 'text', valueType: code }),
+      ],
+    })
+    const document: FormDocument = {
+      format: 1,
+      languages: ['de', 'en'],
+      items: [
+        { type: 'field', key: 'f1', kind: 'code', label: 'A' },
+        {
+          type: 'field',
+          key: 'f2',
+          kind: 'text',
+          label: 'B',
+          visibleWhen: { field: 'f1', op: 'startsWith', value: 'ABCD' },
+        },
+        {
+          type: 'field',
+          key: 'f3',
+          kind: 'text',
+          label: 'C',
+          visibleWhen: { field: 'f1', op: 'startsWith', value: { de: 'AB', en: 'ABCD' } },
+        },
+      ],
+    }
+
+    expect(foundIn(document, coded)).toEqual([
+      {
+        code: 'valueLimit',
+        path: 'document.items[1].visibleWhen.value',
+        params: { op: 'startsWith', maxLength: 3 },
+      },
+      {
+        code: 'valueLimit',
+        path: 'document.items[2].visibleWhen.value',
+        params: { op: 'startsWith', maxLength: 3 },
+      },
+    ])
+  })
+
   it('reports an operator no value type has, and one the compared field has not', () => {
     const document = plain(
       choiceField,

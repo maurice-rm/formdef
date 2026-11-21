@@ -1,4 +1,5 @@
 import type { Comparison, Condition } from '../condition'
+import { isText } from '../is-text'
 import type { JsonValue } from '../json-value'
 import { operatorOf } from '../kinds/operator-of'
 import type { Setting } from '../kinds/setting'
@@ -38,14 +39,12 @@ const limitBroken = (value: JsonValue, compares: Setting<unknown>): ValueLimit |
   if (typeof value === 'number') {
     return numberLimitBroken(value, compares)
   }
-  if (
-    typeof value === 'string' &&
-    compares.maxLength !== undefined &&
-    value.length > compares.maxLength
-  ) {
-    return { maxLength: compares.maxLength }
+  const { maxLength } = compares
+  if (maxLength === undefined || !isText(value)) {
+    return undefined
   }
-  return undefined
+  const translations = typeof value === 'string' ? [value] : Object.values(value)
+  return translations.some((text) => text.length > maxLength) ? { maxLength } : undefined
 }
 
 const checkValueFrom = (
