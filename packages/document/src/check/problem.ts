@@ -59,6 +59,7 @@ export type ProblemCode = keyof ProblemParams
 
 type NoParams = Record<never, never>
 type NamesField = { field: string }
+type NamesKey = { key: string }
 type NamesSetting = { setting: string }
 type NamesLanguage = { language: string }
 type NamesStep = { step: string }
@@ -120,10 +121,10 @@ export type ProblemParams = {
   unknownLanguage: NamesLanguage
   /** The language of the document that is no language code. */
   invalidLanguage: NamesLanguage
-  /** The field a text names that names no answers. */
-  fixedText: NamesField
-  /** The repeat a placeholder names. */
-  repeatPlaceholder: NamesField
+  /** The key a placeholder names in a text that names no answers. */
+  fixedText: NamesKey
+  /** The key of the repeat a placeholder names. */
+  repeatPlaceholder: NamesKey
   /** The placeholder, and the issue code that has no param for it. */
   unknownParam: { param: string; code: string }
   /** The step the document does not hold. */

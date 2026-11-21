@@ -12,7 +12,7 @@ type At = { walk: CheckWalk; path: string }
 const checkPlaceholders = (text: string, at: At): void => {
   for (const field of placeholdersOf(text)) {
     if (earlierFieldNamed(field, at)?.valueType === entryCount) {
-      report(at.walk, { code: 'repeatPlaceholder', path: at.path, params: { field } })
+      report(at.walk, { code: 'repeatPlaceholder', path: at.path, params: { key: field } })
     }
   }
 }

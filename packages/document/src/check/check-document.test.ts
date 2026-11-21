@@ -1109,7 +1109,7 @@ describe('checkDocument with languages', () => {
     }
 
     expect(foundIn({ ...document, languages: ['de', 'en'] })).toEqual([
-      { code: 'fixedText', path: 'document.steps[0].label', params: { field: 'f1' } },
+      { code: 'fixedText', path: 'document.steps[0].label', params: { key: 'f1' } },
       { code: 'unknownField', path: 'document.steps[0].description', params: { field: 'f9' } },
       { code: 'laterField', path: 'document.steps[0].items[0].label', params: { field: 'f1' } },
       {
@@ -1739,7 +1739,7 @@ describe('checkDocument with repeats', () => {
     })
 
     expect(foundIn(checked)).toEqual([
-      { code: 'repeatPlaceholder', path: 'document.items[1].label', params: { field: 'r1' } },
+      { code: 'repeatPlaceholder', path: 'document.items[1].label', params: { key: 'r1' } },
     ])
   })
 

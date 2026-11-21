@@ -25,7 +25,7 @@ export type Dependent = {
    */
   path: string
   /** The key of the field, computed value, repeat or step it names, or whose jumps reach it. */
-  field: string
+  key: string
 }
 
 const isWithin = (position: Position, ancestor: Position): boolean =>
@@ -71,19 +71,19 @@ export function dependentsOf(document: FormDocument, position: Position): Depend
     .filter((entry) => !isWithin(entry.position, position))
     .flatMap(({ condition, path }) =>
       fieldsNamed(condition)
-        .filter((field) => keys.has(field))
-        .map((field) => ({ path, field })),
+        .filter((key) => keys.has(key))
+        .map((key) => ({ path, key })),
     )
   const fromPlaceholders = placeholdersIn(document)
     .filter((entry) => !isWithin(entry.position, position) && keys.has(entry.field))
-    .map(({ path, field }) => ({ path, field }))
+    .map(({ path, field }) => ({ path, key: field }))
   const fromExpressions = nodesOf(document)
     .filter((entry) => !isWithin(entry.position, position))
     .flatMap(({ node: other, path }) =>
       !isStep(other) && other.type === 'computed'
         ? fieldsReadBy(other.expression)
-            .filter((field) => keys.has(field))
-            .map((field) => ({ path: `${path}.expression`, field }))
+            .filter((key) => keys.has(key))
+            .map((key) => ({ path: `${path}.expression`, key }))
         : [],
     )
   return [
@@ -104,7 +104,7 @@ const endingsReachedOnlyFrom = (document: FormDocument, node: DocumentNode): Dep
   const otherEnds = jumpEndingsOf({ ...document, steps: otherSteps })
   return (document.endings ?? []).flatMap((ending, index) =>
     ownEnds.has(ending.key) && !otherEnds.has(ending.key)
-      ? [{ path: pathTo.entry(DOCUMENT_PATH, 'endings', index), field: node.key }]
+      ? [{ path: pathTo.entry(DOCUMENT_PATH, 'endings', index), key: node.key }]
       : [],
   )
 }
@@ -117,7 +117,7 @@ const jumpsTo = (document: FormDocument, node: DocumentNode): Dependent[] => {
     const stepPath = pathTo.entry(DOCUMENT_PATH, 'steps', stepIndex)
     return (step.next ?? []).flatMap((jump, jumpIndex) =>
       jump.step === node.key
-        ? [{ path: `${stepPath}.next[${jumpIndex}].step`, field: node.key }]
+        ? [{ path: `${stepPath}.next[${jumpIndex}].step`, key: node.key }]
         : [],
     )
   })

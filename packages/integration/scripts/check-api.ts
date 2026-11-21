@@ -55,7 +55,7 @@ const ENTRIES: readonly Entry[] = [
       'BlockKindDefinition',
       'Catalog',
       'CatalogOptions',
-      'changeKind',
+      'changeFieldKind',
       'Check',
       'checkDocument',
       'CheckOptions',

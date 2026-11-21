@@ -42,11 +42,11 @@ const document: FormDocument = {
 describe('dependentsOf', () => {
   it('lists the conditions outside a node that name a field inside it', () => {
     expect(dependentsOf(document, [0, 0])).toEqual([
-      { path: 'document.steps[0].items[1].visibleWhen', field: 'f1' },
-      { path: 'document.steps[1].visibleWhen', field: 'f1' },
-      { path: 'document.steps[1].items[0].visibleWhen', field: 'f1' },
-      { path: 'document.steps[1].items[0].items[0].required', field: 'f1' },
-      { path: 'document.steps[1].items[0].items[0].settings.unit.cases[0].when', field: 'f1' },
+      { path: 'document.steps[0].items[1].visibleWhen', key: 'f1' },
+      { path: 'document.steps[1].visibleWhen', key: 'f1' },
+      { path: 'document.steps[1].items[0].visibleWhen', key: 'f1' },
+      { path: 'document.steps[1].items[0].items[0].required', key: 'f1' },
+      { path: 'document.steps[1].items[0].items[0].settings.unit.cases[0].when', key: 'f1' },
     ])
   })
 
@@ -61,7 +61,7 @@ describe('dependentsOf', () => {
     }
 
     expect(dependentsOf(compared, [0])).toEqual([
-      { path: 'document.items[2].visibleWhen', field: 'f1' },
+      { path: 'document.items[2].visibleWhen', key: 'f1' },
     ])
   })
 
@@ -77,8 +77,8 @@ describe('dependentsOf', () => {
     }
 
     expect(dependentsOf(checked, [0])).toEqual([
-      { path: 'document.items[1].checks[0].when', field: 'f1' },
-      { path: 'document.items[1].checks[0].message', field: 'f1' },
+      { path: 'document.items[1].checks[0].when', key: 'f1' },
+      { path: 'document.items[1].checks[0].message', key: 'f1' },
     ])
   })
 
@@ -99,10 +99,10 @@ describe('dependentsOf', () => {
     }
 
     expect(dependentsOf(computed, [0])).toEqual([
-      { path: 'document.items[1].expression', field: 'f1' },
+      { path: 'document.items[1].expression', key: 'f1' },
     ])
     expect(dependentsOf(computed, [1])).toEqual([
-      { path: 'document.items[2].visibleWhen', field: 'c1' },
+      { path: 'document.items[2].visibleWhen', key: 'c1' },
     ])
   })
 
@@ -120,18 +120,18 @@ describe('dependentsOf', () => {
     }
 
     expect(dependentsOf(ending, [0])).toEqual([
-      { path: 'document.endings[0].when', field: 'f1' },
-      { path: 'document.endings[0].items[0].settings.body', field: 'f1' },
+      { path: 'document.endings[0].when', key: 'f1' },
+      { path: 'document.endings[0].items[0].settings.body', key: 'f1' },
     ])
   })
 
   it('leaves out the conditions that go with the node', () => {
     expect(dependentsOf(document, [0])).toEqual([
-      { path: 'document.steps[1].visibleWhen', field: 'f1' },
-      { path: 'document.steps[1].visibleWhen', field: 'f2' },
-      { path: 'document.steps[1].items[0].visibleWhen', field: 'f1' },
-      { path: 'document.steps[1].items[0].items[0].required', field: 'f1' },
-      { path: 'document.steps[1].items[0].items[0].settings.unit.cases[0].when', field: 'f1' },
+      { path: 'document.steps[1].visibleWhen', key: 'f1' },
+      { path: 'document.steps[1].visibleWhen', key: 'f2' },
+      { path: 'document.steps[1].items[0].visibleWhen', key: 'f1' },
+      { path: 'document.steps[1].items[0].items[0].required', key: 'f1' },
+      { path: 'document.steps[1].items[0].items[0].settings.unit.cases[0].when', key: 'f1' },
     ])
     expect(dependentsOf(document, [1])).toEqual([])
   })
@@ -156,8 +156,8 @@ describe('dependentsOf', () => {
     }
 
     expect(dependentsOf(texts, [0])).toEqual([
-      { path: 'document.items[1].label.cases[0].when', field: 'f1' },
-      { path: 'document.items[1].settings.options[0].label.cases[0].when', field: 'f1' },
+      { path: 'document.items[1].label.cases[0].when', key: 'f1' },
+      { path: 'document.items[1].settings.options[0].label.cases[0].when', key: 'f1' },
     ])
   })
 
@@ -173,7 +173,7 @@ describe('dependentsOf', () => {
     }
 
     expect(dependentsOf(texts, [0])).toEqual([
-      { path: 'document.items[1].messages.required.cases[0].when', field: 'f1' },
+      { path: 'document.items[1].messages.required.cases[0].when', key: 'f1' },
     ])
   })
 
@@ -190,8 +190,8 @@ describe('dependentsOf', () => {
     }
 
     expect(dependentsOf(texts, [0])).toEqual([
-      { path: 'document.items[1].label.de', field: 'f1' },
-      { path: 'document.items[1].settings.placeholder', field: 'f1' },
+      { path: 'document.items[1].label.de', key: 'f1' },
+      { path: 'document.items[1].settings.placeholder', key: 'f1' },
     ])
   })
 
@@ -216,7 +216,7 @@ describe('dependentsOf', () => {
         field('f2', { visibleWhen: { field: 'r1', op: 'atLeast', value: 2 } }),
       ],
     }
-    const dependent = { path: 'document.items[1].visibleWhen', field: 'r1' }
+    const dependent = { path: 'document.items[1].visibleWhen', key: 'r1' }
 
     expect(dependentsOf(withRepeat, [0, 0])).toEqual([dependent])
     expect(dependentsOf(withRepeat, [0])).toEqual([dependent])
@@ -238,7 +238,7 @@ describe('dependentsOf', () => {
     }
 
     expect(dependentsOf(withJump, [2])).toEqual([
-      { path: 'document.steps[0].next[0].step', field: 's3' },
+      { path: 'document.steps[0].next[0].step', key: 's3' },
     ])
   })
 
@@ -270,7 +270,7 @@ describe('dependentsOf', () => {
       ],
     }
 
-    expect(dependentsOf(withEndings, [0])).toEqual([{ path: 'document.endings[0]', field: 's1' }])
+    expect(dependentsOf(withEndings, [0])).toEqual([{ path: 'document.endings[0]', key: 's1' }])
     expect(dependentsOf(withEndings, [1])).toEqual([])
   })
 

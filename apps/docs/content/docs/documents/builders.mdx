@@ -101,8 +101,8 @@ The codes, and what their texts name:
 | `missingTranslation` | a translated text that leaves out one of the document's languages | `language` |
 | `unknownLanguage` | a translation into a language the document does not name | `language` |
 | `invalidLanguage` | a language of the document that is no language code, such as `en_US` | `language` |
-| `fixedText` | a placeholder in the label of a step or section, a display's setting, the intro, the submit button or the texts of a repeat, which name no answers; a repeat's `removeLabel` and `entryLabel` name the entry's number as `{n}` | `field` |
-| `repeatPlaceholder` | a placeholder that names a repeat, which writes nothing without entries; a computed `count` writes their number, 0 included | `field` |
+| `fixedText` | a placeholder in the label of a step or section, a display's setting, the intro, the submit button or the texts of a repeat, which name no answers; a repeat's `removeLabel` and `entryLabel` name the entry's number as `{n}` | `key` |
+| `repeatPlaceholder` | a placeholder that names a repeat, which writes nothing without entries; a computed `count` writes their number, 0 included | `key` |
 | `unknownParam` | a placeholder in a field's own error text that its code has no param for | `param`, `code` |
 | `unknownStep` | a jump to a step the document does not hold | `step` |
 | `backwardJump` | a jump to the step itself or an earlier one | `step` |
@@ -128,7 +128,7 @@ second step.
 | `moveNode(document, from, to)` | Moves a step or item. `to` is counted in the document after the node was taken out, as a drag and drop list reports it. |
 | `duplicateNode(document, position)` | Puts a copy of a step or item right after it, its labels as they are. Every key inside the copy is new, and what inside the copy names a field of it names the copy's; what names a field outside it stays. |
 | `updateNode(document, position, update)` | Replaces a step or item with what `update` returns, such as the field with a new label. |
-| `changeKind(document, position, kind)` | Gives a field another field kind. It keeps the settings the new kind has, by name, and drops the others. |
+| `changeFieldKind(document, position, kind)` | Gives a field another field kind. It keeps the settings the new kind has, by name, and drops the others. |
 | `renameKey(document, from, to)` | Renames a step, field or block key, and the field in every condition and placeholder that names it. |
 
 ```ts
@@ -151,16 +151,16 @@ only into the steps of a form, a form with steps holds steps only, a row holds f
 computed values only, and a field, a block or a computed value holds no items. A repeat holds
 items as a section does; one placed inside another is reported by `checkDocument`.
 Everything else, such as a key taken already or a condition whose operator no longer fits after
-`changeKind`, the operation leaves in place for `checkDocument` to report.
+`changeFieldKind`, the operation leaves in place for `checkDocument` to report.
 
 ### Before removing
 
 `removeNode` leaves the conditions, placeholders and expressions elsewhere that name a removed
 field as they are, and `checkDocument` then reports them as `unknownField`; a jump to a removed
 step it reports as `unknownStep`. `dependentsOf` lists them beforehand: one entry per condition
-and field named, then one per placeholder, one per expression and one per jump, with the `path`
-where it sits and the `field`, or step, it names. Last come the endings only the removed step's
-jumps reach, with the step as `field`: without the jump, such an ending takes its turn in order,
+and key named, then one per placeholder, one per expression and one per jump, with the `path`
+where it sits and the `key` it names: of a field, computed value, repeat or step. Last come the
+endings only the removed step's jumps reach, with the step's `key`: without the jump, such an ending takes its turn in order,
 by its condition or as the fallback, and one without a condition before the last is reported as
 `fallbackNotLast`. Those inside the node go with it and are not listed.
 

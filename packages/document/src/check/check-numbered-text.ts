@@ -18,6 +18,6 @@ export function checkNumberedText(text: Text, at: { walk: CheckWalk; path: strin
     path: at.path,
     allowed: ENTRY_NUMBER_ONLY,
   })) {
-    report(at.walk, { code: 'fixedText', path, params: { field: placeholder } })
+    report(at.walk, { code: 'fixedText', path, params: { key: placeholder } })
   }
 }

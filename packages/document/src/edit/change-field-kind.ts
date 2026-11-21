@@ -20,10 +20,10 @@ import { updateNode } from './update-node'
  * @example
  * ```ts
  * const textarea = catalog.findFieldKind('textarea')
- * if (textarea !== undefined) setDocument(changeKind(document, position, textarea))
+ * if (textarea !== undefined) setDocument(changeFieldKind(document, position, textarea))
  * ```
  */
-export function changeKind(
+export function changeFieldKind(
   document: FormDocument,
   position: Position,
   kind: FieldKind<unknown>,

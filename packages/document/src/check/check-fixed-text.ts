@@ -16,6 +16,6 @@ export function checkFixedText(text: Text, at: { walk: CheckWalk; path: string }
     path: at.path,
     allowed: NO_PLACEHOLDERS,
   })) {
-    report(at.walk, { code: 'fixedText', path, params: { field: placeholder } })
+    report(at.walk, { code: 'fixedText', path, params: { key: placeholder } })
   }
 }

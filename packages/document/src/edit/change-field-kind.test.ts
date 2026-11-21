@@ -6,7 +6,7 @@ import type { FieldItem, FormDocument } from '../form-document'
 import { defineFieldKind } from '../kinds/define-field-kind'
 import { setting } from '../kinds/setting'
 import { valueTypes } from '../kinds/value-types'
-import { changeKind } from './change-kind'
+import { changeFieldKind } from './change-field-kind'
 
 const TextWidget = (_: FieldOf<string> & { label?: string }) => null
 const { fieldContext, formContext } = createFormHookContexts()
@@ -31,14 +31,14 @@ const field = (key: string, extra: Partial<FieldItem> = {}): FieldItem => ({
   ...extra,
 })
 
-describe('changeKind', () => {
+describe('changeFieldKind', () => {
   it('gives a field another kind and keeps the settings that kind has', () => {
     const plain: FormDocument = {
       format: 1,
       items: [field('f1', { settings: { unit: 'm²', maxLength: 10 } })],
     }
 
-    expect(changeKind(plain, [0], measure).items).toEqual([
+    expect(changeFieldKind(plain, [0], measure).items).toEqual([
       field('f1', { kind: 'measure', settings: { unit: 'm²' } }),
     ])
   })
@@ -49,7 +49,7 @@ describe('changeKind', () => {
       items: [{ type: 'section', label: 'Flats', items: [field('f1')] }],
     }
 
-    expect(() => changeKind(plain, [0], measure)).toThrow(
+    expect(() => changeFieldKind(plain, [0], measure)).toThrow(
       'formdef: position [0]: expected a field.',
     )
   })

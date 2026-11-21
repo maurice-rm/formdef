@@ -17,7 +17,7 @@ export {
 } from './describe/describe-answers'
 export { type EndingOptions, endingOf } from './describe/ending-of'
 export type { DocumentValues } from './document-values'
-export { changeKind } from './edit/change-kind'
+export { changeFieldKind } from './edit/change-field-kind'
 export { createKey } from './edit/create-key'
 export { type Dependent, dependentsOf } from './edit/dependents-of'
 export { dissolveSteps } from './edit/dissolve-steps'
