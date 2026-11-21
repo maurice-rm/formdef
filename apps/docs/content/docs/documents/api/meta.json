@@ -1,0 +1,19 @@
+{
+  "title": "API",
+  "pages": [
+    "index",
+    "---Document---",
+    "form-document",
+    "document-item",
+    "position",
+    "problem",
+    "problem-code",
+    "---Kinds---",
+    "catalog",
+    "field-kind",
+    "value-type",
+    "---Answers---",
+    "validation-issue",
+    "described-answer"
+  ]
+}

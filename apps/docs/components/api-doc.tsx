@@ -4,13 +4,16 @@ import defaultMdxComponents from 'fumadocs-ui/mdx'
 import type { ReactNode } from 'react'
 
 import { CODE_THEMES } from '@/lib/code-themes'
+import type { DocumentedPackage } from '@/lib/package-exports'
 import { type NamedTag, readTsDoc } from '@/lib/tsdoc'
 
 type HeadingLevel = 2 | 3
 
 type ApiDocProps = {
-  /** The export of `@formdef/core` whose TSDoc the page shows. */
+  /** The export whose TSDoc the page shows. */
   name: string
+  /** The package the export belongs to. */
+  from?: DocumentedPackage
   /** The level of the section headings, one below the heading the TSDoc sits under. */
   headingLevel?: HeadingLevel
 }
@@ -45,9 +48,13 @@ const tableOf = (column: string, tags: NamedTag[]): string =>
 const listOf = (items: string[]): string =>
   items.map((item) => `- ${item.replaceAll('\n', ' ')}`).join('\n')
 
-/** The TSDoc of an export of `@formdef/core`, read from its source: summary, deprecation, type parameters, parameters, return value, errors, remarks and examples. */
-export const ApiDoc = ({ name, headingLevel = DEFAULT_HEADING_LEVEL }: ApiDocProps): ReactNode => {
-  const doc = readTsDoc(name)
+/** The TSDoc of an export of `@formdef/core` or `@formdef/document`, read from its source: summary, deprecation, type parameters, parameters, return value, errors, remarks and examples. */
+export const ApiDoc = ({
+  name,
+  from = 'core',
+  headingLevel = DEFAULT_HEADING_LEVEL,
+}: ApiDocProps): ReactNode => {
+  const doc = readTsDoc(name, from)
   const heading = '#'.repeat(headingLevel)
   const sections = [
     doc.summary,
