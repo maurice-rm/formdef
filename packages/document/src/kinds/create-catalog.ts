@@ -30,6 +30,8 @@ export type Catalog<TRegistry, TValueType extends ValueType = never> = {
    * writes them as plain digits.
    */
   readonly language: string | undefined
+  /** The value type of this name, or `undefined` when there is none. */
+  findValueType: (name: string) => BuiltInValueType | TValueType | undefined
   /** The field kind of this name, or `undefined` when there is none. */
   findFieldKind: (name: string) => FieldKind<TRegistry> | undefined
   /** The block kind of this name, or `undefined` when there is none. */
@@ -170,14 +172,19 @@ export function createCatalog<TRegistry, TValueType extends ValueType = never>(
   const fieldsByName = byNameOf(fields, { registry, list: FIELDS, noun: 'field kind' })
   const blocksByName = byNameOf(blocks, { registry, list: BLOCKS, noun: 'block kind' })
   const displaysByName = byNameOf(displays, { registry, list: DISPLAYS, noun: 'display kind' })
+  const catalogValueTypes = allValueTypes as readonly (BuiltInValueType | TValueType)[]
+  const valueTypesByName = new Map(
+    catalogValueTypes.map((valueType) => [valueType.name, valueType]),
+  )
 
   return {
     registry,
-    valueTypes: allValueTypes as readonly (BuiltInValueType | TValueType)[],
+    valueTypes: catalogValueTypes,
     fields: [...fields],
     blocks: [...blocks],
     displays: [...displays],
     language,
+    findValueType: (name) => valueTypesByName.get(name),
     findFieldKind: (name) => fieldsByName.get(name),
     findBlockKind: (name) => blocksByName.get(name),
     findDisplayKind: (name) => displaysByName.get(name),

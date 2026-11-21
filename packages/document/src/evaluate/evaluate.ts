@@ -184,7 +184,7 @@ const valueTypeOfItem = (
   catalog: Catalog<unknown, ValueType>,
 ): ValueType | undefined =>
   item.type === 'computed'
-    ? catalog.valueTypes.find((valueType) => valueType.name === item.valueType)
+    ? catalog.findValueType(item.valueType)
     : catalog.findFieldKind(item.kind)?.valueType
 
 const valueTypesOf = (

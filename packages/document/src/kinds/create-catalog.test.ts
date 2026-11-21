@@ -83,6 +83,9 @@ describe('createCatalog', () => {
     const catalog = createCatalog(registry, { valueTypes: [postalCode], fields: [postal] })
 
     expect(catalog.valueTypes).toEqual([...Object.values(valueTypes), postalCode])
+    expect(catalog.findValueType('postalCode')).toBe(postalCode)
+    expect(catalog.findValueType('decimal')).toBe(valueTypes.decimal)
+    expect(catalog.findValueType('missing')).toBeUndefined()
   })
 
   it('holds the built-in value types without any of its own', () => {

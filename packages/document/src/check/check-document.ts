@@ -435,7 +435,7 @@ export function checkDocument(
     kindNamed: (name) => catalog.findFieldKind(name),
     blockKindNamed: (name) => catalog.findBlockKind(name),
     displayKindNamed: (name) => catalog.findDisplayKind(name),
-    valueTypeNamed: (name) => catalog.valueTypes.find((valueType) => valueType.name === name),
+    valueTypeNamed: (name) => catalog.findValueType(name),
     languages: document.languages,
     allFieldKeys: new Set([...answerItemsOf(items), ...repeatsOf(items)].map((item) => item.key)),
     earlier: new Map(),
