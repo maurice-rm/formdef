@@ -2,7 +2,7 @@ import type { Expression } from '../expression'
 import { failAt } from '../fail-at'
 import { hasKey } from './has-key'
 import { readCondition } from './read-condition'
-import { readList } from './read-list'
+import { readEach } from './read-each'
 import { readOnlyKeys } from './read-only-keys'
 import { readShape, type Shape } from './read-shape'
 import { readText } from './read-text'
@@ -30,9 +30,7 @@ const readOperation = (shape: Shape, path: string): Expression => {
   }
   readOnlyKeys(shape, ['op', 'args', 'digits'], path)
   const op = readText(shape.op, `${path}.op`)
-  const args = readList(shape.args, `${path}.args`).map((arg, index) =>
-    readExpression(arg, `${path}.args[${index}]`),
-  )
+  const args = readEach(shape.args, `${path}.args`, readExpression)
   if (shape.digits === undefined) {
     return { op, args }
   }

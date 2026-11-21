@@ -10,14 +10,14 @@ import type {
   RowItem,
   SectionItem,
 } from '../form-document'
-import { pathTo } from '../path-to'
 import type { VaryingText } from '../varying-text'
 import { readCondition } from './read-condition'
 import { readDisplay } from './read-display'
+import { readEach } from './read-each'
 import { readExpression } from './read-expression'
-import { readList } from './read-list'
 import { readOneOf } from './read-one-of'
 import { readOnlyKeys } from './read-only-keys'
+import { readOptional } from './read-optional'
 import { readOptionalText } from './read-optional-text'
 import { readSettings } from './read-settings'
 import { readShape, type Shape } from './read-shape'
@@ -82,8 +82,7 @@ const readCheck = (value: unknown, path: string): Check => {
   }
 }
 
-const readChecks = (value: unknown, path: string): Check[] =>
-  readList(value, path).map((entry, index) => readCheck(entry, `${path}[${index}]`))
+const readChecks = (value: unknown, path: string): Check[] => readEach(value, path, readCheck)
 
 const readField = (shape: Shape, path: string): FieldItem => {
   readOnlyKeys(shape, FIELD_KEYS, path)
@@ -94,25 +93,11 @@ const readField = (shape: Shape, path: string): FieldItem => {
     kind: readText(shape.kind, `${path}.kind`),
     label: readVaryingText(shape.label, `${path}.label`),
     ...withOptional('description', readOptionalText(shape.description, `${path}.description`)),
-    ...withOptional(
-      'required',
-      shape.required === undefined
-        ? undefined
-        : readRequired(shape.required, pathTo.required(path)),
-    ),
+    ...readOptional(shape, 'required', { path, read: readRequired }),
     ...readVisibleWhen(shape, path),
-    ...withOptional(
-      'settings',
-      shape.settings === undefined ? undefined : readSettings(shape.settings, `${path}.settings`),
-    ),
-    ...withOptional(
-      'messages',
-      shape.messages === undefined ? undefined : readMessages(shape.messages, `${path}.messages`),
-    ),
-    ...withOptional(
-      'checks',
-      shape.checks === undefined ? undefined : readChecks(shape.checks, `${path}.checks`),
-    ),
+    ...readOptional(shape, 'settings', { path, read: readSettings }),
+    ...readOptional(shape, 'messages', { path, read: readMessages }),
+    ...readOptional(shape, 'checks', { path, read: readChecks }),
   }
 }
 
@@ -124,10 +109,7 @@ const readBlock = (shape: Shape, path: string): BlockItem => {
     key: readText(shape.key, `${path}.key`),
     kind: readText(shape.kind, `${path}.kind`),
     ...readVisibleWhen(shape, path),
-    ...withOptional(
-      'settings',
-      shape.settings === undefined ? undefined : readSettings(shape.settings, `${path}.settings`),
-    ),
+    ...readOptional(shape, 'settings', { path, read: readSettings }),
   }
 }
 
@@ -163,9 +145,7 @@ const readRowItem = (value: unknown, path: string): FieldItem | BlockItem | Comp
 
 const readRow = (shape: Shape, path: string): RowItem => {
   readOnlyKeys(shape, ROW_KEYS, path)
-  const items = readList(shape.items, `${path}.items`).map((entry, index) =>
-    readRowItem(entry, `${path}.items[${index}]`),
-  )
+  const items = readEach(shape.items, `${path}.items`, readRowItem)
 
   return { type: 'row', ...readVisibleWhen(shape, path), ...readDisplay(shape, path), items }
 }
@@ -202,12 +182,7 @@ const readRepeat = (shape: Shape, path: string): RepeatItem => {
     label: readTranslatableText(shape.label, `${path}.label`),
     addLabel: readTranslatableText(shape.addLabel, `${path}.addLabel`),
     removeLabel: readTranslatableText(shape.removeLabel, `${path}.removeLabel`),
-    ...withOptional(
-      'entryLabel',
-      shape.entryLabel === undefined
-        ? undefined
-        : readTranslatableText(shape.entryLabel, `${path}.entryLabel`),
-    ),
+    ...readOptional(shape, 'entryLabel', { path, read: readTranslatableText }),
     ...withOptional('min', readEntryCount(shape.min, `${path}.min`)),
     ...withOptional('max', readEntryCount(shape.max, `${path}.max`)),
     ...readVisibleWhen(shape, path),
@@ -230,5 +205,5 @@ const readItem = (value: unknown, path: string): DocumentItem => {
 }
 
 export function readItems(value: unknown, path: string): DocumentItem[] {
-  return readList(value, path).map((entry, index) => readItem(entry, `${path}[${index}]`))
+  return readEach(value, path, readItem)
 }

@@ -3,9 +3,10 @@ import type { DocumentStep, Jump } from '../form-document'
 import { hasKey } from './has-key'
 import { readCondition } from './read-condition'
 import { readDisplay } from './read-display'
+import { readEach } from './read-each'
 import { readItems } from './read-items'
-import { readList } from './read-list'
 import { readOnlyKeys } from './read-only-keys'
+import { readOptional } from './read-optional'
 import { readOptionalText } from './read-optional-text'
 import { readShape } from './read-shape'
 import { readText } from './read-text'
@@ -28,8 +29,7 @@ const readJump = (value: unknown, path: string): Jump => {
     : { when, step: readText(shape.step, `${path}.step`) }
 }
 
-const readJumps = (value: unknown, path: string): Jump[] =>
-  readList(value, path).map((entry, index) => readJump(entry, `${path}[${index}]`))
+const readJumps = (value: unknown, path: string): Jump[] => readEach(value, path, readJump)
 
 const readStep = (value: unknown, path: string): DocumentStep => {
   const shape = readShape(value, path)
@@ -41,14 +41,11 @@ const readStep = (value: unknown, path: string): DocumentStep => {
     ...withOptional('description', readOptionalText(shape.description, `${path}.description`)),
     ...readVisibleWhen(shape, path),
     ...readDisplay(shape, path),
-    ...withOptional(
-      'next',
-      shape.next === undefined ? undefined : readJumps(shape.next, `${path}.next`),
-    ),
+    ...readOptional(shape, 'next', { path, read: readJumps }),
     items: readItems(shape.items, `${path}.items`),
   }
 }
 
 export function readSteps(value: unknown, path: string): DocumentStep[] {
-  return readList(value, path).map((entry, index) => readStep(entry, `${path}[${index}]`))
+  return readEach(value, path, readStep)
 }

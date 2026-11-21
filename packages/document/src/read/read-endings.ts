@@ -1,11 +1,11 @@
 import type { Ending } from '../form-document'
 import { readBlocks } from './read-blocks'
 import { readCondition } from './read-condition'
-import { readList } from './read-list'
+import { readEach } from './read-each'
 import { readOnlyKeys } from './read-only-keys'
+import { readOptional } from './read-optional'
 import { readShape } from './read-shape'
 import { readText } from './read-text'
-import { withOptional } from './with-optional'
 
 const ENDING_KEYS = ['key', 'when', 'items']
 
@@ -14,15 +14,12 @@ const readEnding = (value: unknown, path: string): Ending => {
   readOnlyKeys(shape, ENDING_KEYS, path)
   return {
     key: readText(shape.key, `${path}.key`),
-    ...withOptional(
-      'when',
-      shape.when === undefined ? undefined : readCondition(shape.when, `${path}.when`),
-    ),
+    ...readOptional(shape, 'when', { path, read: readCondition }),
     items: readBlocks(shape.items, `${path}.items`),
   }
 }
 
 /** Reads the endings of a document: each a key, an optional condition and blocks. */
 export function readEndings(value: unknown, path: string): Ending[] {
-  return readList(value, path).map((entry, index) => readEnding(entry, `${path}[${index}]`))
+  return readEach(value, path, readEnding)
 }

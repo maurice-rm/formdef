@@ -1,9 +1,9 @@
 import type { Display } from '../form-document'
 import { readOnlyKeys } from './read-only-keys'
+import { readOptional } from './read-optional'
 import { readSettings } from './read-settings'
 import { readShape, type Shape } from './read-shape'
 import { readText } from './read-text'
-import { withOptional } from './with-optional'
 
 const DISPLAY_KEYS = ['kind', 'settings']
 
@@ -13,17 +13,11 @@ const readDisplayAt = (value: unknown, path: string): Display => {
 
   return {
     kind: readText(shape.kind, `${path}.kind`),
-    ...withOptional(
-      'settings',
-      shape.settings === undefined ? undefined : readSettings(shape.settings, `${path}.settings`),
-    ),
+    ...readOptional(shape, 'settings', { path, read: readSettings }),
   }
 }
 
 /** Reads the `display` of the form, a step, a section, a row or a repeat, when it has one. */
 export function readDisplay(shape: Shape, path: string): Partial<Record<'display', Display>> {
-  return withOptional(
-    'display',
-    shape.display === undefined ? undefined : readDisplayAt(shape.display, `${path}.display`),
-  )
+  return readOptional(shape, 'display', { path, read: readDisplayAt })
 }

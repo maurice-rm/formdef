@@ -12,10 +12,10 @@ import { readItems } from './read-items'
 import { readLanguages } from './read-languages'
 import { READ_LIMITS, type ReadLimits } from './read-limits'
 import { readOnlyKeys } from './read-only-keys'
+import { readOptional } from './read-optional'
 import { readShape, type Shape } from './read-shape'
 import { readSteps } from './read-steps'
 import { readTranslatableText } from './read-translatable-text'
-import { withOptional } from './with-optional'
 
 const DOCUMENT_KEYS = [
   'format',
@@ -69,29 +69,11 @@ const readShapeOf = (shape: Shape): FormDocument => {
   }
   const head = {
     format: FORMAT_VERSION,
-    ...withOptional(
-      'languages',
-      shape.languages === undefined
-        ? undefined
-        : readLanguages(shape.languages, `${DOCUMENT_PATH}.languages`),
-    ),
+    ...readOptional(shape, 'languages', { path: DOCUMENT_PATH, read: readLanguages }),
     ...readDisplay(shape, DOCUMENT_PATH),
-    ...withOptional(
-      'intro',
-      shape.intro === undefined ? undefined : readIntro(shape.intro, `${DOCUMENT_PATH}.intro`),
-    ),
-    ...withOptional(
-      'endings',
-      shape.endings === undefined
-        ? undefined
-        : readEndings(shape.endings, `${DOCUMENT_PATH}.endings`),
-    ),
-    ...withOptional(
-      'submit',
-      shape.submit === undefined
-        ? undefined
-        : readTranslatableText(shape.submit, `${DOCUMENT_PATH}.submit`),
-    ),
+    ...readOptional(shape, 'intro', { path: DOCUMENT_PATH, read: readIntro }),
+    ...readOptional(shape, 'endings', { path: DOCUMENT_PATH, read: readEndings }),
+    ...readOptional(shape, 'submit', { path: DOCUMENT_PATH, read: readTranslatableText }),
   }
   if (hasSteps) {
     return { ...head, steps: readSteps(shape.steps, `${DOCUMENT_PATH}.steps`) }

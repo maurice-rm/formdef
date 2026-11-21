@@ -1,8 +1,8 @@
 import type { Comparison, Condition } from '../condition'
 import { failAt } from '../fail-at'
 import { hasKey } from './has-key'
+import { readEach } from './read-each'
 import { readJson } from './read-json'
-import { readList } from './read-list'
 import { readOnlyKeys } from './read-only-keys'
 import { readShape, type Shape } from './read-shape'
 import { readText } from './read-text'
@@ -10,7 +10,7 @@ import { readText } from './read-text'
 const COMPARISON_KEYS = ['field', 'op', 'value', 'valueFrom']
 
 const readConditions = (value: unknown, path: string): Condition[] =>
-  readList(value, path).map((entry, index) => readCondition(entry, `${path}[${index}]`))
+  readEach(value, path, readCondition)
 
 // The operators come from the catalog, which `checkDocument` checks the comparison against.
 const readComparison = (shape: Shape, path: string): Comparison => {
