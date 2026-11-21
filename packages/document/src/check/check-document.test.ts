@@ -57,6 +57,7 @@ const fieldKinds = [
     settings: {
       unit: setting.text({ label: 'Unit', required: true, varies: true }),
       min: setting.number({ label: 'Minimum', integer: true }),
+      digits: setting.number({ label: 'Digits', min: 0, max: 3 }),
     },
     props: ({ unit }) => ({ suffix: unit }),
   }),
@@ -662,6 +663,30 @@ describe('checkDocument', () => {
       'settingLimit document.items[1].settings.placeholder',
       'settingLimit document.items[2].settings.options',
       'settingMismatch document.items[3].settings.options',
+    ])
+  })
+
+  it('reports a number setting below its least or above its most', () => {
+    const measure = (key: string, digits: number): FieldItem => ({
+      type: 'field',
+      key,
+      kind: 'measure',
+      label: key,
+      settings: { unit: 'm', digits },
+    })
+    const document = plain(measure('f1', -1), measure('f2', 4), measure('f3', 3))
+
+    expect(foundIn(document)).toEqual([
+      {
+        code: 'settingLimit',
+        path: 'document.items[0].settings.digits',
+        params: { setting: 'digits', min: 0 },
+      },
+      {
+        code: 'settingLimit',
+        path: 'document.items[1].settings.digits',
+        params: { setting: 'digits', max: 3 },
+      },
     ])
   })
 

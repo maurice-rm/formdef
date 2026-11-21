@@ -98,6 +98,20 @@ describe('the shipped field kinds', () => {
     expect(screen.getByText('meter reading').tagName).toBe('STRONG')
   })
 
+  it('report a heading level a page may not hold', () => {
+    const headed = (level: number): FormDocument => ({
+      format: 1,
+      items: [{ type: 'block', key: 'b1', kind: 'heading', settings: { text: 'Heating', level } }],
+    })
+
+    const problemsOf = (level: number) =>
+      checkDocument(headed(level), catalog).map(({ code, params }) => ({ code, params }))
+
+    expect(problemsOf(1)).toEqual([{ code: 'settingLimit', params: { setting: 'level', min: 2 } }])
+    expect(problemsOf(7)).toEqual([{ code: 'settingLimit', params: { setting: 'level', max: 6 } }])
+    expect(checkDocument(headed(4), catalog)).toEqual([])
+  })
+
   it('draw the stepper and a section as their displays say', () => {
     const stepped: FormDocument = {
       format: 1,

@@ -22,8 +22,10 @@ const placeholder = setting.text({ label: 'Placeholder' })
 const maxLength = setting.number({ label: 'Most characters', integer: true })
 
 const HEADING_LEVELS = [2, 3, 4, 5, 6] as const
+const HIGHEST_HEADING_LEVEL = 2
+const LOWEST_HEADING_LEVEL = 6
 
-// A level outside the headings a page may hold leaves the Heading at its own level.
+// checkDocument reports a level outside them; a document it did not check falls back to the Heading's own.
 const headingLevelOf = (level: number | undefined): (typeof HEADING_LEVELS)[number] | undefined =>
   HEADING_LEVELS.find((each) => each === level)
 
@@ -164,6 +166,8 @@ const heading = defineBlockKind(registry, {
       label: 'Level',
       description: 'From 2, right below the page title, to 6; 3 sits below a step.',
       integer: true,
+      min: HIGHEST_HEADING_LEVEL,
+      max: LOWEST_HEADING_LEVEL,
     }),
   },
   props: ({ text, level }) => ({ children: text, level: headingLevelOf(level) }),

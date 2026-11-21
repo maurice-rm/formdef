@@ -272,7 +272,7 @@ against them.
 | Setting | Holds | Constraint |
 | --- | --- | --- |
 | `setting.text` | a line of text, such as a unit or a placeholder, or, `formatted`, a text in limited Markdown for a block | `maxLength` |
-| `setting.number` | a number, such as a bound | `integer` |
+| `setting.number` | a number, such as a bound | `integer`, `min`, `max` |
 | `setting.boolean` | a switch, such as whether a text has several lines | none |
 | `setting.options` | the choices of a choice field, each a `value` the builder generates, a `label`, an optional `description` and an optional `score` for computed values | `minCount` |
 | `setting.option` | the value of one of the field's options, such as one preselected | an option of the field |

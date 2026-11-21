@@ -17,6 +17,15 @@ describe('setting', () => {
       varies: false,
       integer: true,
     })
+    expect(setting.number({ label: 'Level', integer: true, min: 2, max: 6 })).toEqual({
+      type: 'number',
+      label: 'Level',
+      required: false,
+      varies: false,
+      integer: true,
+      min: 2,
+      max: 6,
+    })
   })
 
   it('marks a text setting written in limited Markdown as formatted', () => {

@@ -12,6 +12,7 @@ import { checkText } from './check-text'
 import { checkVaryingText } from './check-varying-text'
 import type { CheckWalk } from './check-walk'
 import { fitsSettingType } from './fits-setting-type'
+import { numberLimitBroken } from './number-limit-broken'
 import { report } from './report'
 
 /** A field, a block or a display: what holds the settings of a kind. */
@@ -77,12 +78,9 @@ const checkTextSetting = (value: Text, setting: Setting<unknown>, at: At): void 
 }
 
 const checkNumber = (value: number, setting: Setting<unknown>, at: At): void => {
-  if (setting.integer === true && !Number.isInteger(value)) {
-    report(at.walk, {
-      code: 'settingLimit',
-      path: at.path,
-      params: { setting: at.name, integer: true },
-    })
+  const limit = numberLimitBroken(value, setting)
+  if (limit !== undefined) {
+    report(at.walk, { code: 'settingLimit', path: at.path, params: { setting: at.name, ...limit } })
   }
 }
 

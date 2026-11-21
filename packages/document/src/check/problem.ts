@@ -1,4 +1,5 @@
 import type { Position } from '../position'
+import type { NumberLimit } from './number-limit-broken'
 
 /**
  * What a problem of a form document is about:
@@ -106,7 +107,7 @@ export type ProblemParams = {
   /** The setting that follows an answer, which its kind does not allow. */
   notVarying: NamesSetting
   /** The setting, and the constraint it is outside of. */
-  settingLimit: NamesSetting & ({ minCount: number } | { maxLength: number } | { integer: true })
+  settingLimit: NamesSetting & ({ minCount: number } | { maxLength: number } | NumberLimit)
   /** The language a translated text leaves out. */
   missingTranslation: NamesLanguage
   /** The language the document does not name. */

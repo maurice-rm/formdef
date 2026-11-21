@@ -65,6 +65,10 @@ export type Setting<TValue> = {
   formatted?: boolean
   /** For a number: whether it is a whole number. */
   integer?: boolean
+  /** For a number: the least it may be. */
+  min?: number
+  /** For a number: the most it may be. */
+  max?: number
   /** For options: the fewest options. */
   minCount?: number
   /** Carries the value type; never set at runtime. */
@@ -143,6 +147,18 @@ type Settings = {
        * @defaultValue `false`
        */
       integer?: boolean
+      /**
+       * The least the number may be.
+       *
+       * @defaultValue no limit
+       */
+      min?: number
+      /**
+       * The most the number may be.
+       *
+       * @defaultValue no limit
+       */
+      max?: number
     },
   ) => Setting<Filled<number, TRequired>>
   /**
