@@ -38,9 +38,11 @@ export const HeatingForm = createForm({
 ```
 
 The heading is an `h3`, below the page's heading and the stepper's `h2`. In a form without steps
-nothing sits between the page's heading and it, so register it with `level={2}` there:
-`formComponents: { Heading: (props) => <Heading {...props} level={2} /> }`. A section is the better
-choice when the fields belong together.
+nothing sits between the page's heading and it, so give it `level: 2` in its props there, or
+register it with `level={2}`:
+`formComponents: { Heading: (props) => <Heading {...props} level={2} /> }`. In a
+[form document](/documents/field-kinds#the-shipped-field-kinds), the `heading` block kind takes
+the level as its setting `level`. A section is the better choice when the fields belong together.
 
 ## Props
 
