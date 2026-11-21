@@ -1,15 +1,7 @@
 import type { Condition } from './condition'
 import { DOCUMENT_PATH } from './document-path'
-import type { Expression } from './expression'
-import type { DocumentNode, FormDocument, Varying } from './form-document'
-import { isField } from './is-field'
-import { isLeaf } from './is-leaf'
-import { isPlainObject } from './is-plain-object'
-import { isStep } from './is-step'
-import { isVarying } from './is-varying'
-import type { JsonValue } from './json-value'
-import { looksVarying } from './looks-varying'
-import { optionListsOf } from './option-lists-of'
+import type { DocumentNode, FormDocument } from './form-document'
+import { mapOwnConditions } from './map-own-conditions'
 import { OUTSIDE_FORM_POSITION } from './outside-form-position'
 import { pathTo } from './path-to'
 import { placedNodesOf } from './placed-nodes-of'
@@ -26,104 +18,13 @@ export type PlacedCondition = {
 
 type Placed = Omit<PlacedCondition, 'position'>
 
-const casesOf = (value: unknown, path: string): Placed[] =>
-  looksVarying(value) && Array.isArray(value.cases)
-    ? (value.cases as { when: Condition }[]).map((entry, index) => ({
-        condition: entry.when,
-        path: pathTo.caseWhen(path, index),
-      }))
-    : []
-
-const textCases = (texts: { label?: unknown; description?: unknown }, path: string): Placed[] => [
-  ...casesOf(texts.label, `${path}.label`),
-  ...casesOf(texts.description, `${path}.description`),
-]
-
-const optionCases = (value: JsonValue | Varying, path: string): Placed[] =>
-  optionListsOf(value, path).flatMap(({ list, path: listPath }) =>
-    list.flatMap((option, index) =>
-      isPlainObject(option) ? textCases(option, `${listPath}[${index}]`) : [],
-    ),
-  )
-
-const settingCases = (
-  { settings }: { settings?: Record<string, JsonValue | Varying> },
-  path: string,
-): Placed[] =>
-  Object.entries(settings ?? {}).flatMap(([name, value]) => {
-    const settingPath = pathTo.setting(path, name)
-    const own = isVarying(value) ? casesOf(value, settingPath) : []
-    return [...own, ...optionCases(value, settingPath)]
-  })
-
-const expressionConditions = (expression: Expression, path: string): Placed[] => {
-  if ('cases' in expression) {
-    return [
-      ...expression.cases.flatMap((entry, index) => [
-        { condition: entry.when, path: pathTo.caseWhen(path, index) },
-        ...expressionConditions(entry.value, `${pathTo.case(path, index)}.value`),
-      ]),
-      ...expressionConditions(expression.otherwise, `${path}.otherwise`),
-    ]
-  }
-  if ('args' in expression) {
-    return expression.args.flatMap((arg, index) =>
-      expressionConditions(arg, `${path}.args[${index}]`),
-    )
-  }
-  return 'when' in expression && expression.when !== undefined
-    ? [{ condition: expression.when, path: `${path}.when` }]
-    : []
-}
-
 const ownConditions = (node: DocumentNode, path: string): Placed[] => {
-  const own =
-    node.visibleWhen === undefined
-      ? []
-      : [{ condition: node.visibleWhen, path: pathTo.visibleWhen(path) }]
-  if (!isLeaf(node)) {
-    const description = 'description' in node ? node.description : undefined
-    const jumps = isStep(node)
-      ? (node.next ?? []).map((jump, index) => ({
-          condition: jump.when,
-          path: `${path}.next[${index}].when`,
-        }))
-      : []
-    return [...own, ...casesOf(description, `${path}.description`), ...jumps]
-  }
-  if (node.type === 'computed') {
-    return [
-      ...own,
-      ...casesOf(node.label, `${path}.label`),
-      ...expressionConditions(node.expression, `${path}.expression`),
-    ]
-  }
-  if (!isField(node)) {
-    return [...own, ...settingCases(node, path)]
-  }
-
-  const required =
-    typeof node.required === 'object'
-      ? [{ condition: node.required, path: pathTo.required(path) }]
-      : []
-  const messages = Object.entries(node.messages ?? {}).flatMap(([code, text]) =>
-    casesOf(text, `${path}.messages.${code}`),
-  )
-  const checks = (node.checks ?? []).flatMap((check, index) => {
-    const checkPath = `${path}.checks[${index}]`
-    return [
-      { condition: check.when, path: `${checkPath}.when` },
-      ...casesOf(check.message, `${checkPath}.message`),
-    ]
+  const found: Placed[] = []
+  mapOwnConditions(node, path, (condition, at) => {
+    found.push({ condition, path: at })
+    return condition
   })
-  return [
-    ...own,
-    ...required,
-    ...textCases(node, path),
-    ...settingCases(node, path),
-    ...messages,
-    ...checks,
-  ]
+  return found
 }
 
 /**

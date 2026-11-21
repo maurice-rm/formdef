@@ -1,7 +1,6 @@
 import type { Condition } from '../condition'
-
-/** A key renamed: the key now, and the new one. */
-export type Rename = { from: string; to: string }
+import type { Rename } from './rename'
+import { renamedKey } from './renamed-key'
 
 /** A condition with the key renamed in each comparison, as the field compared or compared with. */
 export function renameInCondition(condition: Condition, rename: Rename): Condition {
@@ -11,10 +10,11 @@ export function renameInCondition(condition: Condition, rename: Rename): Conditi
   if ('any' in condition) {
     return { any: condition.any.map((entry) => renameInCondition(entry, rename)) }
   }
-  const renamed = (key: string): string => (key === rename.from ? rename.to : key)
   return {
     ...condition,
-    field: renamed(condition.field),
-    ...(condition.valueFrom === undefined ? {} : { valueFrom: renamed(condition.valueFrom) }),
+    field: renamedKey(condition.field, rename),
+    ...(condition.valueFrom === undefined
+      ? {}
+      : { valueFrom: renamedKey(condition.valueFrom, rename) }),
   }
 }

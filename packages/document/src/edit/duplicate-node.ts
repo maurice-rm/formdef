@@ -7,7 +7,8 @@ import type { Position } from '../position'
 import { createKey } from './create-key'
 import { insertNode } from './insert-node'
 import { nodeAt } from './node-at'
-import { type Rename, renameInCondition } from './rename-in-condition'
+import type { Rename } from './rename'
+import { renameInCondition } from './rename-in-condition'
 import { renameKey } from './rename-key'
 
 const ITEM_PREFIXES: Readonly<Record<string, string>> = {
