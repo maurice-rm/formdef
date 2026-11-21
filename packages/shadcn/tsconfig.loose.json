@@ -4,5 +4,5 @@
     "exactOptionalPropertyTypes": false
   },
   "include": ["components/formdef", "lib/formdef", "hooks/formdef"],
-  "exclude": ["lib/formdef/field-kinds.ts"]
+  "exclude": ["lib/formdef/catalog.ts"]
 }

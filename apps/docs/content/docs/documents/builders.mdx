@@ -27,7 +27,7 @@ There are two checks, for two questions:
 
 ```ts
 import { checkDocument, readDocument } from '@formdef/document'
-import { catalog } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/catalog'
 declare const stored: unknown
 // ---cut---
 const document = readDocument(stored)
@@ -60,7 +60,7 @@ the `language` given, empty without one; a label that follows an answer names it
 
 ```ts
 import { checkDocument, type FormDocument } from '@formdef/document'
-import { catalog } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/catalog'
 declare const document: FormDocument
 // ---cut---
 const problems = checkDocument(document, catalog, {
@@ -133,7 +133,7 @@ second step.
 
 ```ts
 import { checkDocument, createKey, insertNode, updateNode, type FormDocument } from '@formdef/document'
-import { catalog } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/catalog'
 declare const document: FormDocument
 // ---cut---
 const withName = insertNode(document, [0], {

@@ -26,19 +26,19 @@
       "categories": ["form"]
     },
     {
-      "name": "field-kinds",
+      "name": "catalog",
       "type": "registry:lib",
-      "title": "formdef field kinds",
-      "description": "Field kinds for form documents and form builders, one or two per widget: short and long text, email, a number with a unit, a whole number, a checkbox, single and multiple choice, a dropdown and a date, block kinds for a notice and a heading, and display kinds for the stepper's variants and a section that reads as one question.",
+      "title": "formdef catalog",
+      "description": "A catalog of kinds for form documents and form builders: field kinds for short and long text, email, a number with a unit, a whole number, a checkbox, single and multiple choice, a dropdown and a date, one or two per widget; block kinds for a notice and a heading; and display kinds for the stepper's variants and a section that reads as one question.",
       "dependencies": ["@formdef/document@>=0.1.0"],
       "files": [
         {
-          "path": "lib/formdef/field-kinds.ts",
+          "path": "lib/formdef/catalog.ts",
           "type": "registry:lib",
-          "target": "@lib/formdef/field-kinds.ts"
+          "target": "@lib/formdef/catalog.ts"
         }
       ],
-      "docs": "Fetch it after the setup. It lands in lib/formdef/field-kinds.ts and names the widgets text, textarea, number, checkbox, radio, select, checkboxes and date: register each under that name in index.tsx, or remove its field kinds. The block kinds name the form components Notice and Heading: register them as formComponents: { Notice, Heading }, or remove the block kinds. The display kinds give props to the Stepper and the Section: register them under structure, or remove the display kinds. Render a form document with createDocumentForm(document, catalog) from @formdef/document/react.",
+      "docs": "Fetch it after the setup. It lands in lib/formdef/catalog.ts, whose field kinds name the widgets text, textarea, number, checkbox, radio, select, checkboxes and date: register each under that name in index.tsx, or remove its field kinds. The block kinds name the form components Notice and Heading: register them as formComponents: { Notice, Heading }, or remove the block kinds. The display kinds give props to the Stepper and the Section: register them under structure, or remove the display kinds. Render a form document with createDocumentForm(document, catalog) from @formdef/document/react.",
       "categories": ["form"]
     },
     {
@@ -820,7 +820,7 @@
       "name": "notice",
       "type": "registry:component",
       "title": "Notice",
-      "description": "A formdef form component that shows a note between fields, with an optional title, built on shadcn's Alert; the notice block kind of the field kinds renders with it.",
+      "description": "A formdef form component that shows a note between fields, with an optional title, built on shadcn's Alert; the notice block kind of the catalog renders with it.",
       "dependencies": [],
       "registryDependencies": ["alert"],
       "files": [
@@ -837,7 +837,7 @@
       "name": "heading",
       "type": "registry:component",
       "title": "Heading",
-      "description": "A formdef form component that titles the fields after it, as an h3 by default; the heading block kind of the field kinds renders with it.",
+      "description": "A formdef form component that titles the fields after it, as an h3 by default; the heading block kind of the catalog renders with it.",
       "dependencies": ["cn"],
       "registryDependencies": [],
       "files": [

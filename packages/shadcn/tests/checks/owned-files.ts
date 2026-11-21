@@ -5,7 +5,4 @@ export const SETUP_FILES: ReadonlySet<string> = new Set([
 ])
 
 /** The files a project owns and edits; their comments say what to do in them. */
-export const OWNED_FILES: ReadonlySet<string> = new Set([
-  ...SETUP_FILES,
-  'lib/formdef/field-kinds.ts',
-])
+export const OWNED_FILES: ReadonlySet<string> = new Set([...SETUP_FILES, 'lib/formdef/catalog.ts'])

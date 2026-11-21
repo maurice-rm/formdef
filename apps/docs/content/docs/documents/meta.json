@@ -1,4 +1,4 @@
 {
   "title": "Form documents",
-  "pages": ["index", "field-kinds", "validation-and-answers", "builders", "api"]
+  "pages": ["index", "kinds", "validation-and-answers", "builders", "api"]
 }

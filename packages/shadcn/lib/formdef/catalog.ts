@@ -10,8 +10,8 @@ import {
 
 import { registry } from '@/lib/formdef'
 
-// This file is yours. Its catalog holds the field kinds a form builder offers and form documents
-// are made of. Each one renders with a widget registered in index.tsx under the name it writes as `widget`:
+// This file is yours. Its catalog holds the kinds a form builder offers and form documents are made
+// of. Each field kind renders with a widget registered in index.tsx under the name it writes as `widget`:
 // remove a kind whose widget you do not fetch, change the labels, and add kinds of your own with
 // defineFieldKind. The block kinds render with the form components Notice and Heading, registered
 // under formComponents; the display kinds give props to the Stepper and Section under structure.

@@ -9,5 +9,5 @@
     "types": []
   },
   "include": ["components", "lib", "hooks"],
-  "exclude": ["lib/formdef/field-kinds.ts"]
+  "exclude": ["lib/formdef/catalog.ts"]
 }

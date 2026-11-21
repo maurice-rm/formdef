@@ -11,7 +11,7 @@ and a server builds the same one from the same document and catalog to check wha
 
 ```ts
 import { createValidator, readDocument } from '@formdef/document'
-import { catalog } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/catalog'
 declare function loadDocument(formId: string): Promise<unknown>
 declare function saveAnswers(answers: Record<string, unknown>): Promise<void>
 // ---cut---
@@ -42,7 +42,7 @@ problem with the document.
 - **Type.** A filled field fails when its value is of the wrong type for its value type, such as
   text for a number, or several choices that name one option twice.
 - **Option.** A choice fails when it is no option of the field.
-- **Rules.** Otherwise the value fails the first of its field kind's [rules](/documents/field-kinds#rules)
+- **Rules.** Otherwise the value fails the first of its field kind's [rules](/documents/kinds#rules)
   it does not pass, with the settings that apply to these answers.
 - **Checks.** Then a filled field fails the first of its [checks](#checks-against-other-answers)
   whose condition does not hold.
@@ -110,7 +110,7 @@ a rule of your own you gave none, reads "This value is not valid.":
 import type { FormDocument, Messages } from '@formdef/document'
 import { createValidator } from '@formdef/document'
 import { createDocumentForm } from '@formdef/document/react'
-import { catalog } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/catalog'
 declare const document: FormDocument
 // ---cut---
 const messages: Messages = {
@@ -161,7 +161,7 @@ that show.
 
 ```ts
 import { createValidator, describeAnswers, type FormDocument } from '@formdef/document'
-import { catalog } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/catalog'
 declare const document: FormDocument
 declare const values: unknown
 declare function sendSummary(description: ReturnType<typeof describeAnswers>): Promise<void>
@@ -194,7 +194,7 @@ that entry's.
 The answer carries its `valueType`: `text`, `decimal` and `date` the `value` as entered, `number`
 the number, `boolean` `true` (an unticked checkbox has no answer), `choice` the chosen option's
 `value` and `label`, and `choices` the chosen options as `values`. An answer of a
-[value type of your own](/documents/field-kinds#value-types) carries what its `describe` returns;
+[value type of your own](/documents/kinds#value-types) carries what its `describe` returns;
 `describeAnswers` reads the value types from the catalog's type, so a `switch` on `valueType` knows
 their shapes. The fields of a row stand one after another, and a step or section with nothing that
 shows is left out.

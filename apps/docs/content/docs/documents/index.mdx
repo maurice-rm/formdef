@@ -15,7 +15,7 @@ registry and validates its answers, in the form and on a server.
 | put together in a builder, or stored per customer in a database | a form document |
 
 Nothing types a document's fields at compile time, so a document is checked when it is read. What
-a field may be is decided in code, once: by the project's [field kinds](/documents/field-kinds).
+a field may be is decided in code, once: by the project's [kinds](/documents/kinds), collected in a catalog.
 
 ## The shape
 
@@ -62,7 +62,7 @@ a field may be is decided in code, once: by the project's [field kinds](/documen
   [**repeat**](#repeats) of items the person fills in as often as needed. A section inside a
   section is a group that reads like one question, such as an address; a third level is not
   allowed.
-- A block has a `key`, the `kind` of a registered [block kind](/documents/field-kinds#block-kinds),
+- A block has a `key`, the `kind` of a registered [block kind](/documents/kinds#block-kinds),
   and optionally `settings` and `visibleWhen`. It gives no answer and is not validated; a condition
   cannot name it.
 - A field has a `key`, the `kind` of a registered field kind and a `label`, and optionally a
@@ -75,10 +75,10 @@ a field may be is decided in code, once: by the project's [field kinds](/documen
   plain form are flat.
 - `required` is `true`, `false` (the default) or a condition. `visibleWhen` takes a condition on a
   step, section, row or field; without one, it always shows.
-- `settings` holds the values of the field kind's [settings](/documents/field-kinds#settings), by
+- `settings` holds the values of the field kind's [settings](/documents/kinds#settings), by
   name, such as the options of a choice or the unit of a number.
 - `display` says how the form of steps, a step, a section, a row or a repeat looks: the `kind` of a
-  registered [display kind](/documents/field-kinds#display-kinds) and its `settings`, such as
+  registered [display kind](/documents/kinds#display-kinds) and its `settings`, such as
   `{ "kind": "rail" }` at the root for a stepper drawn as a rail. Without one, each renders as its
   slot does.
 
@@ -140,7 +140,7 @@ write a brace. A placeholder names no repeat, which would write nothing without 
 entries, 0 included.
 
 A number, such as a computed value, is written in the language of the document, or in the
-[catalog's `language`](/documents/field-kinds#defining-a-field-kind) for a document without
+[catalog's `language`](/documents/kinds#defining-a-field-kind) for a document without
 `languages`: in German `20.005` and `120,5`. Thousands are grouped from five digits on, so a year
 stays `1978`. Without either language, a number is plain digits.
 
@@ -181,7 +181,7 @@ either a string, which holds for every language, such as a unit, or its translat
 ```
 
 - The texts are the labels and descriptions of steps, sections and fields, the labels and
-  descriptions of options, and the values of a field kind's [text settings](/documents/field-kinds#settings),
+  descriptions of options, and the values of a field kind's [text settings](/documents/kinds#settings),
   such as a placeholder.
 - [`checkDocument`](/documents/builders#reading-and-checking) reports a translation that leaves out
   one of the languages, and one into a language the document does not name.
@@ -223,7 +223,7 @@ built-in value types have these:
 | | `isFilled`, `isEmpty` | none |
 | `date` | `equals`, `before`, `onOrBefore`, `after`, `onOrAfter` | a date as an ISO string, such as `2026-05-01` |
 | | `isFilled`, `isEmpty` | none |
-| a [value type of your own](/documents/field-kinds#value-types) | its own operators, `isFilled`, `isEmpty` | what each operator compares with |
+| a [value type of your own](/documents/kinds#value-types) | its own operators, `isFilled`, `isEmpty` | what each operator compares with |
 | a [repeat](#repeats), by its number of entries | `atLeast`, `atMost` | a whole number |
 | | `isFilled` (one entry or more), `isEmpty` | none |
 
@@ -439,20 +439,20 @@ npm install @formdef/document @formdef/core @tanstack/react-form
 </Step>
 <Step>
 
-### Fetch the field kinds
+### Fetch the catalog
 
-After the [setup](/installation#the-widgets-for-shadcn), fetch the field kinds of the shadcn
+After the [setup](/installation#the-widgets-for-shadcn), fetch the catalog of the shadcn
 registry:
 
 ```npm
-npx shadcn@latest add @formdef/field-kinds
+npx shadcn@latest add @formdef/catalog
 ```
 
-It writes `lib/formdef/field-kinds.ts`, which exports them as a `catalog`. Its field kinds name the
+It writes `lib/formdef/catalog.ts`, which exports a `catalog`. Its field kinds name the
 widgets `text`, `textarea`, `number`, `checkbox`, `radio`, `select`, `checkboxes` and `date`.
 Register each under that name in `lib/formdef/index.tsx`, or remove the field kinds of a widget you
 do not fetch;
-[Field kinds](/documents/field-kinds#the-shipped-field-kinds) lists them.
+[Kinds](/documents/kinds#the-shipped-catalog) lists them.
 
 </Step>
 <Step>
@@ -471,7 +471,7 @@ declare function send(answers: Record<string, unknown>): Promise<void>
 import { readDocument } from '@formdef/document'
 import { createDocumentForm } from '@formdef/document/react'
 
-import { catalog } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/catalog'
 
 const ContactForm = createDocumentForm(readDocument(stored), catalog)
 

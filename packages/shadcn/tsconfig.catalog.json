@@ -6,6 +6,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["lib/formdef/field-kinds.ts", "tests/field-kinds.test.tsx"],
+  "include": ["lib/formdef/catalog.ts", "tests/catalog.test.tsx"],
   "exclude": []
 }

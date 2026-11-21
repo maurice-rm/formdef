@@ -4,5 +4,5 @@
     "types": ["node"]
   },
   "include": ["tests", "scripts", "vitest.config.ts"],
-  "exclude": ["lib/formdef/field-kinds.ts", "tests/field-kinds.test.tsx"]
+  "exclude": ["lib/formdef/catalog.ts", "tests/catalog.test.tsx"]
 }

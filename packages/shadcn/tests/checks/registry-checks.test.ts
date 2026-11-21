@@ -199,13 +199,11 @@ describe('conventionProblems', () => {
     ])
   })
 
-  it('lets a setup file and the field kinds explain themselves in comments', () => {
-    const fieldKinds = { ...SETUP_FILE, path: 'lib/formdef/field-kinds.ts' }
+  it('lets a setup file and the catalog explain themselves in comments', () => {
+    const catalog = { ...SETUP_FILE, path: 'lib/formdef/catalog.ts' }
 
     expect(conventionProblems(SETUP_FILE, '// add your widgets here\nconst value = 1')).toEqual([])
-    expect(conventionProblems(fieldKinds, '// remove the kinds you skip\nconst value = 1')).toEqual(
-      [],
-    )
+    expect(conventionProblems(catalog, '// remove the kinds you skip\nconst value = 1')).toEqual([])
   })
 
   it.each([

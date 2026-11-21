@@ -12,7 +12,7 @@ npx shadcn@latest add @formdef/heading
 ```
 
 Register it as a form component in `lib/formdef/index.tsx`, as `formComponents: { Heading }`, and
-place it with a layout entry. The `heading` block kind of the [shipped field kinds](/documents/field-kinds#the-shipped-field-kinds)
+place it with a layout entry. The `heading` block kind of the [shipped catalog](/documents/kinds#the-shipped-catalog)
 renders with it.
 
 ## Usage
@@ -41,7 +41,7 @@ The heading is an `h3`, below the page's heading and the stepper's `h2`. In a fo
 nothing sits between the page's heading and it, so give it `level: 2` in its props there, or
 register it with `level={2}`:
 `formComponents: { Heading: (props) => <Heading {...props} level={2} /> }`. In a
-[form document](/documents/field-kinds#the-shipped-field-kinds), the `heading` block kind takes
+[form document](/documents/kinds#the-shipped-catalog), the `heading` block kind takes
 the level as its setting `level`. A section is the better choice when the fields belong together.
 
 ## Props

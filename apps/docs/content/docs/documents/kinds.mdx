@@ -1,13 +1,14 @@
 ---
-title: Field kinds
-description: What a field of a form document may be, defined once in code, and the field kinds the shadcn registry ships.
+title: Kinds
+description: What the fields, blocks and displays of a form document may be, defined once in code and collected in a catalog, and the catalog the shadcn registry ships.
 ---
 
 A field of a form document names its `kind`. The **field kind**, defined in code, says what that
 is: the widget that renders it, the kind of answer it gives, the settings a person may change on
 it in a builder, the widget props those settings give, and the rules that check its answer.
 Nothing types a document's fields, so the compiler checks the props and rules against the widget
-here, once.
+here, once. Block kinds and display kinds do the same for content between fields and for how
+something looks, and a **catalog** collects them all.
 
 ## Defining a field kind
 
@@ -67,15 +68,17 @@ export const catalog = createCatalog(registry, { fields: [area, dropdown] })
   description and whether it is required reach the widget on their own, as `label`,
   `description` and `required`, so `props` leaves them out. It is optional unless the widget needs a prop.
 - `rules` builds the [rules](#rules) from the values of the settings.
-- `createCatalog` collects the field kinds of one registry in a **catalog**, which rendering,
-  checking, validating and describing a document take. It throws when two field kinds share a name,
-  one was defined with another registry, or its value type is not one of the catalog's.
+- `createCatalog` collects the field kinds of one registry in a **catalog**, with its
+  [value types](#value-types), [block kinds](#block-kinds) and [display kinds](#display-kinds),
+  which rendering, checking, validating and describing a document take. It throws when two kinds
+  of a sort share a name, one was defined with another registry, or a field kind's value type is
+  not one of the catalog's.
 - `language` on the catalog, a language code such as `"de"`, is the language
   [placeholders](/documents#placeholders) write numbers in for a document without `languages`:
   `20.005` and `120,5` rather than `20005` and `120.5`. A document with `languages` writes them in
   its own. `createCatalog` throws for a code that is none.
 
-The field kinds file stays without `'use client'`: a server imports it to
+The catalog's file stays without `'use client'`: a server imports it to
 [validate the answers](/documents/validation-and-answers) with the same catalog.
 
 ## Value types
@@ -332,13 +335,13 @@ const postalCode = defineFieldKind(registry, {
 })
 ```
 
-## The shipped field kinds
+## The shipped catalog
 
 ```npm
-npx shadcn@latest add @formdef/field-kinds
+npx shadcn@latest add @formdef/catalog
 ```
 
-The shadcn registry ships field kinds for its widgets, in `lib/formdef/field-kinds.ts`:
+The shadcn registry ships a catalog for its widgets, in `lib/formdef/catalog.ts`. Its field kinds:
 
 | Name | Label | Widget | Value type | Settings | Rules |
 | --- | --- | --- | --- | --- | --- |

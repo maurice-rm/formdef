@@ -3,7 +3,7 @@ import { createDocumentForm } from '@formdef/document/react'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { catalog } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/catalog'
 
 vi.mock('@/lib/formdef', () => import('./helpers/full-registry'))
 
@@ -62,7 +62,7 @@ const document: FormDocument = {
   ],
 }
 
-describe('the shipped field kinds', () => {
+describe('the kinds of the shipped catalog', () => {
   it('make a sound document of every kind', () => {
     expect(checkDocument(document, catalog)).toEqual([])
   })

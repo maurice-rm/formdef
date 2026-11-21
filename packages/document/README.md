@@ -13,7 +13,7 @@ checked before it is used, and rendered through the widgets of your registry.
 import { createValidator, readDocument } from '@formdef/document'
 import { createDocumentForm } from '@formdef/document/react'
 
-import { catalog } from '@/lib/formdef/field-kinds'
+import { catalog } from '@/lib/formdef/catalog'
 
 const document = readDocument(await loadForm(id))
 const ChecklistForm = createDocumentForm(document, catalog)
@@ -28,8 +28,8 @@ const result = createValidator(document, catalog)['~standard'].validate(answers)
 npm install @formdef/document @formdef/core @tanstack/react-form
 ```
 
-The field kinds for the shadcn/ui widgets come from formdef's shadcn registry:
-`npx shadcn add @formdef/field-kinds`, after the setup the
+A catalog of kinds for the shadcn/ui widgets comes from formdef's shadcn registry:
+`npx shadcn add @formdef/catalog`, after the setup the
 [installation guide](https://formdef.mauricereim.de/installation) describes.
 
 ## Requirements
