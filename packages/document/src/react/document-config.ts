@@ -9,7 +9,6 @@ import { holds } from '../evaluate/holds'
 import { isRequired } from '../evaluate/is-required'
 import { NO_ANSWERS } from '../evaluate/no-answers'
 import { resolveFormattedText } from '../evaluate/resolve-formatted-text'
-import { resolveSettings } from '../evaluate/resolve-settings'
 import { resolveVaryingText } from '../evaluate/resolve-varying-text'
 import { fieldsOf } from '../fields-of'
 import type {
@@ -34,7 +33,7 @@ import type { Text } from '../text'
 import type { DocumentValidator } from '../validate/create-validator'
 import type { VaryingText } from '../varying-text'
 import { formatText, formatTextWithoutLinks } from './format-text'
-import { withFormattedTexts } from './with-formatted-texts'
+import { kindPropsOf } from './kind-props-of'
 
 type Entry = Readonly<Record<string, unknown>>
 
@@ -74,11 +73,7 @@ const displayPropsOf = (display: Display | undefined, build: Build): Entry => {
     return {}
   }
   const kind = displayKindOf(build.catalog, display)
-  const settings = resolveSettings(display, kind, {
-    answers: NO_ANSWERS,
-    language: build.language,
-  })
-  return kind.props(withFormattedTexts(settings, kind))
+  return kindPropsOf(display, kind, { answers: NO_ANSWERS, language: build.language })
 }
 
 const hasProps = (props: Entry): boolean => Object.keys(props).length > 0
@@ -116,9 +111,8 @@ const fieldEntry = (field: FieldItem, build: Build): Entry => {
   const kind = kindOf(build.catalog, field)
   const props = (values: unknown, at: EntryPlace): Entry => {
     const answers = build.answersOf(values, at)
-    const settings = resolveSettings(field, kind, { answers, language: build.language })
     return {
-      ...kind.props(withFormattedTexts(settings, kind)),
+      ...kindPropsOf(field, kind, { answers, language: build.language }),
       label: varyingOf(field.label, { build, answers }),
       ...(field.description === undefined
         ? {}
@@ -133,8 +127,7 @@ const blockEntry = (block: BlockItem, build: Build): Entry => {
   const kind = blockKindOf(build.catalog, block)
   const props = (values: unknown, at: EntryPlace): Entry => {
     const answers = build.answersOf(values, at)
-    const settings = resolveSettings(block, kind, { answers, language: build.language })
-    return kind.props(withFormattedTexts(settings, kind))
+    return kindPropsOf(block, kind, { answers, language: build.language })
   }
   return { component: kind.component, props, ...visibility(block, build) }
 }

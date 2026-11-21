@@ -1,11 +1,10 @@
 import type { Answers } from '../evaluate/answers'
 import { holds } from '../evaluate/holds'
-import { resolveSettings } from '../evaluate/resolve-settings'
 import type { BlockItem } from '../form-document'
 import { blockKindOf } from '../kinds/block-kind-of'
 import type { Catalog } from '../kinds/create-catalog'
 import type { ValueType } from '../kinds/value-type'
-import { withFormattedTexts } from './with-formatted-texts'
+import { kindPropsOf } from './kind-props-of'
 
 type BlockContext = {
   catalog: Catalog<unknown, ValueType>
@@ -25,7 +24,6 @@ export function blockLayoutOf(
     .filter((block) => block.visibleWhen === undefined || holds(block.visibleWhen, answers))
     .map((block) => {
       const kind = blockKindOf(catalog, block)
-      const settings = resolveSettings(block, kind, { answers, language })
-      return { component: kind.component, props: kind.props(withFormattedTexts(settings, kind)) }
+      return { component: kind.component, props: kindPropsOf(block, kind, { answers, language }) }
     })
 }
