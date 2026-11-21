@@ -212,9 +212,9 @@ const checkCases = ({ cases, otherwise }: Cases, at: At): ResultKind | undefined
   }
   cases.forEach((entry, index) => {
     checkCondition(entry.when, pathTo.caseWhen(at.path, index), at.walk)
-    checkResult(entry.value, `${pathTo.case(at.path, index)}.value`)
+    checkResult(entry.value, pathTo.caseValue(at.path, index))
   })
-  checkResult(otherwise, `${at.path}.otherwise`)
+  checkResult(otherwise, pathTo.otherwise(at.path))
   return first
 }
 

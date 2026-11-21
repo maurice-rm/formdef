@@ -11,6 +11,10 @@ type PathTo = {
   case: (settingPath: string, index: number) => string
   /** The condition of a case of a setting that follows an answer. */
   caseWhen: (settingPath: string, index: number) => string
+  /** The value of a case of a setting that follows an answer. */
+  caseValue: (settingPath: string, index: number) => string
+  /** The value of a setting that follows an answer when no case holds. */
+  otherwise: (settingPath: string) => string
 }
 
 const casePath = (settingPath: string, index: number): string => `${settingPath}.cases[${index}]`
@@ -23,4 +27,6 @@ export const pathTo: PathTo = {
   setting: (path, name) => `${path}.settings.${name}`,
   case: casePath,
   caseWhen: (settingPath, index) => `${casePath(settingPath, index)}.when`,
+  caseValue: (settingPath, index) => `${casePath(settingPath, index)}.value`,
+  otherwise: (settingPath) => `${settingPath}.otherwise`,
 }

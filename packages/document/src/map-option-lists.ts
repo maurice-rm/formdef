@@ -23,8 +23,8 @@ export function mapOptionLists(
   return {
     cases: value.cases.map((entry, index) => ({
       ...entry,
-      value: mapAt(entry.value, { path: `${pathTo.case(path, index)}.value`, map }),
+      value: mapAt(entry.value, { path: pathTo.caseValue(path, index), map }),
     })),
-    otherwise: mapAt(value.otherwise, { path: `${path}.otherwise`, map }),
+    otherwise: mapAt(value.otherwise, { path: pathTo.otherwise(path), map }),
   }
 }

@@ -18,9 +18,7 @@ export function optionListsOf(value: JsonValue | Varying, path: string): PlacedL
     return listAt(value, path)
   }
   return [
-    ...value.cases.flatMap((entry, index) =>
-      listAt(entry.value, `${pathTo.case(path, index)}.value`),
-    ),
-    ...listAt(value.otherwise, `${path}.otherwise`),
+    ...value.cases.flatMap((entry, index) => listAt(entry.value, pathTo.caseValue(path, index))),
+    ...listAt(value.otherwise, pathTo.otherwise(path)),
   ]
 }

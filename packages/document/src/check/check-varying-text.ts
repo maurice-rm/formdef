@@ -24,7 +24,7 @@ export function checkVaryingText(
   }
   text.cases.forEach((entry, index) => {
     checkCondition(entry.when, pathTo.caseWhen(path, index), walk)
-    checkPlain(entry.value, { walk, path: `${pathTo.case(path, index)}.value` })
+    checkPlain(entry.value, { walk, path: pathTo.caseValue(path, index) })
   })
-  checkPlain(text.otherwise, { walk, path: `${path}.otherwise` })
+  checkPlain(text.otherwise, { walk, path: pathTo.otherwise(path) })
 }

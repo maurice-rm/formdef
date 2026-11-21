@@ -121,9 +121,9 @@ const checkSetting = (value: JsonValue | Varying, setting: Setting<unknown>, at:
   }
   value.cases.forEach((entry, index) => {
     checkCondition(entry.when, pathTo.caseWhen(at.path, index), at.walk)
-    checkValue(entry.value, setting, { ...at, path: `${pathTo.case(at.path, index)}.value` })
+    checkValue(entry.value, setting, { ...at, path: pathTo.caseValue(at.path, index) })
   })
-  checkValue(value.otherwise, setting, { ...at, path: `${at.path}.otherwise` })
+  checkValue(value.otherwise, setting, { ...at, path: pathTo.otherwise(at.path) })
 }
 
 /**

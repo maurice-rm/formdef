@@ -65,9 +65,9 @@ const mapExpression = (expression: Expression, path: string, map: MapCondition):
     return {
       cases: expression.cases.map((entry, index) => ({
         when: map(entry.when, pathTo.caseWhen(path, index)),
-        value: mapExpression(entry.value, `${pathTo.case(path, index)}.value`, map),
+        value: mapExpression(entry.value, pathTo.caseValue(path, index), map),
       })),
-      otherwise: mapExpression(expression.otherwise, `${path}.otherwise`, map),
+      otherwise: mapExpression(expression.otherwise, pathTo.otherwise(path), map),
     }
   }
   if ('args' in expression) {

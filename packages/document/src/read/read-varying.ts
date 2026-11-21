@@ -36,8 +36,8 @@ export function readVarying<TValue>(
     readCase(entry, { path: pathTo.case(path, index), readValue }),
   )
   if (!hasKey(shape, 'otherwise')) {
-    failAt(`${path}.otherwise`, 'expected a value.')
+    failAt(pathTo.otherwise(path), 'expected a value.')
   }
 
-  return { cases, otherwise: readValue(shape.otherwise, `${path}.otherwise`) }
+  return { cases, otherwise: readValue(shape.otherwise, pathTo.otherwise(path)) }
 }
