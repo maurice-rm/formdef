@@ -13,7 +13,12 @@ start. A widget shows the error once it is **due**: the field is invalid, and it
 or the form was submitted.
 
 Edited **and** left means a person who tabs through an empty form sees no errors, and a person who
-is still typing is not interrupted. After a submit, every invalid field reports at once. In a form
+is still typing is not interrupted. After a submit, every invalid field reports at once, and the
+first invalid field in the order of the page takes the focus, found by its [`fieldId`](#fieldid-and-an-error-summary).
+An element with that id that takes no focus itself, such as the group of a radio group, hands it to
+the first control inside it a person could tab to.
+The focus stays when [`onSubmitAsync`](/guides/validation) returned an error for the whole form,
+which a blur would clear. In a form
 of steps, pressing next on a step counts as its submit: every invalid field of that step reports,
 and those of later steps stay quiet until their turn.
 

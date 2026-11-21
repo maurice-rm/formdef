@@ -1,0 +1,29 @@
+---
+title: API
+description: The types of @formdef/document a form builder works with, with their TSDoc.
+---
+
+`@formdef/document` describes its functions in the guides of this section. The pages below show the
+types a form builder works with most, each with its documentation as it ships with the package, so
+your editor shows the same text on hover. Every other type carries its TSDoc too.
+
+## Document
+
+- [`FormDocument`](/documents/api/form-document) is a form as data, made of
+  [`DocumentItem`](/documents/api/document-item)s.
+- [`Position`](/documents/api/position) is where a step or item sits, as the edit operations take
+  it.
+- [`Problem`](/documents/api/problem) is what `checkDocument` reports, by its
+  [`ProblemCode`](/documents/api/problem-code).
+
+## Kinds
+
+- [`Catalog`](/documents/api/catalog) holds every kind a project offers.
+- [`FieldKind`](/documents/api/field-kind) is what a field may be, and
+  [`ValueType`](/documents/api/value-type) the type of answer it gives.
+
+## Answers
+
+- [`ValidationIssue`](/documents/api/validation-issue) is an answer the validator refuses.
+- [`DescribedAnswer`](/documents/api/described-answer) is an answer as `describeAnswers`
+  describes it.

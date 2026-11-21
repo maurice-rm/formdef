@@ -8,5 +8,6 @@
     },
     "types": []
   },
-  "include": ["components", "lib", "hooks"]
+  "include": ["components", "lib", "hooks"],
+  "exclude": ["lib/formdef/catalog.ts"]
 }

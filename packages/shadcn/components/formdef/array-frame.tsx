@@ -2,22 +2,34 @@
 
 import { type ArrayFrameProps, useFieldParts } from '@formdef/core'
 import { XIcon } from 'lucide-react'
-import { type ComponentProps, useEffect, useRef } from 'react'
+import { type ComponentProps, type ReactNode, useEffect, useRef } from 'react'
 
 import { FieldNotes } from '@/components/formdef/field-notes'
 import { Button } from '@/components/ui/button'
 import { FieldDescription, FieldGroup, FieldLegend, FieldSet } from '@/components/ui/field'
+import { hasDescription } from '@/lib/formdef/field-labels'
 
 type LegendVariant = NonNullable<ComponentProps<typeof FieldLegend>['variant']>
 
 type ArrayFrameFrameProps = ArrayFrameProps<unknown> &
   Pick<ComponentProps<typeof FieldSet>, 'className'> & {
     label?: string | undefined
-    description?: string | undefined
+    description?: ReactNode
     variant?: LegendVariant | undefined
     min?: number | undefined
     max?: number | undefined
+    itemLabel?: ((index: number) => string) | undefined
   }
+
+const Item = ({ label, children }: { label: string | undefined; children: ReactNode }) =>
+  label === undefined ? (
+    children
+  ) : (
+    <FieldSet>
+      <FieldLegend variant="label">{label}</FieldLegend>
+      {children}
+    </FieldSet>
+  )
 
 export const ArrayFrame = ({
   field,
@@ -32,6 +44,7 @@ export const ArrayFrame = ({
   variant = 'legend',
   min,
   max,
+  itemLabel,
   className,
 }: ArrayFrameFrameProps) => {
   const parts = useFieldParts(field)
@@ -40,9 +53,9 @@ export const ArrayFrame = ({
   const removedAt = useRef<number | undefined>(undefined)
   const isAtMin = min !== undefined && keys.length <= min
   const isAtMax = max !== undefined && keys.length >= max
-  const hasDescription = description !== undefined && description !== ''
+  const isDescribed = hasDescription(description)
   const describedBy = [
-    ...(hasDescription ? [parts.descriptionId] : []),
+    ...(isDescribed ? [parts.descriptionId] : []),
     ...(parts.isErrorDue && parts.errors.length > 0 ? [parts.errorId] : []),
   ].join(' ')
 
@@ -63,13 +76,13 @@ export const ArrayFrame = ({
       aria-describedby={describedBy === '' ? undefined : describedBy}
     >
       {label !== undefined && <FieldLegend variant={variant}>{label}</FieldLegend>}
-      {hasDescription && (
-        <FieldDescription id={parts.descriptionId}>{description}</FieldDescription>
-      )}
+      {isDescribed && <FieldDescription id={parts.descriptionId}>{description}</FieldDescription>}
       <FieldGroup>
         {keys.map((key, index) => (
           <div key={key} data-slot="array-item" className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">{renderItem(index)}</div>
+            <div className="min-w-0 flex-1">
+              <Item label={itemLabel?.(index)}>{renderItem(index)}</Item>
+            </div>
             <Button
               ref={(button) => {
                 removeButtons.current[index] = button

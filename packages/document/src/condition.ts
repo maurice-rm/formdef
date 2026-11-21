@@ -1,0 +1,46 @@
+import type { JsonValue } from './json-value'
+
+/**
+ * A condition of a form document: a comparison of one earlier answer, or several conditions
+ * combined. Conditions decide whether a step or item shows, whether a field is required, which case
+ * of a text or setting applies, whether a check passes, and whether a jump or an ending applies.
+ *
+ * The operators come from the value type of the field compared, and each says what it compares
+ * with; {@link checkDocument} checks a document's conditions against its catalog before it is used.
+ *
+ * @example
+ * ```ts
+ * const isApartmentBlock: Condition = { field: 'f1', op: 'equals', value: 'o2' }
+ * const either: Condition = { any: [isApartmentBlock, { field: 'f4', op: 'atLeast', value: 3 }] }
+ * const isPartOf: Condition = { field: 'f5', op: 'atMost', valueFrom: 'f4' }
+ * ```
+ */
+export type Condition =
+  | {
+      /** The key of the answer compared: of a field, a computed value or a repeat. */
+      field: string
+      /** The operator of the field's value type that compares it, such as `equals`. */
+      op: string
+      /**
+       * What the field is compared with, as the operator's setting describes it, such as an
+       * option's value, a list of them, a number or a date; left out when the operator compares
+       * with nothing, such as `isFilled`.
+       */
+      value?: JsonValue
+      /**
+       * The key of an earlier field whose answer the field is compared with, instead of a fixed
+       * `value`; the comparison does not hold while that field has no answer.
+       */
+      valueFrom?: string
+    }
+  | {
+      /** Holds when every one of these conditions holds. */
+      all: Condition[]
+    }
+  | {
+      /** Holds when at least one of these conditions holds. */
+      any: Condition[]
+    }
+
+/** A condition that compares one field, rather than combining conditions. */
+export type Comparison = Extract<Condition, { field: string }>

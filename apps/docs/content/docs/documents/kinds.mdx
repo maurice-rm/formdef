@@ -1,0 +1,379 @@
+---
+title: Kinds
+description: What the fields, blocks and displays of a form document may be, defined once in code and collected in a catalog, and the catalog the shadcn registry ships.
+---
+
+A field of a form document names its `kind`. The **field kind**, defined in code, says what that
+is: the widget that renders it, the type of answer it gives, the settings a person may change on
+it in a builder, the widget props those settings give, and the rules that check its answer.
+Nothing types a document's fields, so the compiler checks the props and rules against the widget
+here, once. Block kinds and display kinds do the same for content between fields and for how
+something looks, and a **catalog** collects them all.
+
+## Defining a field kind
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { SelectField } from '@/components/formdef/select-field'
+import { TextField } from '@/components/formdef/text-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField, select: SelectField },
+})
+// ---cut---
+import { createCatalog, defineFieldKind, rule, setting, valueTypes } from '@formdef/document'
+
+const area = defineFieldKind(registry, {
+  name: 'area',
+  label: 'Area',
+  widget: 'text',
+  valueType: valueTypes.decimal,
+  settings: {
+    unit: setting.text({ label: 'Unit', required: true, varies: true }),
+    min: setting.number({ label: 'Smallest value' }),
+  },
+  props: ({ unit }) => ({
+    inputMode: 'decimal',
+    addons: [{ id: 'unit', content: unit, align: 'inline-end' }],
+  }),
+  rules: ({ min }) => [rule.decimal(), rule.min(min)],
+})
+
+const dropdown = defineFieldKind(registry, {
+  name: 'dropdown',
+  label: 'Dropdown',
+  widget: 'select',
+  valueType: valueTypes.choice,
+  settings: { options: setting.options({ label: 'Options', minCount: 2 }) },
+  props: ({ options }) => ({ options }),
+})
+
+export const catalog = createCatalog(registry, { fields: [area, dropdown] })
+```
+
+- `name` is what a document's `kind` names; `label` is the name a builder lists. A document stores
+  the name, so a field kind keeps it once documents use it.
+- `widget` names a widget of the registry. The same registry renders the documents.
+- `valueType` is the type of answer, one of the [value types](#value-types) of the catalog, such
+  as `valueTypes.decimal`. Every value the widget gives has to be an answer of it: a `string`
+  widget serves `text`, `choice`, `decimal` (written as text, such as `120,5`) and `date` (an ISO
+  string), a `string[]` widget `choices`. The value type decides the operators a
+  [condition](/documents#conditions) may compare the field with and how its answer is described.
+- A field kind of a value type that reads options, such as `choice` or `choices`, reads them from a
+  setting named `options`; without one, it does not compile.
+- `props` builds the widget's props from the values of the settings. The field's label,
+  description and whether it is required reach the widget on their own, as `label`,
+  `description` and `required`, so `props` leaves them out. It is optional unless the widget needs a prop.
+- `rules` builds the [rules](#rules) from the values of the settings.
+- `createCatalog` collects the field kinds of one registry in a **catalog**, with its
+  [value types](#value-types), [block kinds](#block-kinds) and [display kinds](#display-kinds),
+  which rendering, checking, validating and describing a document take. It throws when two kinds
+  of a sort share a name, one was defined with another registry, or a field kind's value type is
+  not one of the catalog's.
+- `language` on the catalog, a language code such as `"de"`, is the language
+  [placeholders](/documents#placeholders) write numbers in for a document without `languages`:
+  `20.005` and `120,5` rather than `20005` and `120.5`. A document with `languages` writes them in
+  its own. `createCatalog` throws for a code that is none.
+
+The catalog's file stays without `'use client'`: a server imports it to
+[validate the answers](/documents/validation-and-answers) with the same catalog.
+
+## Value types
+
+A value type is the type of answer a field gives. Every catalog holds the built-in ones,
+`valueTypes.text`, `choice`, `choices`, `boolean`, `number`, `decimal` and `date`. An answer that
+fits none of them, such as an address as one object, gets a value type of its own:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { createCatalog, defineFieldKind, defineValueType, setting } from '@formdef/document'
+type Address = { street: string; city: string }
+declare const AddressField: (props: FieldOf<Address> & { label?: string }) => null
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({ fieldContext, formContext, widgets: { address: AddressField } })
+// ---cut---
+const isAddress = (value: unknown): value is Address =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as Address).street === 'string' &&
+  typeof (value as Address).city === 'string'
+
+const address = defineValueType({
+  name: 'address',
+  emptyValue: { street: '', city: '' },
+  fits: isAddress,
+  isFilled: ({ street, city }) => street.trim() !== '' && city.trim() !== '',
+  describe: ({ street, city }) => ({ street, city }),
+  operators: {
+    inCity: {
+      compares: setting.text({ label: 'City', required: true }),
+      holds: (answer, city) => answer?.city === city,
+    },
+  },
+})
+
+const postalAddress = defineFieldKind(registry, {
+  name: 'postalAddress',
+  label: 'Postal address',
+  widget: 'address',
+  valueType: address,
+})
+
+export const catalog = createCatalog(registry, { valueTypes: [address], fields: [postalAddress] })
+```
+
+- `name` is unique in the catalog; the built-in value types hold theirs.
+- `emptyValue` is the value a field starts with, which counts as no answer.
+- `fits` tells a value of the right shape, such as one that comes with a request. The validator
+  reports a value that does not fit as `type`.
+- `isFilled` tells whether a value of the right shape is an answer, for `required` and for the
+  operators `isFilled` and `isEmpty`. Without it, every value of the right shape is one.
+- `describe` gives the answer as [`describeAnswers`](/documents/validation-and-answers#describing-answers)
+  shows it, next to the value type's name; it receives the field's options. `undefined` leaves the
+  answer out.
+- `readsOptions: true` makes the value type choose among the field's options: its field kinds need
+  a setting `options`, and `chosenOf` says which option values an answer chooses, such as
+  `['o3']` for `{ option: 'o3', other: 'Pellets' }`. The validator refuses an answer that chooses
+  no option of the field, and `count` and `score` read the options chosen. `defineValueType` throws
+  for a value type that reads options without `chosenOf`.
+- `toText` writes an answer as text for a [placeholder](/documents#placeholders) that names the
+  field. It receives the field's `options` and the `language` the text is written in: the
+  document's, or else the catalog's, `undefined` when neither names one. Without it, a placeholder
+  gives nothing.
+- `operators` are what a [condition](/documents#conditions) may compare a field of this type with,
+  by name. `compares` is the [setting](#settings) the compared `value` is, which a builder renders
+  the input for and `checkDocument` checks; leave it out for an operator that compares with
+  nothing. `holds` receives the answer, or `undefined` for a field without one, and the compared
+  value. Every value type has `isFilled` and `isEmpty` besides, so its own operators take other
+  names.
+- `comparesAs` lets a condition compare another field with an answer of this type through
+  [`valueFrom`](/documents#comparing-with-another-answer): `type` is the setting type it compares
+  as, and `of` turns the answer into a value of it, such as a decimal into a number. Without it,
+  no condition compares with an answer of this type.
+
+## Block kinds
+
+A block is content between fields that gives no answer, such as a notice. A block kind binds a
+form component of the registry to the props a block's settings give:
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { createCatalog, defineBlockKind, setting } from '@formdef/document'
+declare const Notice: (props: { children: string }) => null
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: {},
+  formComponents: { notice: Notice },
+})
+// ---cut---
+const notice = defineBlockKind(registry, {
+  name: 'notice',
+  label: 'Notice',
+  component: 'notice',
+  settings: { body: setting.text({ label: 'Text', required: true }) },
+  props: ({ body }) => ({ children: body }),
+})
+
+export const catalog = createCatalog(registry, { fields: [], blocks: [notice] })
+```
+
+- `component` names a form component of the registry; the compiler checks `props` against it.
+- Its settings work as a field kind's do: they may follow an answer, take placeholders and be
+  translated. A block has no value, rules or `required`.
+- A block's key shares the keys of fields: `renameKey` and `dependentsOf` treat it like a field.
+- `setting.text({ formatted: true })` takes a text in limited Markdown, as descriptions do, and
+  `props` receives it rendered, as a `ReactNode`; the answers its placeholders name show as typed.
+  Only a block kind takes a formatted text, since a widget renders its own texts.
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { defineBlockKind, setting } from '@formdef/document'
+import type { ReactNode } from 'react'
+declare const Notice: (props: { children: ReactNode }) => null
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: {},
+  formComponents: { notice: Notice },
+})
+// ---cut---
+const notice = defineBlockKind(registry, {
+  name: 'notice',
+  label: 'Notice',
+  component: 'notice',
+  settings: { body: setting.text({ label: 'Text', required: true, formatted: true }) },
+  props: ({ body }) => ({ children: body }),
+})
+```
+
+## Display kinds
+
+A display says how something of the form looks. A display kind applies to one thing and gives
+props to the structure slot that renders it:
+
+| `appliesTo` | A display of it sits on | Its props go to |
+| --- | --- | --- |
+| `form` | the document's root, in a form of steps | the stepper, under the config's `stepper.props` |
+| `step` | a step | the step, as the stepper reads it per step |
+| `section` | a section | the section slot |
+| `row` | a row | the row slot |
+
+```tsx
+import { createRegistry, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { createCatalog, defineDisplayKind } from '@formdef/document'
+declare const Stepper: (props: StepperProps & { variant?: 'circles' | 'rail' }) => null
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: {},
+  structure: { stepper: Stepper },
+})
+// ---cut---
+const rail = defineDisplayKind(registry, {
+  name: 'rail',
+  label: 'Rail',
+  appliesTo: 'form',
+  props: () => ({ variant: 'rail' }),
+})
+
+export const catalog = createCatalog(registry, { fields: [], displays: [rail] })
+```
+
+```json
+{ "format": 1, "display": { "kind": "rail" }, "steps": [] }
+```
+
+- The compiler checks `props` against the slot registered for what the kind applies to; a registry
+  without that slot takes no props.
+- A display is fixed for the form: its settings may be translated, but none follows an answer or
+  names one. `defineDisplayKind` throws for a setting with `varies: true` or of `options`, `option`
+  or `optionList`, `checkDocument` reports a placeholder as `fixedText`, and a formatted text is no
+  display setting.
+- `checkDocument` reports a display where its kind does not apply as `misplacedDisplay`, such as a
+  section's on a row, or the form's in a form without steps. `dissolveSteps` leaves out the
+  displays of the form and of its steps.
+- A step's or section's `description` reaches the slot next to the display's props and wins over a
+  `description` among them.
+
+## Settings
+
+A setting is what a person may change on a field, described as data. A builder renders its
+settings panel from a field kind's `settings`, and `checkDocument` checks a document's values
+against them.
+
+| Setting | Holds | Constraint |
+| --- | --- | --- |
+| `setting.text` | a line of text, such as a unit or a placeholder, or, `formatted`, a text in limited Markdown for a block | `maxLength` |
+| `setting.number` | a number, such as a bound | `integer`, `min`, `max` |
+| `setting.boolean` | a switch, such as whether a text has several lines | none |
+| `setting.options` | the choices of a choice field, each a `value` the builder generates, a `label`, an optional `description` and an optional `score` for computed values | `minCount` |
+| `setting.option` | the value of one of the field's options, such as one preselected | an option of the field |
+| `setting.optionList` | the values of several of the field's options | options of the field |
+| `setting.date` | a date as an ISO string, such as the earliest date allowed | none |
+
+- Every setting takes a `label` and a `description` for the settings panel.
+- `text`, `number`, `date`, `option` and `optionList` take `required`: a document has to set it,
+  and `props` and `rules` receive its value without `undefined`. `options` is always required; a
+  `boolean` may be left out.
+- `text`, `number`, `date`, `option` and `optionList` take `varies`: the setting may then
+  [follow an answer](/documents#settings-that-follow-an-answer) through `cases` and `otherwise`.
+
+## Rules
+
+A rule is a fixed check of a field kind on a filled value. Whether a field is filled at all is
+`required`'s concern, not a rule's.
+
+| Rule | Checks | For |
+| --- | --- | --- |
+| `rule.min(min)`, `rule.max(max)` | at least, at most the bound | numbers and decimals |
+| `rule.integer()` | a whole number | numbers and decimals |
+| `rule.decimal()` | a number written with a comma or a dot, such as `120,5` | decimals |
+| `rule.maxLength(maxLength)` | at most so many characters | text |
+| `rule.minCount(minCount)`, `rule.maxCount(maxCount)` | at least, at most so many choices | choices |
+| `rule.earliest(earliest)`, `rule.latest(latest)` | on or after, on or before the date, by day | dates |
+| `rule.email()` | the shape of an email address | text |
+| `rule.custom({ code, params, passes })` | a check of the project's own | any |
+
+A rule whose bound is not set comes back as `undefined` and is left out, so an optional setting
+passes straight through: `rules: ({ min }) => [rule.min(min)]`. A field reports the first rule its
+value fails.
+
+Each rule carries a `code` and the `params` its error text names, such as `{ min: 10 }`; the text
+comes from the [messages](/documents/validation-and-answers#error-texts), which receive the
+field's `label` besides, so a rule's own params take other names. A rule of your own names a code
+of its own:
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { defineFieldKind, rule, valueTypes } from '@formdef/document'
+import { TextField } from '@/components/formdef/text-field'
+const { fieldContext, formContext } = createFormHookContexts()
+const registry = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+// ---cut---
+const POSTAL_CODE = /^\d{5}$/
+
+const postalCode = defineFieldKind(registry, {
+  name: 'postalCode',
+  label: 'Postal code',
+  widget: 'text',
+  valueType: valueTypes.text,
+  rules: () => [
+    rule.custom({ code: 'postalCode', passes: (value: string) => POSTAL_CODE.test(value) }),
+  ],
+})
+```
+
+## The shipped catalog
+
+```npm
+npx shadcn@latest add @formdef/catalog
+```
+
+The shadcn registry ships a catalog for its widgets, in `lib/formdef/catalog.ts`. Its field kinds:
+
+| Name | Label | Widget | Value type | Settings | Rules |
+| --- | --- | --- | --- | --- | --- |
+| `text` | Short text | [`text`](/widgets/text-field) | `text` | `placeholder`, `maxLength` | `maxLength` |
+| `email` | Email address | [`text`](/widgets/text-field) | `text` | `placeholder` | `email` |
+| `longText` | Long text | [`textarea`](/widgets/textarea-field) | `text` | `placeholder`, `maxLength` | `maxLength` |
+| `decimal` | Number with unit | [`text`](/widgets/text-field) | `decimal` | `unit` (varies), `min`, `max` | `decimal`, `min`, `max` |
+| `number` | Whole number | [`number`](/widgets/number-field) | `number` | `min`, `max` | `integer`, `min`, `max` |
+| `checkbox` | Checkbox | [`checkbox`](/widgets/checkbox-field) | `boolean` | none | none |
+| `radio` | Single choice | [`radio`](/widgets/radio-field) | `choice` | `options` | none |
+| `select` | Dropdown | [`select`](/widgets/select-field) | `choice` | `options`, `placeholder` | none |
+| `checkboxes` | Multiple choice | [`checkboxes`](/widgets/checkbox-group-field) | `choices` | `options`, `minCount`, `maxCount` | `minCount`, `maxCount` |
+| `date` | Date | [`date`](/widgets/date-field) | `date` | `earliest`, `latest` | `earliest`, `latest` |
+
+Next to them it ships two block kinds:
+
+| Name | Label | Form component | Settings |
+| --- | --- | --- | --- |
+| `notice` | Notice | [`Notice`](/widgets/notice) | `title` (varies), `body` (required, varies, formatted) |
+| `heading` | Heading | [`Heading`](/widgets/heading) | `text` (required, varies), `level` (2 to 6, 3 without it; 2 in a form without steps, whose page title sits right above) |
+
+And display kinds for the [stepper](/widgets/stepper) and the [section](/widgets/section):
+
+| Name | Applies to | Gives |
+| --- | --- | --- |
+| `rail` | the form | `variant: 'rail'` |
+| `segments` | the form | `variant: 'segments'` |
+| `compact` | the form | `variant: 'compact'` |
+| `group` | a section | `variant: 'label'`, a section that reads as one question, such as an address |
+
+The file is your project's own, like every file of the shadcn registry. Register each widget under
+the name in the table in `lib/formdef/index.tsx`, the form components as
+`formComponents: { Notice, Heading }` and the stepper and section under `structure`, or remove the
+kinds you do not fetch; change the labels, and add kinds of your own with `defineFieldKind`,
+`defineBlockKind` and `defineDisplayKind`.

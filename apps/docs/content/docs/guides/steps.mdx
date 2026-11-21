@@ -140,6 +140,35 @@ export const Checklist = createForm({
 - formdef gives step props no meaning; which ones exist is the stepper's choice. The
   [stepper](/widgets/stepper) of the shadcn registry reads `description` and `icon`.
 
+What the stepper takes for the whole form, such as its variant, the config passes under
+`stepper.props`, checked against the registered stepper:
+
+```tsx
+import { createRegistry, type FieldOf, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const Stepper = (_: StepperProps & { variant?: 'circles' | 'rail' }) => null
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField },
+  structure: { stepper: Stepper },
+})
+// ---cut---
+export const Checklist = createForm({
+  schema: z.object({ contact: z.object({ name: z.string() }) }),
+  defaultValues: { contact: { name: '' } },
+  fields: { contact: { fields: { name: { widget: 'text', props: { label: 'Name' } } } } },
+  layout: [{ step: 'contact', label: 'Contact' }],
+  stepper: { props: { variant: 'rail' } },
+})
+```
+
+These props are fixed for the form; the props of a step entry are the ones that follow the values.
+A form without steps renders no stepper and ignores them.
+
 ## Moving between steps
 
 | Action | What happens |
@@ -198,6 +227,45 @@ export const Order = createForm({
   ],
 })
 ```
+
+A step may also end the form early: while its `submitsWhen` holds, it is the last step that
+shows. Its `next` checks it and submits the form, the stepper receives `isLast` and labels the
+button as the submit button, and the steps after it do not show:
+
+```tsx
+import { createRegistry, type FieldOf, type StepperProps } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const CheckboxField = (_: FieldOf<boolean> & { label: string }) => null
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const Stepper = ({ children }: StepperProps) => <section>{children}</section>
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { checkbox: CheckboxField, text: TextField },
+  structure: { stepper: Stepper },
+})
+// ---cut---
+export const Enquiry = createForm({
+  schema: z.object({
+    house: z.object({ isOwned: z.boolean() }),
+    heating: z.object({ kind: z.string() }),
+  }),
+  defaultValues: { house: { isOwned: true }, heating: { kind: '' } },
+  fields: {
+    house: { fields: { isOwned: { widget: 'checkbox', props: { label: 'I own the house' } } } },
+    heating: { fields: { kind: { widget: 'text', props: { label: 'Heating' } } } },
+  },
+  layout: [
+    { step: 'house', label: 'House', submitsWhen: (values) => !values.house.isOwned },
+    { step: 'heating', label: 'Heating' },
+  ],
+})
+```
+
+The steps it leaves out count as hidden: the [rules for the schema](#three-rules-for-the-schema)
+below apply to them as to a step its condition hides.
 
 ## Three rules for the schema
 

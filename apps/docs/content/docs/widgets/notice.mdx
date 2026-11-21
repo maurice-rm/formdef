@@ -1,0 +1,56 @@
+---
+title: Notice
+description: A note between fields, with an optional title.
+---
+
+<WidgetPreview name="notice" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/notice
+```
+
+Register it as a form component in `lib/formdef/index.tsx`, as `formComponents: { Notice }`, and
+place it with a layout entry. The `notice` block kind of the [shipped catalog](/documents/kinds#the-shipped-catalog)
+renders with it.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+import { Notice } from '@/components/formdef/notice'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField }, formComponents: { Notice } })
+// ---cut---
+export const MeterForm = createForm({
+  schema: z.object({ reading: z.string() }),
+  defaultValues: { reading: '' },
+  fields: { reading: { widget: 'text', props: { label: 'Meter reading' } } },
+  layout: [
+    {
+      component: 'Notice',
+      props: { title: 'Before you start', children: 'The meter sits next to the boiler.' },
+    },
+    'reading',
+  ],
+})
+```
+
+The notice is shadcn's `Alert` with the role `note`: it says something about the form, so a screen
+reader reads it in place and does not announce it as an alert. `variant` and `className` go to the
+`Alert`.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/notice.tsx"
+  type="React.ComponentProps<typeof Notice>"
+/>
+
+## Source
+
+<WidgetSource name="notice" />

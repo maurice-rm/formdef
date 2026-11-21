@@ -5,6 +5,8 @@ import type { BodyProps, StepperProps } from '../config/structure'
 import { Fields, type FieldsProps } from '../render/fields'
 import { warnOnce } from '../render/warn-once'
 import { findRequiredPaths } from './find-required-paths'
+import { firstControlOf } from './first-control-of'
+import { focusControl } from './focus-control'
 import { formOptionsFor } from './form-options-for'
 import { rootStepsOf } from './root-steps'
 import { type StepForm, SteppedForm } from './stepped-form'
@@ -33,6 +35,7 @@ type FormComponentProps = FormElementProps & {
 type ConfigInput = Options & {
   fields?: unknown
   layout?: unknown
+  stepper?: unknown
 }
 
 type ConfiguredFormProps = FormComponentProps & {
@@ -40,6 +43,19 @@ type ConfiguredFormProps = FormComponentProps & {
   config: ConfigInput
   requiredPaths: ReadonlySet<string>
 }
+
+const stepperPropsOf = ({ stepper }: ConfigInput): Options | undefined => {
+  const props =
+    typeof stepper === 'object' && stepper !== null && 'props' in stepper
+      ? stepper.props
+      : undefined
+  return typeof props === 'object' && props !== null ? (props as Options) : undefined
+}
+
+const erringPathsOf = (form: StepForm): string[] =>
+  Object.entries(form.store.get().fieldMeta)
+    .filter(([, meta]) => (meta?.errors?.length ?? 0) > 0)
+    .map(([path]) => path)
 
 const MISSING_DEFAULT_VALUES =
   'formdef: the form has no default values; set defaultValues in its config or in its options.'
@@ -60,11 +76,22 @@ const ConfiguredForm = ({
   const submitStep = useRef<(() => void) | undefined>(undefined)
   const fields = (config.fields ?? {}) as FieldsProps['fields']
   const steps = rootStepsOf(config.layout, fields)
+  const submitPlain = async (): Promise<void> => {
+    await form.handleSubmit()
+    // Moving the focus blurs a field, and TanStack clears the form's submit error on that blur.
+    if (form.store.get().errorMap.onSubmit !== undefined) {
+      return
+    }
+    const control = firstControlOf(form.formId, erringPathsOf(form))
+    if (control !== undefined) {
+      focusControl(control)
+    }
+  }
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault()
     event.stopPropagation()
     if (submitStep.current === undefined) {
-      void form.handleSubmit()
+      void submitPlain()
       return
     }
     submitStep.current()
@@ -89,6 +116,7 @@ const ConfiguredForm = ({
             steps={steps}
             requiredPaths={requiredPaths}
             submitStep={submitStep}
+            stepperProps={stepperPropsOf(config)}
           />
         )}
       </form>
@@ -106,6 +134,8 @@ const PlainContent = ({
   return Body === undefined ? content : <Body>{content}</Body>
 }
 
+const REQUIRED_PATHS_TOPIC = 'requiredPaths'
+
 const isAsyncValidation = (validation: unknown): boolean =>
   typeof validation === 'object' && validation !== null && 'async' in validation
     ? validation.async === true
@@ -119,7 +149,7 @@ const requiredPathsOf = (binding: FormBinding, config: ConfigInput): ReadonlySet
     widgets: binding.parts.widgets,
   })
   if ('problem' in result) {
-    warnOnce(config, result.problem)
+    warnOnce(config, REQUIRED_PATHS_TOPIC, result.problem)
 
     return new Set()
   }
@@ -130,6 +160,8 @@ const requiredPathsOf = (binding: FormBinding, config: ConfigInput): ReadonlySet
 /**
  * Turns a form config into a form component bound to `binding`: TanStack's form with the merged
  * options, a `<form>` element that submits through it, the registered body and the config's fields.
+ * When a form without steps fails to submit, its first invalid field in document order takes the
+ * focus, unless the form holds an error of its own from `onSubmitAsync`.
  * When it first renders, it finds the config's required fields once.
  */
 export function createForm(

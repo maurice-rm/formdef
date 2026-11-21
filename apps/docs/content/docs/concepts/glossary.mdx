@@ -35,6 +35,29 @@ formdef uses one word per concept, in the code, in error messages and here.
 | **base** | The primitive library that shadcn components are built on; for formdef's widgets, Base UI. |
 | **validator key** | A key of `validators`: `onChange`, `onBlurAsync` and the others. |
 | **error is due** | The moment a widget shows a field's error: the field is invalid, and it was edited and left, the form was submitted, or the step it is shown in was submitted. |
+| **form document** | A form described as data: JSON with a format version that holds steps or items, read with `readDocument`. See [Form documents](/documents). |
+| **field kind** | What a field of a form document may be: a widget, its value type, its settings, the props they give and its rules. Defined with `defineFieldKind`. |
+| **block** | An item of a form document that gives no answer, such as a notice: a registered **block kind**, defined with `defineBlockKind`, rendered by a form component from its settings. |
+| **computed value** | An item of a form document worked out from earlier answers by an expression, such as a total; used like an answer nobody types. |
+| **display** | How the form of steps, a step, a section, a row or a repeat of a form document looks: a registered **display kind**, defined with `defineDisplayKind`, that gives props to the slot rendering it. |
+| **catalog** | Every kind a project offers for form documents, for one registry, collected with `createCatalog`; rendering, checking, validating and describing a document take it. |
+| **setting** | A value of a field, block or display in a form document that a person may change, such as a unit, declared by its kind with `setting.*`. |
+| **text** | A text of a form document, such as a label: a string for every language, or its translations into the document's `languages`; most texts may follow an answer with `cases` and `otherwise`. |
+| **item (form document)** | One field, block, computed value, row, section or repeat of a form document, under `items`; not an element of an array. |
+| **repeat** | An item of a form document whose items a person fills in as often as needed, such as one per resident; it renders as an array. |
+| **entry (form document)** | One filling of a repeat, such as the second resident: an item of the array the repeat renders as, which the array frame calls an item. |
+| **key** | The name of a step, a field, block, computed value or repeat, or an ending in a form document; unique among the steps, among the endings and among the items that carry one. Where the format names an answer, as a condition's or an expression's `field`, it is the key of a field, a computed value or a repeat. |
+| **option** | One of the values a choice field offers to pick, held by its `options` setting: a `value` a builder generates and a `label`. What an answer picks among them is its **choice**. |
+| **jump** | One of a step's `next`: when its condition holds, the form goes on at a later step, or ends at an ending. |
+| **ending** | What a form document shows once it is submitted: the first ending whose condition holds, or the one a jump names. |
+| **problem** | What `checkDocument` finds wrong with a form document, with a code, its params and where it sits. |
+| **issue** | What the validator finds wrong with an answer, with a code, its params and the path of the field; a problem is the document's, an issue the answer's. |
+| **document path** | Where a place sits in a form document, such as `document.steps[0].items[2].visibleWhen`, as problems and errors name it; not the path of a field. |
+| **value type** | The type of answer a field kind gives: one of the built-in `valueTypes`, `text`, `choice`, `choices`, `boolean`, `number`, `decimal` and `date`, or a project's own, defined with `defineValueType` and held by the catalog. |
+| **answers** | The values of a form document's fields that show, as the validator returns them and `describeAnswers` describes them. |
+| **condition** | When something applies, depending on the values: a `visibleWhen` in a config, a function of the values; in a form document, a comparison of one earlier answer with an **operator**, its `op`, or several combined with `all` or `any`, which decides whether a step or item shows, whether a field is required, which case of a text or setting applies, whether a check passes, and whether a jump or an ending applies. |
+| **operation** | What an expression of a computed value does with its operands, its `op`, such as `add` or `sum`; in a condition, `op` names an operator instead. |
+| **rule** | A check of a value: in a config, a validator or a refinement of the schema; in a form document, a fixed check of a field kind on a filled value, built with `rule.*`, which carries a code and the params its error text names. |
 | **one call, own shell, plain TanStack** | The three [ways in](/concepts/ways-in). |
 
 Two words keep a second meaning where TanStack owns it: `fields` as the prop of a field group and

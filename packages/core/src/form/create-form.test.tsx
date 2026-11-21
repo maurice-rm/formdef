@@ -8,6 +8,7 @@ import type { BodyProps } from '../config/structure'
 import { Fields } from '../render/fields'
 import type { RenderForm } from '../render/render-form'
 import type { FieldOf } from '../widget/field-of'
+import { useFieldParts } from '../widget/use-field-parts'
 import { createForm } from './create-form'
 
 const { fieldContext, formContext, useFormContext } = createFormHookContexts()
@@ -350,5 +351,155 @@ describe('createForm, required fields', () => {
     render(<Profile />)
 
     expect(isRequired('Again')).toBe(false)
+  })
+})
+
+const PartsField = ({ field, label }: FieldOf<string> & { label: string }): ReactNode => {
+  const { control } = useFieldParts(field)
+
+  return (
+    <div>
+      <label htmlFor={control.id}>{label}</label>
+      <input
+        {...control}
+        value={field.state.value}
+        onChange={(event) => field.handleChange(event.target.value)}
+      />
+    </div>
+  )
+}
+PartsField.emptyValue = ''
+
+const CHOICES = ['oil', 'gas']
+
+// Like a radio group of the registry: the field's id sits on a group that takes no focus itself.
+const ChoiceGroupField = ({ field, label }: FieldOf<string> & { label: string }): ReactNode => {
+  const { control } = useFieldParts(field)
+
+  return (
+    <div id={control.id} role="radiogroup" aria-label={label}>
+      {CHOICES.map((choice) => (
+        <label key={choice}>
+          {choice}
+          <input
+            type="radio"
+            name={control.name}
+            checked={field.state.value === choice}
+            onChange={() => field.handleChange(choice)}
+          />
+        </label>
+      ))}
+    </div>
+  )
+}
+ChoiceGroupField.emptyValue = ''
+
+const partsWidgets = { text: PartsField, choice: ChoiceGroupField }
+const { useAppForm: usePartsForm } = createFormHook({
+  fieldContext,
+  formContext,
+  fieldComponents: partsWidgets,
+  formComponents,
+})
+const PARTS_BINDING = {
+  useAppForm: usePartsForm,
+  parts: { widgets: partsWidgets, formComponents, structure: {} },
+}
+
+describe('createForm without steps, focus', () => {
+  const contactConfig = (rest: Record<string, unknown> = {}): Record<string, unknown> => ({
+    schema: z.object({
+      name: z.string().min(1, 'Enter a name'),
+      email: z.email('Enter an email'),
+      phone: z.string().min(1, 'Enter a phone number'),
+    }),
+    defaultValues: { name: 'Ada', email: '', phone: '' },
+    fields: {
+      name: { widget: 'text', props: { label: 'Name' } },
+      email: { widget: 'text', props: { label: 'Email' } },
+      phone: { widget: 'text', props: { label: 'Phone' } },
+    },
+    layout: ['name', 'email', 'phone', SUBMIT],
+    ...rest,
+  })
+
+  it('focuses the first invalid control when the form fails to submit', async () => {
+    const Contact = createForm(PARTS_BINDING, contactConfig())
+    render(<Contact />)
+
+    await submit()
+
+    expect(document.activeElement).toBe(screen.getByLabelText('Email'))
+  })
+
+  it('focuses the first control inside a group that takes no focus itself', async () => {
+    const Heating = createForm(PARTS_BINDING, {
+      schema: z.object({ kind: z.string().min(1, 'Pick a kind') }),
+      defaultValues: { kind: '' },
+      fields: { kind: { widget: 'choice', props: { label: 'Kind' } } },
+      layout: ['kind', SUBMIT],
+    })
+    render(<Heating />)
+
+    await submit()
+
+    expect(document.activeElement).toBe(screen.getByLabelText('oil'))
+  })
+
+  it('keeps the focus, and so the error, when the server rejects the whole form', async () => {
+    const Contact = createForm(
+      PARTS_BINDING,
+      contactConfig({
+        defaultValues: { name: 'Ada', email: 'ada@example.com', phone: '123' },
+        validators: {
+          onSubmitAsync: async () => ({
+            form: 'Wrong credentials',
+            fields: { email: 'Unknown account' },
+          }),
+        },
+        layout: [
+          'name',
+          'email',
+          'phone',
+          SUBMIT,
+          {
+            render: (form: SubmitErrorForm) => (
+              <form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+                {(error) => (error ? <div role="alert">{String(error)}</div> : null)}
+              </form.Subscribe>
+            ),
+          },
+        ],
+      }),
+    )
+    render(<Contact />)
+    const phone = screen.getByLabelText('Phone')
+    phone.focus()
+    await act(async () => {
+      fireEvent.change(phone, { target: { value: '1234' } })
+    })
+
+    await submit()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Wrong credentials')
+    expect(document.activeElement).toBe(screen.getByLabelText('Phone'))
+  })
+
+  it('leaves the focus where it is when the form submits', async () => {
+    const onSubmit = vi.fn()
+    const Contact = createForm(
+      PARTS_BINDING,
+      contactConfig({
+        onSubmit,
+        defaultValues: { name: 'Ada', email: 'ada@example.com', phone: '123' },
+      }),
+    )
+    render(<Contact />)
+    screen.getByLabelText('Phone').focus()
+
+    await submit()
+
+    expect(onSubmit).toHaveBeenCalledOnce()
+    expect(document.activeElement).toBe(screen.getByLabelText('Phone'))
   })
 })

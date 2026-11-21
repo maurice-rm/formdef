@@ -3,10 +3,15 @@
   "ignoreFiles": ["examples/**"],
   "workspaces": {
     ".": {},
+    "apps/docs": {
+      "ignoreDependencies": ["@formdef/document"]
+    },
     "packages/integration": {
       "entry": [
         "src/consumer.ts",
         "src/consumer.cts",
+        "src/document-consumer.ts",
+        "src/document-consumer.cts",
         "src/form.tsx",
         "src/registry.tsx",
         "src/type-cost/form.ts",
@@ -16,6 +21,11 @@
       ]
     },
     "packages/core": {
+      "vitest": {
+        "entry": ["src/**/*.test.{ts,tsx}", "src/**/*.test-d.{ts,tsx}"]
+      }
+    },
+    "packages/document": {
       "vitest": {
         "entry": ["src/**/*.test.{ts,tsx}", "src/**/*.test-d.{ts,tsx}"]
       }

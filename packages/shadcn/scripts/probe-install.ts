@@ -13,7 +13,12 @@ const run = promisify(execFile)
 const ROOT = join(import.meta.dirname, '../../..')
 const SHADCN_PACKAGE = join(ROOT, 'packages/shadcn')
 const REGISTRY_FILES = join(ROOT, 'apps/docs/public')
-const CORE_PACKAGE = join(ROOT, 'packages/core')
+const PACKAGES = [
+  { name: '@formdef/core', folder: join(ROOT, 'packages/core') },
+  { name: '@formdef/document', folder: join(ROOT, 'packages/document') },
+]
+const FLOOR = /^(@?[^@]+)@>=(\d+\.\d+\.\d+)$/
+const RAISED_TARBALL = 'raised.tgz'
 
 const PROJECT = 'app'
 const TEMPLATE = 'vite'
@@ -25,13 +30,19 @@ const OWN_DATE_FILE = 'src/lib/date.ts'
 const OWN_DATE_SOURCE = 'export const today = (): string => new Date().toISOString().slice(0, 10)\n'
 const PROBE_FORM_FILE = 'src/probe-form.tsx'
 const REGISTRY_FILE = 'src/lib/formdef/index.tsx'
-const CORE_TARBALL_PATH = '/core.tgz'
 const OUTPUT_LIMIT = 64 * 1024 * 1024
 const NPM_SETTING = 'npm_'
 
 type RegistryFile = { path: string; target: string }
-type RegistryItem = { name: string; files: RegistryFile[] }
+type RegistryItem = { name: string; files: RegistryFile[]; dependencies?: string[] }
 type Aliases = Record<string, string>
+type Manifest = {
+  name: string
+  version: string
+  dependencies?: Record<string, string> | undefined
+  peerDependencies?: Record<string, string> | undefined
+}
+type PackedPackage = { tarball: Buffer; manifest: Manifest }
 
 const REGISTRY_SOURCE = `'use client'
 
@@ -44,13 +55,16 @@ import { ComboboxField } from '@/components/formdef/combobox-field'
 import { DateField } from '@/components/formdef/date-field'
 import { DateRangeField } from '@/components/formdef/date-range-field'
 import { DateTimeField } from '@/components/formdef/date-time-field'
+import { Heading } from '@/components/formdef/heading'
 import { MultiComboboxField } from '@/components/formdef/multi-combobox-field'
+import { Notice } from '@/components/formdef/notice'
 import { NumberField } from '@/components/formdef/number-field'
 import { PasswordField } from '@/components/formdef/password-field'
 import { RadioField } from '@/components/formdef/radio-field'
 import { Row } from '@/components/formdef/row'
 import { Section } from '@/components/formdef/section'
 import { SelectField } from '@/components/formdef/select-field'
+import { Stepper } from '@/components/formdef/stepper'
 import { SubmitButton } from '@/components/formdef/submit-button'
 import { SwitchField } from '@/components/formdef/switch-field'
 import { TagsField } from '@/components/formdef/tags-field'
@@ -79,8 +93,14 @@ export const registry = createRegistry({
     dateTime: DateTimeField,
     tags: TagsField,
   },
-  formComponents: { SubmitButton },
-  structure: { body: FieldGroup, section: Section, row: Row, arrayFrame: ArrayFrame },
+  formComponents: { SubmitButton, Notice, Heading },
+  structure: {
+    body: FieldGroup,
+    section: Section,
+    row: Row,
+    arrayFrame: ArrayFrame,
+    stepper: Stepper,
+  },
 })
 
 export const { createForm, Fields, formHook } = registry
@@ -162,18 +182,16 @@ const registryServer = (): Server =>
     response.writeHead(200, { 'content-type': 'application/json' }).end(await readFile(file))
   })
 
-const packumentOf = (
-  manifest: { name: string; version: string },
-  tarball: Buffer,
-  origin: string,
-) => ({
+const tarballPathOf = (name: string): string => `/${name.replace('/', '-')}.tgz`
+
+const packumentOf = ({ manifest, tarball }: PackedPackage, origin: string) => ({
   name: manifest.name,
   'dist-tags': { latest: manifest.version },
   versions: {
     [manifest.version]: {
       ...manifest,
       dist: {
-        tarball: `${origin}${CORE_TARBALL_PATH}`,
+        tarball: `${origin}${tarballPathOf(manifest.name)}`,
         shasum: createHash('sha1').update(tarball).digest('hex'),
         integrity: `sha512-${createHash('sha512').update(tarball).digest('base64')}`,
       },
@@ -181,33 +199,122 @@ const packumentOf = (
   },
 })
 
-// The probe installs the local build of @formdef/core, not the published one; a scoped registry serves it.
-const coreServer = (tarball: Buffer, manifest: { name: string; version: string }): Server => {
+// The probe installs the local builds of the formdef packages, not the published ones; a scoped
+// registry serves them.
+const packageServer = (packages: readonly PackedPackage[]): Server => {
   const server: Server = createServer((request, response) => {
-    if (request.url === CORE_TARBALL_PATH) {
-      response.writeHead(200, { 'content-type': 'application/octet-stream' }).end(tarball)
+    const path = decodeURIComponent(new URL(request.url ?? '/', 'http://x').pathname)
+    const tarball = packages.find(({ manifest }) => tarballPathOf(manifest.name) === path)
+    if (tarball !== undefined) {
+      response.writeHead(200, { 'content-type': 'application/octet-stream' }).end(tarball.tarball)
+      return
+    }
+    const named = packages.find(({ manifest }) => `/${manifest.name}` === path)
+    if (named === undefined) {
+      response.writeHead(404).end()
       return
     }
     const { port } = server.address() as AddressInfo
-    const packument = packumentOf(manifest, tarball, `http://127.0.0.1:${port}`)
+    const packument = packumentOf(named, `http://127.0.0.1:${port}`)
     response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(packument))
   })
 
   return server
 }
 
-const packCore = async (
-  into: string,
-): Promise<{ tarball: Buffer; manifest: { name: string; version: string } }> => {
-  await runIn(CORE_PACKAGE, 'pnpm', ['pack', '--pack-destination', into])
-  const file = (await readdir(into)).find((name) => name.endsWith('.tgz'))
-  if (file === undefined) {
-    throw new Error('probe-install: pnpm pack wrote no tarball for @formdef/core.')
+const isBelow = (version: string, floor: string): boolean => {
+  const [major = 0, minor = 0, patch = 0] = version.split('.').map(Number)
+  const [floorMajor = 0, floorMinor = 0, floorPatch = 0] = floor.split('.').map(Number)
+  if (major !== floorMajor) {
+    return major < floorMajor
   }
-  const path = join(into, file)
-  const manifest = JSON.parse(await runIn(into, 'tar', ['-xzOf', path, 'package/package.json']))
+  return minor === floorMinor ? patch < floorPatch : minor < floorMinor
+}
 
-  return { tarball: await readFile(path), manifest }
+const floorOf = (items: readonly RegistryItem[], name: string): string | undefined =>
+  items
+    .flatMap((item) => item.dependencies ?? [])
+    .map((declaration) => FLOOR.exec(declaration))
+    .filter((match) => match?.[1] === name)
+    .map((match) => match?.[2] ?? '')
+    .reduce<string | undefined>(
+      (highest, floor) => (highest === undefined || isBelow(highest, floor) ? floor : highest),
+      undefined,
+    )
+
+type Raised = ReadonlyMap<string, string>
+
+const raisedRanges = (
+  ranges: Readonly<Record<string, string>> | undefined,
+  raised: Raised,
+): Record<string, string> | undefined =>
+  ranges === undefined
+    ? undefined
+    : Object.fromEntries(
+        Object.entries(ranges).map(([name, range]) => {
+          const version = raised.get(name)
+          return [name, version === undefined ? range : `^${version}`]
+        }),
+      )
+
+const isRaising = ({ manifest }: PackedPackage, raised: Raised): boolean =>
+  [manifest.name, ...Object.keys({ ...manifest.dependencies, ...manifest.peerDependencies })].some(
+    (name) => raised.has(name),
+  )
+
+// A package not released yet still carries the version before its first changeset, below the
+// minimum the registry already names; the probe serves it at that minimum, as the release will,
+// and the ranges of the other packages that name it as `workspace:^` turns into on release.
+const raiseVersions = async (
+  packed: PackedPackage & { path: string },
+  raised: Raised,
+): Promise<PackedPackage> => {
+  if (!isRaising(packed, raised)) {
+    return packed
+  }
+  const folder = dirname(packed.path)
+  await runIn(folder, 'tar', ['-xzf', packed.path])
+  const { manifest } = packed
+  const raisedManifest = {
+    ...manifest,
+    version: raised.get(manifest.name) ?? manifest.version,
+    dependencies: raisedRanges(manifest.dependencies, raised),
+    peerDependencies: raisedRanges(manifest.peerDependencies, raised),
+  }
+  await writeFile(join(folder, 'package/package.json'), JSON.stringify(raisedManifest, null, 2))
+  await runIn(folder, 'tar', ['-czf', RAISED_TARBALL, 'package'])
+
+  return { tarball: await readFile(join(folder, RAISED_TARBALL)), manifest: raisedManifest }
+}
+
+const raisedVersionsOf = (
+  packed: readonly PackedPackage[],
+  items: readonly RegistryItem[],
+): Raised =>
+  new Map(
+    packed.flatMap(({ manifest }) => {
+      const floor = floorOf(items, manifest.name)
+      return floor !== undefined && isBelow(manifest.version, floor)
+        ? [[manifest.name, floor] as const]
+        : []
+    }),
+  )
+
+const packPackage = async (
+  folder: string,
+  into: string,
+): Promise<PackedPackage & { path: string }> => {
+  const destination = await mkdtemp(join(into, 'pack-'))
+  await runIn(folder, 'pnpm', ['pack', '--pack-destination', destination])
+  const file = (await readdir(destination)).find((name) => name.endsWith('.tgz'))
+  if (file === undefined) {
+    throw new Error(`probe-install: pnpm pack wrote no tarball for ${folder}.`)
+  }
+  const path = join(destination, file)
+  const manifest = JSON.parse(
+    await runIn(destination, 'tar', ['-xzOf', path, 'package/package.json']),
+  )
+  return { tarball: await readFile(path), manifest, path }
 }
 
 const landedPathOf = (target: string, aliases: Aliases): string => {
@@ -252,11 +359,11 @@ const scaffold = async (folder: string, version: string): Promise<string> => {
 const configure = async (
   project: string,
   registryOrigin: string,
-  coreOrigin: string,
+  packagesOrigin: string,
 ): Promise<Aliases> => {
   await mkdir(dirname(join(project, OWN_DATE_FILE)), { recursive: true })
   await writeFile(join(project, OWN_DATE_FILE), OWN_DATE_SOURCE)
-  await writeFile(join(project, '.npmrc'), `@formdef:registry=${coreOrigin}/\n`)
+  await writeFile(join(project, '.npmrc'), `@formdef:registry=${packagesOrigin}/\n`)
   const componentsJson = JSON.parse(await readFile(join(project, 'components.json'), 'utf8'))
   componentsJson.registries = { '@formdef': `${registryOrigin}/r/{style}/{name}.json` }
   await writeFile(join(project, 'components.json'), JSON.stringify(componentsJson, null, 2))
@@ -286,22 +393,25 @@ const compile = async (project: string): Promise<void> => {
 }
 
 const probe = async (folder: string): Promise<void> => {
-  step('building @formdef/core and the shadcn registry')
+  step('building @formdef/core, @formdef/document and the shadcn registry')
   await runIn(ROOT, 'pnpm', [
     'turbo',
     'run',
     'build',
     '--filter=@formdef/core',
+    '--filter=@formdef/document',
     '--filter=@formdef/shadcn',
   ])
   const items = await readItems()
   const version = await shadcnVersion()
-  const { tarball, manifest } = await packCore(folder)
+  const local = await Promise.all(PACKAGES.map((entry) => packPackage(entry.folder, folder)))
+  const raised = raisedVersionsOf(local, items)
+  const packed = await Promise.all(local.map((entry) => raiseVersions(entry, raised)))
   const registry = registryServer()
-  const core = coreServer(tarball, manifest)
+  const packages = packageServer(packed)
   try {
     const project = await scaffold(folder, version)
-    const aliases = await configure(project, await listen(registry), await listen(core))
+    const aliases = await configure(project, await listen(registry), await listen(packages))
     step(`adding ${items.length} items`)
     await runIn(project, 'npx', [
       'shadcn',
@@ -317,7 +427,7 @@ const probe = async (folder: string): Promise<void> => {
     step('every item installed, the project compiles and builds')
   } finally {
     registry.close()
-    core.close()
+    packages.close()
   }
 }
 

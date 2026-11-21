@@ -42,11 +42,14 @@ const mountMode = (mode: NonNullable<Validation['mode']>) =>
 describe('formOptionsFor', () => {
   it("passes TanStack's form options on and leaves formdef's own keys out", () => {
     const onSubmit = vi.fn()
-    const options = formOptionsFor({ config: configWith({ onSubmit }), options: undefined })
+    const options = formOptionsFor({
+      config: { ...configWith({ onSubmit }), stepper: { props: { variant: 'rail' } } },
+      options: undefined,
+    })
 
     expect(options.defaultValues).toBe(DEFAULT_VALUES)
     expect(options.onSubmit).toBe(onSubmit)
-    for (const key of ['schema', 'fields', 'layout', 'validation']) {
+    for (const key of ['schema', 'fields', 'layout', 'validation', 'stepper']) {
       expect(options).not.toHaveProperty(key)
     }
   })

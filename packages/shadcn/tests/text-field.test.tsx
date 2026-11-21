@@ -68,6 +68,31 @@ describeWiring({
 })
 
 describe('TextField', () => {
+  it('renders a description of React elements and points the control at it', () => {
+    const Formatted = createForm({
+      schema,
+      defaultValues: { email: '' },
+      formId: 'formatted',
+      fields: {
+        email: {
+          widget: 'text',
+          props: {
+            label: 'Email',
+            description: (
+              <>
+                See the <a href="https://example.com/privacy">privacy notice</a>.
+              </>
+            ),
+          },
+        },
+      },
+    })
+    render(<Formatted />)
+
+    expect(screen.getByRole('link', { name: 'privacy notice' })).toBeDefined()
+    expect(email().getAttribute('aria-describedby')).toBe('formatted-email-description')
+  })
+
   it('writes what is typed to the form', () => {
     render(<Form />)
 

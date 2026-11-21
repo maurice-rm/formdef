@@ -1,0 +1,222 @@
+---
+title: Building a builder
+description: Check a form document while it is edited, and change it with operations that keep its conditions in order.
+---
+
+A builder keeps a form document in its state and changes it with the operations of
+`@formdef/document`. Each one returns a new document and leaves the one it was given as it was, so
+the result goes straight into state. Whether the result is sound as a form, `checkDocument`
+reports.
+
+## Reading and checking
+
+There are two checks, for two questions:
+
+- **`readDocument` checks the shape.** Every key and every value sits where the format expects
+  it, and nothing is there that the format does not know. It returns a copy, and throws when the
+  input is no form document, naming the path of the first problem, or when its format is newer
+  than this release reads. Use it on everything
+  that comes from storage or a request.
+- **`readDocument` keeps the document within limits,** so a document built to be huge cannot take
+  a server down, and refuses the keys `__proto__`, `constructor` and `prototype` anywhere. Its error
+  names the limit exceeded; `limits` changes one.
+- **`checkDocument` checks the document as a form,** against the catalog, and returns every
+  problem in document order; the list is empty when the document is sound. A builder lists the
+  problems while a document is edited. `createDocumentForm`, `createValidator` and
+  `describeAnswers` refuse a document that has any.
+
+```ts
+import { checkDocument, readDocument } from '@formdef/document'
+import { catalog } from '@/lib/formdef/catalog'
+declare const stored: unknown
+// ---cut---
+const document = readDocument(stored)
+const problems = checkDocument(document, catalog)
+```
+
+| Limit | Holds at most | Default |
+| --- | --- | --- |
+| `depth` | levels of nesting of objects and lists, the document being the first | `32` |
+| `items` | items of the whole document, counting those inside rows and sections and the blocks of the intro and endings | `2000` |
+| `conditions` | comparisons in all conditions together | `2000` |
+| `options` | options of one field or block | `1000` |
+| `textLength` | characters of one text, such as a label or a setting | `20000` |
+
+```ts
+import { readDocument } from '@formdef/document'
+declare const stored: unknown
+// ---cut---
+const document = readDocument(stored, { limits: { items: 500, textLength: 5000 } })
+```
+
+A problem has a `code`, the `path` it is about, such as `document.steps[0].items[2].settings.unit`,
+the `params` its text names and the `message`, its text. It has a `position` when it sits on a step
+or an item, `[2]` or `[0, 2]` as the [edit operations](#positions) take it, so a builder selects
+what to fix; a problem of the document itself, its intro or its endings has none.
+
+The texts are English unless the project gives its own, by code, under `messages`. Each receives
+the `params` of its code, typed by `ProblemParams`, and the `label` of the step or item concerned in
+the `language` given, empty without one; a label that follows an answer names its fallback:
+
+```ts
+import { checkDocument, type FormDocument } from '@formdef/document'
+import { catalog } from '@/lib/formdef/catalog'
+declare const document: FormDocument
+// ---cut---
+const problems = checkDocument(document, catalog, {
+  language: 'de',
+  messages: {
+    laterField: ({ label, field }) => `${label}: Das Feld ${field} kommt erst später.`,
+  },
+})
+```
+
+The codes, and what their texts name:
+
+| `code` | The document has | `params` |
+| --- | --- | --- |
+| `duplicateKey` | a step key used twice, or a key of fields, blocks, computed values and repeats used twice | `key` |
+| `invalidKey` | a key that is empty or holds a dot or a bracket | `key` |
+| `overlappingKey` | a step key that starts with another step's key, such as `s10` after `s1` | `key`, `start` |
+| `duplicateOption` | an option value used twice in one field | `value` |
+| `unknownKind` | a field, block or display of a kind that is not registered | `kind` |
+| `misplacedDisplay` | a display where its kind does not apply, such as a section's on a row, or the form's in a form without steps | `kind`, `appliesTo` |
+| `misplacedSubmit` | the label of a submit button in a form of steps, whose stepper submits | none |
+| `unknownField` | a condition or placeholder on a field the document does not hold | `field` |
+| `laterField` | a condition or placeholder on a field that comes later, or on the field itself | `field` |
+| `repeatField` | a condition or placeholder outside a repeat on a field inside it, where no entry is meant | `field` |
+| `operatorMismatch` | an operator the value type of the field compared does not have | `op`, `valueType` |
+| `unknownOption` | a compared value, or a setting of one option or several, that is no option of the field | `field`, `value` |
+| `valueMismatch` | a compared value of the wrong type, such as text for a number, left out, or given to an operator that compares with nothing | `expected`, the setting type, or `nothing` |
+| `valueLimit` | a compared value outside the constraints of the operator's setting, such as a number of entries that is no whole number or below 0 | `op` and the constraint, such as `integer` or `min` |
+| `empty` | a step, section, row or repeat without items, or a form of steps without steps | none |
+| `tooDeep` | a section inside a section inside a section, counting those around a repeat | none |
+| `nestedRepeat` | a repeat inside a repeat | none |
+| `minAboveMax` | a repeat whose `min` is above its `max` | `min`, `max` |
+| `unknownSetting` | a setting the field kind does not have | `setting` |
+| `missingSetting` | a required setting left out | `setting` |
+| `settingMismatch` | a setting of the wrong type | `setting`, `type` |
+| `notVarying` | a setting that follows an answer, which its field kind does not allow | `setting` |
+| `settingLimit` | a setting outside its constraints, such as too long or too few options | `setting` and the constraint, such as `minCount` |
+| `missingTranslation` | a translated text that leaves out one of the document's languages | `language` |
+| `unknownLanguage` | a translation into a language the document does not name | `language` |
+| `invalidLanguage` | a language of the document that is no language code, such as `en_US` | `language` |
+| `fixedText` | a placeholder in the label of a step or section, a display's setting, the intro, the submit button or the texts of a repeat, which name no answers; a repeat's `removeLabel` and `entryLabel` name the entry's number as `{n}` | `key` |
+| `repeatPlaceholder` | a placeholder that names a repeat, which writes nothing without entries; a computed `count` writes their number, 0 included | `key` |
+| `unknownParam` | a placeholder in a field's own error text that its code has no param for | `param`, `code` |
+| `unknownStep` | a jump to a step the document does not hold | `step` |
+| `backwardJump` | a jump to the step itself or an earlier one | `step` |
+| `unknownEnding` | a jump that ends the form with an ending the document does not hold | `ending` |
+| `fallbackNotLast` | an ending without `when` before the last one taken in order | none |
+| `unknownOperation` | an operation of an expression the package does not know | `op` |
+| `operandMismatch` | an operand of the wrong kind or number, such as text to `add`, or an answer read that is no number, text or date | `op`, `expected` |
+| `resultMismatch` | a computed value of a value type other than `number`, `text` or `date`, or whose expression comes to another | `valueType`, and `result` for the expression |
+
+## Positions
+
+Rows and sections have no keys, so the operations address a step or item by its **position**: the
+index at each level, from the root down. In a document with steps the first index is the step's,
+in one without it is the item's. `[1, 0, 2]` is the third item of the first section or row of the
+second step.
+
+## Changing a document
+
+| Operation | Does |
+| --- | --- |
+| `insertNode(document, position, node)` | Inserts a step or item. The last index is its place among its siblings; one past the last appends. |
+| `removeNode(document, position)` | Removes a step or item with everything inside it. |
+| `moveNode(document, from, to)` | Moves a step or item. `to` is counted in the document after the node was taken out, as a drag and drop list reports it. |
+| `duplicateNode(document, position)` | Puts a copy of a step or item right after it, its labels as they are. Every key inside the copy is new, and what inside the copy names a field of it names the copy's; what names a field outside it stays. |
+| `updateNode(document, position, update)` | Replaces a step or item with what `update` returns, such as the field with a new label. |
+| `changeFieldKind(document, position, kind)` | Gives a field another field kind. It keeps the settings the new kind has, by name, and drops the others. |
+| `renameKey(document, from, to)` | Renames a step, field or block key, and the field in every condition and placeholder that names it. |
+
+```ts
+import { checkDocument, createKey, insertNode, updateNode, type FormDocument } from '@formdef/document'
+import { catalog } from '@/lib/formdef/catalog'
+declare const document: FormDocument
+// ---cut---
+const withName = insertNode(document, [0], {
+  type: 'field',
+  key: createKey('f'),
+  kind: 'text',
+  label: 'Name',
+})
+const renamed = updateNode(withName, [0], (node) => ({ ...node, label: 'Full name' }))
+const problems = checkDocument(renamed, catalog)
+```
+
+An operation throws when its position finds nothing or a place that cannot hold the node: steps go
+only into the steps of a form, a form with steps holds steps only, a row holds fields, blocks and
+computed values only, and a field, a block or a computed value holds no items. A repeat holds
+items as a section does; one placed inside another is reported by `checkDocument`.
+Everything else, such as a key taken already or a condition whose operator no longer fits after
+`changeFieldKind`, the operation leaves in place for `checkDocument` to report.
+
+### Before removing
+
+`removeNode` leaves the conditions, placeholders and expressions elsewhere that name a removed
+field as they are, and `checkDocument` then reports them as `unknownField`; a jump to a removed
+step it reports as `unknownStep`. `dependentsOf` lists them beforehand: one entry per condition
+and key named, then one per placeholder, one per expression and one per jump, with the `path`
+where it sits and the `key` it names: of a field, computed value, repeat or step. Last come the
+endings only the removed step's jumps reach, with the step's `key`: without the jump, such an ending takes its turn in order,
+by its condition or as the fallback, and one without a condition before the last is reported as
+`fallbackNotLast`. Those inside the node go with it and are not listed.
+
+```ts
+import { dependentsOf, removeNode, type Dependent, type FormDocument, type Position } from '@formdef/document'
+declare const document: FormDocument
+declare const position: Position
+declare function askBeforeRemoving(dependents: Dependent[]): void
+declare function setDocument(document: FormDocument): void
+// ---cut---
+const dependents = dependentsOf(document, position)
+
+if (dependents.length > 0) askBeforeRemoving(dependents)
+else setDocument(removeNode(document, position))
+```
+
+## Steps on and off
+
+`splitIntoSteps` turns a plain form into one with steps: its items become the items of one step,
+and further steps are inserted after it; the label of its submit button is left out, as the stepper
+submits a form of steps. `dissolveSteps` turns the steps back into sections, each
+with the step's label, description and condition. A section of a step now sits one level deeper,
+where `checkDocument` may report it as `tooDeep`. The displays of the form and of its steps, the
+jumps of its steps and the endings only a jump reaches apply to steps only and are left out.
+
+```ts
+import { createKey, dissolveSteps, insertNode, splitIntoSteps, type FormDocument } from '@formdef/document'
+declare const document: FormDocument
+// ---cut---
+const stepped = insertNode(splitIntoSteps(document, { key: createKey('s'), label: 'Contact' }), [1], {
+  key: createKey('s'),
+  label: 'Building',
+  items: [],
+})
+const plain = dissolveSteps(stepped)
+```
+
+A new step starts without items, which `checkDocument` reports as `empty` until one is inserted.
+Each of the two throws when the document already is what it would turn it into. The answers change shape with
+the document, nested by step key with steps and flat without, so answers kept for one shape do not
+fit the other.
+
+## Keys
+
+`createKey` creates a key for a step, a field or an option: the prefix and eight random letters
+and digits, such as `f3k9x0q2m`.
+
+```ts
+import { createKey } from '@formdef/document'
+// ---cut---
+const stepKey = createKey('s')
+const fieldKey = createKey('f')
+const optionValue = createKey('o')
+```
+
+All keys of one prefix have one length, which matters for steps: the values of a step are the
+fields whose path starts with the step's key, so no step key may start another one. `s1` and `s10`
+would overlap, and `checkDocument` reports `overlappingKey`. Keys are never shown, so a field keeps
+its key when its label changes; `renameKey` gives one a readable name, such as `houseType`.

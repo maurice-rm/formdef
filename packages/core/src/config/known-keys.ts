@@ -40,7 +40,7 @@ type Walk<TKey, TActual, TShape> = TKey extends 'props'
   ? FlatKnown<TActual, TShape>
   : TKey extends 'fields'
     ? FieldsKnown<TActual, TShape>
-    : TKey extends 'item'
+    : TKey extends 'item' | 'stepper'
       ? EntryKnown<TActual, TShape>
       : TKey extends 'layout' | 'row'
         ? LayoutKnown<TActual, TShape>

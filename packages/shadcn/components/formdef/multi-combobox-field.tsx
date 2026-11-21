@@ -19,7 +19,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from '@/components/ui/combobox'
-import type { FieldLabels } from '@/lib/formdef/field-labels'
+import { type FieldLabels, hasDescription } from '@/lib/formdef/field-labels'
 import type { Option } from '@/lib/formdef/options'
 
 type Attrs = Pick<ComponentProps<typeof Combobox>, 'disabled' | 'readOnly' | 'required'> &
@@ -110,7 +110,7 @@ export const MultiComboboxField = ({
               <ComboboxItem key={option.value} value={option} disabled={option.disabled}>
                 <span className="flex flex-col">
                   {option.label}
-                  {option.description !== undefined && option.description !== '' && (
+                  {hasDescription(option.description) && (
                     <span className="text-muted-foreground text-xs">{option.description}</span>
                   )}
                 </span>

@@ -210,6 +210,174 @@
           }
         }
       }
+    },
+    {
+      "includes": ["packages/document/src/**", "!packages/document/src/react/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./react", "./react/**", "../react", "../react/**"],
+                    "message": "formdef: the root entry of @formdef/document runs on a server; it imports nothing from react/"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "packages/document/src/validate/**",
+        "packages/document/src/describe/**",
+        "packages/document/src/edit/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../react", "../react/**"],
+                    "message": "formdef: the root entry of @formdef/document runs on a server; it imports nothing from react/"
+                  },
+                  {
+                    "group": [
+                      "../validate",
+                      "../validate/**",
+                      "../describe",
+                      "../describe/**",
+                      "../edit",
+                      "../edit/**"
+                    ],
+                    "message": "formdef: validate/, describe/ and edit/ import from evaluate/, check/, kinds/, read/ and the root files, not from each other"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/document/src/evaluate/**", "packages/document/src/check/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../react", "../react/**"],
+                    "message": "formdef: the root entry of @formdef/document runs on a server; it imports nothing from react/"
+                  },
+                  {
+                    "group": [
+                      "../validate",
+                      "../validate/**",
+                      "../describe",
+                      "../describe/**",
+                      "../edit",
+                      "../edit/**",
+                      "../evaluate",
+                      "../evaluate/**",
+                      "../check",
+                      "../check/**"
+                    ],
+                    "message": "formdef: evaluate/ and check/ import from kinds/, read/ and the root files only"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/document/src/kinds/**", "packages/document/src/read/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["../react", "../react/**"],
+                    "message": "formdef: the root entry of @formdef/document runs on a server; it imports nothing from react/"
+                  },
+                  {
+                    "group": [
+                      "../validate",
+                      "../validate/**",
+                      "../describe",
+                      "../describe/**",
+                      "../edit",
+                      "../edit/**",
+                      "../evaluate",
+                      "../evaluate/**",
+                      "../check",
+                      "../check/**",
+                      "../kinds",
+                      "../kinds/**",
+                      "../read",
+                      "../read/**"
+                    ],
+                    "message": "formdef: kinds/ and read/ import from the root files only"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/document/src/*.ts", "!packages/document/src/index.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["./react", "./react/**"],
+                    "message": "formdef: the root entry of @formdef/document runs on a server; it imports nothing from react/"
+                  },
+                  {
+                    "group": [
+                      "./validate",
+                      "./validate/**",
+                      "./describe",
+                      "./describe/**",
+                      "./edit",
+                      "./edit/**",
+                      "./evaluate",
+                      "./evaluate/**",
+                      "./check",
+                      "./check/**",
+                      "./kinds",
+                      "./kinds/**",
+                      "./read",
+                      "./read/**"
+                    ],
+                    "message": "formdef: the root files of @formdef/document import from no folder of it"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ]
 }

@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@formdef/core": "workspace:*",
+    "@formdef/document": "workspace:*",
     "@formdef/tsconfig": "workspace:*",
     "@tanstack/react-form": "catalog:",
     "@types/node": "24.19.2",

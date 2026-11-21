@@ -49,6 +49,9 @@ says what formdef does; this file says how code is written here.
   projects, where the shadcn CLI rewrites that alias.
 - In `@formdef/core` dependencies point one way: `registry` → `form` → `render` → `config` →
   `widget`. An inner folder never imports an outer one.
+- In `@formdef/document` they point one way too: `react` → `validate` | `describe` | `edit` →
+  `evaluate` | `check` → `kinds` | `read` → the files at the root of `src`. Folders of one level
+  do not import each other, and nothing imports `react/`, since the root entry runs on a server.
 - Exports of `@formdef/core` declare their types (`isolatedDeclarations`).
 
 ## Tests

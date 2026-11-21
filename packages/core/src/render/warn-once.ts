@@ -3,17 +3,25 @@
 // biome-ignore lint/style/useNamingConvention: the name bundlers replace.
 declare const process: { env: { NODE_ENV?: string } } | undefined
 
-const warnedOwners = new WeakSet<object>()
+const warnedTopics = new WeakMap<object, Set<string>>()
 
 const isProduction = (): boolean =>
   typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
 
-/** Warns once per `owner`, and never in production. */
-export function warnOnce(owner: object, message: string): void {
-  if (isProduction() || warnedOwners.has(owner)) {
+/**
+ * Warns once per `owner` and `topic`, so warnings about different things of one owner each show,
+ * and never in production.
+ */
+export function warnOnce(owner: object, topic: string, message: string): void {
+  if (isProduction()) {
+    return
+  }
+  const topics = warnedTopics.get(owner) ?? new Set<string>()
+  if (topics.has(topic)) {
     return
   }
 
-  warnedOwners.add(owner)
+  topics.add(topic)
+  warnedTopics.set(owner, topics)
   console.warn(message)
 }

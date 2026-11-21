@@ -50,6 +50,7 @@ export function formOptionsFor({ config, options }: FormOptionsInput): Record<st
     validation,
     fields: _renderedByFields,
     layout: _arrangedByFields,
+    stepper: _passedToTheStepper,
     ...configOptions
   } = config
   const { mode = DEFAULT_MODE, ...timing } = recordOf(validation) as Validation

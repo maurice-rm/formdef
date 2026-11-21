@@ -44,8 +44,9 @@ const Stepper = ({
   isLast,
   isSubmitting,
   children,
-}: StepperProps<{ description?: string }>): ReactNode => (
-  <section aria-label="Stepper" data-submitting={String(isSubmitting)}>
+  variant,
+}: StepperProps<{ description?: string }> & { variant?: string }): ReactNode => (
+  <section aria-label="Stepper" data-submitting={String(isSubmitting)} data-variant={variant}>
     <ol>
       {steps.map((step, index) => (
         <li
@@ -332,6 +333,16 @@ describe('createForm with steps', () => {
     expect(stepItem('Building').dataset.description).toBeUndefined()
   })
 
+  it("passes the config's stepper props to the stepper", () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({ stepper: { props: { variant: 'rail' } } }),
+    )
+    render(<Checklist />)
+
+    expect(screen.getByRole('region', { name: 'Stepper' }).dataset.variant).toBe('rail')
+  })
+
   it('builds the props of a step from the values of the form', async () => {
     const Checklist = createForm(
       BINDING,
@@ -354,6 +365,22 @@ describe('createForm with steps', () => {
     expect(stepItem('Building').dataset.description).toBe('Your building')
     await type('Name', 'Ada')
     expect(stepItem('Building').dataset.description).toBe("Ada's building")
+  })
+
+  it('hands the condition and props of a step where it renders, at the root', () => {
+    const visibleWhen = vi.fn(() => true)
+    const buildProps = vi.fn(() => ({ description: 'Your building' }))
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        layout: [STEPS[0], { ...STEPS[1], visibleWhen, props: buildProps }, STEPS[2]],
+      }),
+    )
+    render(<Checklist />)
+
+    const atRoot = { path: '', item: undefined }
+    expect(visibleWhen).toHaveBeenCalledWith(DEFAULT_VALUES, atRoot)
+    expect(buildProps).toHaveBeenCalledWith(DEFAULT_VALUES, atRoot)
   })
 
   it('builds no props for a step its condition hides', async () => {
@@ -655,6 +682,40 @@ describe('createForm with steps', () => {
       await pending
     })
 
+    expect(currentStep()).toBe('Go to Contact')
+  })
+
+  it('submits from a step whose submitsWhen holds, and shows no step after it', async () => {
+    const onSubmit = vi.fn()
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: z.object({
+          contact: z.object({ name: z.string().min(1, 'Enter a name') }),
+          building: z.object({ city: z.string() }),
+          heating: z.object({ kind: z.string() }),
+        }),
+        layout: [
+          {
+            ...STEPS[0],
+            submitsWhen: (values: typeof DEFAULT_VALUES) => values.contact.name === 'Ada',
+          },
+          STEPS[1],
+          STEPS[2],
+        ],
+        onSubmit: ({ value }: { value: unknown }) => onSubmit(value),
+      }),
+    )
+    render(<Checklist />)
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(3)
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDefined()
+
+    await type('Name', 'Ada')
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(1)
+    await click('Submit')
+    expect(onSubmit).toHaveBeenCalledTimes(1)
     expect(currentStep()).toBe('Go to Contact')
   })
 
@@ -983,6 +1044,57 @@ describe('createForm with steps, errors and focus', () => {
     await click('Submit')
 
     expect(currentStep()).toBe('Go to Building')
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the form fails to submit through errors in the hidden step "heating": heating.kind. What a condition hides must accept every value it can hold.',
+    )
+  })
+
+  it('warns when a step left out by submitsWhen holds the errors that stop the submit', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        layout: [{ ...STEPS[0], submitsWhen: () => true }, { ...STEPS[1] }, { ...STEPS[2] }],
+      }),
+    )
+    render(<Checklist />)
+
+    await type('Name', 'Ada')
+    await click('Submit')
+
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the form fails to submit through errors in the hidden step "heating": heating.kind. What a condition hides must accept every value it can hold.',
+    )
+  })
+
+  it('warns about a hidden step with errors even after warning that its key starts another', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        schema: schema.extend({ heatingExtra: z.object({ note: z.string() }) }),
+        defaultValues: { ...DEFAULT_VALUES, contact: { name: 'Ada' }, heatingExtra: { note: '' } },
+        fields: {
+          ...FIELDS,
+          heatingExtra: { fields: { note: { widget: 'text', props: { label: 'Note' } } } },
+        },
+        layout: [
+          STEPS[0],
+          STEPS[1],
+          { ...STEPS[2], visibleWhen: () => false },
+          { step: 'heatingExtra', label: 'Extra' },
+        ],
+      }),
+    )
+    render(<Checklist />)
+
+    await click('Next')
+    await click('Next')
+    await click('Submit')
+
+    expect(warn).toHaveBeenCalledWith(
+      'formdef: the step "heating" starts the root key "heatingExtra"; its form group would count the fields of "heatingExtra" as its own.',
+    )
     expect(warn).toHaveBeenCalledWith(
       'formdef: the form fails to submit through errors in the hidden step "heating": heating.kind. What a condition hides must accept every value it can hold.',
     )

@@ -1,0 +1,174 @@
+import type { FormProps, Validation } from '@formdef/core'
+import { type ComponentType, useState } from 'react'
+
+import { NO_ANSWERS } from '../evaluate/no-answers'
+import type { FormDocument } from '../form-document'
+import type { Catalog } from '../kinds/create-catalog'
+import type { ValueType } from '../kinds/value-type'
+import { languageOf } from '../language-of'
+import { resolveFixedText } from '../resolve-fixed-text'
+import {
+  createValidator,
+  type DocumentValidator,
+  type ValidatorOptions,
+} from '../validate/create-validator'
+import { blockLayoutOf } from './block-layout-of'
+import type { BlockRenderer } from './blocks-view'
+import { type DocumentConfig, documentConfig } from './document-config'
+import type { DocumentForm } from './document-form'
+import { endingLayoutOf } from './ending-layout-of'
+import { EndingView } from './ending-view'
+import { StartButton, type StartButtonProps } from './start-button'
+import { SubmitButton, type SubmitButtonProps } from './submit-button'
+import { withIntro } from './with-intro'
+
+/**
+ * What {@link createDocumentForm} takes besides the document: what {@link createValidator} takes,
+ * and more.
+ */
+export type DocumentFormOptions = ValidatorOptions & {
+  /**
+   * When the answers are validated, as a form config's `validation`.
+   *
+   * @defaultValue `{ mode: 'revalidate' }`
+   */
+  validation?: Validation
+  /**
+   * Whether the form gives way to the ending that applies once it is submitted, as
+   * {@link endingOf} tells it. A project that shows a page of its own or redirects sets it to
+   * `false` and calls {@link endingOf} itself.
+   *
+   * @defaultValue `true`
+   */
+  showsEnding?: boolean
+  /**
+   * The button that starts the form after the document's intro; it receives the `label` the
+   * document gives it and `onStart`.
+   *
+   * @defaultValue a plain `<button type="button">`
+   */
+  startButton?: ComponentType<StartButtonProps>
+  /**
+   * The button that submits a form without steps, rendered after its items when the document
+   * gives it a `submit` label; it receives that `label` and submits the form it sits in.
+   *
+   * @defaultValue a plain `<button type="submit">`
+   */
+  submitButton?: ComponentType<SubmitButtonProps>
+}
+
+// A plain form ends with its submit button; a form of steps submits through its stepper.
+const withSubmit = (
+  config: DocumentConfig,
+  { label, Button }: { label: string | undefined; Button: ComponentType<SubmitButtonProps> },
+): DocumentConfig =>
+  label === undefined
+    ? config
+    : { ...config, layout: [...config.layout, { render: () => <Button label={label} /> }] }
+
+type SubmitArgs = Parameters<
+  NonNullable<NonNullable<FormProps<DocumentValidator>['options']>['onSubmit']>
+>[0]
+
+type EndingSource = {
+  registry: BlockRenderer
+  layoutOf: (values: unknown) => unknown[] | undefined
+}
+
+// The form gives way to its ending once `onSubmit` is done; one that fails keeps the form.
+const withEnding = (Form: DocumentForm, { registry, layoutOf }: EndingSource): DocumentForm =>
+  function DocumentFormWithEnding(props) {
+    const [layout, setLayout] = useState<unknown[] | undefined>(undefined)
+    if (layout !== undefined) {
+      return <EndingView registry={registry} layout={layout} />
+    }
+    const onSubmit = async (submit: SubmitArgs): Promise<void> => {
+      await props.options?.onSubmit?.(submit)
+      setLayout(layoutOf(submit.value))
+    }
+    return <Form {...props} options={{ ...props.options, onSubmit }} />
+  }
+
+type CreatesForms = {
+  createForm: (config: DocumentConfig & { validation?: Validation }) => DocumentForm
+}
+
+/**
+ * Turns a form document into a form component of the catalog's registry, through its
+ * `createForm`: a document with steps renders through the registered stepper, one without as a
+ * plain form. Each field renders with its field kind's widget, label, description and the props
+ * its settings give; conditions, required fields and settings that follow an answer update as the
+ * answers change. The form validates with {@link createValidator}, so fields that do not show are
+ * not validated, and starts with each field's empty value. `onSubmit` receives the form's values,
+ * which still hold what was entered in fields that no longer show; the validator's `value` holds
+ * the answers of the fields that show, which is what a server keeps. Once `onSubmit` is done, the
+ * form gives way to the document's ending that applies, which takes the focus; without one that
+ * applies, the form stays. A document with an intro shows it and its start button first; once
+ * started, the form takes the focus. A form without steps whose document gives a `submit` label
+ * ends with its submit button.
+ *
+ * @param document - The document, as {@link readDocument} returns it.
+ * @param catalog - The catalog with the kinds the document uses and the registry that renders them.
+ * @param options - The error texts, the language and when the answers are validated.
+ * @param options.messages - The error texts, by issue code; a code left out keeps its English
+ *   text, and a code without any text gets a general one.
+ * @param options.language - The language the form shows its texts in; a language the document
+ *   does not name gives its first.
+ * @param options.validation - When the answers are validated, as a form config's `validation`.
+ * @param options.showsEnding - Whether the form gives way to the ending that applies once it is
+ *   submitted and `onSubmit` is done.
+ * @param options.startButton - The button that starts the form after the intro; it receives
+ *   `label` and `onStart`.
+ * @param options.submitButton - The button that submits a form without steps; it receives
+ *   `label`.
+ * @defaultValue `options.messages`: the English texts; `options.language`: the document's first;
+ *   `options.validation`: `{ mode: 'revalidate' }`; `options.showsEnding`: `true`;
+ *   `options.startButton`: a plain `<button type="button">`; `options.submitButton`: a plain
+ *   `<button type="submit">`.
+ * @returns The form component.
+ * @throws When the document has problems, as {@link checkDocument} reports them.
+ *
+ * @example
+ * ```tsx
+ * const ChecklistForm = createDocumentForm(document, catalog, { messages: germanMessages })
+ *
+ * export const Checklist = () => <ChecklistForm options={{ onSubmit: ({ value }) => send(value) }} />
+ * ```
+ */
+export function createDocumentForm(
+  document: FormDocument,
+  catalog: Catalog<unknown, ValueType>,
+  options: DocumentFormOptions = {},
+): DocumentForm {
+  const schema = createValidator(document, catalog, options)
+  const language = languageOf(document, options.language)
+  const config = withSubmit(documentConfig(document, catalog, { schema, language }), {
+    label:
+      document.steps !== undefined || document.submit === undefined
+        ? undefined
+        : resolveFixedText(document.submit, language),
+    Button: options.submitButton ?? SubmitButton,
+  })
+  // The registry's `createForm` types a config written in code; a document's is known at runtime.
+  const registry = catalog.registry as CreatesForms & BlockRenderer
+  const Form = registry.createForm(
+    options.validation === undefined ? config : { ...config, validation: options.validation },
+  )
+  const Ended =
+    options.showsEnding === false || document.endings === undefined
+      ? Form
+      : withEnding(Form, {
+          registry,
+          layoutOf: (values) => endingLayoutOf(document, catalog, { values, language }),
+        })
+  if (document.intro === undefined) {
+    return Ended
+  }
+  return withIntro(Ended, {
+    registry,
+    // The intro shows before any answer; `checkDocument` refuses texts in it that name one.
+    layout: blockLayoutOf(document.intro.items, { catalog, answers: NO_ANSWERS, language }),
+    label: resolveFixedText(document.intro.start, language),
+    StartButton: options.startButton ?? StartButton,
+  })
+}

@@ -12,7 +12,9 @@ import { ComboboxFieldPreview } from './previews/combobox-field'
 import { DateFieldPreview } from './previews/date-field'
 import { DateRangeFieldPreview } from './previews/date-range-field'
 import { DateTimeFieldPreview } from './previews/date-time-field'
+import { HeadingPreview } from './previews/heading'
 import { MultiComboboxFieldPreview } from './previews/multi-combobox-field'
+import { NoticePreview } from './previews/notice'
 import { NumberFieldPreview } from './previews/number-field'
 import { PasswordFieldPreview } from './previews/password-field'
 import { RadioFieldPreview } from './previews/radio-field'
@@ -34,7 +36,9 @@ const PREVIEWS = {
   'date-field': DateFieldPreview,
   'date-range-field': DateRangeFieldPreview,
   'date-time-field': DateTimeFieldPreview,
+  heading: HeadingPreview,
   'multi-combobox-field': MultiComboboxFieldPreview,
+  notice: NoticePreview,
   'number-field': NumberFieldPreview,
   'password-field': PasswordFieldPreview,
   'radio-field': RadioFieldPreview,

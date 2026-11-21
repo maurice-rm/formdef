@@ -230,6 +230,55 @@ describe('an array entry without a frame', () => {
     expect(inputNames()).toEqual(['tags[0]'])
   })
 
+  it('hands a condition and derived props inside an item where they are and the item', () => {
+    const emailItem = {
+      widget: 'text',
+      visibleWhen: (_values: Address, at: { item: unknown }) =>
+        (at.item as Contact).name !== 'Grace',
+      props: (_values: Address, at: { path: string; item: unknown }) => ({
+        label: `Email of ${(at.item as Contact).name} at ${at.path}`,
+      }),
+    }
+    render(<BookForm fields={bookEntry({ fields: { name: nameItem, email: emailItem } })} />)
+
+    expect(screen.getByLabelText('Email of Ada at book[0].email')).toBeDefined()
+    expect(screen.queryByLabelText(/Email of Grace/)).toBeNull()
+
+    fireEvent.change(screen.getAllByLabelText('Name')[1] as HTMLElement, {
+      target: { value: 'Hopper' },
+    })
+
+    expect(screen.getByLabelText('Email of Hopper at book[1].email')).toBeDefined()
+  })
+
+  it('reads a condition inside an item again only when a path in its dependsOn changes', () => {
+    const emailItem = (dependsOn: string[]) => ({
+      widget: 'text',
+      props: { label: 'Email' },
+      visibleWhen: (_values: Address, at: { item: unknown }) =>
+        (at.item as Contact).name !== 'Grace',
+      dependsOn,
+    })
+    const renameGrace = (): void => {
+      fireEvent.change(screen.getAllByLabelText('Name')[1] as HTMLElement, {
+        target: { value: 'Hopper' },
+      })
+    }
+
+    const { unmount } = render(
+      <BookForm fields={bookEntry({ fields: { name: nameItem, email: emailItem(['tags']) } })} />,
+    )
+    renameGrace()
+    expect(screen.getAllByLabelText('Email')).toHaveLength(1)
+    unmount()
+
+    render(
+      <BookForm fields={bookEntry({ fields: { name: nameItem, email: emailItem(['book']) } })} />,
+    )
+    renameGrace()
+    expect(screen.getAllByLabelText('Email')).toHaveLength(2)
+  })
+
   it('hides while its condition fails', () => {
     render(<BookForm fields={bookEntry(contactItem, { visibleWhen: () => false })} />)
 

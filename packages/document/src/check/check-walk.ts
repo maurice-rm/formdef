@@ -1,0 +1,30 @@
+import type { BlockKind } from '../kinds/block-kind'
+import type { DisplayKind } from '../kinds/display-kind'
+import type { FieldKind } from '../kinds/field-kind'
+import type { ValueType } from '../kinds/value-type'
+import type { EarlierField } from './earlier-field'
+import type { FoundProblem } from './problem'
+
+/** What a check of one document carries along while it walks the document in order. */
+export type CheckWalk = {
+  /** The field kind of this name, or `undefined` when none is registered. */
+  kindNamed: (name: string) => FieldKind<unknown> | undefined
+  /** The block kind of this name, or `undefined` when none is registered. */
+  blockKindNamed: (name: string) => BlockKind<unknown> | undefined
+  /** The display kind of this name, or `undefined` when none is registered. */
+  displayKindNamed: (name: string) => DisplayKind<unknown> | undefined
+  /** The value type of this name, or `undefined` when the catalog holds none. */
+  valueTypeNamed: (name: string) => ValueType | undefined
+  /** The languages the document names; `undefined` when its texts are strings. */
+  languages: readonly string[] | undefined
+  allFieldKeys: ReadonlySet<string>
+  earlier: Map<string, EarlierField>
+  /**
+   * The answers inside a repeat already left, which nothing outside the repeat may name, with the
+   * key of their repeat.
+   */
+  repeatOfField: Map<string, string>
+  /** The answers an entry of each repeat already left reads: its own and those before it. */
+  repeatScopes: Map<string, ReadonlyMap<string, EarlierField>>
+  problems: FoundProblem[]
+}

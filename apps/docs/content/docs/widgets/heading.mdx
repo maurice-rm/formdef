@@ -1,0 +1,56 @@
+---
+title: Heading
+description: A title for the fields after it.
+---
+
+<WidgetPreview name="heading" />
+
+## Installation
+
+```npm
+npx shadcn@latest add @formdef/heading
+```
+
+Register it as a form component in `lib/formdef/index.tsx`, as `formComponents: { Heading }`, and
+place it with a layout entry. The `heading` block kind of the [shipped catalog](/documents/kinds#the-shipped-catalog)
+renders with it.
+
+## Usage
+
+```tsx
+import { createRegistry } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+import { TextField } from '@/components/formdef/text-field'
+import { Heading } from '@/components/formdef/heading'
+const { fieldContext, formContext } = createFormHookContexts()
+const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField }, formComponents: { Heading } })
+// ---cut---
+export const HeatingForm = createForm({
+  schema: z.object({ boiler: z.string(), year: z.string() }),
+  defaultValues: { boiler: '', year: '' },
+  fields: {
+    boiler: { widget: 'text', props: { label: 'Boiler' } },
+    year: { widget: 'text', props: { label: 'Year built' } },
+  },
+  layout: [{ component: 'Heading', props: { children: 'Heating' } }, 'boiler', 'year'],
+})
+```
+
+The heading is an `h3`, below the page's heading and the stepper's `h2`. In a form without steps
+nothing sits between the page's heading and it, so give it `level: 2` in its props there, or
+register it with `level={2}`:
+`formComponents: { Heading: (props) => <Heading {...props} level={2} /> }`. In a
+[form document](/documents/kinds#the-shipped-catalog), the `heading` block kind takes
+the level as its setting `level`. A section is the better choice when the fields belong together.
+
+## Props
+
+<AutoTypeTable
+  path="../../packages/shadcn/components/formdef/heading.tsx"
+  type="React.ComponentProps<typeof Heading>"
+/>
+
+## Source
+
+<WidgetSource name="heading" />

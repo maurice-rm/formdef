@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/lib/formdef": ["./tests/helpers/full-registry.tsx"],
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["lib/formdef/catalog.ts", "tests/catalog.test.tsx"],
+  "exclude": []
+}

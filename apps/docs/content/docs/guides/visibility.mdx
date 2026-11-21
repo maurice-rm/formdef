@@ -61,6 +61,58 @@ In a form of [steps](/guides/steps#three-rules-for-the-schema), a hidden field w
 schema rejects keeps its step from moving on, with no error to see; let the schema accept every
 value a hidden field can hold, including one typed before the condition hid it.
 
+## Inside an array item
+
+A condition and a props function take a second argument, `at`, with where the entry renders:
+`at.path` is its path, such as `household[1].since`, and `at.item` is the value of the innermost
+[array](/guides/arrays) item it belongs to, `undefined` outside arrays. That is how an entry depends
+on its own item rather than on all of them:
+
+```tsx
+import { createRegistry, type FieldOf } from '@formdef/core'
+import { createFormHookContexts } from '@tanstack/react-form'
+import { z } from 'zod'
+const { fieldContext, formContext } = createFormHookContexts()
+const TextField = (_: FieldOf<string> & { label: string }) => null
+const CheckboxField = (_: FieldOf<boolean> & { label: string }) => null
+const { createForm } = createRegistry({
+  fieldContext,
+  formContext,
+  widgets: { text: TextField, checkbox: CheckboxField },
+})
+// ---cut---
+const person = z.object({ name: z.string(), works: z.boolean(), since: z.string() })
+
+type Person = z.infer<typeof person>
+
+export const Household = createForm({
+  schema: z.object({ household: z.array(person) }),
+  defaultValues: { household: [] },
+  fields: {
+    household: {
+      newItem: () => ({ name: '', works: false, since: '' }),
+      addLabel: 'Add person',
+      removeLabel: (member, index) => `Remove ${member.name || `person ${index + 1}`}`,
+      item: {
+        fields: {
+          name: { widget: 'text', props: { label: 'Name' } },
+          works: { widget: 'checkbox', props: { label: 'Works' } },
+          since: {
+            widget: 'text',
+            props: { label: 'Working since' },
+            visibleWhen: (_values, at) => (at.item as Person).works,
+          },
+        },
+      },
+    },
+  },
+})
+```
+
+`at.item` is typed `unknown`, so name its type where you read it. With [`dependsOn`](#dependson),
+a function that reads its item names the array, such as `household`, so a change in any item runs
+it again. A step's condition and props get `at` too, with an empty path and no item.
+
 ## Derived props
 
 `props` may be a function of the form's values, on a leaf, a section, a row, a form component and
@@ -102,8 +154,8 @@ though: TypeScript rejects them on an object you write directly, not on one a fu
 ## dependsOn
 
 `dependsOn` lists the paths a condition or a props function reads, from anywhere in the form:
-`country`, `address.zip`, `contacts[0].name`. The function then runs again only when one of them
-changes.
+`country`, `address.zip`, `contacts[0].name`, or a whole array such as `contacts`. The function
+then runs again only when one of them changes.
 
 - **Derived props need it.** Their result is the values themselves, so without `dependsOn` the
   widget re-renders on every change anywhere in the form.

@@ -1,6 +1,10 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
-import { apiPageOf, readCoreExports } from './core-exports'
+import { API_ROUTES, apiPageOf, type DocumentedPackage, readExports } from './package-exports'
+
+const DOCUMENT_API_PAGES = join(process.cwd(), 'content/docs/documents/api')
+const PAGE_EXTENSION = '.mdx'
 
 /** A tag that names what it describes: a type parameter or a parameter. */
 export type NamedTag = { name: string; text: string }
@@ -28,8 +32,24 @@ const declarationOf = (name: string): RegExp =>
     String.raw`/\*\*((?:(?!\*/)[\s\S])*)\*/\s*export (?:declare )?(?:const|function|type|interface) ${name}\b`,
   )
 
+const CORE_EXPORTS = readExports('core')
+
+// An export of `@formdef/document` without a page of its own is described in the guides.
+const pageOf = (target: string): string | undefined => {
+  const page = apiPageOf(target)
+  if (CORE_EXPORTS.has(target)) {
+    return `${API_ROUTES.core}/${page}`
+  }
+  return existsSync(join(DOCUMENT_API_PAGES, `${page}${PAGE_EXTENSION}`))
+    ? `${API_ROUTES.document}/${page}`
+    : undefined
+}
+
 const linkedText = (text: string): string =>
-  text.replace(INLINE_LINK, (_, target: string) => `[\`${target}\`](/api/${apiPageOf(target)})`)
+  text.replace(INLINE_LINK, (_, target: string) => {
+    const page = pageOf(target)
+    return page === undefined ? `\`${target}\`` : `[\`${target}\`](${page})`
+  })
 
 const commentLinesOf = (comment: string): string[] =>
   comment
@@ -115,14 +135,14 @@ const parse = (comment: string): TsDoc => {
 }
 
 /**
- * Reads the TSDoc of an export of `@formdef/core` from its source.
+ * Reads the TSDoc of an export of a formdef package from its source.
  *
- * @throws When `@formdef/core` has no export of that name, or its declaration carries no TSDoc.
+ * @throws When the package has no export of that name, or its declaration carries no TSDoc.
  */
-export const readTsDoc = (name: string): TsDoc => {
-  const file = readCoreExports().get(name)
+export const readTsDoc = (name: string, documented: DocumentedPackage): TsDoc => {
+  const file = readExports(documented).get(name)
   if (file === undefined) {
-    throw new Error(`formdef: @formdef/core has no export "${name}".`)
+    throw new Error(`formdef: @formdef/${documented} has no export "${name}".`)
   }
 
   const comment = declarationOf(name).exec(readFileSync(file, 'utf8'))?.[1]

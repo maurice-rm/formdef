@@ -1,5 +1,6 @@
 import { describe, expectTypeOf, it } from 'vitest'
 
+import type { EntryPlace } from './entry-place'
 import type { Visibility } from './visibility'
 
 type Values = {
@@ -18,6 +19,17 @@ describe('Visibility', () => {
         expectTypeOf(values).toEqualTypeOf<Values>()
 
         return values.age >= 18
+      },
+    }
+    expectTypeOf(options).not.toBeAny()
+  })
+
+  it('gives visibleWhen where the entry renders, with the item of an array', () => {
+    const options: EntryVisibility = {
+      visibleWhen: (_values, at) => {
+        expectTypeOf(at).toEqualTypeOf<EntryPlace>()
+
+        return at.path.startsWith('contacts[') && at.item !== undefined
       },
     }
     expectTypeOf(options).not.toBeAny()

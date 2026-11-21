@@ -12,10 +12,11 @@ import type { BodyProps, StepperProps, StepState } from '../config/structure'
 import { Fields, type FieldsProps } from '../render/fields'
 import type { RenderForm } from '../render/render-form'
 import { warnOnce } from '../render/warn-once'
-import { fieldId } from '../widget/field-id'
 import { hasDueError } from '../widget/has-due-error'
 import { StepSubmitted } from '../widget/step-submitted'
-import type { RootStep, RootSteps } from './root-steps'
+import { firstControlOf } from './first-control-of'
+import { focusControl } from './focus-control'
+import { type RootStep, type RootSteps, STEP_PLACE } from './root-steps'
 
 type FieldMeta =
   | { errors?: readonly unknown[]; isValid: boolean; isBlurred: boolean; isDirty: boolean }
@@ -27,6 +28,8 @@ type StepFormState = {
   fieldMeta: Readonly<Record<string, FieldMeta>>
   submissionAttempts: number
   isSubmitting: boolean
+  /** The form's own errors by cause; `onSubmit` holds one an `onSubmitAsync` returned. */
+  errorMap: { onSubmit?: unknown }
 }
 
 type StepGroup = { handleSubmit: () => Promise<void> }
@@ -62,6 +65,8 @@ type SteppedFormProps = {
   requiredPaths: ReadonlySet<string>
   /** Receives what a submit of the `<form>` element does: `next` of the current step. */
   submitStep: RefObject<(() => void) | undefined>
+  /** What the config passes the stepper besides what the form gives it. */
+  stepperProps: Readonly<Record<string, unknown>> | undefined
 }
 
 type GroupHandleProps = {
@@ -81,6 +86,10 @@ type StepChecks = ReadonlyMap<string, StepCheck>
 const NO_STEPPER = 'formdef: the form has steps, but no structure.stepper is registered.'
 
 const HIDDEN_VALUES_RULE = 'What a condition hides must accept every value it can hold.'
+
+const WIDER_KEY_TOPIC = 'widerKey'
+const UNRENDERED_ERRORS_TOPIC = 'unrenderedErrors'
+const HIDDEN_STEP_TOPIC = 'hiddenStep'
 
 const isUnder = (path: string, key: string): boolean =>
   path === key || path.startsWith(`${key}.`) || path.startsWith(`${key}[`)
@@ -123,7 +132,17 @@ const withoutCheck = (checks: StepChecks, key: string): StepChecks => {
 }
 
 const isShown = (step: RootStep, values: unknown): boolean =>
-  step.visibleWhen === undefined || step.visibleWhen(values)
+  step.visibleWhen === undefined || step.visibleWhen(values, STEP_PLACE)
+
+// A step that submits is the last that shows; the steps after it do not, whatever their condition.
+const shownStepsOf = (steps: RootSteps, values: unknown): boolean[] => {
+  let hasEnded = false
+  return steps.map((step) => {
+    const isStepShown = !hasEnded && isShown(step, values)
+    hasEnded ||= isStepShown && step.submitsWhen?.(values) === true
+    return isStepShown
+  })
+}
 
 const firstShownKey = (steps: RootSteps, values: unknown): string =>
   (steps.find((step) => isShown(step, values)) ?? steps[0]).step
@@ -134,7 +153,7 @@ const hasSameItems = (first: readonly boolean[], second: readonly boolean[]): bo
 type StepProps = Readonly<Record<string, unknown>> | undefined
 
 const stepPropsOf = (step: RootStep, values: unknown): StepProps => {
-  const props = typeof step.props === 'function' ? step.props(values) : step.props
+  const props = typeof step.props === 'function' ? step.props(values, STEP_PLACE) : step.props
 
   return typeof props === 'object' && props !== null ? props : undefined
 }
@@ -163,15 +182,9 @@ const erringFieldPathsUnder = (form: StepForm, key: string): string[] =>
 const isRendered = (form: StepForm, path: string): boolean =>
   Boolean(form.fieldInfo[path]?.instance)
 
-const comesFirst = (first: HTMLElement, second: HTMLElement): number =>
-  first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
-
 /** The control of the step's first invalid field in document order, if one is rendered. */
 const firstInvalidControl = (form: StepForm, key: string): HTMLElement | undefined =>
-  erringFieldPathsUnder(form, key)
-    .map((path) => document.getElementById(fieldId(form.formId, path)))
-    .filter((control) => control !== null)
-    .sort(comesFirst)[0]
+  firstControlOf(form.formId, erringFieldPathsUnder(form, key))
 
 // TanStack's form group counts every field whose path starts with its name, separator or not.
 const warnAboutWiderKeys = (steps: RootSteps, fields: FieldsProps['fields']): void => {
@@ -182,6 +195,7 @@ const warnAboutWiderKeys = (steps: RootSteps, fields: FieldsProps['fields']): vo
     if (wider !== undefined) {
       warnOnce(
         step,
+        WIDER_KEY_TOPIC,
         `formdef: the step "${step.step}" starts the root key "${wider}"; its form group would count the fields of "${wider}" as its own.`,
       )
     }
@@ -196,6 +210,7 @@ const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): 
   if (erring.length === 0 && holdsOwnError(form, key)) {
     warnOnce(
       owner,
+      UNRENDERED_ERRORS_TOPIC,
       `formdef: the step "${key}" is held back by an error on the step itself, which no field shows. A rule across the fields of a step puts its path on one of them.`,
     )
     return
@@ -206,17 +221,20 @@ const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): 
 
   warnOnce(
     owner,
+    UNRENDERED_ERRORS_TOPIC,
     `formdef: the step "${key}" is held back by errors on fields it does not render: ${erring.join(', ')}. ${HIDDEN_VALUES_RULE}`,
   )
 }
 
-// A hidden step has a condition; its function is a stable owner the other warnings do not use.
-const warnAboutHiddenSteps = (steps: RootSteps, fieldMeta: StepFormState['fieldMeta']): void => {
+type SubmitState = { fieldMeta: StepFormState['fieldMeta']; shownKeys: ReadonlySet<string> }
+
+const warnAboutHiddenSteps = (steps: RootSteps, { fieldMeta, shownKeys }: SubmitState): void => {
   for (const step of steps) {
     const erring = erringPathsUnder(fieldMeta, step.step)
-    if (erring.length > 0 && step.visibleWhen !== undefined) {
+    if (erring.length > 0 && !shownKeys.has(step.step)) {
       warnOnce(
-        step.visibleWhen,
+        step,
+        HIDDEN_STEP_TOPIC,
         `formdef: the form fails to submit through errors in the hidden step "${step.step}": ${erring.join(', ')}. ${HIDDEN_VALUES_RULE}`,
       )
     }
@@ -253,6 +271,7 @@ export const SteppedForm = ({
   steps,
   requiredPaths,
   submitStep,
+  stepperProps,
 }: SteppedFormProps): ReactNode => {
   const [currentKey, setCurrentKey] = useState(() => firstShownKey(steps, form.store.get().values))
   const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set([currentKey]))
@@ -264,11 +283,9 @@ export const SteppedForm = ({
   // A recheck submits the step's group, which a remount reset, so a mode like `revalidate` checks
   // on change again; it neither moves on nor takes the focus.
   const recheckingKey = useRef<string | undefined>(undefined)
-  const shownByCondition = useSelector(
-    form.store,
-    (state) => steps.map((step) => isShown(step, state.values)),
-    { compare: hasSameItems },
-  )
+  const shownByCondition = useSelector(form.store, (state) => shownStepsOf(steps, state.values), {
+    compare: hasSameItems,
+  })
   const hasErrors = useSelector(
     form.store,
     (state) => steps.map((step) => erringPathsUnder(state.fieldMeta, step.step).length > 0),
@@ -288,12 +305,14 @@ export const SteppedForm = ({
   )
   const stepProps = useSelector(
     form.store,
-    (state) =>
-      steps.map((step) =>
-        step.step === currentKey || isShown(step, state.values)
+    (state) => {
+      const shown = shownStepsOf(steps, state.values)
+      return steps.map((step, position) =>
+        step.step === currentKey || shown[position] === true
           ? stepPropsOf(step, state.values)
           : undefined,
-      ),
+      )
+    },
     { compare: hasSameStepProps },
   )
   const wasSubmitted = useSelector(form.store, (state) => state.submissionAttempts > 0)
@@ -330,7 +349,7 @@ export const SteppedForm = ({
       warnAboutUnrenderedErrors(form, currentKey, fields[currentKey] ?? steps)
       return
     }
-    control.focus()
+    focusControl(control)
   }, [isFocusPending, form, currentKey, fields, steps])
 
   const currentGroup = useRef<StepGroup | undefined>(undefined)
@@ -415,7 +434,10 @@ export const SteppedForm = ({
     )
     const erring = visible.find(({ step }) => erringPathsUnder(fieldMeta, step.step).length > 0)
     if (erring === undefined) {
-      warnAboutHiddenSteps(steps, fieldMeta)
+      warnAboutHiddenSteps(steps, {
+        fieldMeta,
+        shownKeys: new Set(visible.map(({ step }) => step.step)),
+      })
       return
     }
     moveTo(erring.step.step)
@@ -457,6 +479,7 @@ export const SteppedForm = ({
 
   return (
     <Stepper
+      {...stepperProps}
       steps={states}
       current={current}
       next={next}

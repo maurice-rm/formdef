@@ -4,6 +4,7 @@ import { describe, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
 
 import type { FormHandle } from '../config/form-handle'
+import type { StepperProps } from '../config/structure'
 import type { FieldOf } from '../widget/field-of'
 import { createRegistry } from './create-registry'
 import type { FormConfig } from './form-config'
@@ -13,6 +14,7 @@ const { fieldContext, formContext } = createFormHookContexts()
 declare const TextField: ComponentType<FieldOf<string> & { label: string; required?: boolean }>
 declare const CheckboxField: ComponentType<FieldOf<boolean> & { label: string }>
 declare const SubmitButton: ComponentType<{ label: string }>
+declare const Stepper: ComponentType<StepperProps & { variant?: 'circles' | 'rail' }>
 
 const registry = createRegistry({
   fieldContext,
@@ -147,6 +149,58 @@ describe('FormConfig', () => {
       defaultState: { values: { email: '', password: '', remember: false } },
     }
     expectTypeOf(config).not.toBeAny()
+  })
+
+  it("takes the stepper's own props, checked against the registered stepper", () => {
+    const stepped = createRegistry({
+      fieldContext,
+      formContext,
+      widgets: { text: TextField },
+      structure: { stepper: Stepper },
+    })
+    const steps = z.object({ contact: z.object({ email: z.email() }) })
+    type SteppedConfig = FormConfig<typeof stepped, typeof steps>
+
+    const config: SteppedConfig = {
+      schema: steps,
+      fields: { contact: { fields: { email: { widget: 'text', props: { label: 'Email' } } } } },
+      layout: [{ step: 'contact', label: 'Contact' }],
+      stepper: { props: { variant: 'rail' } },
+    }
+    const wrong: SteppedConfig = {
+      schema: steps,
+      fields: { contact: { fields: { email: { widget: 'text', props: { label: 'Email' } } } } },
+      layout: [{ step: 'contact', label: 'Contact' }],
+      // @ts-expect-error the stepper's variant is 'circles' or 'rail'
+      stepper: { props: { variant: 'bar' } },
+    }
+    stepped.createForm({
+      schema: steps,
+      defaultValues: { contact: { email: '' } },
+      fields: { contact: { fields: { email: { widget: 'text', props: { label: 'Email' } } } } },
+      layout: [{ step: 'contact', label: 'Contact' }],
+      // @ts-expect-error the stepper has no prop `tone`
+      stepper: { props: { tone: 'loud' } },
+    })
+    expectTypeOf(config).not.toBeAny()
+    expectTypeOf(wrong).not.toBeAny()
+  })
+
+  it('takes no stepper props without a registered stepper', () => {
+    const config: SignInConfig = {
+      schema,
+      fields: {},
+      // @ts-expect-error the registry has no stepper
+      stepper: { props: {} },
+    }
+    const empty: SignInConfig = {
+      schema,
+      fields: {},
+      // @ts-expect-error the registry has no stepper
+      stepper: {},
+    }
+    expectTypeOf(config).not.toBeAny()
+    expectTypeOf(empty).not.toBeAny()
   })
 
   it('rejects a key neither formdef nor TanStack knows', () => {

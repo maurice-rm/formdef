@@ -16,6 +16,8 @@
   "include": [
     "src/consumer.ts",
     "src/consumer.cts",
+    "src/document-consumer.ts",
+    "src/document-consumer.cts",
     "src/form.tsx",
     "src/registry.tsx",
     "src/type-cost/form.ts"

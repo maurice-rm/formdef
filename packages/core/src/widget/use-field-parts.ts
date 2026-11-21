@@ -1,5 +1,5 @@
 import { useSelector } from '@tanstack/react-form'
-import { use } from 'react'
+import { type ReactNode, use } from 'react'
 
 import type { FieldApiOf } from './field-of'
 import { type FieldParts, fieldPartsFor } from './field-parts'
@@ -20,8 +20,8 @@ import { StepSubmitted } from './step-submitted'
  * @typeParam TValue - The value type of the field.
  * @param field - The field the widget renders.
  * @param options - What the widget renders besides the control.
- * @param options.description - The description the widget renders below its label, if any. Only
- *   whether it is a non-empty string is read.
+ * @param options.description - The description the widget renders below its label, if any: text
+ *   or React elements, such as a formatted text. Only whether it renders something is read.
  * @defaultValue `options.description`: `undefined`, no description is rendered.
  * @returns The props for the control, the ids for the description and error elements, whether an
  *   error is due, and the error texts.
@@ -44,7 +44,7 @@ import { StepSubmitted } from './step-submitted'
  */
 export function useFieldParts<TValue>(
   field: FieldApiOf<TValue>,
-  options: { description?: string | undefined } = {},
+  options: { description?: ReactNode } = {},
 ): FieldParts {
   const wasFormSubmitted = useSelector(field.form.store, (state) => state.submissionAttempts > 0)
   const wasStepSubmitted = use(StepSubmitted)
