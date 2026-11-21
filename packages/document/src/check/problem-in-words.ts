@@ -1,8 +1,7 @@
+import { findNodeAt } from '../find-node-at'
 import type { DocumentNode, FormDocument } from '../form-document'
 import { isFollowing } from '../is-following'
-import { isLeaf } from '../is-leaf'
 import { isStep } from '../is-step'
-import type { Position } from '../position'
 import { positionOfPath } from '../position-of-path'
 import { resolveFixedText } from '../resolve-fixed-text'
 import type { VaryingText } from '../varying-text'
@@ -16,16 +15,6 @@ type Wording = {
 }
 
 type Message = (params: ProblemParams[ProblemCode] & { label: string }) => string
-
-const nodeAt = (document: FormDocument, position: Position): DocumentNode | undefined => {
-  const [first, ...rest] = position
-  let node: DocumentNode | undefined =
-    first === undefined ? undefined : (document.steps ?? document.items)[first]
-  for (const index of rest) {
-    node = node === undefined || isLeaf(node) ? undefined : node.items[index]
-  }
-  return node
-}
 
 // A label that follows an answer names its fallback, as no answer is given while a form is built.
 const labelText = (label: VaryingText, language: string | undefined): string =>
@@ -44,7 +33,7 @@ const labelOf = (node: DocumentNode | undefined, language: string | undefined): 
  */
 export function problemInWords(found: FoundProblem, wording: Wording): Problem {
   const position = positionOfPath(found.path)
-  const node = position === undefined ? undefined : nodeAt(wording.document, position)
+  const node = position === undefined ? undefined : findNodeAt(wording.document, position)
   const label = labelOf(node, wording.language)
   // Each code's text takes that code's params; the union of codes cannot follow one of them.
   const message = (wording.messages[found.code] ?? DEFAULT_PROBLEM_MESSAGES[found.code]) as Message
