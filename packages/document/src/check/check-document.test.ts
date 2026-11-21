@@ -1732,7 +1732,7 @@ describe('checkDocument with repeats', () => {
     ])
   })
 
-  it('reports a placeholder that names a repeat, whose entries a text cannot write', () => {
+  it('reports a placeholder that names a repeat, which writes nothing without entries', () => {
     const checked = document(repeat([name]), {
       ...works,
       label: 'Works, of {r1} residents',

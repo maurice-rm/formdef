@@ -39,8 +39,8 @@ import type { ValueLimit } from './value-limit'
  * - `invalidLanguage`: a language of the document that is no language code, such as `en_US`;
  * - `fixedText`: a placeholder in the label of a step or section, a display's setting, the intro,
  *   the submit button or the texts of a repeat, which name no answers; those of each entry name its number as `{n}`;
- * - `repeatPlaceholder`: a placeholder that names a repeat, whose entries a text cannot write; a
- *   computed `count` writes their number;
+ * - `repeatPlaceholder`: a placeholder that names a repeat, which writes nothing without entries;
+ *   a computed `count` writes their number, 0 included;
  * - `unknownParam`: a placeholder in a field's error text that its issue code has no param for;
  * - `unknownStep`: a jump to a step the document does not hold;
  * - `backwardJump`: a jump to the step itself or an earlier one, which could loop;

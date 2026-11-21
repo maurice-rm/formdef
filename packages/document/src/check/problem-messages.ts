@@ -49,7 +49,7 @@ export const DEFAULT_PROBLEM_MESSAGES: { readonly [Code in ProblemCode]: Message
   invalidLanguage: ({ language }) => `This is no language code, such as de or de-CH: ${language}.`,
   fixedText: ({ field }) => `This text names no answers, so it cannot name ${field}.`,
   repeatPlaceholder: ({ field }) =>
-    `This names the repeat ${field}; a computed count writes its number of entries.`,
+    `This names the repeat ${field}, which writes nothing without entries; a computed count writes their number.`,
   unknownParam: ({ param, code }) => `The error text for ${code} has no placeholder ${param}.`,
   unknownStep: ({ step }) => `This jumps to a step the form does not hold: ${step}.`,
   backwardJump: ({ step }) => `This jumps back to ${step}, but a jump goes forward only.`,

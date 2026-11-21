@@ -135,8 +135,9 @@ A text may name the answer of an earlier field as `{key}`, such as `"Thank you, 
 placeholder takes the answer as its value type writes it: text, a decimal or a date as entered, a
 number in the document's language, the label of the option chosen, the labels of several joined
 with commas. An answer that is empty or does not show, and a boolean, give nothing. `{{` and `}}`
-write a brace. A placeholder names no repeat; `checkDocument` reports one as `repeatPlaceholder`,
-and a computed `count` writes the number of its entries.
+write a brace. A placeholder names no repeat, which would write nothing without entries;
+`checkDocument` reports one as `repeatPlaceholder`, and a computed `count` writes the number of its
+entries, 0 included.
 
 A number, such as a computed value, is written in the language of the document, or in the
 [catalog's `language`](/documents/field-kinds#defining-a-field-kind) for a document without
