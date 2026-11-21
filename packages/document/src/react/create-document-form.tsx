@@ -1,5 +1,5 @@
 import type { FormProps, Validation } from '@formdef/core'
-import { type ComponentType, createElement, useState } from 'react'
+import { type ComponentType, useState } from 'react'
 
 import { NO_ANSWERS } from '../evaluate/no-answers'
 import type { FormDocument } from '../form-document'
@@ -64,7 +64,7 @@ const withSubmit = (
 ): DocumentConfig =>
   label === undefined
     ? config
-    : { ...config, layout: [...config.layout, { render: () => createElement(Button, { label }) }] }
+    : { ...config, layout: [...config.layout, { render: () => <Button label={label} /> }] }
 
 type SubmitArgs = Parameters<
   NonNullable<NonNullable<FormProps<DocumentValidator>['options']>['onSubmit']>
@@ -80,13 +80,13 @@ const withEnding = (Form: DocumentForm, { registry, layoutOf }: EndingSource): D
   function DocumentFormWithEnding(props) {
     const [layout, setLayout] = useState<unknown[] | undefined>(undefined)
     if (layout !== undefined) {
-      return createElement(EndingView, { registry, layout })
+      return <EndingView registry={registry} layout={layout} />
     }
     const onSubmit = async (submit: SubmitArgs): Promise<void> => {
       await props.options?.onSubmit?.(submit)
       setLayout(layoutOf(submit.value))
     }
-    return createElement(Form, { ...props, options: { ...props.options, onSubmit } })
+    return <Form {...props} options={{ ...props.options, onSubmit }} />
   }
 
 type CreatesForms = {

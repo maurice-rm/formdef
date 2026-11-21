@@ -1,7 +1,8 @@
-import { type ComponentType, createElement, Fragment, useCallback, useState } from 'react'
+import { type ComponentType, useState } from 'react'
 
 import { type BlockRenderer, BlocksView } from './blocks-view'
 import type { DocumentForm } from './document-form'
+import { FocusOnShow } from './focus-on-show'
 import type { StartButtonProps } from './start-button'
 
 /** What a form needs to open with its intro. */
@@ -17,17 +18,21 @@ export type IntroSource = {
  * takes the focus so a person using a screen reader goes on with it.
  */
 export function withIntro(Form: DocumentForm, intro: IntroSource): DocumentForm {
+  const { StartButton } = intro
   return function DocumentFormWithIntro(props) {
     const [hasStarted, setHasStarted] = useState(false)
-    const takeFocus = useCallback((node: HTMLDivElement | null) => node?.focus(), [])
     if (hasStarted) {
-      return createElement('div', { ref: takeFocus, tabIndex: -1 }, createElement(Form, props))
+      return (
+        <FocusOnShow>
+          <Form {...props} />
+        </FocusOnShow>
+      )
     }
-    return createElement(
-      Fragment,
-      null,
-      createElement(BlocksView, { registry: intro.registry, layout: intro.layout }),
-      createElement(intro.StartButton, { label: intro.label, onStart: () => setHasStarted(true) }),
+    return (
+      <>
+        <BlocksView registry={intro.registry} layout={intro.layout} />
+        <StartButton label={intro.label} onStart={() => setHasStarted(true)} />
+      </>
     )
   }
 }

@@ -1,6 +1,7 @@
-import { type ReactNode, useCallback } from 'react'
+import type { ReactNode } from 'react'
 
 import { type BlockRenderer, BlocksView } from './blocks-view'
+import { FocusOnShow } from './focus-on-show'
 
 /**
  * The blocks of an ending. It takes the focus once it shows, so a person using a screen reader
@@ -13,11 +14,9 @@ export function EndingView({
   registry: BlockRenderer
   layout: unknown[]
 }): ReactNode {
-  const takeFocus = useCallback((node: HTMLDivElement | null) => node?.focus(), [])
-
   return (
-    <div ref={takeFocus} tabIndex={-1}>
+    <FocusOnShow>
       <BlocksView registry={registry} layout={layout} />
-    </div>
+    </FocusOnShow>
   )
 }
