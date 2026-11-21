@@ -1,10 +1,11 @@
 import { ENTRY_NUMBER } from '../entry-number'
-import { placeholdersOf } from '../placeholders-of'
 import type { Text } from '../text'
-import { translationsOf } from '../translations-of'
 import { checkTranslations } from './check-translations'
 import type { CheckWalk } from './check-walk'
+import { placeholdersOutside } from './placeholders-outside'
 import { report } from './report'
+
+const ENTRY_NUMBER_ONLY: readonly string[] = [ENTRY_NUMBER]
 
 /**
  * Checks a text of each entry of a repeat, its title or the label of its remove button, against
@@ -13,11 +14,10 @@ import { report } from './report'
  */
 export function checkNumberedText(text: Text, at: { walk: CheckWalk; path: string }): void {
   checkTranslations(text, at)
-  for (const translation of translationsOf(text, at.path)) {
-    for (const field of placeholdersOf(translation.text)) {
-      if (field !== ENTRY_NUMBER) {
-        report(at.walk, { code: 'fixedText', path: translation.path, params: { field } })
-      }
-    }
+  for (const { placeholder, path } of placeholdersOutside(text, {
+    path: at.path,
+    allowed: ENTRY_NUMBER_ONLY,
+  })) {
+    report(at.walk, { code: 'fixedText', path, params: { field: placeholder } })
   }
 }

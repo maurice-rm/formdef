@@ -1,11 +1,10 @@
 import type { FieldItem } from '../form-document'
 import { ISSUE_PARAM_NAMES, type IssueParams, LABEL_PARAM } from '../issue-params'
-import { placeholdersOf } from '../placeholders-of'
 import type { Text } from '../text'
-import { translationsOf } from '../translations-of'
 import { checkTranslations } from './check-translations'
 import { checkVaryingText } from './check-varying-text'
 import type { CheckWalk } from './check-walk'
+import { placeholdersOutside } from './placeholders-outside'
 import { report } from './report'
 
 type At = { walk: CheckWalk; path: string }
@@ -18,13 +17,9 @@ const checkParams = (text: Text, { at, code }: { at: At; code: string }): void =
   if (!isKnownCode(code)) {
     return
   }
-  const known = [LABEL_PARAM, ...ISSUE_PARAM_NAMES[code]]
-  for (const translation of translationsOf(text, at.path)) {
-    for (const param of placeholdersOf(translation.text)) {
-      if (!known.includes(param)) {
-        report(at.walk, { code: 'unknownParam', path: translation.path, params: { param, code } })
-      }
-    }
+  const allowed = [LABEL_PARAM, ...ISSUE_PARAM_NAMES[code]]
+  for (const { placeholder, path } of placeholdersOutside(text, { path: at.path, allowed })) {
+    report(at.walk, { code: 'unknownParam', path, params: { param: placeholder, code } })
   }
 }
 
