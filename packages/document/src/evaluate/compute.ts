@@ -1,7 +1,12 @@
-import type { Condition } from '../condition'
 import { dayOf } from '../day-of'
-import type { Expression } from '../expression'
+import type { Expression, FieldOperation, OperandOperation } from '../expression'
 import { entryCount } from '../kinds/entry-count'
+import {
+  ACROSS_ENTRIES_OPERATIONS,
+  ARITHMETIC_OPERATIONS,
+  COUNT_WHERE,
+  isOperationIn,
+} from '../operations'
 import type { Answers } from './answers'
 import { holds } from './holds'
 
@@ -10,12 +15,10 @@ export type Computed = number | string
 
 type Arithmetic = (numbers: readonly number[]) => number | undefined
 
-type Operation = { op: string; args: readonly Expression[]; digits?: number }
-
 const DIGITS_BASE = 10
 const MS_PER_DAY = 86_400_000
 
-const ARITHMETIC: Readonly<Record<string, Arithmetic>> = {
+const ARITHMETIC: Readonly<Record<(typeof ARITHMETIC_OPERATIONS)[number], Arithmetic>> = {
   add: (numbers) => numbers.reduce((sum, number) => sum + number, 0),
   subtract: ([first = 0, second = 0]) => first - second,
   multiply: (numbers) => numbers.reduce((product, number) => product * number, 1),
@@ -49,9 +52,7 @@ const chosenIn = (
   return { values, scores }
 }
 
-type OnField = { op: string; field: string; when?: Condition }
-
-const computeOnChoices = ({ op, field }: OnField, answers: Answers): number | undefined => {
+const computeOnChoices = ({ op, field }: FieldOperation, answers: Answers): number | undefined => {
   const { values, scores } = chosenIn(field, answers)
   if (op === 'count') {
     return values.length
@@ -69,18 +70,18 @@ const numbersAcross = (field: string, answers: Answers): number[] => {
   })
 }
 
-const ACROSS_ENTRIES: Readonly<Record<string, Arithmetic>> = {
+const ACROSS_ENTRIES: Readonly<Record<(typeof ACROSS_ENTRIES_OPERATIONS)[number], Arithmetic>> = {
   sum: (numbers) => numbers.reduce((sum, number) => sum + number, 0),
-  min: (numbers) => (numbers.length === 0 ? undefined : ARITHMETIC.min?.(numbers)),
-  max: (numbers) => (numbers.length === 0 ? undefined : ARITHMETIC.max?.(numbers)),
+  min: (numbers) => (numbers.length === 0 ? undefined : ARITHMETIC.min(numbers)),
+  max: (numbers) => (numbers.length === 0 ? undefined : ARITHMETIC.max(numbers)),
 }
 
-const computeOnField = (operation: OnField, answers: Answers): number | undefined => {
+const computeOnField = (operation: FieldOperation, answers: Answers): number | undefined => {
   const { op, field, when } = operation
-  if (Object.hasOwn(ACROSS_ENTRIES, op)) {
-    return ACROSS_ENTRIES[op]?.(numbersAcross(field, answers))
+  if (isOperationIn(ACROSS_ENTRIES_OPERATIONS, op)) {
+    return ACROSS_ENTRIES[op](numbersAcross(field, answers))
   }
-  if (op === 'countWhere') {
+  if (op === COUNT_WHERE) {
     const entries = answers.entriesOf(field)
     return when === undefined ? undefined : entries.filter((entry) => holds(when, entry)).length
   }
@@ -124,7 +125,7 @@ const roundTo = (value: number, digits: number): number => {
 }
 
 const computeOperation = (
-  { op, args, digits = 0 }: Operation,
+  { op, args, digits = 0 }: OperandOperation,
   answers: Answers,
 ): Computed | undefined => {
   if (op === 'otherwise') {
@@ -145,7 +146,7 @@ const computeOperation = (
   if (op === 'round') {
     return numbers[0] === undefined ? undefined : roundTo(numbers[0], digits)
   }
-  return Object.hasOwn(ARITHMETIC, op) ? ARITHMETIC[op]?.(numbers) : undefined
+  return isOperationIn(ARITHMETIC_OPERATIONS, op) ? ARITHMETIC[op](numbers) : undefined
 }
 
 const finite = (value: Computed | undefined): Computed | undefined =>

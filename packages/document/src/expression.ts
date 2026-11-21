@@ -69,3 +69,9 @@ export type Expression =
       /** The result when no case applies. */
       otherwise: Expression
     }
+
+/** An expression that operates on its operands, such as `add`. */
+export type OperandOperation = Extract<Expression, { args: Expression[] }>
+
+/** An expression that operates on a field, such as `count` of its choices. */
+export type FieldOperation = Extract<Expression, { op: string; field: string }>

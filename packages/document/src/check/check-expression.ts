@@ -1,5 +1,12 @@
 import type { Condition } from '../condition'
-import type { Expression } from '../expression'
+import type { Expression, FieldOperation, OperandOperation } from '../expression'
+import {
+  ACROSS_ENTRIES_OPERATIONS,
+  CHOICE_OPERATIONS,
+  COUNT_WHERE,
+  isOperationIn,
+  OPERAND_OPERATIONS,
+} from '../operations'
 import { pathTo } from '../path-to'
 import { checkCondition } from './check-condition'
 import type { CheckWalk } from './check-walk'
@@ -8,8 +15,6 @@ import { report } from './report'
 import { isResultKind, type ResultKind } from './result-kind'
 
 type At = { walk: CheckWalk; path: string }
-
-type Operation = { op: string; args: readonly Expression[]; digits?: number }
 
 type OperandCount = { fewest: number; most: number }
 
@@ -32,7 +37,7 @@ const TWO: OperandCount = { fewest: 2, most: 2 }
 const ON_NUMBERS: OperationShape = { count: ANY_NUMBER, operands: NUMBER, result: NUMBER }
 const ON_TWO_NUMBERS: OperationShape = { count: TWO, operands: NUMBER, result: NUMBER }
 
-const OPERATIONS: Readonly<Record<string, OperationShape>> = {
+const OPERATIONS: Readonly<Record<(typeof OPERAND_OPERATIONS)[number], OperationShape>> = {
   add: ON_NUMBERS,
   multiply: ON_NUMBERS,
   min: ON_NUMBERS,
@@ -45,11 +50,8 @@ const OPERATIONS: Readonly<Record<string, OperationShape>> = {
   daysBetween: { count: TWO, operands: 'date', result: NUMBER },
 }
 
-const ACROSS_ENTRIES: ReadonlySet<string> = new Set(['sum', 'min', 'max'])
-const COUNT_WHERE = 'countWhere'
 const ROUND = 'round'
-
-const CHOICE_OPERATIONS: ReadonlySet<string> = new Set(['count', 'score'])
+const COUNT = 'count'
 
 // Beyond 15 digits a double holds no more, and the factor of rounding overflows past 308.
 const MOST_DIGITS = 15
@@ -72,10 +74,8 @@ const checkRead = (key: string, at: At): ResultKind | undefined => {
   return kind
 }
 
-type OnField = { op: string; field: string; when?: Condition }
-
-const checkOnChoices = ({ op, field }: OnField, at: At): ResultKind | undefined => {
-  if (!CHOICE_OPERATIONS.has(op)) {
+const checkOnChoices = ({ op, field }: FieldOperation, at: At): ResultKind | undefined => {
+  if (!isOperationIn(CHOICE_OPERATIONS, op)) {
     report(at.walk, { code: 'unknownOperation', path: `${at.path}.op`, params: { op } })
     return undefined
   }
@@ -99,7 +99,7 @@ const reportNotNamed = (
 }
 
 // A field inside a repeat is read across its entries only once the repeat is left.
-const checkAcrossEntries = ({ op, field }: OnField, at: At): ResultKind => {
+const checkAcrossEntries = ({ op, field }: FieldOperation, at: At): ResultKind => {
   const fieldAt = { walk: at.walk, path: `${at.path}.field` }
   const repeat = at.walk.repeatOfField.get(field)
   const scope = repeat === undefined ? undefined : at.walk.repeatScopes.get(repeat)
@@ -113,7 +113,7 @@ const checkAcrossEntries = ({ op, field }: OnField, at: At): ResultKind => {
 }
 
 // The condition reads each entry: the fields of the repeat and those before it.
-const checkCountWhere = ({ op, field, when }: OnField, at: At): ResultKind => {
+const checkCountWhere = ({ op, field, when }: FieldOperation, at: At): ResultKind => {
   const scope = at.walk.repeatScopes.get(field)
   if (scope === undefined) {
     const fieldAt = { walk: at.walk, path: `${at.path}.field` }
@@ -127,18 +127,18 @@ const checkCountWhere = ({ op, field, when }: OnField, at: At): ResultKind => {
   return NUMBER
 }
 
-const checkOnField = (operation: OnField, at: At): ResultKind | undefined => {
+const checkOnField = (operation: FieldOperation, at: At): ResultKind | undefined => {
   const { op, field, when } = operation
   if (when !== undefined && op !== COUNT_WHERE) {
     mismatch({ walk: at.walk, path: `${at.path}.when` }, { op, expected: 'no condition' })
   }
-  if (ACROSS_ENTRIES.has(op)) {
+  if (isOperationIn(ACROSS_ENTRIES_OPERATIONS, op)) {
     return checkAcrossEntries(operation, at)
   }
   if (op === COUNT_WHERE) {
     return checkCountWhere(operation, at)
   }
-  return op === 'count' && at.walk.repeatScopes.has(field) ? NUMBER : checkOnChoices(operation, at)
+  return op === COUNT && at.walk.repeatScopes.has(field) ? NUMBER : checkOnChoices(operation, at)
 }
 
 // Each operand is checked, then its kind against the one expected, so problems stay in order.
@@ -180,12 +180,12 @@ const checkDigits = (digits: number, { op, at }: { op: string; at: At }): void =
   }
 }
 
-const checkOperation = ({ op, args, digits }: Operation, at: At): ResultKind | undefined => {
-  const shape = Object.hasOwn(OPERATIONS, op) ? OPERATIONS[op] : undefined
-  if (shape === undefined) {
+const checkOperation = ({ op, args, digits }: OperandOperation, at: At): ResultKind | undefined => {
+  if (!isOperationIn(OPERAND_OPERATIONS, op)) {
     report(at.walk, { code: 'unknownOperation', path: `${at.path}.op`, params: { op } })
     return undefined
   }
+  const shape = OPERATIONS[op]
   checkCount(args, { op, count: shape.count, at })
   const operands = args.map((expression, index) => ({
     expression,
