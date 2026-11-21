@@ -41,7 +41,7 @@ export type BlockKindDefinition<
 > = {
   /** The block kind's name, as a document's `kind` names it. */
   name: string
-  /** The block kind's name in a builder. */
+  /** What a builder shows for the block kind. */
   label: string
   /** The form component that renders blocks of this kind. */
   component: TName

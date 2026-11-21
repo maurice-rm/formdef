@@ -13,7 +13,7 @@ export type BlockKind<TRegistry> = {
   readonly registry: TRegistry
   /** The block kind's name, as a document's `kind` names it. */
   readonly name: string
-  /** The block kind's name in a builder. */
+  /** What a builder shows for the block kind. */
   readonly label: string
   /** The name of the form component that renders blocks of this kind. */
   readonly component: string

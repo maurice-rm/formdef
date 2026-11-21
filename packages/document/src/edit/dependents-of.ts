@@ -46,7 +46,7 @@ const namedKeysUnder = (node: DocumentNode): string[] => {
 /**
  * Lists the conditions, placeholders and expressions that name a field, computed value or repeat of
  * a step or item, or the item itself, and the jumps to a step, which would lose it when the node is
- * removed: one entry per condition and key named, in document order, then one per placeholder,
+ * removed: one per condition and key named, in document order, then one per placeholder,
  * then one per expression, then one per jump. Last come the endings only the step's own jumps
  * reach, which without them take their turn in order: by their condition, or as the fallback.
  * Those inside the node go with it and are left out. A builder shows them before it removes the

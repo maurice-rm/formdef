@@ -1,9 +1,9 @@
 import type { JsonValue } from './json-value'
 
 /**
- * A condition of a form document: a comparison of one field, or several conditions combined.
- * Conditions decide whether a step, section, row or field shows, whether a field is required, and
- * which case of a varying setting applies.
+ * A condition of a form document: a comparison of one earlier answer, or several conditions
+ * combined. Conditions decide whether a step or item shows, whether a field is required, which case
+ * of a text or setting applies, whether a check passes, and whether a jump or an ending applies.
  *
  * The operators come from the value type of the field compared, and each says what it compares
  * with; {@link checkDocument} checks a document's conditions against its catalog before it is used.
@@ -17,7 +17,7 @@ import type { JsonValue } from './json-value'
  */
 export type Condition =
   | {
-      /** The key of the field compared. */
+      /** The key of the answer compared: of a field, a computed value or a repeat. */
       field: string
       /** The operator of the field's value type that compares it, such as `equals`. */
       op: string

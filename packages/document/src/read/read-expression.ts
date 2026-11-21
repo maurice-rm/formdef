@@ -40,7 +40,7 @@ const readOperation = (shape: Shape, path: string): Expression => {
   return { op, args, digits }
 }
 
-/** Reads an expression of a computed value: an answer read, a constant, an operation or a choice. */
+/** Reads an expression of a computed value: an answer read, a constant, an operation or a case expression. */
 export function readExpression(value: unknown, path: string): Expression {
   const shape = readShape(value, path)
 

@@ -4,7 +4,7 @@ description: What the fields, blocks and displays of a form document may be, def
 ---
 
 A field of a form document names its `kind`. The **field kind**, defined in code, says what that
-is: the widget that renders it, the kind of answer it gives, the settings a person may change on
+is: the widget that renders it, the type of answer it gives, the settings a person may change on
 it in a builder, the widget props those settings give, and the rules that check its answer.
 Nothing types a document's fields, so the compiler checks the props and rules against the widget
 here, once. Block kinds and display kinds do the same for content between fields and for how
@@ -57,7 +57,7 @@ export const catalog = createCatalog(registry, { fields: [area, dropdown] })
 - `name` is what a document's `kind` names; `label` is the name a builder lists. A document stores
   the name, so a field kind keeps it once documents use it.
 - `widget` names a widget of the registry. The same registry renders the documents.
-- `valueType` is the kind of answer, one of the [value types](#value-types) of the catalog, such
+- `valueType` is the type of answer, one of the [value types](#value-types) of the catalog, such
   as `valueTypes.decimal`. Every value the widget gives has to be an answer of it: a `string`
   widget serves `text`, `choice`, `decimal` (written as text, such as `120,5`) and `date` (an ISO
   string), a `string[]` widget `choices`. The value type decides the operators a
@@ -83,7 +83,7 @@ The catalog's file stays without `'use client'`: a server imports it to
 
 ## Value types
 
-A value type is the kind of answer a field gives. Every catalog holds the built-in ones,
+A value type is the type of answer a field gives. Every catalog holds the built-in ones,
 `valueTypes.text`, `choice`, `choices`, `boolean`, `number`, `decimal` and `date`. An answer that
 fits none of them, such as an address as one object, gets a value type of its own:
 

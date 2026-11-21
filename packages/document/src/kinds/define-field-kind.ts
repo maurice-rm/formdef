@@ -84,12 +84,12 @@ export type FieldKindDefinition<
 > = {
   /** The field kind's name, as a document's `kind` names it. */
   name: string
-  /** The field kind's name in a builder. */
+  /** What a builder shows for the field kind. */
   label: string
   /** The widget that renders fields of this kind. */
   widget: TName
   /**
-   * What kind of answer a field of this kind gives, such as `valueTypes.decimal`; every value the
+   * What type of answer a field of this kind gives, such as `valueTypes.decimal`; every value the
    * widget gives has to be an answer of it, and it has to be one of the catalog's. A value type
    * that reads options, such as `valueTypes.choice`, reads them from a setting named `options`.
    */

@@ -18,7 +18,7 @@ export type DisplayKind<TRegistry> = {
   readonly registry: TRegistry
   /** The display kind's name, as a document's `display.kind` names it. */
   readonly name: string
-  /** The display kind's name in a builder. */
+  /** What a builder shows for the display kind. */
   readonly label: string
   /** What the display kind applies to. */
   readonly appliesTo: DisplayTarget

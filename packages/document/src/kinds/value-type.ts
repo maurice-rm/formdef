@@ -4,7 +4,7 @@ import type { SettingOption } from './setting'
 import type { TextContext } from './text-context'
 
 /**
- * A value type of form documents: what kind of answer a field gives, how a value of that kind is
+ * A value type of form documents: what type of answer a field gives, how a value of that type is
  * recognised, the value a field starts with, when an answer counts as given, how a condition
  * compares it and how it is described. Built with {@link defineValueType}; the package ships the
  * built-in ones as {@link valueTypes}.

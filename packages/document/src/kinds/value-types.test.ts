@@ -42,7 +42,7 @@ describe('valueTypes', () => {
     expect(valueTypes.number.isFilled(0)).toBe(true)
   })
 
-  it('offer the operators of their kind of answer, and isFilled and isEmpty', () => {
+  it('offer the operators of their type of answer, and isFilled and isEmpty', () => {
     const operatorsOf = Object.fromEntries(
       Object.values(valueTypes).map(({ name, operators }) => [name, Object.keys(operators)]),
     )

@@ -9,7 +9,7 @@ import { languageOf } from '../language-of'
 
 /** What {@link endingOf} takes besides the document and its catalog. */
 export type EndingOptions = {
-  /** The answers, nested by step key in a document with steps, flat without. */
+  /** The values given, nested by step key in a document with steps, flat without. */
   values: unknown
   /**
    * The language the conditions read option texts in; a language the document does not name gives
@@ -28,8 +28,9 @@ export type EndingOptions = {
  *
  * @param document - The document, as {@link readDocument} returns it.
  * @param catalog - The catalog with the kinds the document uses.
- * @param options - The answers and the language.
- * @param options.values - The answers, nested by step key in a document with steps, flat without.
+ * @param options - The values given and the language.
+ * @param options.values - The values given, nested by step key in a document with steps, flat
+ *   without.
  * @param options.language - The language the conditions read option texts in.
  * @defaultValue `options.language`: the document's first language.
  * @returns The ending, or `undefined` when none applies or the document has none.

@@ -206,7 +206,7 @@ The field compared comes earlier in the document than the condition that names i
 does not show counts as empty in the conditions after it, whatever value it still holds.
 
 The operators belong to the value type of the field compared, and each says what it compares with,
-as a setting: `op` is a name and `value` any JSON, and
+as a setting: `op` names the operator and `value` is any JSON, and
 [`checkDocument`](/documents/builders#reading-and-checking) checks both against the catalog. The
 built-in value types have these:
 
@@ -395,7 +395,9 @@ used like an answer nobody types:
 }
 ```
 
-An expression is data, never code the package runs:
+An expression is data, never code the package runs. Its `op` names an operation, where a
+condition's `op` names an operator, and its `field` the key of an earlier answer: of a field, a
+computed value or a repeat.
 
 | Expression | Comes to |
 | --- | --- |

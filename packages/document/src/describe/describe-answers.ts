@@ -53,7 +53,7 @@ export type DescribedAnswer<TValueType extends ValueType = never> = DescribedOf<
  * @typeParam TValueType - The project's own value types, as its catalog holds them.
  */
 export type DescribedField<TValueType extends ValueType = never> = {
-  /** Marks the entry as a field. */
+  /** Marks the item as a field. */
   type: 'field'
   /** The field's key. */
   key: string
@@ -76,7 +76,7 @@ export type DescribedField<TValueType extends ValueType = never> = {
  * @typeParam TValueType - The project's own value types, as its catalog holds them.
  */
 export type DescribedComputed<TValueType extends ValueType = never> = {
-  /** Marks the entry as a computed value. */
+  /** Marks the item as a computed value. */
   type: 'computed'
   /** The computed value's key. */
   key: string
@@ -92,7 +92,7 @@ export type DescribedComputed<TValueType extends ValueType = never> = {
  * @typeParam TValueType - The project's own value types, as its catalog holds them.
  */
 export type DescribedSection<TValueType extends ValueType = never> = {
-  /** Marks the entry as a section. */
+  /** Marks the item as a section. */
   type: 'section'
   /** The section's title. */
   label: string
@@ -120,7 +120,7 @@ export type DescribedEntry<TValueType extends ValueType = never> = {
  * @typeParam TValueType - The project's own value types, as its catalog holds them.
  */
 export type DescribedRepeat<TValueType extends ValueType = never> = {
-  /** Marks the entry as a repeat. */
+  /** Marks the item as a repeat. */
   type: 'repeat'
   /** The repeat's key. */
   key: string
@@ -131,7 +131,7 @@ export type DescribedRepeat<TValueType extends ValueType = never> = {
 }
 
 /**
- * One entry of a description: a field, a computed value, a section or a repeat.
+ * One item of a description: a field, a computed value, a section or a repeat.
  *
  * @typeParam TValueType - The project's own value types, as its catalog holds them.
  */
@@ -172,7 +172,7 @@ export type AnswerDescription<TValueType extends ValueType = never> =
 
 /** What {@link describeAnswers} takes besides the document and its catalog. */
 export type DescribeOptions = {
-  /** The answers, nested by step key in a document with steps, flat without. */
+  /** The values given, nested by step key in a document with steps, flat without. */
   values: unknown
   /**
    * The language of the questions, sections and options; a language the document does not name
@@ -315,8 +315,9 @@ const describeDocument = (
  * @typeParam TValueType - The project's own value types, as its catalog holds them.
  * @param document - The document, as {@link readDocument} returns it.
  * @param catalog - The catalog with the kinds the document uses.
- * @param options - The answers and the language.
- * @param options.values - The answers, nested by step key in a document with steps, flat without.
+ * @param options - The values given and the language.
+ * @param options.values - The values given, nested by step key in a document with steps, flat
+ *   without.
  * @param options.language - The language of the questions, sections and options.
  * @defaultValue `options.language`: the document's first language.
  * @returns The description; a step or section with nothing that shows is left out, a repeat

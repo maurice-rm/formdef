@@ -2,8 +2,8 @@ import type { Condition } from './condition'
 
 /**
  * A calculation of a form document, as data the package evaluates: the answer of an earlier field
- * or computed value, a constant, an operation on expressions, or a choice by conditions, shaped
- * like a setting that follows an answer. An empty operand makes an empty result, unless the
+ * or computed value, a constant, an operation on expressions, or a case expression that picks by
+ * conditions, shaped like a setting that follows an answer. An empty operand makes an empty result, unless the
  * operation `otherwise` replaces it.
  *
  * The operations are `add`, `subtract`, `multiply`, `divide`, `min`, `max` and `round` on numbers;

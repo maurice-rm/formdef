@@ -54,7 +54,7 @@ export type DisplayKindDefinition<
 > = {
   /** The display kind's name, as a document's `display.kind` names it. */
   name: string
-  /** The display kind's name in a builder. */
+  /** What a builder shows for the display kind. */
   label: string
   /**
    * What the display kind applies to: `form` gives props to the stepper of a form of steps,

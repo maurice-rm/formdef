@@ -2,7 +2,8 @@ const KEY_LENGTH = 8
 const KEY_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
 
 /**
- * Creates a new key for a step, field or option: the prefix and eight random letters and digits.
+ * Creates a new key for a step or item, or a value for an option: the prefix and eight random
+ * letters and digits.
  * All keys of one prefix have one length, so none starts another, as step keys must not.
  *
  * @param prefix - What the key starts with, such as `s` for a step or `f` for a field.

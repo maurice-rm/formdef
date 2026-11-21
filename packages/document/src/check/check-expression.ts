@@ -224,7 +224,7 @@ const checkCases = ({ cases, otherwise }: Cases, at: At): ResultKind | undefined
  * many operands as it has, of the kinds it works on; `count` and `score` read a field that
  * chooses; `sum`, `min` and `max` read a number field of an earlier repeat, `count` and
  * `countWhere` an earlier repeat, the latter with a condition on its entries; the results of a
- * choice by conditions are of one kind. `undefined` when what it comes
+ * case expression are of one kind. `undefined` when what it comes
  * to cannot be told, as a problem was reported.
  */
 export function checkExpression(expression: Expression, at: At): ResultKind | undefined {

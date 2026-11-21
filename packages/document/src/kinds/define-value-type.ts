@@ -127,7 +127,7 @@ const collectOperators = (
 }
 
 /**
- * Defines a value type for form documents: what kind of answer a field gives. A field kind names
+ * Defines a value type for form documents: what type of answer a field gives. A field kind names
  * its value type, which decides how its answers are recognised, when they count as given, how a
  * condition compares them and how they are described. The built-in value types are in every
  * catalog; a project adds its own with {@link createCatalog}.
