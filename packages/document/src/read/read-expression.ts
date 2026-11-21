@@ -1,4 +1,3 @@
-import type { Condition } from '../condition'
 import type { Expression } from '../expression'
 import { failAt } from '../fail-at'
 import { hasKey } from './has-key'
@@ -7,6 +6,7 @@ import { readList } from './read-list'
 import { readOnlyKeys } from './read-only-keys'
 import { readShape, type Shape } from './read-shape'
 import { readText } from './read-text'
+import { readVarying } from './read-varying'
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value)
@@ -42,25 +42,6 @@ const readOperation = (shape: Shape, path: string): Expression => {
   return { op, args, digits }
 }
 
-const readCase = (value: unknown, path: string): { when: Condition; value: Expression } => {
-  const shape = readShape(value, path)
-  readOnlyKeys(shape, ['when', 'value'], path)
-  return {
-    when: readCondition(shape.when, `${path}.when`),
-    value: readExpression(shape.value, `${path}.value`),
-  }
-}
-
-const readCases = (shape: Shape, path: string): Expression => {
-  readOnlyKeys(shape, ['cases', 'otherwise'], path)
-  return {
-    cases: readList(shape.cases, `${path}.cases`).map((entry, index) =>
-      readCase(entry, `${path}.cases[${index}]`),
-    ),
-    otherwise: readExpression(shape.otherwise, `${path}.otherwise`),
-  }
-}
-
 /** Reads an expression of a computed value: an answer read, a constant, an operation or a choice. */
 export function readExpression(value: unknown, path: string): Expression {
   const shape = readShape(value, path)
@@ -77,7 +58,7 @@ export function readExpression(value: unknown, path: string): Expression {
     return { value: readConstant(shape.value, `${path}.value`) }
   }
   if (hasKey(shape, 'cases')) {
-    return readCases(shape, path)
+    return readVarying(shape, path, readExpression)
   }
   return failAt(path, 'expected an expression: field, value, op or cases.')
 }

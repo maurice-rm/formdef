@@ -4,35 +4,18 @@ import { DOCUMENT_PATH } from '../document-path'
 import { failAt } from '../fail-at'
 import type { DocumentItem, FormDocument } from '../form-document'
 import { isLeaf } from '../is-leaf'
-import { isVarying } from '../is-varying'
-import type { JsonValue } from '../json-value'
+import { isStep } from '../is-step'
+import { optionListsOf } from '../option-lists-of'
 import { pathTo } from '../path-to'
+import { placedNodesOf } from '../placed-nodes-of'
 import type { ReadLimits } from './read-limits'
 
 type PlacedItem = { item: DocumentItem; path: string }
 
 const OPTIONS_SETTING = 'options'
 
-const placedIn = (items: readonly DocumentItem[], path: string): PlacedItem[] =>
-  items.flatMap((item, index) => {
-    const itemPath = pathTo.entry(path, 'items', index)
-    const inner = isLeaf(item) ? [] : placedIn(item.items, itemPath)
-    return [{ item, path: itemPath }, ...inner]
-  })
-
-const itemsOf = (document: FormDocument): PlacedItem[] => {
-  const ofIntro = placedIn(document.intro?.items ?? [], `${DOCUMENT_PATH}.intro`)
-  const ofEndings = (document.endings ?? []).flatMap((ending, index) =>
-    placedIn(ending.items, pathTo.entry(DOCUMENT_PATH, 'endings', index)),
-  )
-  const ofForm =
-    document.steps === undefined
-      ? placedIn(document.items, DOCUMENT_PATH)
-      : document.steps.flatMap((step, index) =>
-          placedIn(step.items, pathTo.entry(DOCUMENT_PATH, 'steps', index)),
-        )
-  return [...ofIntro, ...ofForm, ...ofEndings]
-}
+const itemsOf = (document: FormDocument): PlacedItem[] =>
+  placedNodesOf(document).flatMap(({ node, path }) => (isStep(node) ? [] : [{ item: node, path }]))
 
 const comparisonsIn = (condition: Condition): number => {
   if ('all' in condition) {
@@ -44,27 +27,17 @@ const comparisonsIn = (condition: Condition): number => {
   return 1
 }
 
-const checkOptionList = (value: JsonValue, { path, limit }: { path: string; limit: number }) => {
-  if (Array.isArray(value) && value.length > limit) {
-    failAt(path, `more than ${limit} options (limit options).`)
-  }
-}
-
 const checkOptions = ({ item, path }: PlacedItem, limit: number): void => {
   const options =
     isLeaf(item) && item.type !== 'computed' ? item.settings?.[OPTIONS_SETTING] : undefined
   if (options === undefined) {
     return
   }
-  const settingPath = pathTo.setting(path, OPTIONS_SETTING)
-  if (!isVarying(options)) {
-    checkOptionList(options, { path: settingPath, limit })
-    return
+  for (const placed of optionListsOf(options, pathTo.setting(path, OPTIONS_SETTING))) {
+    if (placed.list.length > limit) {
+      failAt(placed.path, `more than ${limit} options (limit options).`)
+    }
   }
-  options.cases.forEach((entry, index) => {
-    checkOptionList(entry.value, { path: `${pathTo.case(settingPath, index)}.value`, limit })
-  })
-  checkOptionList(options.otherwise, { path: `${settingPath}.otherwise`, limit })
 }
 
 /**

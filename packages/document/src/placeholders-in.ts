@@ -1,9 +1,6 @@
-import { DOCUMENT_PATH } from './document-path'
-import type { BlockItem, FormDocument } from './form-document'
-import { nodesOf } from './nodes-of'
-import { OUTSIDE_FORM_POSITION } from './outside-form-position'
+import type { FormDocument } from './form-document'
 import { OWN_TEXT_KEYS } from './own-text-keys'
-import { pathTo } from './path-to'
+import { placedNodesOf } from './placed-nodes-of'
 import { placeholdersOf } from './placeholders-of'
 import type { Position } from './position'
 import { stringsIn } from './strings-in'
@@ -23,18 +20,7 @@ export type PlacedPlaceholder = {
  * its endings last.
  */
 export function placeholdersIn(document: FormDocument): PlacedPlaceholder[] {
-  const placedBlocks = (blocks: readonly BlockItem[], path: string) =>
-    blocks.map((block, index) => ({
-      node: block,
-      position: OUTSIDE_FORM_POSITION,
-      path: `${path}.items[${index}]`,
-    }))
-  const blocksOfIntro = placedBlocks(document.intro?.items ?? [], `${DOCUMENT_PATH}.intro`)
-  const blocksOfEndings = (document.endings ?? []).flatMap((ending, index) =>
-    placedBlocks(ending.items, pathTo.entry(DOCUMENT_PATH, 'endings', index)),
-  )
-  const placed = [...blocksOfIntro, ...nodesOf(document), ...blocksOfEndings]
-  return placed.flatMap(({ node, position, path }) =>
+  return placedNodesOf(document).flatMap(({ node, position, path }) =>
     OWN_TEXT_KEYS.flatMap((name) =>
       stringsIn((node as Partial<Record<string, unknown>>)[name], `${path}.${name}`),
     ).flatMap(({ text, path: textPath }) =>
