@@ -12,9 +12,9 @@ import type { BodyProps, StepperProps, StepState } from '../config/structure'
 import { Fields, type FieldsProps } from '../render/fields'
 import type { RenderForm } from '../render/render-form'
 import { warnOnce } from '../render/warn-once'
-import { fieldId } from '../widget/field-id'
 import { hasDueError } from '../widget/has-due-error'
 import { StepSubmitted } from '../widget/step-submitted'
+import { firstControlOf } from './first-control-of'
 import { type RootStep, type RootSteps, STEP_PLACE } from './root-steps'
 
 type FieldMeta =
@@ -27,6 +27,8 @@ type StepFormState = {
   fieldMeta: Readonly<Record<string, FieldMeta>>
   submissionAttempts: number
   isSubmitting: boolean
+  /** The form's own errors by cause; `onSubmit` holds one an `onSubmitAsync` returned. */
+  errorMap: { onSubmit?: unknown }
 }
 
 type StepGroup = { handleSubmit: () => Promise<void> }
@@ -179,15 +181,9 @@ const erringFieldPathsUnder = (form: StepForm, key: string): string[] =>
 const isRendered = (form: StepForm, path: string): boolean =>
   Boolean(form.fieldInfo[path]?.instance)
 
-const comesFirst = (first: HTMLElement, second: HTMLElement): number =>
-  first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
-
 /** The control of the step's first invalid field in document order, if one is rendered. */
 const firstInvalidControl = (form: StepForm, key: string): HTMLElement | undefined =>
-  erringFieldPathsUnder(form, key)
-    .map((path) => document.getElementById(fieldId(form.formId, path)))
-    .filter((control) => control !== null)
-    .sort(comesFirst)[0]
+  firstControlOf(form.formId, erringFieldPathsUnder(form, key))
 
 // TanStack's form group counts every field whose path starts with its name, separator or not.
 const warnAboutWiderKeys = (steps: RootSteps, fields: FieldsProps['fields']): void => {
