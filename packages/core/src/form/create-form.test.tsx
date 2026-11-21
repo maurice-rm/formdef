@@ -370,7 +370,31 @@ const PartsField = ({ field, label }: FieldOf<string> & { label: string }): Reac
 }
 PartsField.emptyValue = ''
 
-const partsWidgets = { text: PartsField }
+const CHOICES = ['oil', 'gas']
+
+// Like a radio group of the registry: the field's id sits on a group that takes no focus itself.
+const ChoiceGroupField = ({ field, label }: FieldOf<string> & { label: string }): ReactNode => {
+  const { control } = useFieldParts(field)
+
+  return (
+    <div id={control.id} role="radiogroup" aria-label={label}>
+      {CHOICES.map((choice) => (
+        <label key={choice}>
+          {choice}
+          <input
+            type="radio"
+            name={control.name}
+            checked={field.state.value === choice}
+            onChange={() => field.handleChange(choice)}
+          />
+        </label>
+      ))}
+    </div>
+  )
+}
+ChoiceGroupField.emptyValue = ''
+
+const partsWidgets = { text: PartsField, choice: ChoiceGroupField }
 const { useAppForm: usePartsForm } = createFormHook({
   fieldContext,
   formContext,
@@ -406,6 +430,20 @@ describe('createForm without steps, focus', () => {
     await submit()
 
     expect(document.activeElement).toBe(screen.getByLabelText('Email'))
+  })
+
+  it('focuses the first control inside a group that takes no focus itself', async () => {
+    const Heating = createForm(PARTS_BINDING, {
+      schema: z.object({ kind: z.string().min(1, 'Pick a kind') }),
+      defaultValues: { kind: '' },
+      fields: { kind: { widget: 'choice', props: { label: 'Kind' } } },
+      layout: ['kind', SUBMIT],
+    })
+    render(<Heating />)
+
+    await submit()
+
+    expect(document.activeElement).toBe(screen.getByLabelText('oil'))
   })
 
   it('keeps the focus, and so the error, when the server rejects the whole form', async () => {

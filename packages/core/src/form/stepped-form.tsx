@@ -15,6 +15,7 @@ import { warnOnce } from '../render/warn-once'
 import { hasDueError } from '../widget/has-due-error'
 import { StepSubmitted } from '../widget/step-submitted'
 import { firstControlOf } from './first-control-of'
+import { focusControl } from './focus-control'
 import { type RootStep, type RootSteps, STEP_PLACE } from './root-steps'
 
 type FieldMeta =
@@ -348,7 +349,7 @@ export const SteppedForm = ({
       warnAboutUnrenderedErrors(form, currentKey, fields[currentKey] ?? steps)
       return
     }
-    control.focus()
+    focusControl(control)
   }, [isFocusPending, form, currentKey, fields, steps])
 
   const currentGroup = useRef<StepGroup | undefined>(undefined)

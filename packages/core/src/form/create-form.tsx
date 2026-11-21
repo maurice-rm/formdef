@@ -6,6 +6,7 @@ import { Fields, type FieldsProps } from '../render/fields'
 import { warnOnce } from '../render/warn-once'
 import { findRequiredPaths } from './find-required-paths'
 import { firstControlOf } from './first-control-of'
+import { focusControl } from './focus-control'
 import { formOptionsFor } from './form-options-for'
 import { rootStepsOf } from './root-steps'
 import { type StepForm, SteppedForm } from './stepped-form'
@@ -81,7 +82,10 @@ const ConfiguredForm = ({
     if (form.store.get().errorMap.onSubmit !== undefined) {
       return
     }
-    firstControlOf(form.formId, erringPathsOf(form))?.focus()
+    const control = firstControlOf(form.formId, erringPathsOf(form))
+    if (control !== undefined) {
+      focusControl(control)
+    }
   }
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault()
