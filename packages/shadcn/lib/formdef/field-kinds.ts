@@ -22,8 +22,7 @@ const placeholder = setting.text({ label: 'Placeholder' })
 const maxLength = setting.number({ label: 'Most characters', integer: true })
 
 const HEADING_LEVELS = [2, 3, 4, 5, 6] as const
-const HIGHEST_HEADING_LEVEL = 2
-const LOWEST_HEADING_LEVEL = 6
+const [HIGHEST_HEADING_LEVEL, , , , LOWEST_HEADING_LEVEL] = HEADING_LEVELS
 
 // checkDocument reports a level outside them; a document it did not check falls back to the Heading's own.
 const headingLevelOf = (level: number | undefined): (typeof HEADING_LEVELS)[number] | undefined =>
