@@ -133,8 +133,14 @@ chosen first, then the language, then the placeholders.
 
 A text may name the answer of an earlier field as `{key}`, such as `"Thank you, {f1}."`. The
 placeholder takes the answer as its value type writes it: text, a decimal or a date as entered, a
-number, the label of the option chosen, the labels of several joined with commas. An answer that
-is empty or does not show, and a boolean, give nothing. `{{` and `}}` write a brace.
+number in the document's language, the label of the option chosen, the labels of several joined
+with commas. An answer that is empty or does not show, and a boolean, give nothing. `{{` and `}}`
+write a brace.
+
+A number, such as a computed value, is written in the language of the document, or in the
+[catalog's `language`](/documents/field-kinds#defining-a-field-kind) for a document without
+`languages`: in German `20.005` and `120,5`. Thousands are grouped from five digits on, so a year
+stays `1978`. Without either language, a number is plain digits.
 
 Placeholders work in every text that may follow an answer, and in text settings. In a field's own
 [error texts](/documents/validation-and-answers#error-texts) they name the issue's params and the
@@ -397,7 +403,7 @@ An expression is data, never code the package runs:
 | `{ "op": "round", "args": [x], "digits": 1 }` | `x` rounded, to no digits without `digits` |
 | `{ "op": "otherwise", "args": [x, fallback] }` | `x`, or `fallback` when `x` is empty |
 | `{ "op": "daysBetween", "args": [from, to] }` | the days from one date to the other, by their day |
-| `{ "op": "concat", "args": [ … ] }` | a text of its operands joined: an answer read as its [placeholder](#placeholders) writes it, such as a decimal with its comma, anything else as plain digits or text |
+| `{ "op": "concat", "args": [ … ] }` | a text of its operands joined: an answer read as its [placeholder](#placeholders) writes it, such as a decimal with its comma or a number in the document's language, anything else as plain digits or text |
 | `{ "op": "count", "field": "f4" }` | how many options a field that chooses holds, 0 without any, 1 at most for one choice |
 | `{ "op": "score", "field": "f4" }` | the sum of the `score` of each option chosen, 0 without any; an option without a `score` counts 0 |
 | `{ "op": "sum", "field": "f5" }` | the sum of a number field of an earlier [repeat](#repeats) over its entries, 0 without any; `min` and `max` the smallest and largest, empty without any |

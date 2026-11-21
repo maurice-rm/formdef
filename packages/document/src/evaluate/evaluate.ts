@@ -93,6 +93,8 @@ export type EvaluationInput = {
 type EvaluationWalk = {
   catalog: Catalog<unknown, ValueType>
   language: string | undefined
+  /** The language answers are written in for placeholders: the document's, or the catalog's. */
+  writtenIn: string | undefined
   sources: AnswerSources
   filled: Map<string, Answer>
   answers: Answers
@@ -119,6 +121,8 @@ const objectOf = (value: unknown): Readonly<Record<string, unknown>> =>
   isPlainObject(value) ? value : {}
 
 const NO_ENTRIES: readonly Answers[] = []
+
+const NO_OPTIONS: readonly SettingOption[] = []
 
 const answersOver = (filled: ReadonlyMap<string, Answer>, sources: AnswerSources): Answers => ({
   get: (key) => filled.get(key),
@@ -150,7 +154,7 @@ const walkField = (field: FieldItem, container: Container, walk: EvaluationWalk)
   if (isFilled(value, kind.valueType)) {
     // The settings of a field that shows are resolved, so their options hold strings.
     const options = optionsOf(settings) as SettingOption[]
-    const text = kind.valueType.toText(value, options)
+    const text = kind.valueType.toText(value, { options, language: walk.writtenIn })
     walk.filled.set(field.key, { value, valueType: kind.valueType, text, options })
   }
 }
@@ -169,7 +173,7 @@ const walkComputed = (computed: ComputedItem, container: Container, walk: Evalua
     walk.filled.set(computed.key, {
       value,
       valueType,
-      text: valueType.toText(value, []),
+      text: valueType.toText(value, { options: NO_OPTIONS, language: walk.writtenIn }),
       options: [],
     })
   }
@@ -260,7 +264,7 @@ const walkRepeat = (repeat: RepeatItem, container: Container, walk: EvaluationWa
     walk.filled.set(repeat.key, {
       value: count,
       valueType: entryCount,
-      text: entryCount.toText(count, []),
+      text: entryCount.toText(count, { options: NO_OPTIONS, language: walk.writtenIn }),
       options: [],
     })
   }
@@ -286,6 +290,7 @@ export function evaluate(
   const walk: EvaluationWalk = {
     catalog,
     language,
+    writtenIn: language ?? catalog.language,
     sources,
     filled,
     answers: answersOver(filled, sources),

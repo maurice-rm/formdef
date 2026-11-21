@@ -48,8 +48,10 @@ describe('defineValueType', () => {
       describe: (value) => ({ city: value.city }),
     })
 
-    expect(address.toText({ street: 'Main St', city: 'Bonn' }, [])).toBe('Main St, Bonn')
-    expect(silent.toText({ street: 'Main St', city: 'Bonn' }, [])).toBe('')
+    const context = { options: [], language: 'de' }
+
+    expect(address.toText({ street: 'Main St', city: 'Bonn' }, context)).toBe('Main St, Bonn')
+    expect(silent.toText({ street: 'Main St', city: 'Bonn' }, context)).toBe('')
   })
 
   it('counts every value of the right shape as filled when it says nothing else', () => {

@@ -1,4 +1,6 @@
 import { failAt } from '../fail-at'
+import { isLanguageCode } from '../is-language-code'
+import { LANGUAGE_CODE_EXPECTED } from '../language-code-expected'
 import type { BlockKind } from './block-kind'
 import type { DisplayKind } from './display-kind'
 import type { FieldKind } from './field-kind'
@@ -23,6 +25,11 @@ export type Catalog<TRegistry, TValueType extends ValueType = never> = {
   readonly blocks: readonly BlockKind<TRegistry>[]
   /** Every display kind, in the order given. */
   readonly displays: readonly DisplayKind<TRegistry>[]
+  /**
+   * The language placeholders write numbers in for a document without `languages`; `undefined`
+   * writes them as plain digits.
+   */
+  readonly language: string | undefined
   /** The field kind of this name, or `undefined` when there is none. */
   findFieldKind: (name: string) => FieldKind<TRegistry> | undefined
   /** The block kind of this name, or `undefined` when there is none. */
@@ -59,6 +66,14 @@ export type CatalogOptions<TRegistry, TValueType extends ValueType> = {
    * @defaultValue none
    */
   displays?: readonly DisplayKind<TRegistry>[]
+  /**
+   * The language placeholders write numbers in for a document without `languages`, as a language
+   * code such as `de`: `20.005` and `120,5` rather than `20005` and `120.5`. A document with
+   * `languages` writes them in its own language.
+   *
+   * @defaultValue none; numbers are written as plain digits
+   */
+  language?: string
 }
 
 type Kind<TRegistry> = { readonly registry: TRegistry; readonly name: string }
@@ -67,6 +82,7 @@ const VALUE_TYPES = 'valueTypes'
 const FIELDS = 'fields'
 const BLOCKS = 'blocks'
 const DISPLAYS = 'displays'
+const LANGUAGE = 'language'
 
 const collectValueTypes = (own: readonly ValueType[]): readonly ValueType[] => {
   const all = [...Object.values(builtInValueTypes), ...own]
@@ -113,11 +129,14 @@ const byNameOf = <TRegistry, TKind extends Kind<TRegistry>>(
  *   registry.
  * @param options.displays - The display kinds, each built with {@link defineDisplayKind} and this
  *   registry.
- * @defaultValue `options.valueTypes`, `options.blocks` and `options.displays`: none.
+ * @param options.language - The language placeholders write numbers in for a document without
+ *   `languages`, as a language code.
+ * @defaultValue `options.valueTypes`, `options.blocks` and `options.displays`: none;
+ *   `options.language`: none, numbers are written as plain digits.
  * @returns The catalog, which finds each kind by its name.
  * @throws When two value types, two field kinds, two block kinds or two display kinds share a
- *   name, a kind was defined with another registry, or a field kind's value type is not one of the
- *   catalog's.
+ *   name, a kind was defined with another registry, a field kind's value type is not one of the
+ *   catalog's, or `options.language` is no language code.
  *
  * @example
  * ```ts
@@ -131,8 +150,17 @@ const byNameOf = <TRegistry, TKind extends Kind<TRegistry>>(
  */
 export function createCatalog<TRegistry, TValueType extends ValueType = never>(
   registry: TRegistry,
-  { valueTypes = [], fields, blocks = [], displays = [] }: CatalogOptions<TRegistry, TValueType>,
+  {
+    valueTypes = [],
+    fields,
+    blocks = [],
+    displays = [],
+    language,
+  }: CatalogOptions<TRegistry, TValueType>,
 ): Catalog<TRegistry, TValueType> {
+  if (language !== undefined && !isLanguageCode(language)) {
+    failAt(LANGUAGE, LANGUAGE_CODE_EXPECTED)
+  }
   const allValueTypes = collectValueTypes(valueTypes)
   fields.forEach((kind, index) => {
     if (!allValueTypes.includes(kind.valueType)) {
@@ -149,6 +177,7 @@ export function createCatalog<TRegistry, TValueType extends ValueType = never>(
     fields: [...fields],
     blocks: [...blocks],
     displays: [...displays],
+    language,
     findFieldKind: (name) => fieldsByName.get(name),
     findBlockKind: (name) => blocksByName.get(name),
     findDisplayKind: (name) => displaysByName.get(name),

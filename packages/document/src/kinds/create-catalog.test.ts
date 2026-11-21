@@ -91,6 +91,20 @@ describe('createCatalog', () => {
     expect(catalog.valueTypes).toEqual(Object.values(valueTypes))
   })
 
+  it('holds the language numbers are written in for documents without languages', () => {
+    expect(createCatalog(registry, { fields: [] }).language).toBeUndefined()
+    expect(createCatalog(registry, { fields: [], language: 'de-CH' }).language).toBe('de-CH')
+  })
+
+  it('refuses a language that is no language code', () => {
+    expect(() => createCatalog(registry, { fields: [], language: 'German' })).toThrow(
+      'formdef: language: expected a language code, such as "de" or "de-CH".',
+    )
+    expect(() => createCatalog(registry, { fields: [], language: 'de-DE-DE' })).toThrow(
+      'formdef: language: expected a language code, such as "de" or "de-CH".',
+    )
+  })
+
   it('refuses a value type of a built-in name', () => {
     const again = { ...postalCode, name: 'text' }
 

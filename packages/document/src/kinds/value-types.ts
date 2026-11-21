@@ -2,6 +2,7 @@ import { dayOf } from '../day-of'
 import { isIsoDate } from '../is-iso-date'
 import { numberOf } from '../number-of'
 import { defineValueType } from './define-value-type'
+import { formatNumber } from './format-number'
 import { optionOf } from './option-of'
 import { type Setting, type SettingOption, setting } from './setting'
 import type { ValueType } from './value-type'
@@ -147,7 +148,7 @@ const choice: BuiltIn<string, 'choice', SettingOption, true> = defineValueType({
   isFilled: isNotBlank,
   chosenOf: (value) => (isNotBlank(value) ? [value] : []),
   describe: (value, options): SettingOption | undefined => optionOf(options, value),
-  toText: (value, options) => labelOf(options, value),
+  toText: (value, { options }) => labelOf(options, value),
   operators: {
     equals: isChosen,
     notEquals: negated(isChosen),
@@ -170,7 +171,7 @@ const choices: BuiltIn<readonly string[], 'choices', Chosen, true> = defineValue
     const known = chosen.filter((option) => option !== undefined)
     return known.length === chosen.length ? { values: known } : undefined
   },
-  toText: (value, options) =>
+  toText: (value, { options }) =>
     value
       .map((entry) => labelOf(options, entry))
       .filter((label) => label !== '')
@@ -197,7 +198,7 @@ const number: BuiltIn<number, 'number', Counted> = defineValueType({
   emptyValue: undefined,
   fits: (value): value is number => typeof value === 'number' && Number.isFinite(value),
   describe: (value): Counted => ({ value }),
-  toText: String,
+  toText: (value, { language }) => formatNumber(value, language),
   operators: numericOperators<number>((value) => value),
   comparesAs: { type: 'number', of: (value) => value },
 })

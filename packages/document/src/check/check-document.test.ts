@@ -936,6 +936,18 @@ describe('checkDocument with languages', () => {
     expect(codesOf(unnamed)).toEqual(['unknownLanguage document.items[0].label.de'])
   })
 
+  it('reports a language of the document that is no language code', () => {
+    const document: FormDocument = {
+      format: 1,
+      languages: ['de', 'en_US'],
+      items: [{ type: 'field', key: 'f1', kind: 'text', label: 'Name' }],
+    }
+
+    expect(foundIn(document)).toEqual([
+      { code: 'invalidLanguage', path: 'document.languages[1]', params: { language: 'en_US' } },
+    ])
+  })
+
   it('checks the conditions and translations of texts that follow an answer', () => {
     const document: FormDocument = {
       format: 1,

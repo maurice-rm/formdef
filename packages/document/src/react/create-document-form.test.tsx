@@ -400,6 +400,57 @@ describe('createDocumentForm without steps', () => {
     expect(screen.getByText('For 4 rooms.')).toBeDefined()
   })
 
+  describe('writes a computed number in a placeholder', () => {
+    const energy = (extra: Partial<FormDocument> = {}): FormDocument =>
+      ({
+        format: 1,
+        items: [
+          field('oil', 'measure', { label: 'Oil', settings: { unit: 'l' } }),
+          {
+            type: 'computed',
+            key: 'kwh',
+            label: 'Energy',
+            valueType: 'number',
+            expression: { op: 'multiply', args: [{ field: 'oil' }, { value: 10 }] },
+          },
+          field('note', 'text', { label: 'Note', description: 'About {kwh} kWh.' }),
+        ],
+        ...extra,
+      }) as FormDocument
+    const inGerman = createCatalog(registry, {
+      fields: fieldKinds,
+      blocks: [notice, callout],
+      language: 'de',
+    })
+
+    it('in the catalog language when the document names none', async () => {
+      const Form = createDocumentForm(energy(), inGerman)
+      render(<Form />)
+
+      await type('Oil', '2000,5')
+
+      expect(screen.getByText('About 20.005 kWh.')).toBeDefined()
+    })
+
+    it('in the document language before the catalog language', async () => {
+      const Form = createDocumentForm(energy({ languages: ['en'] }), inGerman)
+      render(<Form />)
+
+      await type('Oil', '2000,5')
+
+      expect(screen.getByText('About 20,005 kWh.')).toBeDefined()
+    })
+
+    it('as plain digits without any language', async () => {
+      const Form = createDocumentForm(energy(), catalog)
+      render(<Form />)
+
+      await type('Oil', '2000,5')
+
+      expect(screen.getByText('About 20005 kWh.')).toBeDefined()
+    })
+  })
+
   it('renders in the first language without one chosen', () => {
     const translated: FormDocument = {
       format: 1,

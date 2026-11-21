@@ -24,6 +24,7 @@ import { checkComputed } from './check-computed'
 import { checkCondition } from './check-condition'
 import { checkDisplay } from './check-display'
 import { checkFixedText } from './check-fixed-text'
+import { checkLanguages } from './check-languages'
 import { checkMessages } from './check-messages'
 import { checkNumberedText } from './check-numbered-text'
 import { checkSettings } from './check-settings'
@@ -443,6 +444,7 @@ export function checkDocument(
     problems: [],
   }
 
+  checkLanguages(document.languages, walk)
   checkDisplay(document.display, document.steps === undefined ? undefined : 'form', {
     walk,
     path: DOCUMENT_PATH,

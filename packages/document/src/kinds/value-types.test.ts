@@ -76,14 +76,35 @@ describe('valueTypes', () => {
   })
 
   it('write an answer as text for a placeholder', () => {
-    expect(valueTypes.text.toText('Ada', [])).toBe('Ada')
-    expect(valueTypes.decimal.toText('120,5', [])).toBe('120,5')
-    expect(valueTypes.date.toText('2026-01-31', [])).toBe('2026-01-31')
-    expect(valueTypes.number.toText(6, [])).toBe('6')
-    expect(valueTypes.choice.toText('o2', OPTIONS)).toBe('Apartment block')
-    expect(valueTypes.choice.toText('o9', OPTIONS)).toBe('')
-    expect(valueTypes.choices.toText(['o2', 'o1'], OPTIONS)).toBe('Apartment block, Detached')
-    expect(valueTypes.boolean.toText(true, [])).toBe('')
+    const plain = { options: [], language: undefined }
+    const withOptions = { options: OPTIONS, language: undefined }
+
+    expect(valueTypes.text.toText('Ada', plain)).toBe('Ada')
+    expect(valueTypes.decimal.toText('120,5', plain)).toBe('120,5')
+    expect(valueTypes.date.toText('2026-01-31', plain)).toBe('2026-01-31')
+    expect(valueTypes.number.toText(6, plain)).toBe('6')
+    expect(valueTypes.choice.toText('o2', withOptions)).toBe('Apartment block')
+    expect(valueTypes.choice.toText('o9', withOptions)).toBe('')
+    expect(valueTypes.choices.toText(['o2', 'o1'], withOptions)).toBe('Apartment block, Detached')
+    expect(valueTypes.boolean.toText(true, plain)).toBe('')
+  })
+
+  it('write a number in the language, grouping thousands from five digits on', () => {
+    const inGerman = { options: [], language: 'de' }
+    const inEnglish = { options: [], language: 'en' }
+
+    expect(valueTypes.number.toText(120.5, inGerman)).toBe('120,5')
+    expect(valueTypes.number.toText(20005, inGerman)).toBe('20.005')
+    expect(valueTypes.number.toText(1978, inGerman)).toBe('1978')
+    expect(valueTypes.number.toText(20005, inEnglish)).toBe('20,005')
+    expect(valueTypes.number.toText(0.1 + 0.2, inGerman)).toBe('0,30000000000000004')
+    expect(valueTypes.number.toText(-0, inGerman)).toBe('0')
+    expect(valueTypes.number.toText(-20005, inGerman)).toBe('-20.005')
+    expect(valueTypes.number.toText(20005.5, { options: [], language: undefined })).toBe('20005.5')
+  })
+
+  it('write a decimal as it was entered, whatever the language', () => {
+    expect(valueTypes.decimal.toText('20005.5', { options: [], language: 'de' })).toBe('20005.5')
   })
 
   it('describe a choice by its option, and leave out one that is no option', () => {

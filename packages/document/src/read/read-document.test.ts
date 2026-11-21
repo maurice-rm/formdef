@@ -652,6 +652,9 @@ describe('readDocument with languages', () => {
     ).toThrow(
       'formdef: document.items[0].label.German: expected a language code, such as "de" or "de-CH".',
     )
+    expect(() => readDocument({ format: 1, languages: ['de-DE-DE'], items: [] })).toThrow(
+      'formdef: document.languages[0]: expected a language code, such as "de" or "de-CH".',
+    )
   })
 
   it('refuses a language listed twice, and translations without any', () => {

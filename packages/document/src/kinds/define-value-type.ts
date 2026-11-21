@@ -2,6 +2,7 @@ import { failAt } from '../fail-at'
 import type { ComparesAs } from './compares-as'
 import type { Operator } from './operator'
 import type { Setting, SettingOption } from './setting'
+import type { TextContext } from './text-context'
 import type { ValueType } from './value-type'
 
 /** The operators every value type has, which compare whether a field holds an answer. */
@@ -74,12 +75,13 @@ export type ValueTypeDefinition<
    */
   describe: (value: TValue, options: readonly SettingOption[]) => TDescribed | undefined
   /**
-   * Writes an answer as text, given the field's options, for a placeholder `{key}` that names the
-   * field.
+   * Writes an answer as text, for a placeholder `{key}` that names the field, given the field's
+   * options and the language: the document's, or else the catalog's, such as for a number with
+   * its decimal comma.
    *
    * @defaultValue an empty text
    */
-  toText?: (value: TValue, options: readonly SettingOption[]) => string
+  toText?: (value: TValue, context: TextContext) => string
   /**
    * The operators a condition may compare a field of this type with, by name; `isFilled` and
    * `isEmpty` come with every value type.

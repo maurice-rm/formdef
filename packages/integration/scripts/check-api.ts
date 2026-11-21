@@ -133,6 +133,7 @@ const ENTRIES: readonly Entry[] = [
       'SettingValues',
       'splitIntoSteps',
       'Text',
+      'TextContext',
       'updateNode',
       'ValidationIssue',
       'ValidationResult',

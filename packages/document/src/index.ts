@@ -76,6 +76,7 @@ export {
   type SettingType,
   setting,
 } from './kinds/setting'
+export type { TextContext } from './kinds/text-context'
 export type { ValueType } from './kinds/value-type'
 export { valueTypes } from './kinds/value-types'
 export type { Position } from './position'

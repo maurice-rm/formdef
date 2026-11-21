@@ -45,6 +45,7 @@ export const DEFAULT_PROBLEM_MESSAGES: { readonly [Code in ProblemCode]: Message
   missingTranslation: ({ language }) => `This text has no translation into ${language}.`,
   unknownLanguage: ({ language }) =>
     `This text is translated into ${language}, which the form does not name.`,
+  invalidLanguage: ({ language }) => `This is no language code, such as de or de-CH: ${language}.`,
   fixedText: ({ field }) => `This text names no answers, so it cannot name ${field}.`,
   unknownParam: ({ param, code }) => `The error text for ${code} has no placeholder ${param}.`,
   unknownStep: ({ step }) => `This jumps to a step the form does not hold: ${step}.`,

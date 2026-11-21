@@ -70,6 +70,10 @@ export const catalog = createCatalog(registry, { fields: [area, dropdown] })
 - `createCatalog` collects the field kinds of one registry in a **catalog**, which rendering,
   checking, validating and describing a document take. It throws when two field kinds share a name,
   one was defined with another registry, or its value type is not one of the catalog's.
+- `language` on the catalog, a language code such as `"de"`, is the language
+  [placeholders](/documents#placeholders) write numbers in for a document without `languages`:
+  `20.005` and `120,5` rather than `20005` and `120.5`. A document with `languages` writes them in
+  its own. `createCatalog` throws for a code that is none.
 
 The field kinds file stays without `'use client'`: a server imports it to
 [validate the answers](/documents/validation-and-answers) with the same catalog.
@@ -134,7 +138,9 @@ export const catalog = createCatalog(registry, { valueTypes: [address], fields: 
   no option of the field, and `count` and `score` read the options chosen. `defineValueType` throws
   for a value type that reads options without `chosenOf`.
 - `toText` writes an answer as text for a [placeholder](/documents#placeholders) that names the
-  field, given the field's options. Without it, a placeholder gives nothing.
+  field. It receives the field's `options` and the `language` the text is written in: the
+  document's, or else the catalog's, `undefined` when neither names one. Without it, a placeholder
+  gives nothing.
 - `operators` are what a [condition](/documents#conditions) may compare a field of this type with,
   by name. `compares` is the [setting](#settings) the compared `value` is, which a builder renders
   the input for and `checkDocument` checks; leave it out for an operator that compares with

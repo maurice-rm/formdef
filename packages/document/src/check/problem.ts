@@ -33,6 +33,7 @@ import type { Position } from '../position'
  * - `settingLimit`: a setting outside its constraints, such as too long or too few options;
  * - `missingTranslation`: a translated text that leaves out a language of the document;
  * - `unknownLanguage`: a translation into a language the document does not name;
+ * - `invalidLanguage`: a language of the document that is no language code, such as `en_US`;
  * - `fixedText`: a placeholder in the label of a step or section, a display's setting, the intro,
  *   the submit button or the texts of a repeat, which name no answers; those of each entry name its number as `{n}`;
  * - `unknownParam`: a placeholder in a field's error text that its issue code has no param for;
@@ -110,6 +111,8 @@ export type ProblemParams = {
   missingTranslation: NamesLanguage
   /** The language the document does not name. */
   unknownLanguage: NamesLanguage
+  /** The language of the document that is no language code. */
+  invalidLanguage: NamesLanguage
   /** The field a text names that names no answers. */
   fixedText: NamesField
   /** The placeholder, and the issue code that has no param for it. */

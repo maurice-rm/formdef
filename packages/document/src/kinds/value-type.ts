@@ -1,6 +1,7 @@
 import type { ComparesAs } from './compares-as'
 import type { Operator } from './operator'
 import type { SettingOption } from './setting'
+import type { TextContext } from './text-context'
 
 /**
  * A value type of form documents: what kind of answer a field gives, how a value of that kind is
@@ -42,6 +43,9 @@ export type ValueType<
    * choice that is no option of the field.
    */
   describe(value: TValue, options: readonly SettingOption[]): TDescribed | undefined
-  /** Writes an answer as text, for a placeholder that names its field, given the field's options. */
-  toText(value: TValue, options: readonly SettingOption[]): string
+  /**
+   * Writes an answer as text, for a placeholder that names its field, given the field's options
+   * and the language.
+   */
+  toText(value: TValue, context: TextContext): string
 }

@@ -1,4 +1,5 @@
 import { defineValueType } from './define-value-type'
+import { formatNumber } from './format-number'
 import { setting } from './setting'
 import type { ValueType } from './value-type'
 
@@ -22,7 +23,7 @@ export const entryCount: ValueType<number, 'entries', Counted> = defineValueType
   fits: (value): value is number => typeof value === 'number' && Number.isInteger(value),
   isFilled: (value) => value > 0,
   describe: (value): Counted => ({ value }),
-  toText: String,
+  toText: (value, { language }) => formatNumber(value, language),
   operators: {
     atLeast: { compares: NUMBER, holds: (answer, compared) => countOf(answer) >= compared },
     atMost: { compares: NUMBER, holds: (answer, compared) => countOf(answer) <= compared },

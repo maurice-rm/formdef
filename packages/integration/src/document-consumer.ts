@@ -48,6 +48,7 @@ const postalCode = defineValueType({
   emptyValue: '',
   fits: (value): value is string => typeof value === 'string',
   describe: (value) => ({ code: value }),
+  toText: (value, { language }) => (language === 'de' ? `PLZ ${value}` : value),
   operators: {
     startsWith: {
       compares: setting.text({ label: 'Start', required: true }),
@@ -63,7 +64,11 @@ const postal = defineFieldKind(registry, {
   valueType: postalCode,
 })
 
-export const catalog = createCatalog(registry, { valueTypes: [postalCode], fields: [text, postal] })
+export const catalog = createCatalog(registry, {
+  valueTypes: [postalCode],
+  fields: [text, postal],
+  language: 'de',
+})
 
 export const document: FormDocument = readDocument({
   format: 1,
