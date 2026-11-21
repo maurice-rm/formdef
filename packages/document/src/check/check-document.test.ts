@@ -1676,6 +1676,17 @@ describe('checkDocument with repeats', () => {
     ])
   })
 
+  it('reports a placeholder that names a repeat, whose entries a text cannot write', () => {
+    const checked = document(repeat([name]), {
+      ...works,
+      label: 'Works, of {r1} residents',
+    })
+
+    expect(foundIn(checked)).toEqual([
+      { code: 'repeatPlaceholder', path: 'document.items[1].label', params: { field: 'r1' } },
+    ])
+  })
+
   it('reports a number of entries compared with that is no whole number or below 0', () => {
     const checked = document(
       repeat([name]),
