@@ -2,6 +2,7 @@ import type { Varying } from '../form-document'
 import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
 import type { DocumentOption } from '../kinds/document-option'
+import type { KindSettings } from '../kinds/kind-settings'
 import { optionValuesOf } from '../kinds/option-values-of'
 import type { Setting } from '../kinds/setting'
 import { pathTo } from '../path-to'
@@ -133,7 +134,7 @@ const checkSetting = (value: JsonValue | Varying, setting: Setting<unknown>, at:
  */
 export function checkSettings(
   field: Owner,
-  kind: { readonly settings: Readonly<Record<string, Setting<unknown>>> },
+  kind: { readonly settings: KindSettings },
   {
     walk,
     path,

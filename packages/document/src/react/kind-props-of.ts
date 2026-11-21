@@ -1,11 +1,11 @@
 import type { Answers } from '../evaluate/answers'
 import { resolveSettings } from '../evaluate/resolve-settings'
 import type { FieldItem } from '../form-document'
-import type { Setting } from '../kinds/setting'
+import type { KindSettings } from '../kinds/kind-settings'
 import { withFormattedTexts } from './with-formatted-texts'
 
 type PropsBuilder = {
-  readonly settings: Readonly<Record<string, Setting<unknown>>>
+  readonly settings: KindSettings
   props: (settings: Readonly<Record<string, unknown>>) => Readonly<Record<string, unknown>>
 }
 

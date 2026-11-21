@@ -3,6 +3,7 @@ import { isVarying } from '../is-varying'
 import type { JsonValue } from '../json-value'
 import { isFormattedText } from '../kinds/is-formatted-text'
 import { isOption } from '../kinds/is-option'
+import type { KindSettings } from '../kinds/kind-settings'
 import type { Setting } from '../kinds/setting'
 import type { Text } from '../text'
 import type { Answers } from './answers'
@@ -50,7 +51,7 @@ const resolveTexts = (
  */
 export function resolveSettings(
   owner: Pick<FieldItem, 'settings'>,
-  kind: { readonly settings: Readonly<Record<string, Setting<unknown>>> },
+  kind: { readonly settings: KindSettings },
   context: Context,
 ): Readonly<Record<string, JsonValue>> {
   return Object.fromEntries(

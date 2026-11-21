@@ -6,21 +6,19 @@ import type {
   StepperProps,
   StepState,
 } from '@formdef/core'
-import type { ComponentType } from 'react'
-
 import { failAt } from '../fail-at'
+import type { AnyRegistry } from './any-registry'
 import type { SettingValues } from './define-field-kind'
 import type { DisplayKind, DisplayTarget } from './display-kind'
-import type { Setting, SettingType } from './setting'
-
-// biome-ignore lint/suspicious/noExplicitAny: a registry of any widgets, form components and slots.
-type AnyRegistry = Registry<any, any, any>
+import type { KindSettings } from './kind-settings'
+import { NO_PROPS } from './no-props'
+import type { PropsOf } from './props-of'
+import type { SettingType } from './setting'
+import type { WithoutFormattedSettings } from './without-formatted-settings'
 
 type StructureOf<TRegistry> =
   // biome-ignore lint/suspicious/noExplicitAny: only the structure slots are read.
   TRegistry extends Registry<any, any, infer TStructure> ? TStructure : never
-
-type PropsOf<TComponent> = TComponent extends ComponentType<infer TProps> ? TProps : never
 
 type SlotOf<TStructure, TSlot extends string> = TSlot extends keyof TStructure
   ? NonNullable<TStructure[TSlot]>
@@ -42,15 +40,6 @@ type TargetProps<TStructure, TTarget extends DisplayTarget> = {
   repeat: OwnProps<PropsOf<SlotOf<TStructure, 'arrayFrame'>>, keyof ArrayFrameProps<unknown>>
 }[TTarget]
 
-type Settings = Readonly<Record<string, Setting<unknown>>>
-
-// A display is how something looks, which does not follow the answers.
-type FixedSettingsPart<TSettings> = true extends {
-  [Name in keyof TSettings]: TSettings[Name] extends { formatted: true } ? true : false
-}[keyof TSettings]
-  ? { settings: never }
-  : unknown
-
 /**
  * What {@link defineDisplayKind} takes.
  *
@@ -61,7 +50,7 @@ type FixedSettingsPart<TSettings> = true extends {
 export type DisplayKindDefinition<
   TStructure,
   TTarget extends DisplayTarget,
-  TSettings extends Settings,
+  TSettings extends KindSettings,
 > = {
   /** The display kind's name, as a document's `display.kind` names it. */
   name: string
@@ -89,14 +78,13 @@ export type DisplayKindDefinition<
    */
   props?: (settings: SettingValues<TSettings>) => TargetProps<TStructure, TTarget>
 }> &
-  FixedSettingsPart<TSettings>
-
-const NO_PROPS = (): Readonly<Record<string, unknown>> => ({})
+  // A display is how something looks, which does not follow the answers.
+  WithoutFormattedSettings<TSettings>
 
 // Options and option values name the choices of a field, which a display has none of.
 const OPTION_TYPES: ReadonlySet<SettingType> = new Set(['options', 'option', 'optionList'])
 
-const refuseUnfitSettings = (settings: Settings): void => {
+const refuseUnfitSettings = (settings: KindSettings): void => {
   for (const [name, setting] of Object.entries(settings)) {
     if (setting.varies) {
       failAt(`settings.${name}`, "a display kind's setting does not follow an answer.")
@@ -134,7 +122,7 @@ const refuseUnfitSettings = (settings: Settings): void => {
 export function defineDisplayKind<
   TRegistry extends AnyRegistry,
   TTarget extends DisplayTarget,
-  TSettings extends Settings = Record<never, never>,
+  TSettings extends KindSettings = Record<never, never>,
 >(
   registry: TRegistry,
   definition: DisplayKindDefinition<StructureOf<TRegistry>, TTarget, TSettings>,

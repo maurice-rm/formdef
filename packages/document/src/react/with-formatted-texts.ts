@@ -1,6 +1,7 @@
 import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
 import { isFormattedText } from '../kinds/is-formatted-text'
+import type { KindSettings } from '../kinds/kind-settings'
 import type { Setting } from '../kinds/setting'
 import { formatText } from './format-text'
 
@@ -25,7 +26,7 @@ const formatSetting = (value: JsonValue, setting: Setting<unknown> | undefined):
  */
 export function withFormattedTexts(
   settings: Readonly<Record<string, JsonValue>>,
-  kind: { readonly settings: Readonly<Record<string, Setting<unknown>>> },
+  kind: { readonly settings: KindSettings },
 ): Readonly<Record<string, unknown>> {
   return Object.fromEntries(
     Object.entries(settings).map(([name, value]) => [

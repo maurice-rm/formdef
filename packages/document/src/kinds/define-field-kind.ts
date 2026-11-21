@@ -1,26 +1,23 @@
 import type { Registry, ValueOf } from '@formdef/core'
-import type { ComponentType } from 'react'
 
+import type { AnyRegistry } from './any-registry'
 import type { FieldKind } from './field-kind'
+import type { KindSettings } from './kind-settings'
+import { NO_PROPS } from './no-props'
+import type { PropsOf } from './props-of'
 import type { Rule } from './rule'
 import type { Setting, SettingOption } from './setting'
 import type { ValueType } from './value-type'
-
-// biome-ignore lint/suspicious/noExplicitAny: a registry of any widgets, form components and slots.
-type AnyRegistry = Registry<any, any, any>
+import type { WithoutFormattedSettings } from './without-formatted-settings'
 
 type WidgetsOf<TRegistry> =
   // biome-ignore lint/suspicious/noExplicitAny: only the widgets are read.
   TRegistry extends Registry<infer TWidgets, any, any> ? TWidgets : never
 
-type PropsOf<TWidget> = TWidget extends ComponentType<infer TProps> ? TProps : never
-
 /** What the renderer passes every widget itself, so a field kind does not. */
 type Supplied = 'field' | 'label' | 'description' | 'required'
 
 type OwnProps<TWidget> = Omit<PropsOf<TWidget>, Supplied>
-
-type Settings = Readonly<Record<string, Setting<unknown>>>
 
 /**
  * The values of a field kind's settings, as its `props` and `rules` receive them.
@@ -47,13 +44,6 @@ type HasItsOptions<TValueType, TSettings> = TValueType extends { readsOptions: t
     ? true
     : false
   : true
-
-// A widget renders its own texts, so a field kind takes no formatted text setting.
-type PlainSettingsPart<TSettings> = true extends {
-  [Name in keyof TSettings]: TSettings[Name] extends { formatted: true } ? true : false
-}[keyof TSettings]
-  ? { settings: never }
-  : unknown
 
 type ValueTypePart<TWidget, TSettings, TValueType> =
   ServesWidget<TValueType, ValueOf<TWidget>> extends true
@@ -89,7 +79,7 @@ type PropsPart<TWidget, TSettings> =
 export type FieldKindDefinition<
   TWidgets,
   TName extends keyof TWidgets & string,
-  TSettings extends Settings,
+  TSettings extends KindSettings,
   TValueType extends ValueType,
 > = {
   /** The field kind's name, as a document's `kind` names it. */
@@ -122,9 +112,9 @@ export type FieldKindDefinition<
   ) => (Rule<NonNullable<ValueOf<TWidgets[TName]>>> | undefined)[]
 } & PropsPart<TWidgets[TName], TSettings> &
   ValueTypePart<TWidgets[TName], TSettings, TValueType> &
-  PlainSettingsPart<TSettings>
+  // A widget renders its own texts, so a field kind takes no formatted text setting.
+  WithoutFormattedSettings<TSettings>
 
-const NO_PROPS = (): Readonly<Record<string, unknown>> => ({})
 const NO_RULES = (): readonly (Rule<never> | undefined)[] => []
 
 /**
@@ -157,7 +147,7 @@ const NO_RULES = (): readonly (Rule<never> | undefined)[] => []
 export function defineFieldKind<
   TRegistry extends AnyRegistry,
   TName extends keyof WidgetsOf<TRegistry> & string,
-  TSettings extends Settings = Record<never, never>,
+  TSettings extends KindSettings = Record<never, never>,
   TValueType extends ValueType = ValueType,
 >(
   registry: TRegistry,

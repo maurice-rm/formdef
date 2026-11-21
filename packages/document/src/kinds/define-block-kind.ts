@@ -1,20 +1,15 @@
 import type { Registry } from '@formdef/core'
-import type { ComponentType } from 'react'
 
+import type { AnyRegistry } from './any-registry'
 import type { BlockKind } from './block-kind'
 import type { SettingValues } from './define-field-kind'
-import type { Setting } from './setting'
-
-// biome-ignore lint/suspicious/noExplicitAny: a registry of any widgets, form components and slots.
-type AnyRegistry = Registry<any, any, any>
+import type { KindSettings } from './kind-settings'
+import { NO_PROPS } from './no-props'
+import type { PropsOf } from './props-of'
 
 type FormComponentsOf<TRegistry> =
   // biome-ignore lint/suspicious/noExplicitAny: only the form components are read.
   TRegistry extends Registry<any, infer TFormComponents, any> ? TFormComponents : never
-
-type PropsOf<TComponent> = TComponent extends ComponentType<infer TProps> ? TProps : never
-
-type Settings = Readonly<Record<string, Setting<unknown>>>
 
 type PropsPart<TComponent, TSettings> =
   // biome-ignore lint/complexity/noBannedTypes: `{}` tests whether every prop is optional.
@@ -42,7 +37,7 @@ type PropsPart<TComponent, TSettings> =
 export type BlockKindDefinition<
   TFormComponents,
   TName extends keyof TFormComponents & string,
-  TSettings extends Settings,
+  TSettings extends KindSettings,
 > = {
   /** The block kind's name, as a document's `kind` names it. */
   name: string
@@ -57,8 +52,6 @@ export type BlockKindDefinition<
    */
   settings?: TSettings
 } & PropsPart<TFormComponents[TName], TSettings>
-
-const NO_PROPS = (): Readonly<Record<string, unknown>> => ({})
 
 /**
  * Defines a block kind for form documents: content between fields that gives no answer, rendered
@@ -87,7 +80,7 @@ const NO_PROPS = (): Readonly<Record<string, unknown>> => ({})
 export function defineBlockKind<
   TRegistry extends AnyRegistry,
   TName extends keyof FormComponentsOf<TRegistry> & string,
-  TSettings extends Settings = Record<never, never>,
+  TSettings extends KindSettings = Record<never, never>,
 >(
   registry: TRegistry,
   definition: BlockKindDefinition<FormComponentsOf<TRegistry>, TName, TSettings>,
