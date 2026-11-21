@@ -10,6 +10,7 @@ import type {
   Jump,
   RepeatItem,
 } from '../form-document'
+import { formItemsOf } from '../form-items-of'
 import { jumpEndingsOf } from '../jump-endings-of'
 import type { Catalog } from '../kinds/create-catalog'
 import { entryCount } from '../kinds/entry-count'
@@ -429,8 +430,7 @@ export function checkDocument(
   catalog: Catalog<unknown, ValueType>,
   options: CheckOptions = {},
 ): Problem[] {
-  const items =
-    document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
+  const items = formItemsOf(document)
   const walk: CheckWalk = {
     kindNamed: (name) => catalog.findFieldKind(name),
     blockKindNamed: (name) => catalog.findBlockKind(name),

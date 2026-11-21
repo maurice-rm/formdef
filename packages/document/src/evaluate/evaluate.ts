@@ -7,6 +7,7 @@ import type {
   FormDocument,
   RepeatItem,
 } from '../form-document'
+import { formItemsOf } from '../form-items-of'
 import { isPlainObject } from '../is-plain-object'
 import type { JsonValue } from '../json-value'
 import type { Catalog } from '../kinds/create-catalog'
@@ -207,8 +208,7 @@ const repeatOfKeyIn = (items: readonly DocumentItem[]): ReadonlyMap<string, stri
   )
 
 const sourcesOf = (document: FormDocument, catalog: Catalog<unknown, ValueType>): AnswerSources => {
-  const items =
-    document.steps === undefined ? document.items : document.steps.flatMap((step) => step.items)
+  const items = formItemsOf(document)
   return {
     valueTypes: valueTypesOf(items, catalog),
     entries: new Map(),
