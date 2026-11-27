@@ -1,4 +1,4 @@
-import { createFormHook, createFormHookContexts } from '@tanstack/react-form'
+import { createFormHook } from '@tanstack/react-form'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -6,11 +6,10 @@ import { z } from 'zod'
 
 import type { StepperProps } from '../config/structure'
 import { Fields } from '../render/fields'
+import type { RenderForm } from '../render/render-form'
 import type { FieldOf } from '../widget/field-of'
 import { useFieldParts } from '../widget/use-field-parts'
-import { createForm } from './create-form'
-
-const { fieldContext, formContext } = createFormHookContexts()
+import { createForm, type FormBinding } from './create-form'
 
 const TextField = ({
   field,
@@ -25,7 +24,7 @@ const TextField = ({
       <input
         {...control}
         required={required}
-        value={field.state.value}
+        value={field.value}
         onChange={(event) => field.handleChange(event.target.value)}
       />
       {isErrorDue && <p id={errorId}>{errors.join(' ')}</p>}
@@ -75,17 +74,18 @@ const Stepper = ({
 
 const widgets = { text: TextField }
 const { useAppForm } = createFormHook({
-  fieldContext,
-  formContext,
   fieldComponents: widgets,
   formComponents: {},
 })
+// TanStack's hook is generic over the form's types; a binding passes the merged options untyped, as
+// the registry does.
+const untypedUseAppForm = useAppForm as unknown as FormBinding['useAppForm']
 const BINDING = {
-  useAppForm,
+  useAppForm: untypedUseAppForm,
   parts: { widgets, formComponents: {}, structure: { stepper: Stepper } },
 }
 const BINDING_WITHOUT_STEPPER = {
-  useAppForm,
+  useAppForm: untypedUseAppForm,
   parts: { widgets, formComponents: {}, structure: {} },
 }
 
@@ -148,8 +148,23 @@ const stepItem = (label: string): HTMLElement =>
 const StepsUnderFields = (): ReactNode => {
   const form = useAppForm({ defaultValues: DEFAULT_VALUES })
 
-  return <Fields parts={BINDING_WITHOUT_STEPPER.parts} form={form} fields={FIELDS} layout={STEPS} />
+  return (
+    <Fields
+      parts={BINDING_WITHOUT_STEPPER.parts}
+      form={form as unknown as RenderForm}
+      fields={FIELDS}
+      layout={STEPS}
+    />
+  )
 }
+
+// TanStack Form v2 alpha warns on every form and form group built with validators that their count
+// changed, since its constructors compare them with `null`; only formdef's warnings count here.
+const formdefWarningsOf = (warn: { mock: { calls: unknown[][] } }): unknown[][] =>
+  warn.mock.calls.filter(([message]) => String(message).startsWith('formdef:'))
+
+/** A field validator that runs on submit only, as a server check does. */
+const onSubmitOnly = (run: () => unknown): object => ({ run, triggers: [] })
 
 afterEach(() => {
   cleanup()
@@ -488,12 +503,12 @@ describe('createForm with steps', () => {
           ...FIELDS,
           contact: {
             fields: {
-              name: { ...FIELDS.contact.fields.name, validators: { onSubmitAsync: heldRule(0) } },
+              name: { ...FIELDS.contact.fields.name, validators: [onSubmitOnly(heldRule(0))] },
             },
           },
           building: {
             fields: {
-              city: { ...FIELDS.building.fields.city, validators: { onSubmitAsync: heldRule(1) } },
+              city: { ...FIELDS.building.fields.city, validators: [onSubmitOnly(heldRule(1))] },
             },
           },
         },
@@ -649,6 +664,28 @@ describe('createForm with steps', () => {
     expect(stepItem('Contact').dataset.dueError).toBe('true')
   })
 
+  it('marks a step once its field, already invalid from an edit, is left', async () => {
+    const Checklist = createForm(
+      BINDING,
+      checklistConfig({
+        validation: { mode: 'onChange' },
+        defaultValues: { ...DEFAULT_VALUES, contact: { name: 'Ada' } },
+      }),
+    )
+    render(<Checklist />)
+    const name = screen.getByLabelText('Name')
+
+    await act(async () => {
+      fireEvent.change(name, { target: { value: '' } })
+    })
+    expect(stepItem('Contact').dataset.dueError).toBe('false')
+
+    await act(async () => {
+      fireEvent.blur(name)
+    })
+    expect(stepItem('Contact').dataset.dueError).toBe('true')
+  })
+
   it('stays on the step chosen while a step before it was still being submitted', async () => {
     let settle: () => void = () => undefined
     const pending = new Promise<undefined>((resolve) => {
@@ -664,7 +701,7 @@ describe('createForm with steps', () => {
             fields: {
               city: {
                 ...FIELDS.building.fields.city,
-                validators: { onSubmitAsync: () => pending },
+                validators: [onSubmitOnly(() => pending)],
               },
             },
           },
@@ -1023,10 +1060,11 @@ describe('createForm with steps, errors and focus', () => {
     await click('Next')
 
     expect(currentStep()).toBe('Go to Contact')
-    expect(warn).toHaveBeenCalledOnce()
-    expect(warn).toHaveBeenCalledWith(
-      'formdef: the step "contact" is held back by errors on fields it does not render: contact.email. What a condition hides must accept every value it can hold.',
-    )
+    expect(formdefWarningsOf(warn)).toEqual([
+      [
+        'formdef: the step "contact" is held back by errors on fields it does not render: contact.email. What a condition hides must accept every value it can hold.',
+      ],
+    ])
   })
 
   it('warns when the form fails to submit only through a step its condition hides', async () => {
@@ -1117,9 +1155,10 @@ describe('createForm with steps, errors and focus', () => {
     render(<Checklist />)
     render(<Checklist />)
 
-    expect(warn).toHaveBeenCalledOnce()
-    expect(warn).toHaveBeenCalledWith(
-      'formdef: the step "contact" starts the root key "contactExtra"; its form group would count the fields of "contactExtra" as its own.',
-    )
+    expect(formdefWarningsOf(warn)).toEqual([
+      [
+        'formdef: the step "contact" starts the root key "contactExtra"; its form group would count the fields of "contactExtra" as its own.',
+      ],
+    ])
   })
 })

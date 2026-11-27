@@ -1,43 +1,43 @@
-import { useSelector } from '@tanstack/react-form'
+import { type StandardSchemaV1, useSelector } from '@tanstack/react-form'
 import {
   type ComponentType,
   type ReactNode,
   type RefObject,
   useEffect,
+  useReducer,
   useRef,
   useState,
 } from 'react'
 
 import type { BodyProps, StepperProps, StepState } from '../config/structure'
+import type { Validation } from '../config/validation'
 import { Fields, type FieldsProps } from '../render/fields'
 import type { RenderForm } from '../render/render-form'
 import { warnOnce } from '../render/warn-once'
 import { hasDueError } from '../widget/has-due-error'
 import { StepSubmitted } from '../widget/step-submitted'
+import { type ErringField, erringFieldsOf, subscribeToErringFields } from './erring-fields'
 import { firstControlOf } from './first-control-of'
 import { focusControl } from './focus-control'
 import { type RootStep, type RootSteps, STEP_PLACE } from './root-steps'
-
-type FieldMeta =
-  | { errors?: readonly unknown[]; isValid: boolean; isBlurred: boolean; isDirty: boolean }
-  | undefined
+import { stepValidatorOf } from './step-validator'
 
 /** The state of a form, as far as the steps read it. */
 type StepFormState = {
   values: unknown
-  fieldMeta: Readonly<Record<string, FieldMeta>>
   submissionAttempts: number
   isSubmitting: boolean
-  /** The form's own errors by cause; `onSubmit` holds one an `onSubmitAsync` returned. */
-  errorMap: { onSubmit?: unknown }
+  /** The form's own errors, such as one `onSubmit` returned. */
+  errors: readonly unknown[]
 }
 
-type StepGroup = { handleSubmit: () => Promise<void> }
+type StepGroup = { handleSubmit: () => Promise<unknown> }
 
 type FormGroupProps = {
   name: string
-  onGroupSubmit: () => void
-  onGroupSubmitInvalid: () => void
+  validators: readonly object[]
+  onSubmit: () => void
+  onSubmitInvalid: () => void
   children: (group: StepGroup) => ReactNode
 }
 
@@ -45,12 +45,12 @@ type FormGroupProps = {
 export type StepForm = RenderForm & {
   FormGroup: ComponentType<FormGroupProps>
   formId: string
-  fieldInfo: Readonly<Record<string, { instance: unknown } | undefined>>
-  store: {
+  readonly state: StepFormState
+  atom: {
     get: () => StepFormState
     subscribe: (listener: (state: StepFormState) => void) => { unsubscribe: () => void }
   }
-  handleSubmit: () => Promise<void>
+  handleSubmit: () => Promise<unknown>
 }
 
 type StepParts = FieldsProps['parts'] & {
@@ -62,6 +62,9 @@ type SteppedFormProps = {
   form: StepForm
   fields: FieldsProps['fields']
   steps: RootSteps
+  /** The schema of the form and when it runs, for each step to check its part of it. */
+  schema: StandardSchemaV1
+  validation: Validation | undefined
   requiredPaths: ReadonlySet<string>
   /** Receives what a submit of the `<form>` element does: `next` of the current step. */
   submitStep: RefObject<(() => void) | undefined>
@@ -94,27 +97,22 @@ const HIDDEN_STEP_TOPIC = 'hiddenStep'
 const isUnder = (path: string, key: string): boolean =>
   path === key || path.startsWith(`${key}.`) || path.startsWith(`${key}[`)
 
-const erringPathsUnder = (fieldMeta: StepFormState['fieldMeta'], key: string): string[] =>
-  Object.entries(fieldMeta)
-    .filter(([path, meta]) => isUnder(path, key) && (meta?.errors?.length ?? 0) > 0)
-    .map(([path]) => path)
+const erringPathsUnder = (erring: readonly ErringField[], key: string): string[] =>
+  erring.filter(({ path }) => isUnder(path, key)).map(({ path }) => path)
 
 const hasDueErrorUnder = (
-  fieldMeta: StepFormState['fieldMeta'],
+  erring: readonly ErringField[],
   key: string,
   wasSubmitted: boolean,
-): boolean =>
-  Object.entries(fieldMeta).some(
-    ([path, meta]) => isUnder(path, key) && meta !== undefined && hasDueError(meta, wasSubmitted),
-  )
+): boolean => erring.some(({ path, meta }) => isUnder(path, key) && hasDueError(meta, wasSubmitted))
 
 // Unmounting a field resets its meta, so a step not shown keeps what its fields held when it was left.
 const checkOf = (form: StepForm, key: string, wasChecked: boolean): StepCheck => {
-  const { fieldMeta } = form.store.get()
+  const erring = erringFieldsOf(form)
 
   return {
-    hasErrors: erringPathsUnder(fieldMeta, key).length > 0,
-    hasDueError: hasDueErrorUnder(fieldMeta, key, wasChecked),
+    hasErrors: erringPathsUnder(erring, key).length > 0,
+    hasDueError: hasDueErrorUnder(erring, key, wasChecked),
   }
 }
 
@@ -177,10 +175,7 @@ const hasSameStepProps = (first: readonly StepProps[], second: readonly StepProp
 
 // The step's own path belongs to its form group, which renders no control.
 const erringFieldPathsUnder = (form: StepForm, key: string): string[] =>
-  erringPathsUnder(form.store.get().fieldMeta, key).filter((path) => path !== key)
-
-const isRendered = (form: StepForm, path: string): boolean =>
-  Boolean(form.fieldInfo[path]?.instance)
+  erringPathsUnder(erringFieldsOf(form), key).filter((path) => path !== key)
 
 /** The control of the step's first invalid field in document order, if one is rendered. */
 const firstInvalidControl = (form: StepForm, key: string): HTMLElement | undefined =>
@@ -203,8 +198,9 @@ const warnAboutWiderKeys = (steps: RootSteps, fields: FieldsProps['fields']): vo
 }
 
 const holdsOwnError = (form: StepForm, key: string): boolean =>
-  (form.store.get().fieldMeta[key]?.errors?.length ?? 0) > 0
+  erringFieldsOf(form).some(({ path }) => path === key)
 
+// Called when no erring field of the step renders a control to focus.
 const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): void => {
   const erring = erringFieldPathsUnder(form, key)
   if (erring.length === 0 && holdsOwnError(form, key)) {
@@ -215,7 +211,7 @@ const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): 
     )
     return
   }
-  if (erring.length === 0 || erring.some((path) => isRendered(form, path))) {
+  if (erring.length === 0) {
     return
   }
 
@@ -226,11 +222,11 @@ const warnAboutUnrenderedErrors = (form: StepForm, key: string, owner: object): 
   )
 }
 
-type SubmitState = { fieldMeta: StepFormState['fieldMeta']; shownKeys: ReadonlySet<string> }
+type SubmitState = { erringFields: readonly ErringField[]; shownKeys: ReadonlySet<string> }
 
-const warnAboutHiddenSteps = (steps: RootSteps, { fieldMeta, shownKeys }: SubmitState): void => {
+const warnAboutHiddenSteps = (steps: RootSteps, { erringFields, shownKeys }: SubmitState): void => {
   for (const step of steps) {
-    const erring = erringPathsUnder(fieldMeta, step.step)
+    const erring = erringPathsUnder(erringFields, step.step)
     if (erring.length > 0 && !shownKeys.has(step.step)) {
       warnOnce(
         step,
@@ -251,7 +247,8 @@ const GroupHandle = ({ group, currentGroup, children }: GroupHandleProps): React
 
 /**
  * Renders a form whose root layout holds steps: the current step as a TanStack form group at its
- * key, inside the registered stepper. A step moves on when its group submits valid; otherwise its
+ * key, inside the registered stepper. The group checks the schema's issues under its key, at the
+ * times `validation` picks. A step moves on when its group submits valid; otherwise its
  * errors become due and its first invalid control takes the focus. The last step submits the
  * form; when that fails, the first step holding an error is shown and its first invalid control
  * takes the focus. A step its condition hides is skipped, except while it is the current one. A
@@ -269,11 +266,13 @@ export const SteppedForm = ({
   form,
   fields,
   steps,
+  schema,
+  validation,
   requiredPaths,
   submitStep,
   stepperProps,
 }: SteppedFormProps): ReactNode => {
-  const [currentKey, setCurrentKey] = useState(() => firstShownKey(steps, form.store.get().values))
+  const [currentKey, setCurrentKey] = useState(() => firstShownKey(steps, form.state.values))
   const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set([currentKey]))
   const [attempted, setAttempted] = useState<ReadonlySet<string>>(() => new Set())
   const [isFocusPending, setIsFocusPending] = useState(false)
@@ -283,28 +282,19 @@ export const SteppedForm = ({
   // A recheck submits the step's group, which a remount reset, so a mode like `revalidate` checks
   // on change again; it neither moves on nor takes the focus.
   const recheckingKey = useRef<string | undefined>(undefined)
-  const shownByCondition = useSelector(form.store, (state) => shownStepsOf(steps, state.values), {
+  const shownByCondition = useSelector(form.atom, (state) => shownStepsOf(steps, state.values), {
     compare: hasSameItems,
   })
-  const hasErrors = useSelector(
-    form.store,
-    (state) => steps.map((step) => erringPathsUnder(state.fieldMeta, step.step).length > 0),
-    { compare: hasSameItems },
-  )
-  const hasDueErrors = useSelector(
-    form.store,
-    (state) =>
-      steps.map((step) =>
-        hasDueErrorUnder(
-          state.fieldMeta,
-          step.step,
-          state.submissionAttempts > 0 || attempted.has(step.step),
-        ),
-      ),
-    { compare: hasSameItems },
+  const [, renderAgain] = useReducer((version: number) => version + 1, 0)
+  useEffect(() => subscribeToErringFields(form, renderAgain), [form])
+  const erringFields = erringFieldsOf(form)
+  const submissionAttempts = useSelector(form.atom, (state) => state.submissionAttempts)
+  const hasErrors = steps.map((step) => erringPathsUnder(erringFields, step.step).length > 0)
+  const hasDueErrors = steps.map((step) =>
+    hasDueErrorUnder(erringFields, step.step, submissionAttempts > 0 || attempted.has(step.step)),
   )
   const stepProps = useSelector(
-    form.store,
+    form.atom,
     (state) => {
       const shown = shownStepsOf(steps, state.values)
       return steps.map((step, position) =>
@@ -315,7 +305,7 @@ export const SteppedForm = ({
     },
     { compare: hasSameStepProps },
   )
-  const wasSubmitted = useSelector(form.store, (state) => state.submissionAttempts > 0)
+  const wasSubmitted = submissionAttempts > 0
   // A reset of the form, such as `formApi.reset()` in `onSubmit`, sets its submit attempts back to
   // none; the steps start over with it.
   const wasSubmittedBefore = useRef(wasSubmitted)
@@ -325,14 +315,14 @@ export const SteppedForm = ({
     if (!isReset) {
       return
     }
-    const first = firstShownKey(steps, form.store.get().values)
+    const first = firstShownKey(steps, form.state.values)
     recheckKey.current = undefined
     setCurrentKey(first)
     setVisited(new Set([first]))
     setAttempted(new Set())
     setLastChecks(new Map())
   }, [wasSubmitted, steps, form])
-  const isSubmitting = useSelector(form.store, (state) => state.isSubmitting)
+  const isSubmitting = useSelector(form.atom, (state) => state.isSubmitting)
   // A step's submit settles after its validation; by then another step may be shown.
   const shownKey = useRef(currentKey)
   useEffect(() => {
@@ -396,7 +386,7 @@ export const SteppedForm = ({
     if (key === currentKey) {
       return
     }
-    const wasChecked = form.store.get().submissionAttempts > 0 || attempted.has(currentKey)
+    const wasChecked = form.state.submissionAttempts > 0 || attempted.has(currentKey)
     const left = checkOf(form, currentKey, wasChecked)
     setLastChecks((checks) => withCheck(checks, currentKey, left))
     recheckKey.current = isChecked(key) ? key : undefined
@@ -423,7 +413,7 @@ export const SteppedForm = ({
   }
   const submitForm = async (): Promise<void> => {
     await form.handleSubmit()
-    const { fieldMeta } = form.store.get()
+    const erringAfterSubmit = erringFieldsOf(form)
     const notShown = visible.filter(({ step }) => step.step !== shownKey.current)
     setLastChecks(
       (checks) =>
@@ -432,10 +422,12 @@ export const SteppedForm = ({
           ...notShown.map(({ step }) => [step.step, checkOf(form, step.step, true)] as const),
         ]),
     )
-    const erring = visible.find(({ step }) => erringPathsUnder(fieldMeta, step.step).length > 0)
+    const erring = visible.find(
+      ({ step }) => erringPathsUnder(erringAfterSubmit, step.step).length > 0,
+    )
     if (erring === undefined) {
       warnAboutHiddenSteps(steps, {
-        fieldMeta,
+        erringFields: erringAfterSubmit,
         shownKeys: new Set(visible.map(({ step }) => step.step)),
       })
       return
@@ -445,7 +437,7 @@ export const SteppedForm = ({
   }
   const following = visible[current + 1]
   const next = (): void => {
-    if (form.store.get().isSubmitting) {
+    if (form.state.isSubmitting) {
       return
     }
     markAttempted()
@@ -492,7 +484,8 @@ export const SteppedForm = ({
       <form.FormGroup
         key={currentKey}
         name={currentKey}
-        onGroupSubmit={() => {
+        validators={[stepValidatorOf({ schema, validation, key: currentKey })]}
+        onSubmit={() => {
           if (recheckingKey.current === currentKey) {
             return
           }
@@ -500,7 +493,7 @@ export const SteppedForm = ({
             moveTo(following.step.step)
           }
         }}
-        onGroupSubmitInvalid={() => {
+        onSubmitInvalid={() => {
           if (recheckingKey.current === currentKey) {
             return
           }

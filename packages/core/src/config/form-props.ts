@@ -16,8 +16,6 @@ export type FormElementProps = Omit<
  * `ref` reaches the `<form>` element.
  *
  * @typeParam TSchema - The Standard Schema of the form; its input type is the form's data type.
- * @typeParam TSubmitMeta - What `handleSubmit` takes besides the values, as in TanStack's
- *   `onSubmitMeta`. Defaults to none.
  *
  * @example
  * ```tsx
@@ -33,25 +31,23 @@ export type FormElementProps = Omit<
  * }
  * ```
  */
-export type FormProps<TSchema extends StandardSchemaV1, TSubmitMeta = never> = FormElementProps & {
+export type FormProps<TSchema extends StandardSchemaV1> = FormElementProps & {
   /**
    * The form's TanStack options for this instance, such as default values from a hook or a submit
-   * handler that calls a mutation. They take precedence over the config's; a key set to
-   * `undefined`, such as data still loading, keeps the config's value.
+   * handler that calls a mutation. They take precedence over the config's, except `validators` and
+   * `listeners`, of which both run, the config's first; a key set to `undefined`, such as data still
+   * loading, keeps the config's value.
    *
    * @defaultValue none; the config's options apply
    */
-  options?: FormOptionsOf<InferData<TSchema>, TSubmitMeta> & {
+  options?: FormOptionsOf<InferData<TSchema>> & {
     /** The values the form starts with; they take precedence over the config's. */
     defaultValues?: InferData<TSchema>
   }
 }
 
-type WithDefaultValues<TSchema extends StandardSchemaV1, TSubmitMeta> = FormProps<
-  TSchema,
-  TSubmitMeta
-> & {
-  options: NonNullable<FormProps<TSchema, TSubmitMeta>['options']> & {
+type WithDefaultValues<TSchema extends StandardSchemaV1> = FormProps<TSchema> & {
+  options: NonNullable<FormProps<TSchema>['options']> & {
     defaultValues: InferData<TSchema>
   }
 }
@@ -60,10 +56,10 @@ type WithDefaultValues<TSchema extends StandardSchemaV1, TSubmitMeta> = FormProp
  * The props of the form built from `TConfig`: when the config leaves out `defaultValues`, the
  * instance has to pass them in `options`.
  */
-export type FormPropsFor<TSchema extends StandardSchemaV1, TSubmitMeta, TConfig> = TConfig extends {
+export type FormPropsFor<TSchema extends StandardSchemaV1, TConfig> = TConfig extends {
   defaultValues: infer TDefaultValues
 }
   ? undefined extends TDefaultValues
-    ? WithDefaultValues<TSchema, TSubmitMeta>
-    : FormProps<TSchema, TSubmitMeta>
-  : WithDefaultValues<TSchema, TSubmitMeta>
+    ? WithDefaultValues<TSchema>
+    : FormProps<TSchema>
+  : WithDefaultValues<TSchema>

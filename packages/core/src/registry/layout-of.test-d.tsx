@@ -1,4 +1,3 @@
-import { createFormHookContexts } from '@tanstack/react-form'
 import type { ComponentType } from 'react'
 import { describe, expectTypeOf, it } from 'vitest'
 
@@ -7,14 +6,10 @@ import type { FieldOf } from '../widget/field-of'
 import { createRegistry } from './create-registry'
 import type { LayoutOf } from './layout-of'
 
-const { fieldContext, formContext } = createFormHookContexts()
-
 declare const TextField: ComponentType<FieldOf<string> & { label: string }>
 declare const SubmitButton: ComponentType<{ label: string }>
 
 const registry = createRegistry({
-  fieldContext,
-  formContext,
   widgets: { text: TextField },
   formComponents: { SubmitButton },
 })
@@ -48,10 +43,10 @@ describe('LayoutOf', () => {
     const layout: LayoutOf<typeof registry, Address, Customer> = [
       {
         render: (form) => {
-          expectTypeOf(form).toEqualTypeOf<FormHandle<Customer, never>>()
+          expectTypeOf(form).toEqualTypeOf<FormHandle<Customer>>()
           expectTypeOf(form.getFieldValue('billing.zip')).toEqualTypeOf<string>()
           form.handleSubmit()
-          // @ts-expect-error a fragment does not know the submit meta of its form
+          // @ts-expect-error TanStack Form v2's handleSubmit takes no submit meta
           form.handleSubmit({ intent: 'save' })
 
           return null

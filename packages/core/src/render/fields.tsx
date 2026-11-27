@@ -7,7 +7,7 @@ import { byName } from './by-name'
 import { childPath } from './child-path'
 import { Derived } from './derived'
 import { pathPattern } from './path-pattern'
-import type { AppFieldProps, RenderForm } from './render-form'
+import type { FieldProps, RenderForm } from './render-form'
 import { NO_REQUIRED_PATHS, RequiredPaths } from './required-paths'
 import { splitEntry } from './split-entry'
 import { warnOnce } from './warn-once'
@@ -79,8 +79,6 @@ type LayoutKindProps = {
   entry: Readonly<Record<string, unknown>>
   props: object | undefined
 }
-
-const ARRAY_MODE = 'array'
 
 const DROPPED_EXTRA = 'passes extra props to an item that has no single widget to receive them'
 const DROPPED_EXTRA_TOPIC = 'droppedExtra'
@@ -155,23 +153,23 @@ const FieldContent = ({
       : undefined
 
     return (
-      <form.AppField {...fieldOptions} name={path}>
+      <form.Field {...fieldOptions} name={path}>
         {(field) => <Widget {...found} {...props} {...extra} field={field} />}
-      </form.AppField>
+      </form.Field>
     )
   }
 
   if (typeof own.render === 'function') {
     return (
-      <form.AppField {...fieldOptions} name={path}>
-        {own.render as AppFieldProps['children']}
-      </form.AppField>
+      <form.Field {...fieldOptions} name={path}>
+        {own.render as FieldProps['children']}
+      </form.Field>
     )
   }
 
   if (typeof own.item === 'object' && own.item !== null) {
     return (
-      <form.AppField {...fieldOptions} name={path} mode={ARRAY_MODE}>
+      <form.ArrayField {...fieldOptions} name={path}>
         {(field) => (
           <ArrayEntry
             field={field}
@@ -190,7 +188,7 @@ const FieldContent = ({
             )}
           />
         )}
-      </form.AppField>
+      </form.ArrayField>
     )
   }
 
@@ -201,9 +199,9 @@ const FieldContent = ({
   return (
     <>
       {Object.keys(fieldOptions).length > 0 && (
-        <form.AppField {...fieldOptions} name={path}>
+        <form.Field {...fieldOptions} name={path}>
           {renderNothing}
-        </form.AppField>
+        </form.Field>
       )}
       <LevelEntries
         parts={parts}
@@ -308,8 +306,12 @@ const ComponentNode = ({ level, entry, props }: LayoutKindProps): ReactNode => {
       `formdef: the layout of ${layoutOwner(level.path)} places the unregistered form component "${name}".`,
     )
   }
+  // TanStack binds each registered form component to its form on first read, through a getter on
+  // the prototype, and hands the form to it through context.
+  const bound = (level.form as unknown as Partial<ComponentMap>)[name]
+  const Bound = typeof bound === 'function' ? bound : Component
 
-  return <Component {...props} />
+  return <Bound {...props} />
 }
 
 const LayoutKind = ({ level, entry, props }: LayoutKindProps): ReactNode => {

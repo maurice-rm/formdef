@@ -1,41 +1,51 @@
-import { FieldApi, FormApi } from '@tanstack/react-form'
+import type { AnyFieldApi } from '@tanstack/react-form'
+import { act, cleanup } from '@testing-library/react'
 import { createElement } from 'react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { fieldId } from './field-id'
 import { fieldParts } from './field-parts'
+import { mountField } from './mount-field.test-support'
 
 const FORM_ID = 'signup'
 const EMAIL_MESSAGE = 'Enter an email address'
 const DESCRIPTION = 'We never share it'
 
-// `useAppForm` types the submit meta of a form without `onSubmitMeta` as `unknown`; `new FormApi`
-// would default it to `never`, which no widget's field type accepts.
-const SUBMIT_META: unknown = undefined
+type FieldOptions = {
+  formId?: string
+  defaultValues?: object
+  name?: string
+  validate?: () => unknown
+}
 
-function emailField(validate: () => unknown = () => EMAIL_MESSAGE) {
-  const form = new FormApi({
-    formId: FORM_ID,
-    defaultValues: { email: '' },
-    onSubmitMeta: SUBMIT_META,
-  })
-  form.mount()
-  const field = new FieldApi({
-    form,
-    name: 'email',
-    validators: { onChange: validate, onBlur: validate },
-  })
-  field.mount()
+// A field read later sees the field's current state, since TanStack hands out views onto one
+// field object.
+function fieldWith({
+  formId,
+  defaultValues = { email: '' },
+  name = 'email',
+  validate,
+}: FieldOptions = {}): AnyFieldApi {
+  return mountField({
+    formOptions: { ...(formId === undefined ? {} : { formId }), defaultValues },
+    name,
+    fieldValidators:
+      validate === undefined ? undefined : [{ run: validate, triggers: ['change', 'blur'] }],
+  }).field()
+}
+
+function emailField(validate: () => unknown = () => EMAIL_MESSAGE): AnyFieldApi {
+  return fieldWith({ formId: FORM_ID, validate })
+}
+
+function editAndLeave(field: AnyFieldApi): AnyFieldApi {
+  act(() => field.handleChange('changed'))
+  act(() => field.handleBlur())
 
   return field
 }
 
-function editAndLeave(field: ReturnType<typeof emailField>) {
-  field.handleChange('changed')
-  field.handleBlur()
-
-  return field
-}
+afterEach(cleanup)
 
 describe('fieldParts', () => {
   describe('ids', () => {
@@ -48,12 +58,11 @@ describe('fieldParts', () => {
     })
 
     it('builds the id of a nested path', () => {
-      const form = new FormApi({
+      const field = fieldWith({
         formId: FORM_ID,
         defaultValues: { address: { zip: '' } },
-        onSubmitMeta: SUBMIT_META,
+        name: 'address.zip',
       })
-      const field = new FieldApi({ form, name: 'address.zip' })
 
       expect(fieldParts(field).control).toMatchObject({
         id: fieldId(FORM_ID, 'address.zip'),
@@ -62,29 +71,27 @@ describe('fieldParts', () => {
     })
 
     it('keeps the ids of two forms apart', () => {
-      const first = new FormApi({ defaultValues: { email: '' }, onSubmitMeta: SUBMIT_META })
-      const second = new FormApi({ defaultValues: { email: '' }, onSubmitMeta: SUBMIT_META })
+      const first = fieldWith()
+      const second = fieldWith()
 
-      expect(fieldParts(new FieldApi({ form: first, name: 'email' })).control.id).not.toBe(
-        fieldParts(new FieldApi({ form: second, name: 'email' })).control.id,
-      )
+      expect(fieldParts(first).control.id).not.toBe(fieldParts(second).control.id)
     })
   })
 
   describe('isErrorDue', () => {
     it('is false while an invalid field was only edited', () => {
       const field = emailField()
-      field.handleChange('changed')
+      act(() => field.handleChange('changed'))
 
-      expect(field.state.meta.isValid).toBe(false)
+      expect(field.meta.isValid).toBe(false)
       expect(fieldParts(field).isErrorDue).toBe(false)
     })
 
     it('is false while an invalid field was only left', () => {
       const field = emailField()
-      field.handleBlur()
+      act(() => field.handleBlur())
 
-      expect(field.state.meta.isValid).toBe(false)
+      expect(field.meta.isValid).toBe(false)
       expect(fieldParts(field).isErrorDue).toBe(false)
     })
 
@@ -94,7 +101,9 @@ describe('fieldParts', () => {
 
     it('is true for an untouched invalid field once the form was submitted', async () => {
       const field = emailField()
-      await field.form.handleSubmit()
+      await act(async () => {
+        await field.form.handleSubmit()
+      })
 
       expect(fieldParts(field).isErrorDue).toBe(true)
     })
@@ -162,9 +171,9 @@ describe('fieldParts', () => {
 
     it('reports leaving the control to the field', () => {
       const field = emailField()
-      fieldParts(field).control.onBlur()
+      act(() => fieldParts(field).control.onBlur())
 
-      expect(field.state.meta.isBlurred).toBe(true)
+      expect(field.meta.isBlurred).toBe(true)
     })
   })
 })

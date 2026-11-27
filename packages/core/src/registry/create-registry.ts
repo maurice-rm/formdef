@@ -1,5 +1,9 @@
-import { type AnyFieldApi, type AnyFormApi, createFormHook } from '@tanstack/react-form'
-import { type Context, createElement, type ReactNode } from 'react'
+import {
+  createFormHook,
+  type ReactComponentTree,
+  type ReactFormComponents,
+} from '@tanstack/react-form'
+import { createElement, type ReactNode } from 'react'
 
 import { createForm, type FormBinding } from '../form/create-form'
 import { Fields, type FieldsProps } from '../render/fields'
@@ -8,6 +12,7 @@ import type {
   CheckedStructure,
   CheckedWidgets,
   Components,
+  FormHook,
   NewFormComponents,
   NewStructure,
   NewWidgets,
@@ -15,12 +20,7 @@ import type {
   Structure,
 } from './registry'
 
-type Contexts = {
-  fieldContext: Context<AnyFieldApi>
-  formContext: Context<AnyFormApi>
-}
-
-type RegistryParts<TWidgets, TFormComponents, TStructure> = Contexts & {
+type RegistryParts<TWidgets, TFormComponents, TStructure> = {
   widgets: TWidgets
   formComponents: TFormComponents
   structure: TStructure
@@ -33,12 +33,11 @@ function buildRegistry<
 >(
   parts: RegistryParts<TWidgets, TFormComponents, TStructure>,
 ): Registry<TWidgets, TFormComponents, TStructure> {
-  const { extendForm: _replacedByExtendRegistry, ...formHook } = createFormHook({
-    fieldContext: parts.fieldContext,
-    formContext: parts.formContext,
-    fieldComponents: parts.widgets,
-    formComponents: parts.formComponents,
-  })
+  // TanStack takes function components only; formdef's maps admit any component type.
+  const formHook = createFormHook<ReactFormComponents, ReactComponentTree>({
+    fieldComponents: parts.widgets as ReactComponentTree,
+    formComponents: parts.formComponents as ReactFormComponents,
+  }) as unknown as FormHook<TWidgets, TFormComponents>
 
   function extendRegistry<
     const TNewWidgets extends NewWidgets<TWidgets> = Record<never, never>,
@@ -58,8 +57,6 @@ function buildRegistry<
 
     // The extension's maps are optional, and spreading an optional generic map drops its type.
     return buildRegistry({
-      fieldContext: parts.fieldContext,
-      formContext: parts.formContext,
       widgets: { ...parts.widgets, ...addedWidgets } as TWidgets & TNewWidgets,
       formComponents: { ...parts.formComponents, ...extension.formComponents } as TFormComponents &
         TNewFormComponents,
@@ -97,18 +94,16 @@ function buildRegistry<
 }
 
 /**
- * Binds widgets, form components and structure slots to the app's TanStack contexts and returns a
+ * Binds widgets, form components and structure slots to TanStack's form hook and returns a
  * registry, the value every form of the app is built with.
  *
- * Create the contexts with TanStack's `createFormHookContexts()` in a module of their own, so a
- * form component can read the form through `useFormContext()` without importing the registry.
+ * A form component reads its form through TanStack's `formComponent.create`, or through
+ * `formContext.create(...).useFormContext()`, both from `getFormHookHelpers()`.
  *
  * @typeParam TWidgets - The widgets by name; each takes its field as a prop typed `FieldOf<V>`.
  * @typeParam TFormComponents - The form components by name, placed in a layout by `{ component }`.
  * @typeParam TStructure - The structure slots: `body`, `section`, `row`, `arrayFrame` and `stepper`.
- * @param config - The contexts and what the registry holds.
- * @param config.fieldContext - The field context from `createFormHookContexts()`.
- * @param config.formContext - The form context from `createFormHookContexts()`.
+ * @param config - What the registry holds.
  * @param config.widgets - The widgets by name. A widget's static `emptyValue`, the value it holds
  *   while nothing is entered, must be of the value type it serves.
  * @param config.formComponents - The form components by name.
@@ -120,11 +115,8 @@ function buildRegistry<
  * ```tsx
  * 'use client'
  * import { createRegistry } from '@formdef/core'
- * import { fieldContext, formContext } from './context'
  *
  * export const registry = createRegistry({
- *   fieldContext,
- *   formContext,
  *   widgets: { text: TextField, checkbox: CheckboxField },
  *   formComponents: { SubmitButton },
  *   structure: { section: Section },
@@ -135,17 +127,13 @@ export function createRegistry<
   const TWidgets extends Components,
   const TFormComponents extends Components = Record<never, never>,
   const TStructure extends Structure = Record<never, never>,
->(
-  config: Contexts & {
-    widgets: TWidgets & CheckedWidgets<TWidgets>
-    formComponents?: TFormComponents
-    structure?: TStructure & CheckedStructure<TStructure>
-  },
-): Registry<TWidgets, TFormComponents, TStructure> {
+>(config: {
+  widgets: TWidgets & CheckedWidgets<TWidgets>
+  formComponents?: TFormComponents
+  structure?: TStructure & CheckedStructure<TStructure>
+}): Registry<TWidgets, TFormComponents, TStructure> {
   // Both maps fall back to their empty defaults exactly when they are left out.
   return buildRegistry<TWidgets, TFormComponents, TStructure>({
-    fieldContext: config.fieldContext,
-    formContext: config.formContext,
     widgets: config.widgets,
     formComponents: config.formComponents ?? ({} as TFormComponents),
     structure: config.structure ?? ({} as TStructure),

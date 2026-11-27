@@ -1,20 +1,37 @@
-import { type AnyFormApi, createFormHook, createFormHookContexts } from '@tanstack/react-form'
+import {
+  type AnyFormApi,
+  createFormHook,
+  formOptions,
+  getFormHookHelpers,
+} from '@tanstack/react-form'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { createElement, type ReactNode, useMemo } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RowProps, SectionProps } from '../config/structure'
 import { errorsOf } from '../widget/errors-of'
 import type { FieldOf } from '../widget/field-of'
 import { Fields } from './fields'
+import type { FieldProps, RenderForm } from './render-form'
 
-const { fieldContext, formContext, useFormContext } = createFormHookContexts()
+type Address = { street: string; zip: string }
+type Order = { email: string; address: Address; note: string }
+
+const DEFAULT_VALUES: Order = {
+  email: 'ada@example.com',
+  address: { street: 'Main Street 1', zip: '12345' },
+  note: 'Ring twice',
+}
+
+const { useFormContext } = getFormHookHelpers().formContext.create(
+  formOptions({ defaultValues: DEFAULT_VALUES }),
+)
 
 const TextField = ({ field, label }: FieldOf<string> & { label: string }): ReactNode => (
   <label>
     {label}
     <input
       name={field.name}
-      value={field.state.value}
+      value={field.value}
       onChange={(event) => field.handleChange(event.target.value)}
     />
     {errorsOf(field).map((error) => (
@@ -47,8 +64,6 @@ const widgets = { text: TextField }
 const formComponents = { SubmitButton }
 
 const { useAppForm } = createFormHook({
-  fieldContext,
-  formContext,
   fieldComponents: widgets,
   formComponents,
 })
@@ -56,21 +71,25 @@ const { useAppForm } = createFormHook({
 const PARTS = { widgets, formComponents, structure: {} }
 const PARTS_WITH_SLOTS = { widgets, formComponents, structure: { section: Section, row: Row } }
 
-type Address = { street: string; zip: string }
-type Order = { email: string; address: Address; note: string }
-
-const DEFAULT_VALUES: Order = {
-  email: 'ada@example.com',
-  address: { street: 'Main Street 1', zip: '12345' },
-  note: 'Ring twice',
-}
-
 type OrderFormProps = {
   fields: Record<string, object>
   layout?: readonly unknown[] | undefined
   parts?: typeof PARTS | typeof PARTS_WITH_SLOTS
   onForm?: (form: AnyFormApi) => void
   onSubmit?: (values: Order) => void
+  /** Receives the props of every `Field` the renderer mounts. */
+  onFieldProps?: (props: FieldProps) => void
+}
+
+// TanStack Form v2 does not expose a field's options, so the test sees them on their way in.
+const recordingFormOf = (form: RenderForm, record: (props: FieldProps) => void): RenderForm => {
+  const view: RenderForm = Object.create(form)
+  view.Field = (props: FieldProps): ReactNode => {
+    record(props)
+    return createElement(form.Field, props)
+  }
+
+  return view
 }
 
 const OrderForm = ({
@@ -79,18 +98,22 @@ const OrderForm = ({
   parts = PARTS,
   onForm,
   onSubmit,
+  onFieldProps,
 }: OrderFormProps): ReactNode => {
   const form = useAppForm({
     defaultValues: DEFAULT_VALUES,
     onSubmit: ({ value }) => onSubmit?.(value),
   })
   onForm?.(form)
-
-  return (
-    <form.AppForm>
-      <Fields parts={parts} form={form} fields={fields} layout={layout} />
-    </form.AppForm>
+  const rendered = useMemo(
+    () =>
+      onFieldProps === undefined
+        ? (form as unknown as RenderForm)
+        : recordingFormOf(form as unknown as RenderForm, onFieldProps),
+    [form, onFieldProps],
   )
+
+  return <Fields parts={parts} form={rendered} fields={fields} layout={layout} />
 }
 
 const ORDER_FIELDS = {
@@ -107,10 +130,13 @@ const ORDER_FIELDS = {
 const inputNames = (): (string | null)[] =>
   screen.getAllByRole('textbox').map((input) => input.getAttribute('name'))
 
-const needsAt = ({ value }: { value: string }): string | undefined =>
-  value.includes('@') ? undefined : 'Needs an @'
+const needsAt = {
+  run: ({ value }: { value: string }): string | undefined =>
+    value.includes('@') ? undefined : 'Needs an @',
+  triggers: ['change'],
+}
 
-const checkedOnMount = (): string => 'Checked on mount'
+const checkedOnMount = { run: (): string => 'Checked on mount', triggers: ['mount'] }
 
 afterEach(() => {
   cleanup()
@@ -140,7 +166,7 @@ describe('Fields', () => {
     render(
       <OrderForm
         fields={{
-          email: { widget: 'text', props: { label: 'Email' }, validators: { onChange: needsAt } },
+          email: { widget: 'text', props: { label: 'Email' }, validators: [needsAt] },
         }}
       />,
     )
@@ -151,12 +177,15 @@ describe('Fields', () => {
   })
 
   it("keeps formdef's own keys away from the field", () => {
-    const listOptionKeys = (field: FieldOf<string>['field']): ReactNode => (
-      <output>{Object.keys(field.options).join(',')}</output>
+    const seen: FieldProps[] = []
+    render(
+      <OrderForm
+        fields={{ note: { render: () => null, visibleWhen: () => true } }}
+        onFieldProps={(props) => seen.push(props)}
+      />,
     )
-    render(<OrderForm fields={{ note: { render: listOptionKeys, visibleWhen: () => true } }} />)
 
-    const keys = screen.getByRole('status').textContent?.split(',')
+    const keys = Object.keys(seen[0] ?? {})
     expect(keys).toContain('name')
     expect(keys).not.toContain('render')
     expect(keys).not.toContain('visibleWhen')
@@ -169,7 +198,7 @@ describe('Fields', () => {
         fields={{
           address: {
             fields: { zip: { widget: 'text', props: { label: 'ZIP' } } },
-            validators: { onMount: checkedOnMount },
+            validators: [checkedOnMount],
           },
         }}
         onForm={(instance) => {
@@ -178,21 +207,20 @@ describe('Fields', () => {
       />,
     )
 
-    expect(form?.getFieldMeta('address')?.errors).toEqual(['Checked on mount'])
+    expect(form?.state.isValid).toBe(false)
   })
 
   it('mounts no field for an object whose entry carries no TanStack options', () => {
-    let form: AnyFormApi | undefined
+    const seen: FieldProps[] = []
     render(
       <OrderForm
         fields={{ address: { fields: { zip: { widget: 'text', props: { label: 'ZIP' } } } } }}
-        onForm={(instance) => {
-          form = instance
-        }}
+        onFieldProps={(props) => seen.push(props)}
       />,
     )
 
-    expect(form?.fieldInfo.address?.instance ?? null).toBeNull()
+    expect(seen.map(({ name }) => name)).not.toContain('address')
+    expect(seen.map(({ name }) => name)).toContain('address.zip')
   })
 
   it('hands a custom entry the real field', () => {
@@ -201,7 +229,7 @@ describe('Fields', () => {
         fields={{
           note: {
             render: (field: FieldOf<string>['field']) => (
-              <output>{`${field.name}: ${field.state.value}`}</output>
+              <output>{`${field.name}: ${field.value}`}</output>
             ),
           },
         }}

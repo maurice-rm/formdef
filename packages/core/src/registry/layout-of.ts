@@ -22,7 +22,7 @@ import type { AnyRegistry, PartsOf } from './registry'
  * ```
  */
 export type LayoutOf<TRegistry extends AnyRegistry, TValue, TRoot = TValue> = LayoutEntry<
-  PartsOf<TRegistry, FormHandle<TRoot, never>>,
+  PartsOf<TRegistry, FormHandle<TRoot>>,
   keyof NonNullable<TValue> & string,
   TRoot
 >[]

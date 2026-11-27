@@ -5,6 +5,7 @@ import { childPath } from '../render/child-path'
 import { pathPattern } from '../render/path-pattern'
 import { splitEntry } from '../render/split-entry'
 import { declaresEmptyValue } from '../widget/declares-empty-value'
+import { issuePathOf, type SchemaIssue, type SchemaResult } from './issue-path'
 
 type LevelFields = Readonly<Record<string, object>>
 
@@ -26,9 +27,6 @@ type EmptyValues = {
   /** The path patterns of the leaves whose widget declares an empty value. */
   declared: Set<string>
 }
-
-type Validation = ReturnType<StandardSchemaV1['~standard']['validate']>
-type Issue = NonNullable<Exclude<Validation, Promise<unknown>>['issues']>[number]
 
 const NONE: RequiredPathsResult = { paths: new Set() }
 
@@ -74,14 +72,7 @@ function emptyEntry(entry: object, path: string, empty: EmptyValues): unknown {
   return undefined
 }
 
-const issuePath = (issue: Issue): string =>
-  pathPattern(
-    (issue.path ?? []).reduce<string | undefined>((parent, segment) => {
-      const key = typeof segment === 'object' ? segment.key : segment
-
-      return childPath(parent, typeof key === 'number' ? key : String(key))
-    }, undefined) ?? '',
-  )
+const issuePath = (issue: SchemaIssue): string => pathPattern(issuePathOf(issue))
 
 const parentOf = (path: string): string =>
   path.slice(0, Math.max(path.lastIndexOf('.'), path.lastIndexOf('[')))
@@ -124,7 +115,7 @@ export function findRequiredPaths({
 
   const empty: EmptyValues = { widgets, declared: new Set() }
   const values = emptyLevel(fields, undefined, empty)
-  let result: Validation
+  let result: SchemaResult
   try {
     result = schema['~standard'].validate(values)
   } catch (error) {

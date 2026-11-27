@@ -17,8 +17,6 @@ import type { AnyRegistry, PartsOf } from './registry'
  *
  * @typeParam TRegistry - The registry the form is built with, as `typeof registry`.
  * @typeParam TSchema - The Standard Schema of the form; its input type is the form's data type.
- * @typeParam TSubmitMeta - What `handleSubmit` takes besides the values, as in TanStack's
- *   `onSubmitMeta`. Defaults to none.
  *
  * @example
  * ```ts
@@ -37,5 +35,4 @@ import type { AnyRegistry, PartsOf } from './registry'
 export type FormConfig<
   TRegistry extends AnyRegistry,
   TSchema extends StandardSchemaV1,
-  TSubmitMeta = never,
-> = FormConfigOf<Omit<PartsOf<TRegistry, never>, 'handle'>, TSchema, TSubmitMeta>
+> = FormConfigOf<Omit<PartsOf<TRegistry, never>, 'handle'>, TSchema>

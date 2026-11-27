@@ -1,4 +1,3 @@
-import { createFormHookContexts } from '@tanstack/react-form'
 import type { ComponentType } from 'react'
 import { describe, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
@@ -9,16 +8,12 @@ import type { FieldOf } from '../widget/field-of'
 import { createRegistry } from './create-registry'
 import type { FormConfig } from './form-config'
 
-const { fieldContext, formContext } = createFormHookContexts()
-
 declare const TextField: ComponentType<FieldOf<string> & { label: string; required?: boolean }>
 declare const CheckboxField: ComponentType<FieldOf<boolean> & { label: string }>
 declare const SubmitButton: ComponentType<{ label: string }>
 declare const Stepper: ComponentType<StepperProps & { variant?: 'circles' | 'rail' }>
 
 const registry = createRegistry({
-  fieldContext,
-  formContext,
   widgets: { text: TextField, checkbox: CheckboxField },
   formComponents: { SubmitButton },
 })
@@ -29,9 +24,8 @@ const schema = z.object({
   remember: z.boolean(),
 })
 type SignIn = z.input<typeof schema>
-type Intent = { intent: 'signIn' | 'signUp' }
 
-type SignInConfig = FormConfig<typeof registry, typeof schema, Intent>
+type SignInConfig = FormConfig<typeof registry, typeof schema>
 
 describe('FormConfig', () => {
   it('describes a whole form typed by its schema', () => {
@@ -50,10 +44,8 @@ describe('FormConfig', () => {
         { component: 'SubmitButton', props: { label: 'Sign in' } },
       ],
       validation: { mode: 'blurThenChange' },
-      onSubmitMeta: { intent: 'signIn' },
-      onSubmit: ({ value, meta }) => {
+      onSubmit: ({ value }) => {
         expectTypeOf(value).toEqualTypeOf<SignIn>()
-        expectTypeOf(meta).toEqualTypeOf<Intent>()
       },
     }
     expectTypeOf(config).not.toBeAny()
@@ -84,15 +76,15 @@ describe('FormConfig', () => {
     expectTypeOf(wrongWidget).not.toBeAny()
   })
 
-  it('hands an inline entry the form handle with the submit meta of the form', () => {
+  it('hands an inline entry the form handle of the form', () => {
     const config: SignInConfig = {
       schema,
       fields: {},
       layout: [
         {
           render: (form) => {
-            expectTypeOf(form).toEqualTypeOf<FormHandle<SignIn, Intent>>()
-            form.handleSubmit({ intent: 'signUp' })
+            expectTypeOf(form).toEqualTypeOf<FormHandle<SignIn>>()
+            form.handleSubmit()
 
             return null
           },
@@ -106,55 +98,35 @@ describe('FormConfig', () => {
     const config: SignInConfig = {
       schema,
       fields: {},
-      validators: {
-        onChange: ({ value }) => {
-          expectTypeOf(value).toEqualTypeOf<SignIn>()
+      validators: [
+        {
+          run: ({ value }) => {
+            expectTypeOf(value).toEqualTypeOf<SignIn>()
 
-          return value.email === value.password
-            ? 'Choose a password that is not your email'
-            : undefined
+            return value.email === value.password
+              ? 'Choose a password that is not your email'
+              : undefined
+          },
+          triggers: ['change'],
         },
-        onSubmitAsync: schema,
-      },
+        { run: schema, triggers: [] },
+      ],
     }
     expectTypeOf(config).not.toBeAny()
   })
 
-  it('lets onSubmit read the errors and set one from the server', () => {
+  it('lets onSubmit report an error from the server', () => {
     const config: SignInConfig = {
       schema,
       fields: {},
-      onSubmit: ({ formApi }) => {
-        expectTypeOf(formApi.state.errors).not.toEqualTypeOf<never[]>()
-        formApi.setErrorMap({ onSubmit: 'The email or the password is wrong.' })
-      },
-    }
-    expectTypeOf(config).not.toBeAny()
-  })
-
-  it('starts with a form error in the default state', () => {
-    const config: SignInConfig = {
-      schema,
-      fields: {},
-      defaultState: { errorMap: { onSubmit: 'The link has expired. Request a new one.' } },
-    }
-    expectTypeOf(config).not.toBeAny()
-  })
-
-  it('takes the start values from defaultValues only', () => {
-    const config: SignInConfig = {
-      schema,
-      fields: {},
-      // @ts-expect-error the start values belong in defaultValues
-      defaultState: { values: { email: '', password: '', remember: false } },
+      onSubmit: ({ createValidationError }) =>
+        createValidationError('The email or the password is wrong.'),
     }
     expectTypeOf(config).not.toBeAny()
   })
 
   it("takes the stepper's own props, checked against the registered stepper", () => {
     const stepped = createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField },
       structure: { stepper: Stepper },
     })

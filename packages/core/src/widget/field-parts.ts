@@ -64,7 +64,7 @@ export function fieldPartsFor<TValue>(
   const id = fieldId(field.form.formId, field.name)
   const descriptionId = `${id}${DESCRIPTION_SUFFIX}`
   const errorId = `${id}${ERROR_SUFFIX}`
-  const isErrorDue = hasDueError(field.state.meta, options.wasSubmitted)
+  const isErrorDue = hasDueError(field.meta, options.wasSubmitted)
   const errors = errorsOf(field)
   const isErrorNamed = isErrorDue && errors.length > 0
   const hasDescription = rendersSomething(options.description)
@@ -120,7 +120,7 @@ export function fieldPartsFor<TValue>(
  *     <div>
  *       <label htmlFor={control.id}>{label}</label>
  *       {description && <p id={descriptionId}>{description}</p>}
- *       <input {...control} value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} />
+ *       <input {...control} value={field.value} onChange={(event) => field.handleChange(event.target.value)} />
  *       {isErrorDue && errors.length > 0 && <p id={errorId}>{errors.join(' ')}</p>}
  *     </div>
  *   )

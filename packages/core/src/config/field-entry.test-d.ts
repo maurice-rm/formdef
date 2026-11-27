@@ -131,13 +131,16 @@ describe('FieldEntry', () => {
               zip: {
                 widget: 'text',
                 props: { label: 'Postal code', required: true },
-                validators: {
-                  onBlur: ({ value }) => {
-                    expectTypeOf(value).toEqualTypeOf<string | undefined>()
+                validators: [
+                  {
+                    run: ({ value }) => {
+                      expectTypeOf(value).toEqualTypeOf<string | undefined>()
 
-                    return undefined
+                      return undefined
+                    },
+                    triggers: ['blur'],
                   },
-                },
+                ],
               },
             },
           },
@@ -322,7 +325,7 @@ describe('FieldEntry', () => {
         render: (field) => {
           expectTypeOf(field).toEqualTypeOf<FieldApiOf<string>>()
 
-          return field.state.value
+          return field.value
         },
       }
       expectTypeOf(entry).not.toBeAny()
@@ -373,7 +376,7 @@ describe('FieldEntry', () => {
           email: {
             widget: 'text',
             props: { label: 'Email' },
-            validators: { onBlur: z.email() },
+            validators: [{ run: z.email(), triggers: ['blur'] }],
           },
           birthday: { render: () => null, dependsOn: ['email'] },
         },

@@ -13,8 +13,8 @@ import type { Validation } from './validation'
 /** The parts of a registry a form config reads, without the handle, which the form decides. */
 type FormParts = Omit<ConfigParts, 'handle'>
 
-type PartsWithHandle<TParts extends FormParts, TData, TSubmitMeta> = TParts & {
-  handle: FormHandle<TData, TSubmitMeta>
+type PartsWithHandle<TParts extends FormParts, TData> = TParts & {
+  handle: FormHandle<TData>
 }
 
 // A form's root layout arranges its fields as every level does, or holds only steps.
@@ -60,9 +60,8 @@ type StepperConfig<TParts extends FormParts> = [StepperOf<TParts['structure']>] 
 export type FormConfigOf<
   TParts extends FormParts,
   TSchema extends StandardSchemaV1,
-  TSubmitMeta,
-> = FormOptionsOf<InferData<TSchema>, TSubmitMeta> &
-  FormLevel<PartsWithHandle<TParts, InferData<TSchema>, TSubmitMeta>, InferData<TSchema>> &
+> = FormOptionsOf<InferData<TSchema>> &
+  FormLevel<PartsWithHandle<TParts, InferData<TSchema>>, InferData<TSchema>> &
   StepperConfig<TParts> & {
     /** The schema that validates the form; its input type is the form's data type. */
     schema: TSchema

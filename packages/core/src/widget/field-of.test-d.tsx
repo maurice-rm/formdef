@@ -1,4 +1,4 @@
-import { createFormHook, createFormHookContexts } from '@tanstack/react-form'
+import { createFormHook } from '@tanstack/react-form'
 import { describe, expectTypeOf, it } from 'vitest'
 
 import type { Compatible, FieldApiOf, FieldOf, ValueOf } from './field-of'
@@ -80,10 +80,7 @@ describe('Compatible', () => {
 })
 
 describe('FieldApiOf', () => {
-  const { fieldContext, formContext, useFieldContext } = createFormHookContexts()
   const { useAppForm } = createFormHook({
-    fieldContext,
-    formContext,
     fieldComponents: {},
     formComponents: {},
   })
@@ -93,56 +90,38 @@ describe('FieldApiOf', () => {
       const form = useAppForm({ defaultValues: { email: '', age: 0 } })
 
       return (
-        <form.AppField name="email">
+        <form.Field name="email">
           {(field) => {
             expectTypeOf(field).toExtend<FieldApiOf<string>>()
             expectTypeOf(field).not.toExtend<FieldApiOf<number>>()
 
             return null
           }}
-        </form.AppField>
+        </form.Field>
       )
     }
 
     expectTypeOf(SignUp).toBeFunction()
   })
 
-  it('accepts the field of a form that declares submit metadata', () => {
+  it('accepts the field of a form whose validators type its errors', () => {
     const Publish = () => {
-      const form = useAppForm({ defaultValues: { title: '' }, onSubmitMeta: { publish: false } })
+      const form = useAppForm({
+        defaultValues: { title: '' },
+        validators: [{ run: () => 'Too short', triggers: ['change'] }],
+      })
 
       return (
-        <form.AppField name="title">
+        <form.Field name="title">
           {(field) => {
             expectTypeOf(field).toExtend<FieldApiOf<string>>()
 
             return null
           }}
-        </form.AppField>
+        </form.Field>
       )
     }
 
     expectTypeOf(Publish).toBeFunction()
-  })
-
-  it('accepts a field that the type of the field context rejects', () => {
-    type ContextField = ReturnType<typeof useFieldContext<string>>
-
-    const SignUp = () => {
-      const form = useAppForm({ defaultValues: { email: '' } })
-
-      return (
-        <form.AppField name="email">
-          {(field) => {
-            expectTypeOf(field).not.toExtend<ContextField>()
-            expectTypeOf(field).toExtend<FieldApiOf<string>>()
-
-            return null
-          }}
-        </form.AppField>
-      )
-    }
-
-    expectTypeOf(SignUp).toBeFunction()
   })
 })

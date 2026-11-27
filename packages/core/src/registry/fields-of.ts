@@ -30,7 +30,7 @@ import type { AnyRegistry, PartsOf } from './registry'
  * ```
  */
 export type FieldsOf<TRegistry extends AnyRegistry, TValue, TRoot = TValue> = LevelFields<
-  PartsOf<TRegistry, FormHandle<TRoot, never>>,
+  PartsOf<TRegistry, FormHandle<TRoot>>,
   TValue,
   TRoot
 >

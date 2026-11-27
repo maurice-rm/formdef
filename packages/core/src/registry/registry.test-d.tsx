@@ -1,4 +1,3 @@
-import { createFormHookContexts } from '@tanstack/react-form'
 import type { ComponentType, ReactNode } from 'react'
 import { describe, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
@@ -9,8 +8,6 @@ import { createRegistry } from './create-registry'
 import type { FieldsOf } from './fields-of'
 import type { LayoutOf } from './layout-of'
 import type { Registry } from './registry'
-
-const { fieldContext, formContext } = createFormHookContexts()
 
 declare const TextField: ComponentType<FieldOf<string> & { label: string }>
 declare const NumberField: ComponentType<FieldOf<number> & { label: string }>
@@ -25,8 +22,6 @@ describe('Registry', () => {
       <fieldset aria-label={label}>{children}</fieldset>
     )
     const registry = createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField },
       formComponents: { SubmitButton },
       structure: { section: Section },
@@ -42,7 +37,7 @@ describe('Registry', () => {
   })
 
   it('keeps its types through extensions, one after another', () => {
-    const base = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+    const base = createRegistry({ widgets: { text: TextField } })
     const extended = base
       .extendRegistry({ widgets: { number: NumberField } })
       .extendRegistry({ formComponents: { SubmitButton } })
@@ -59,7 +54,7 @@ describe('Registry', () => {
   })
 
   it('rejects an extension that names a widget the registry already has', () => {
-    const base = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+    const base = createRegistry({ widgets: { text: TextField } })
 
     // @ts-expect-error a widget named `text` is already registered
     base.extendRegistry({ widgets: { text: NumberField } })
@@ -67,8 +62,6 @@ describe('Registry', () => {
 
   it('rejects an extension that names a form component the registry already has', () => {
     const base = createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField },
       formComponents: { SubmitButton },
     })
@@ -84,8 +77,6 @@ describe('Registry', () => {
     AgeField.emptyValue = undefined
 
     const registry = createRegistry({
-      fieldContext,
-      formContext,
       widgets: { name: NameField },
     }).extendRegistry({ widgets: { age: AgeField } })
     expectTypeOf(registry).not.toBeAny()
@@ -98,8 +89,8 @@ describe('Registry', () => {
     AgeField.emptyValue = ''
 
     // @ts-expect-error a text widget's empty value is a string
-    createRegistry({ fieldContext, formContext, widgets: { name: NameField } })
-    const base = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+    createRegistry({ widgets: { name: NameField } })
+    const base = createRegistry({ widgets: { text: TextField } })
     // @ts-expect-error a number widget's empty value is a number
     base.extendRegistry({ widgets: { age: AgeField } })
   })
@@ -108,18 +99,17 @@ describe('Registry', () => {
     const DeclaredField = TextField as typeof TextField & { emptyValue?: string }
     const WrongField = TextField as typeof TextField & { emptyValue?: number }
 
-    createRegistry({ fieldContext, formContext, widgets: { text: DeclaredField } })
+    createRegistry({ widgets: { text: DeclaredField } })
     // @ts-expect-error a text widget's empty value is a string
-    createRegistry({ fieldContext, formContext, widgets: { text: WrongField } })
+    createRegistry({ widgets: { text: WrongField } })
   })
 
-  it("hands out TanStack's form hook without its own extension", () => {
-    const { formHook } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+  it("hands out TanStack's form hook", () => {
+    const { formHook } = createRegistry({ widgets: { text: TextField } })
 
     expectTypeOf(formHook).toHaveProperty('useAppForm')
-    expectTypeOf(formHook).toHaveProperty('withForm')
-    expectTypeOf(formHook).toHaveProperty('withFieldGroup')
-    expectTypeOf(formHook).not.toHaveProperty('extendForm')
+    expectTypeOf(formHook).toHaveProperty('appFormOptions')
+    expectTypeOf(formHook).toHaveProperty('defineAppFieldGroup')
   })
 
   it('rejects a section slot that takes its label as something other than a string', () => {
@@ -132,8 +122,6 @@ describe('Registry', () => {
     }): ReactNode => <fieldset aria-label={String(label)}>{children}</fieldset>
 
     createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField },
       // @ts-expect-error the renderer passes the section title as a string
       structure: { section: NumberedSection },
@@ -146,8 +134,6 @@ describe('Registry', () => {
     )
 
     const registry = createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField },
       structure: { row: Row },
     })
@@ -160,8 +146,6 @@ describe('Registry', () => {
     )
 
     const registry = createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField },
       structure: { stepper: Stepper },
     })
@@ -174,8 +158,6 @@ describe('Registry', () => {
     )
 
     createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField },
       // @ts-expect-error the renderer passes the index of the current step
       structure: { stepper: NamedStepper },
@@ -186,8 +168,6 @@ describe('Registry', () => {
 describe('Registry.createForm with steps', () => {
   const Stepper = ({ children }: StepperProps): ReactNode => <section>{children}</section>
   const registry = createRegistry({
-    fieldContext,
-    formContext,
     widgets: { text: TextField, number: NumberField },
     formComponents: { SubmitButton },
     structure: { stepper: Stepper },
@@ -307,7 +287,7 @@ describe('Registry.createForm with steps', () => {
   })
 
   it('rejects steps without a registered stepper', () => {
-    const bare = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+    const bare = createRegistry({ widgets: { text: TextField } })
     bare.createForm({
       schema: z.object({ contact: z.object({ name: z.string() }) }),
       defaultValues: { contact: { name: '' } },
@@ -325,8 +305,6 @@ describe('Registry.createForm with steps', () => {
       <section aria-description={steps[0]?.description}>{children}</section>
     )
     const described = createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField, number: NumberField },
       structure: { stepper: DescribedStepper },
     })
@@ -381,14 +359,11 @@ describe('Registry.createForm with steps', () => {
 
 describe('Registry.createForm', () => {
   const registry = createRegistry({
-    fieldContext,
-    formContext,
     widgets: { text: TextField, area: AreaField, number: NumberField },
     formComponents: { SubmitButton, ResetButton },
   })
   const schema = z.object({ email: z.email(), age: z.number() })
   type Signup = z.input<typeof schema>
-  type Intent = { readonly intent: 'signUp' }
 
   it('types the callbacks of a config by its schema', () => {
     const Signup = registry.createForm({
@@ -412,27 +387,14 @@ describe('Registry.createForm', () => {
     expectTypeOf(Signup).not.toBeAny()
   })
 
-  it('types the submit meta by onSubmitMeta', () => {
+  it('takes a server error from a validator on submit', () => {
     const Signup = registry.createForm({
       schema,
       defaultValues: { email: '', age: 0 },
       fields: {},
-      onSubmitMeta: { intent: 'signUp' },
-      onSubmit: ({ meta }) => {
-        expectTypeOf(meta).toEqualTypeOf<Intent>()
-      },
-    })
-    expectTypeOf<{ options: { onSubmitMeta: Intent } }>().toExtend<Parameters<typeof Signup>[0]>()
-  })
-
-  it('takes a server error from onSubmitAsync', () => {
-    const Signup = registry.createForm({
-      schema,
-      defaultValues: { email: '', age: 0 },
-      fields: {},
-      validators: {
-        onSubmitAsync: async () => ({ form: 'Taken', fields: { email: 'Taken' } }),
-      },
+      validators: [
+        { run: async () => ({ form: 'Taken', fields: { email: 'Taken' } }), triggers: [] },
+      ],
     })
     expectTypeOf(Signup).not.toBeAny()
   })
@@ -594,8 +556,6 @@ describe('Registry.createForm', () => {
 
 describe('Registry.Fields', () => {
   const registry = createRegistry({
-    fieldContext,
-    formContext,
     widgets: { text: TextField, number: NumberField },
   })
   type Address = { street: string; zip: string }
@@ -627,26 +587,30 @@ describe('Registry.Fields', () => {
   })
 
   it('types its entries by the values of a field group', () => {
-    const AddressGroup = registry.formHook.withFieldGroup({
-      defaultValues: { street: '', zip: '' } as Address,
-      render: ({ group }) => (
-        <registry.Fields
-          form={group}
-          fields={{
-            street: { widget: 'text', props: { label: 'Street' } },
-            zip: {
-              widget: 'text',
-              props: { label: 'ZIP' },
-              visibleWhen: (values) => {
-                expectTypeOf(values).toEqualTypeOf<Address>()
-                return true
-              },
+    const addressGroup = registry.formHook.defineAppFieldGroup(({ strict }) => ({
+      street: strict<string>(),
+      zip: strict<string>(),
+    }))
+    const AddressFields = ({ group }: { group: typeof addressGroup.fields }): ReactNode => (
+      <registry.Fields
+        form={group}
+        fields={{
+          street: { widget: 'text', props: { label: 'Street' } },
+          zip: {
+            widget: 'text',
+            props: { label: 'ZIP' },
+            // TanStack Form v2 types a field group's values by its slots, which `defineAppFieldGroup`
+            // keeps readonly.
+            visibleWhen: (values) => {
+              expectTypeOf(values).toEqualTypeOf<Readonly<Address>>()
+              return true
             },
-          }}
-        />
-      ),
-    })
-    expectTypeOf(AddressGroup).not.toBeAny()
+          },
+        }}
+      />
+    )
+    const AddressGroup = addressGroup.bindComponent(AddressFields, 'group')
+    expectTypeOf(AddressGroup).toBeFunction()
   })
 
   it('rejects a widget that does not fit and a layout naming an undescribed key', () => {

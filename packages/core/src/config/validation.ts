@@ -7,8 +7,8 @@
  * | `blurThenChange` | when a field is left, then on every change while the form is invalid |
  * | `onChange`, `onBlur`, `onSubmit` | at that moment |
  *
- * An asynchronous schema needs `async: true`, which also allows a debounce. A validator the config
- * places itself in the slot a mode picks takes precedence, and the schema is not placed there.
+ * An asynchronous schema needs `async: true`, which also allows a debounce. The schema runs after
+ * the validators of the config and of the form's `options`, and on every submit.
  *
  * @example
  * ```ts
@@ -29,9 +29,9 @@ export type Validation = {
       async: true
       /**
        * How long the schema waits after the event that triggers it, in milliseconds; on submit it
-       * never waits. An `asyncDebounceMs` of the form config takes precedence.
+       * never waits.
        *
-       * @defaultValue the form config's `asyncDebounceMs`, or `0`
+       * @defaultValue none; the schema runs at once
        */
       asyncDebounceMs?: number
     }

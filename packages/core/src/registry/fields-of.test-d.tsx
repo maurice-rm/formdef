@@ -1,4 +1,3 @@
-import { createFormHookContexts } from '@tanstack/react-form'
 import type { ComponentType } from 'react'
 import { describe, expectTypeOf, it } from 'vitest'
 
@@ -6,12 +5,10 @@ import type { FieldOf } from '../widget/field-of'
 import { createRegistry } from './create-registry'
 import type { FieldsOf } from './fields-of'
 
-const { fieldContext, formContext } = createFormHookContexts()
-
 declare const TextField: ComponentType<FieldOf<string> & { label: string }>
 declare const CheckboxField: ComponentType<FieldOf<boolean> & { label: string }>
 
-const registry = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const registry = createRegistry({ widgets: { text: TextField } })
 const extended = registry.extendRegistry({ widgets: { checkbox: CheckboxField } })
 
 type Address = { street: string; zip: string }

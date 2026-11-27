@@ -1,8 +1,8 @@
-import { getBy } from '@tanstack/react-form'
 import { type ReactNode, useRef } from 'react'
 
 import type { EntryPlace } from '../config/entry-place'
 import type { RenderForm } from './render-form'
+import { valueAt } from './value-at'
 
 /** What an entry reads from the form values: its condition, its props and the paths they read. */
 type DerivedEntry = {
@@ -17,8 +17,11 @@ type Place = {
   itemPath: string | undefined
 }
 
+/** A form, or a field group, whose atom holds its values and which has no `state`. */
+type DerivedForm = Pick<RenderForm, 'Subscribe'> & { atom?: { get: () => unknown } }
+
 type DerivedProps = {
-  form: RenderForm
+  form: DerivedForm
   entry: DerivedEntry
   place: Place
   /** Builds the entry from its props; called only while the entry is visible. */
@@ -53,7 +56,7 @@ const isStale = (
 
 const placeIn = (values: unknown, { path, itemPath }: Place): EntryPlace => ({
   path,
-  item: itemPath === undefined ? undefined : getBy(values, itemPath),
+  item: itemPath === undefined ? undefined : valueAt(values, itemPath),
 })
 
 /**
@@ -82,12 +85,14 @@ export const Derived = ({ form, entry, place, children }: DerivedProps): ReactNo
     return isDerived ? values : VISIBLE
   }
 
-  const select = ({ values }: { values: unknown }): unknown => {
+  // A field group's `Subscribe` hands out the state of its form; the group's values sit in its atom.
+  const select = (state: { values: unknown }): unknown => {
+    const values = 'state' in form ? state.values : form.atom?.get()
     if (!Array.isArray(dependsOn)) {
       return selectFrom(values)
     }
 
-    const dependencies = dependsOn.map((path) => getBy(values, path))
+    const dependencies = dependsOn.map((path) => valueAt(values, path))
     const read = { entry, path: place.path, dependencies }
     if (isStale(lastRead.current, read)) {
       lastRead.current = { ...read, selected: selectFrom(values) }

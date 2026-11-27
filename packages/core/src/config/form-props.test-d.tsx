@@ -6,18 +6,16 @@ import type { FormProps, FormPropsFor } from './form-props'
 
 const schema = z.object({ email: z.email(), remember: z.boolean() })
 type SignIn = z.input<typeof schema>
-type Intent = { intent: 'signIn' | 'signUp' }
 
-type Props = FormProps<typeof schema, Intent>
+type Props = FormProps<typeof schema>
 
 describe('FormProps', () => {
   it("takes the form's TanStack options again, typed by the data type", () => {
     const props: Props = {
       options: {
         defaultValues: { email: '', remember: false },
-        onSubmit: ({ value, meta }) => {
+        onSubmit: ({ value }) => {
           expectTypeOf(value).toEqualTypeOf<SignIn>()
-          expectTypeOf(meta).toEqualTypeOf<Intent>()
         },
       },
     }
@@ -67,12 +65,12 @@ describe('FormProps', () => {
 describe('FormPropsFor', () => {
   it('needs nothing when the config holds the default values', () => {
     expectTypeOf<Record<never, never>>().toExtend<
-      FormPropsFor<typeof schema, Intent, { defaultValues: SignIn }>
+      FormPropsFor<typeof schema, { defaultValues: SignIn }>
     >()
   })
 
   it('needs the default values from the instance when the config leaves them out', () => {
-    type Instance = FormPropsFor<typeof schema, Intent, { fields: object }>
+    type Instance = FormPropsFor<typeof schema, { fields: object }>
 
     expectTypeOf<Record<never, never>>().not.toExtend<Instance>()
     expectTypeOf<{ options: { onSubmit: () => void } }>().not.toExtend<Instance>()
@@ -80,7 +78,7 @@ describe('FormPropsFor', () => {
   })
 
   it('needs the default values from the instance when the config sets them to undefined', () => {
-    type Instance = FormPropsFor<typeof schema, Intent, { defaultValues: undefined }>
+    type Instance = FormPropsFor<typeof schema, { defaultValues: undefined }>
 
     expectTypeOf<Record<never, never>>().not.toExtend<Instance>()
   })

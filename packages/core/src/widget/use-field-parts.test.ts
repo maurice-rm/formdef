@@ -1,30 +1,21 @@
-import { FieldApi, FormApi } from '@tanstack/react-form'
-import { act, renderHook } from '@testing-library/react'
+import type { AnyFieldApi } from '@tanstack/react-form'
+import { act, cleanup, renderHook } from '@testing-library/react'
 import { createElement } from 'react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
+import { mountField } from './mount-field.test-support'
 import { StepSubmitted } from './step-submitted'
 import { useFieldParts } from './use-field-parts'
 
 const EMAIL_MESSAGE = 'Enter an email address'
 const DESCRIPTION = 'We never share it'
 
-// `useAppForm` types the submit meta of a form without `onSubmitMeta` as `unknown`; `new FormApi`
-// would default it to `never`, which no widget's field type accepts.
-const SUBMIT_META: unknown = undefined
+const emailField = (): AnyFieldApi =>
+  mountField({
+    fieldValidators: [{ run: () => EMAIL_MESSAGE, triggers: ['change', 'blur'] }],
+  }).field()
 
-function emailField() {
-  const form = new FormApi({ defaultValues: { email: '' }, onSubmitMeta: SUBMIT_META })
-  form.mount()
-  const field = new FieldApi({
-    form,
-    name: 'email',
-    validators: { onChange: () => EMAIL_MESSAGE, onBlur: () => EMAIL_MESSAGE },
-  })
-  field.mount()
-
-  return field
-}
+afterEach(cleanup)
 
 describe('useFieldParts', () => {
   it('renders the error of a field that was left before without an edit once the form is submitted', async () => {
@@ -34,7 +25,9 @@ describe('useFieldParts', () => {
 
     expect(result.current.isErrorDue).toBe(false)
 
-    await act(() => field.form.handleSubmit())
+    await act(async () => {
+      await field.form.handleSubmit()
+    })
 
     expect(result.current.isErrorDue).toBe(true)
     expect(result.current.control['aria-invalid']).toBe(true)
@@ -54,7 +47,8 @@ describe('useFieldParts', () => {
   })
 
   it('ties the control to the description it is given', () => {
-    const { result } = renderHook(() => useFieldParts(emailField(), { description: DESCRIPTION }))
+    const field = emailField()
+    const { result } = renderHook(() => useFieldParts(field, { description: DESCRIPTION }))
 
     expect(result.current.control['aria-describedby']).toBe(result.current.descriptionId)
   })

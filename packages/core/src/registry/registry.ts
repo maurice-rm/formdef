@@ -1,4 +1,11 @@
-import type { createFormHook, StandardSchemaV1 } from '@tanstack/react-form'
+import type {
+  AppFormHookResult,
+  BoundFormComponents,
+  ReactComponentTree,
+  ReactFormComponentMap,
+  ReactFormComponents,
+  StandardSchemaV1,
+} from '@tanstack/react-form'
 import type { ComponentProps, ComponentType, Key, ReactNode } from 'react'
 
 import type { ConfigParts } from '../config/config-parts'
@@ -86,9 +93,15 @@ export type NewFormComponents<TFormComponents> = Components &
 /** Structure slots an extension fills: none the registry already fills. */
 export type NewStructure<TStructure> = Structure & Fresh<TStructure, DuplicateSlot>
 
-type FormHook<TWidgets extends Components, TFormComponents extends Components> = Omit<
-  ReturnType<typeof createFormHook<TWidgets, TFormComponents>>,
-  'extendForm'
+/** TanStack's `createFormHook` result for the widgets and form components of a registry. */
+export type FormHook<
+  TWidgets extends Components,
+  TFormComponents extends Components,
+> = AppFormHookResult<
+  ReactFormComponentMap<
+    BoundFormComponents<TFormComponents & ReactFormComponents>,
+    TWidgets & ReactComponentTree
+  >
 >
 
 // A misspelled field name fails this constraint, so TypeScript reports it with a suggestion.
@@ -102,14 +115,19 @@ type OwnParts<TWidgets, TFormComponents, TStructure> = {
   structure: TStructure
 }
 
-/** What `Fields` renders into: a form from `useAppForm` or a field group from `withFieldGroup`. */
+/** What `Fields` renders into: a form from `useAppForm` or a field group from `defineAppFieldGroup`. */
 type FieldsForm = {
-  AppField: unknown
+  Field: unknown
+  ArrayField: unknown
   Subscribe: unknown
-  state: { values: unknown }
 }
 
-type ValuesOf<TForm extends FieldsForm> = TForm['state']['values']
+// A form's atom holds its state, a field group's atom its values.
+type ValuesOf<TForm extends FieldsForm> = TForm extends { state: { values: infer TValues } }
+  ? TValues
+  : TForm extends { atom: { get: () => infer TValues } }
+    ? TValues
+    : never
 
 // An inline entry under `Fields` receives the form `Fields` was given. `NoInfer` keeps a layout
 // annotated as `LayoutOf`, whose inline entries take a `FormHandle`, from inferring the form.
@@ -141,8 +159,8 @@ export interface Registry<
   TStructure extends Structure,
 > {
   /**
-   * TanStack's `createFormHook` result for this registry's widgets and form components, without
-   * `extendForm`: `useAppForm`, `withForm`, `withFieldGroup` and `useTypedAppFormContext`.
+   * TanStack's `createFormHook` result for this registry's widgets and form components:
+   * `useAppForm`, `appFormOptions` and `defineAppFieldGroup`.
    */
   formHook: FormHook<TWidgets, TFormComponents>
   /**
@@ -164,8 +182,6 @@ export interface Registry<
    *
    * @typeParam TSchema - The Standard Schema of the form, inferred from `schema`.
    * @typeParam TConfig - The config as written, inferred.
-   * @typeParam TSubmitMeta - What `handleSubmit` takes besides the values, inferred from
-   *   `onSubmitMeta`; none without it.
    * @param config - The form config.
    * @returns The form component.
    * @throws When rendered with default values in neither the config nor `options`, with a
@@ -193,25 +209,20 @@ export interface Registry<
     // infers it, the full config type as constraint makes `KnownKeys` walk every widget's props for
     // each `props` of the config.
     const TConfig extends NamedFields<InferData<TSchema>>,
-    TSubmitMeta = never,
   >(
     config: TConfig &
-      FormConfigOf<OwnParts<TWidgets, TFormComponents, TStructure>, TSchema, TSubmitMeta> & {
+      FormConfigOf<OwnParts<TWidgets, TFormComponents, TStructure>, TSchema> & {
         schema: TSchema
-        onSubmitMeta?: TSubmitMeta
       } & DescribedLayout<TConfig> &
       StepsOnlyLayout<TConfig> &
       StepsNameLevels<TConfig> &
       NoInfer<
-        KnownKeys<
-          TConfig,
-          FormConfigOf<OwnParts<TWidgets, TFormComponents, TStructure>, TSchema, TSubmitMeta>
-        >
+        KnownKeys<TConfig, FormConfigOf<OwnParts<TWidgets, TFormComponents, TStructure>, TSchema>>
       >,
-  ) => (props: FormPropsFor<TSchema, TSubmitMeta, TConfig>) => ReactNode
+  ) => (props: FormPropsFor<TSchema, TConfig>) => ReactNode
   /**
    * Renders `fields` and `layout` into a form the caller built with `formHook.useAppForm`, or into a
-   * field group from `formHook.withFieldGroup`, with this registry's widgets. The entries are typed
+   * field group from `formHook.defineAppFieldGroup`, with this registry's widgets. The entries are typed
    * by the values of `form`; the `layout` may name only keys `fields` describes, and an inline
    * entry receives `form` itself. `fields` and `layout` are those of a form config.
    *
@@ -228,12 +239,10 @@ export interface Registry<
    *   const form = registry.formHook.useAppForm({ defaultValues, onSubmit: ({ value }) => pay(value) })
    *
    *   return (
-   *     <form.AppForm>
-   *       <form onSubmit={(event) => { event.preventDefault(); void form.handleSubmit() }}>
-   *         <registry.Fields form={form} fields={contactFields} />
-   *         <PaymentStep form={form} />
-   *       </form>
-   *     </form.AppForm>
+   *     <form onSubmit={(event) => { event.preventDefault(); void form.handleSubmit() }}>
+   *       <registry.Fields form={form} fields={contactFields} />
+   *       <PaymentStep form={form} />
+   *     </form>
    *   )
    * }
    * ```
@@ -248,7 +257,7 @@ export interface Registry<
   >(
     props: TLevel &
       LevelConfig<FieldsParts<TWidgets, TFormComponents, TStructure, TForm>, ValuesOf<TForm>> & {
-        /** The form from `formHook.useAppForm`, or the field group from `formHook.withFieldGroup`. */
+        /** The form from `formHook.useAppForm`, or a field group from `formHook.defineAppFieldGroup`. */
         form: TForm
       } & DescribedLayout<TLevel> &
       NoInfer<

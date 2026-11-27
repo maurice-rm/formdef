@@ -14,96 +14,81 @@ type Values = {
 
 type EmailOptions = FieldEntryOptions<string, Values>
 
-// biome-ignore lint/suspicious/noExplicitAny: the open axes of TanStack's validator slots.
+// biome-ignore lint/suspicious/noExplicitAny: the path and error axes a nested config leaves open.
 type AnyAxis = any
-type TanStackValidators = FieldValidators<
-  AnyAxis,
-  AnyAxis,
-  AnyAxis,
-  AnyAxis,
-  AnyAxis,
-  AnyAxis,
-  AnyAxis,
-  AnyAxis,
-  AnyAxis,
-  AnyAxis,
-  AnyAxis,
-  AnyAxis
->
 
 describe('FieldEntryOptions', () => {
   describe('validators', () => {
     it('validate the value of the field', () => {
       const options: EmailOptions = {
-        validators: {
-          onChange: ({ value, fieldApi }) => {
-            expectTypeOf(value).toEqualTypeOf<string>()
-            expectTypeOf(fieldApi).toEqualTypeOf<FieldApiOf<string>>()
+        validators: [
+          {
+            run: ({ value, fieldApi }) => {
+              expectTypeOf(value).toEqualTypeOf<string>()
+              expectTypeOf(fieldApi).toExtend<FieldApiOf<string>>()
 
-            return value.includes('@') ? undefined : 'Enter an email address'
+              return value.includes('@') ? undefined : 'Enter an email address'
+            },
+            triggers: ['change'],
           },
-        },
+        ],
       }
       expectTypeOf(options).not.toBeAny()
     })
 
     it('take a schema for the value of the field', () => {
-      expectTypeOf({ validators: { onBlur: z.email() } }).toExtend<EmailOptions>()
+      expectTypeOf({
+        validators: [{ run: z.email(), triggers: ['blur' as const] }],
+      }).toExtend<EmailOptions>()
 
-      // @ts-expect-error the schema checks a number, the field holds a string
-      const options: EmailOptions = { validators: { onBlur: z.number() } }
-      expectTypeOf(options).not.toBeAny()
-    })
-
-    it('keep promises out of the sync slots', () => {
       const options: EmailOptions = {
-        validators: {
-          // @ts-expect-error an async rule belongs in onChangeAsync
-          onChange: async ({ value }) => (value === '' ? 'Required' : undefined),
-        },
+        // @ts-expect-error the schema checks a number, the field holds a string
+        validators: [{ run: z.number(), triggers: ['blur'] }],
       }
       expectTypeOf(options).not.toBeAny()
     })
 
-    it('give async rules an abort signal', () => {
+    it('give async rules an abort signal and a debounce', () => {
       const options: EmailOptions = {
-        validators: {
-          onChangeAsync: async ({ value, signal }) => {
-            expectTypeOf(signal).toEqualTypeOf<AbortSignal>()
+        validators: [
+          {
+            run: async ({ value, signal }) => {
+              expectTypeOf(signal).toEqualTypeOf<AbortSignal>()
 
-            return value === 'taken@example.com' ? 'Already registered' : undefined
+              return value === 'taken@example.com' ? 'Already registered' : undefined
+            },
+            triggers: ['change'],
+            triggerDebounceMs: 300,
           },
-          onChangeAsyncDebounceMs: 300,
-        },
+        ],
       }
       expectTypeOf(options).not.toBeAny()
     })
 
-    it('take a plain return in an async slot, as TanStack awaits it', () => {
+    it('watch the paths of the whole data type', () => {
+      const watching: EmailOptions = {
+        validators: [{ run: () => undefined, triggers: ['change'], watchFields: ['age'] }],
+      }
+      expectTypeOf(watching).not.toBeAny()
+
       const options: EmailOptions = {
-        validators: { onChangeAsync: ({ value }) => (value === '' ? 'Required' : undefined) },
+        // @ts-expect-error `agee` is no path of the form
+        validators: [{ run: () => undefined, triggers: ['blur'], watchFields: ['agee'] }],
       }
       expectTypeOf(options).not.toBeAny()
     })
 
-    it('listen to the paths of the whole data type', () => {
-      const listening: EmailOptions = { validators: { onChangeListenTo: ['age'] } }
-      expectTypeOf(listening).not.toBeAny()
-
-      // @ts-expect-error `agee` is no path of the form
-      const options: EmailOptions = { validators: { onBlurListenTo: ['agee'] } }
+    it('reject a trigger TanStack does not have', () => {
+      const options: EmailOptions = {
+        // @ts-expect-error `chnage` is misspelled
+        validators: [{ run: () => undefined, triggers: ['chnage'] }],
+      }
       expectTypeOf(options).not.toBeAny()
     })
 
-    it('reject a slot TanStack does not have', () => {
-      // @ts-expect-error `onChnage` is misspelled
-      const options: EmailOptions = { validators: { onChnage: () => undefined } }
-      expectTypeOf(options).not.toBeAny()
-    })
-
-    it("list exactly TanStack's validator keys", () => {
-      expectTypeOf<keyof NonNullable<EmailOptions['validators']>>().toEqualTypeOf<
-        keyof TanStackValidators
+    it("are TanStack's field validators, typed by the value and the form's values", () => {
+      expectTypeOf<EmailOptions['validators']>().toEqualTypeOf<
+        FieldValidators<Values, AnyAxis, string> | undefined
       >()
     })
   })
@@ -111,28 +96,32 @@ describe('FieldEntryOptions', () => {
   describe('listeners', () => {
     it('receive the value of the field', () => {
       const options: EmailOptions = {
-        listeners: {
-          onChange: ({ value }) => {
-            expectTypeOf(value).toEqualTypeOf<string>()
+        listeners: [
+          {
+            run: ({ value }) => {
+              expectTypeOf(value).toEqualTypeOf<string>()
+            },
+            triggers: ['change'],
           },
-        },
+        ],
       }
       expectTypeOf(options).not.toBeAny()
     })
 
-    it("list exactly TanStack's listener keys", () => {
-      expectTypeOf<keyof NonNullable<EmailOptions['listeners']>>().toEqualTypeOf<
-        keyof FieldListeners<AnyAxis, AnyAxis>
+    it("are TanStack's field listeners, typed by the value and the form's values", () => {
+      expectTypeOf<EmailOptions['listeners']>().toEqualTypeOf<
+        FieldListeners<Values, AnyAxis, string, AnyAxis, Values, AnyAxis> | undefined
       >()
     })
   })
 
   describe('other TanStack field options', () => {
-    it('type the default value as the value of the field', () => {
-      expectTypeOf({ defaultValue: 'you@example.com', asyncAlways: true }).toExtend<EmailOptions>()
+    it("take TanStack's other field options", () => {
+      expectTypeOf({ errorBoundary: true }).toExtend<EmailOptions>()
 
-      // @ts-expect-error the field holds a string
-      const options: EmailOptions = { defaultValue: 42 }
+      const options: EmailOptions = {
+        errorVisibility: ({ fieldState }) => fieldState.meta.isBlurred,
+      }
       expectTypeOf(options).not.toBeAny()
     })
 

@@ -35,7 +35,7 @@ import { StepSubmitted } from './step-submitted'
  *     <div>
  *       <label htmlFor={control.id}>{label}</label>
  *       {description && <p id={descriptionId}>{description}</p>}
- *       <input {...control} value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} />
+ *       <input {...control} value={field.value} onChange={(event) => field.handleChange(event.target.value)} />
  *       {isErrorDue && errors.length > 0 && <p id={errorId}>{errors.join(' ')}</p>}
  *     </div>
  *   )
@@ -46,7 +46,7 @@ export function useFieldParts<TValue>(
   field: FieldApiOf<TValue>,
   options: { description?: ReactNode } = {},
 ): FieldParts {
-  const wasFormSubmitted = useSelector(field.form.store, (state) => state.submissionAttempts > 0)
+  const wasFormSubmitted = useSelector(field.form.atom, (state) => state.submissionAttempts > 0)
   const wasStepSubmitted = use(StepSubmitted)
 
   return fieldPartsFor(field, { ...options, wasSubmitted: wasFormSubmitted || wasStepSubmitted })

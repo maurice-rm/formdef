@@ -1,4 +1,4 @@
-import { createFormHook, createFormHookContexts } from '@tanstack/react-form'
+import { createFormHook } from '@tanstack/react-form'
 import * as v from 'valibot'
 import { describe, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
@@ -56,17 +56,15 @@ describe('InferData', () => {
   })
 
   it('types default values that TanStack accepts next to the schema', () => {
-    const { fieldContext, formContext } = createFormHookContexts()
     const { useAppForm } = createFormHook({
-      fieldContext,
-      formContext,
       fieldComponents: {},
       formComponents: {},
     })
     const schema = z.object({ email: z.email(), age: z.string().transform(Number) })
     const defaultValues: InferData<typeof schema> = { email: '', age: '' }
 
-    const useSignUp = () => useAppForm({ defaultValues, validators: { onChange: schema } })
+    const useSignUp = () =>
+      useAppForm({ defaultValues, validators: [{ run: schema, triggers: ['change'] }] })
 
     expectTypeOf<ReturnType<typeof useSignUp>['state']['values']>().toEqualTypeOf<
       InferData<typeof schema>

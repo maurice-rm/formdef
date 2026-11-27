@@ -1,6 +1,8 @@
 import { type AnyFieldApi, useSelector } from '@tanstack/react-form'
 import { type ComponentType, Fragment, type ReactNode } from 'react'
 
+import { errorsOf } from '../widget/errors-of'
+
 // biome-ignore lint/suspicious/noExplicitAny: a registered frame takes props of its own; the config types check them.
 type AnyProps = any
 
@@ -66,13 +68,16 @@ export const ArrayEntry = ({
   props,
   renderItem,
 }: ArrayEntryProps): ReactNode => {
-  // The field renders in TanStack's array mode, so only a change to the list reaches it; keys and
+  // The field renders as TanStack's `ArrayField`, so only a change to the list reaches it; keys and
   // labels that name an item follow the items through a selection of their own.
   const { keys, removeLabels } = useSelector(
-    field.store,
+    field.atom,
     (state: { value: unknown }) => itemControlsOf(options, state.value),
     { compare: isSameControls },
   )
+  // A frame reads the list's own errors from the field's meta. TanStack's `subscribeToMeta` would
+  // also render it again on every edit of an item, so the errors are selected on their own.
+  useSelector(field.atom, () => errorsOf(field), { compare: isSameList })
   const newItem = options.newItem as () => unknown
   const addLabel = String(options.addLabel)
   const add = (): void => field.pushValue(newItem())

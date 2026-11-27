@@ -1,49 +1,21 @@
-import type { FieldApi } from '@tanstack/react-form'
+import type { FieldWithValue } from '@tanstack/react-form'
 import type { ComponentType } from 'react'
 
-// TanStack declares every parameter of `FieldApi` as invariant (`in out`). Only `any` lets a field
-// of any form, at any path and with any validators fit a widget that fixes the value type alone.
-// biome-ignore lint/suspicious/noExplicitAny: the open axes of TanStack's invariant FieldApi.
-type OpenAxis = any
-
 /**
- * TanStack Form's `FieldApi` with the value type fixed and every other type parameter open.
+ * TanStack Form's `FieldWithValue`: its `FieldApi` with the value type fixed and every other type
+ * parameter open.
  *
  * This is the type of the `field` a widget receives: the real field of a form, with its
- * `state`, `handleChange`, `handleBlur` and the rest of TanStack's API.
+ * `value`, `meta`, `handleChange`, `handleBlur` and the rest of TanStack's API.
  *
  * @typeParam TValue - The type of the value the field holds.
  *
  * @example
  * ```ts
- * const isEmpty = (field: FieldApiOf<string>): boolean => field.state.value === ''
+ * const isEmpty = (field: FieldApiOf<string>): boolean => field.value === ''
  * ```
  */
-export type FieldApiOf<TValue> = FieldApi<
-  OpenAxis,
-  OpenAxis,
-  TValue,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis,
-  OpenAxis
->
+export type FieldApiOf<TValue> = FieldWithValue<TValue>
 
 /**
  * The props every widget takes: the field it renders, as a prop.
@@ -60,7 +32,7 @@ export type FieldApiOf<TValue> = FieldApi<
  *   <label>
  *     {label}
  *     <input
- *       value={field.state.value}
+ *       value={field.value}
  *       onChange={(event) => field.handleChange(event.target.value)}
  *       onBlur={field.handleBlur}
  *     />

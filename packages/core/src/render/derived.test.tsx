@@ -1,15 +1,11 @@
-import { type AnyFormApi, createFormHook, createFormHookContexts } from '@tanstack/react-form'
+import { type AnyFormApi, createFormHook } from '@tanstack/react-form'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { Derived } from './derived'
 
-const { fieldContext, formContext } = createFormHookContexts()
-
 const { useAppForm } = createFormHook({
-  fieldContext,
-  formContext,
   fieldComponents: {},
   formComponents: {},
 })

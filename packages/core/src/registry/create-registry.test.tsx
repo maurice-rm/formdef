@@ -1,4 +1,3 @@
-import { createFormHookContexts } from '@tanstack/react-form'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -8,14 +7,12 @@ import type { BodyProps } from '../config/structure'
 import type { FieldOf } from '../widget/field-of'
 import { createRegistry } from './create-registry'
 
-const { fieldContext, formContext } = createFormHookContexts()
-
 const TextField = ({ field, label }: FieldOf<string> & { label: string }): ReactNode => (
   <label>
     {label}
     <input
       name={field.name}
-      value={field.state.value}
+      value={field.value}
       onChange={(event) => field.handleChange(event.target.value)}
     />
   </label>
@@ -26,24 +23,20 @@ const NumberField = ({ field, label }: FieldOf<number> & { label: string }): Rea
     {label}
     <input
       type="number"
-      value={field.state.value}
+      value={field.value}
       onChange={(event) => field.handleChange(event.target.valueAsNumber)}
     />
   </label>
 )
 
-const base = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const base = createRegistry({ widgets: { text: TextField } })
 const extended = base.extendRegistry({ widgets: { number: NumberField } })
 
 const SignIn = (): ReactNode => {
   const form = base.formHook.useAppForm({ defaultValues: { email: 'ada@example.com' } })
 
   return (
-    <form.AppForm>
-      <form.AppField name="email">
-        {(field) => <field.text field={field} label="Email" />}
-      </form.AppField>
-    </form.AppForm>
+    <form.Field name="email">{(field) => <field.text field={field} label="Email" />}</form.Field>
   )
 }
 
@@ -51,14 +44,10 @@ const Profile = (): ReactNode => {
   const form = extended.formHook.useAppForm({ defaultValues: { name: 'Ada', age: 36 } })
 
   return (
-    <form.AppForm>
-      <form.AppField name="name">
-        {(field) => <field.text field={field} label="Name" />}
-      </form.AppField>
-      <form.AppField name="age">
-        {(field) => <field.number field={field} label="Age" />}
-      </form.AppField>
-    </form.AppForm>
+    <>
+      <form.Field name="name">{(field) => <field.text field={field} label="Name" />}</form.Field>
+      <form.Field name="age">{(field) => <field.number field={field} label="Age" />}</form.Field>
+    </>
   )
 }
 
@@ -66,11 +55,9 @@ const BaseWidgets = (): ReactNode => {
   const form = base.formHook.useAppForm({ defaultValues: { age: 36 } })
 
   return (
-    <form.AppForm>
-      <form.AppField name="age">
-        {(field) => <output>{'number' in field ? 'extended' : 'unchanged'}</output>}
-      </form.AppField>
-    </form.AppForm>
+    <form.Field name="age">
+      {(field) => <output>{'number' in field ? 'extended' : 'unchanged'}</output>}
+    </form.Field>
   )
 }
 
@@ -79,10 +66,6 @@ describe('createRegistry', () => {
     render(<SignIn />)
 
     expect(screen.getByLabelText('Email')).toHaveProperty('value', 'ada@example.com')
-  })
-
-  it("leaves out TanStack's own extension, which extendRegistry replaces", () => {
-    expect(base.formHook).not.toHaveProperty('extendForm')
   })
 
   it('extends into a new registry with the widgets of both', () => {
@@ -144,10 +127,16 @@ const addressFields = {
   },
 } as const
 
-const AddressGroup = base.formHook.withFieldGroup({
-  defaultValues: { street: '', zip: '' } as Address,
-  render: ({ group }) => <base.Fields form={group} fields={addressFields} />,
-})
+const addressGroup = base.formHook.defineAppFieldGroup(({ strict }) => ({
+  street: strict<string>(),
+  zip: strict<string>(),
+}))
+
+const AddressFields = ({ group }: { group: typeof addressGroup.fields }): ReactNode => (
+  <base.Fields form={group} fields={addressFields} />
+)
+
+const AddressGroup = addressGroup.bindComponent(AddressFields, 'group')
 
 const inputNames = (): (string | null)[] =>
   screen.getAllByRole('textbox').map((input) => input.getAttribute('name'))
@@ -159,29 +148,27 @@ const Checkout = ({ onSubmit }: { onSubmit: (value: Customer) => void }): ReactN
   })
 
   return (
-    <form.AppForm>
-      <form
-        aria-label="Checkout"
-        onSubmit={(event) => {
-          event.preventDefault()
-          void form.handleSubmit()
-        }}
-      >
-        <base.Fields form={form} fields={{ name: { widget: 'text', props: { label: 'Name' } } }} />
-        <hr />
-        <base.Fields
-          form={form}
-          fields={{
-            billing: {
-              fields: {
-                street: { widget: 'text', props: { label: 'Street' } },
-                zip: { widget: 'text', props: { label: 'ZIP' } },
-              },
+    <form
+      aria-label="Checkout"
+      onSubmit={(event) => {
+        event.preventDefault()
+        void form.handleSubmit()
+      }}
+    >
+      <base.Fields form={form} fields={{ name: { widget: 'text', props: { label: 'Name' } } }} />
+      <hr />
+      <base.Fields
+        form={form}
+        fields={{
+          billing: {
+            fields: {
+              street: { widget: 'text', props: { label: 'Street' } },
+              zip: { widget: 'text', props: { label: 'ZIP' } },
             },
-          }}
-        />
-      </form>
-    </form.AppForm>
+          },
+        }}
+      />
+    </form>
   )
 }
 
@@ -189,10 +176,10 @@ const Addresses = (): ReactNode => {
   const form = base.formHook.useAppForm({ defaultValues: CUSTOMER })
 
   return (
-    <form.AppForm>
-      <AddressGroup form={form} fields="billing" />
-      <AddressGroup form={form} fields="shipping" />
-    </form.AppForm>
+    <>
+      <AddressGroup form={form} group={{ street: 'billing.street', zip: 'billing.zip' }} />
+      <AddressGroup form={form} group={{ street: 'shipping.street', zip: 'shipping.zip' }} />
+    </>
   )
 }
 
@@ -234,8 +221,6 @@ describe('registry.Fields', () => {
 describe('extendRegistry', () => {
   it('keeps the structure slots of the registry it extends', () => {
     const framed = createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField },
       structure: { body: Body },
     }).extendRegistry({ widgets: { number: NumberField } })
