@@ -39,3 +39,54 @@ jobs:
         run: pnpm --filter @formdef/core list @tanstack/react-form
       - name: Check types and tests against it
         run: pnpm turbo run check-types test test:types
+
+  tanstack-form-alpha:
+    name: Newest TanStack Form v2 alpha against the v2 port
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: experiment/tanstack-v2
+          persist-credentials: false
+      - uses: $/.github/actions/setup
+        with:
+          install: "false"
+      # pkg.pr.new builds TanStack Form per pull request only, so the newest merge into `alpha` that
+      # has a build stands for the branch.
+      - name: Find the build of the newest merge into alpha
+        id: alpha
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          merged=$(gh api "repos/TanStack/form/pulls?state=closed&base=alpha&sort=updated&direction=desc&per_page=30" \
+            --jq '[.[] | select(.merged_at != null)] | sort_by(.merged_at) | reverse | .[].number')
+          for pr in $merged; do
+            url="https://pkg.pr.new/@tanstack/react-form@$pr"
+            if curl --silent --fail --head --location --output /dev/null "$url"; then
+              echo "url=$url" >> "$GITHUB_OUTPUT"
+              echo "Testing TanStack/form#$pr: $url"
+              exit 0
+            fi
+          done
+          echo "No pkg.pr.new build found for the last merges into alpha." >&2
+          exit 1
+      - name: Point the catalog at that build
+        env:
+          URL: ${{ steps.alpha.outputs.url }}
+        run: |
+          sed -i "s|^  \"@tanstack/react-form\": .*|  \"@tanstack/react-form\": $URL|" pnpm-workspace.yaml
+          grep --fixed-strings "\"@tanstack/react-form\": $URL" pnpm-workspace.yaml
+      - name: Install against it
+        run: pnpm install --no-frozen-lockfile
+      - name: Show the version under test
+        run: pnpm --filter @formdef/core list @tanstack/react-form
+      # The alpha ships no CommonJS build, so the TypeScript 5.7 check of the CommonJS entries stays
+      # out until formdef decides on it; the current TypeScript checks run.
+      - name: Check types and tests against it
+        run: |
+          pnpm turbo run build check-types test test:types --filter='!@formdef/docs' --filter='!@formdef/integration'
+          pnpm --filter @formdef/integration run check-types:current
+          pnpm --filter @formdef/integration run test
