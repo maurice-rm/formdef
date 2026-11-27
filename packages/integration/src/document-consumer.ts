@@ -15,15 +15,12 @@ import {
   valueTypes,
 } from '@formdef/document'
 import { createDocumentForm, type DocumentForm } from '@formdef/document/react'
-import { createFormHookContexts } from '@tanstack/react-form'
-
-const { fieldContext, formContext } = createFormHookContexts()
 
 const TextWidget = (
   _: FieldOf<string> & { label?: string; placeholder?: string | undefined },
 ): null => null
 
-const registry = createRegistry({ fieldContext, formContext, widgets: { text: TextWidget } })
+const registry = createRegistry({ widgets: { text: TextWidget } })
 
 const text = defineFieldKind(registry, {
   name: 'text',

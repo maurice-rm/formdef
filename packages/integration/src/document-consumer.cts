@@ -1,13 +1,10 @@
 import core = require('@formdef/core')
 import document = require('@formdef/document')
 import documentReact = require('@formdef/document/react')
-import tanstack = require('@tanstack/react-form')
-
-const { fieldContext, formContext } = tanstack.createFormHookContexts()
 
 const TextWidget = (_: core.FieldOf<string> & { label?: string }): null => null
 
-const registry = core.createRegistry({ fieldContext, formContext, widgets: { text: TextWidget } })
+const registry = core.createRegistry({ widgets: { text: TextWidget } })
 
 const text = document.defineFieldKind(registry, {
   name: 'text',

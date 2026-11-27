@@ -6,7 +6,6 @@ import {
   type SectionProps,
   type StepperProps,
 } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import type { ComponentProps, ReactNode } from 'react'
 
 type Labels = { label?: string; description?: string; labelAside?: ReactNode }
@@ -32,11 +31,7 @@ const widgetOf =
   (_: FieldOf<TValue> & Labels & InputAttrs & TProps): ReactNode =>
     null
 
-const { fieldContext, formContext } = createFormHookContexts()
-
 export const { createForm } = createRegistry({
-  fieldContext,
-  formContext,
   widgets: {
     text: widgetOf<string, { type?: 'text' | 'email' }>(),
     textarea: widgetOf<string, { rows?: number }>(),

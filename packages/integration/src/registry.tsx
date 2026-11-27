@@ -7,20 +7,17 @@ import {
   type LayoutOf,
   type RowProps,
 } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { type ComponentType, createRef, type ReactNode } from 'react'
 import { z } from 'zod'
-
-const { fieldContext, formContext } = createFormHookContexts()
 
 const TextField = ({ field, label }: FieldOf<string> & { label: string }): ReactNode => (
   <label>
     {label}
-    <input value={field.state.value} onChange={(event) => field.handleChange(event.target.value)} />
+    <input value={field.value} onChange={(event) => field.handleChange(event.target.value)} />
   </label>
 )
 
-const NumberField = ({ field }: FieldOf<number>): ReactNode => field.state.value
+const NumberField = ({ field }: FieldOf<number>): ReactNode => field.value
 
 const SubmitButton = ({ label }: { label: string }): ReactNode => (
   <button type="submit">{label}</button>
@@ -28,7 +25,7 @@ const SubmitButton = ({ label }: { label: string }): ReactNode => (
 
 const Row = ({ children }: RowProps): ReactNode => <div>{children}</div>
 
-const registry = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const registry = createRegistry({ widgets: { text: TextField } })
   .extendRegistry({ widgets: { number: NumberField }, formComponents: { SubmitButton } })
   .extendRegistry({ structure: { row: Row } })
 
@@ -39,15 +36,13 @@ export const Profile = (): ReactNode => {
   const form = registry.formHook.useAppForm({ defaultValues: { name: '', age: 0 } })
 
   return (
-    <form.AppForm>
-      <form.AppField name="name">
-        {(field) => <field.text field={field} label="Name" />}
-      </form.AppField>
-      <form.AppField name="age">{(field) => <field.number field={field} />}</form.AppField>
+    <>
+      <form.Field name="name">{(field) => <field.text field={field} label="Name" />}</form.Field>
+      <form.Field name="age">{(field) => <field.number field={field} />}</form.Field>
       {/* @ts-expect-error no widget named `date` is registered */}
-      <form.AppField name="name">{(field) => <field.date field={field} />}</form.AppField>
+      <form.Field name="name">{(field) => <field.date field={field} />}</form.Field>
       <form.SubmitButton label="Save" />
-    </form.AppForm>
+    </>
   )
 }
 
@@ -93,22 +88,16 @@ const customerSchema = z.object({
   shipping: z.object({ street: z.string(), zip: z.string() }),
 })
 
-export const customerConfig: FormConfig<
-  typeof registry,
-  typeof customerSchema,
-  { intent: string }
-> = {
+export const customerConfig: FormConfig<typeof registry, typeof customerSchema> = {
   schema: customerSchema,
   defaultValues: { name: '', billing: { street: '', zip: '' }, shipping: { street: '', zip: '' } },
   fields: customerFields,
   layout: customerLayout,
   validation: { mode: 'blurThenChange' },
-  onSubmitMeta: { intent: 'save' },
-  onSubmit: ({ value, meta }) => console.info(meta.intent, value.name),
-  defaultState: { errorMap: { onSubmit: 'The link has expired.' } },
+  onSubmit: ({ value }) => console.info(value.name),
 }
 
-declare const CustomerForm: ComponentType<FormProps<typeof customerSchema, { intent: string }>>
+declare const CustomerForm: ComponentType<FormProps<typeof customerSchema>>
 
 export const EditCustomer = ({ name }: { name: string }): ReactNode => (
   <CustomerForm
@@ -116,7 +105,7 @@ export const EditCustomer = ({ name }: { name: string }): ReactNode => (
     ref={createRef<HTMLFormElement>()}
     options={{
       defaultValues: { name, billing: { street: '', zip: '' }, shipping: { street: '', zip: '' } },
-      onSubmit: ({ value, meta }) => console.info(meta.intent, value.name),
+      onSubmit: ({ value }) => console.info(value.name),
     }}
   />
 )
@@ -135,8 +124,7 @@ export const SignUpForm = registry.createForm({
   schema: customerSchema,
   fields: customerFields,
   layout: [{ row: ['name'] }, { section: 'Addresses', layout: ['billing', 'shipping'] }],
-  onSubmitMeta: { intent: 'signUp' },
-  onSubmit: ({ value, meta }) => console.info(meta.intent, value.billing.zip),
+  onSubmit: ({ value }) => console.info(value.billing.zip),
 })
 
 export const SignUp = (): ReactNode => (
@@ -199,27 +187,31 @@ export const OwnShell = (): ReactNode => {
   })
 
   return (
-    <form.AppForm>
+    <>
       <registry.Fields form={form} fields={customerFields} layout={['name', 'billing']} />
       {/* @ts-expect-error shipping is not described in fields */}
       <registry.Fields form={form} fields={{ name: customerFields.name }} layout={['shipping']} />
-    </form.AppForm>
+    </>
   )
 }
 
-export const AddressGroup = registry.formHook.withFieldGroup({
-  defaultValues: { street: '', zip: '' },
-  render: ({ group }) => (
-    <registry.Fields
-      form={group}
-      fields={{
-        street: { widget: 'text', props: { label: 'Street' } },
-        zip: {
-          widget: 'text',
-          props: { label: 'ZIP' },
-          visibleWhen: (values) => values.street !== '',
-        },
-      }}
-    />
-  ),
-})
+const addressGroup = registry.formHook.defineAppFieldGroup(({ strict }) => ({
+  street: strict<string>(),
+  zip: strict<string>(),
+}))
+
+const AddressFields = ({ group }: { group: typeof addressGroup.fields }): ReactNode => (
+  <registry.Fields
+    form={group}
+    fields={{
+      street: { widget: 'text', props: { label: 'Street' } },
+      zip: {
+        widget: 'text',
+        props: { label: 'ZIP' },
+        visibleWhen: (values) => values.street !== '',
+      },
+    }}
+  />
+)
+
+export const AddressGroup = addressGroup.bindComponent(AddressFields, 'group')
