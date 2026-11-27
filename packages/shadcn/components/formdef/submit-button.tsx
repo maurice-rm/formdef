@@ -15,7 +15,7 @@ type SubmitButtonProps = Pick<ComponentProps<typeof Button>, 'variant' | 'size' 
 
 export const SubmitButton = ({ label, icon, ...attrs }: SubmitButtonProps) => {
   const form = useFormContext()
-  const isSubmitting = useSelector(form.store, (state) => state.isSubmitting)
+  const isSubmitting = useSelector(form.atom, (state) => state.isSubmitting)
   const isSlow = useSlow(isSubmitting)
 
   return (

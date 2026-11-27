@@ -32,7 +32,7 @@ export const NumberField = ({
   ...attrs
 }: NumberFieldProps) => {
   const parts = useFieldParts(field, { description })
-  const value = field.state.value ?? ''
+  const value = field.value ?? ''
 
   return (
     <FieldFrame

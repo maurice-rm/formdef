@@ -5,11 +5,8 @@ import { z } from 'zod'
 
 import { SubmitButton } from '@/components/formdef/submit-button'
 import { TextField } from '@/components/formdef/text-field'
-import { fieldContext, formContext } from '@/lib/formdef/context'
 
 const { createForm } = createRegistry({
-  fieldContext,
-  formContext,
   widgets: { text: TextField },
   formComponents: { SubmitButton },
 })

@@ -28,7 +28,7 @@ export const SwitchField = ({
 }: SwitchFieldProps) => {
   const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...control } = parts.control
-  const checked = field.state.value ?? false
+  const checked = field.value ?? false
   const titleId = `${control.id}${TITLE_SUFFIX}`
   const isCard = variant === 'card'
   const toggle = (

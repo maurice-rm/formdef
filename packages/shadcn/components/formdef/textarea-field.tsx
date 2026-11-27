@@ -39,7 +39,7 @@ export const TextareaField = ({
   ...attrs
 }: TextareaFieldProps) => {
   const parts = useFieldParts(field, { description })
-  const value = field.state.value ?? ''
+  const value = field.value ?? ''
   const hasAddons = addons.length > 0
   const Control = hasAddons ? InputGroupTextarea : Textarea
   const textarea = (

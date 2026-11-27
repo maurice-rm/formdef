@@ -7,7 +7,7 @@
       "name": "setup",
       "type": "registry:lib",
       "title": "formdef setup",
-      "description": "The wiring every formdef form needs: the TanStack contexts in one file, the registry that names your widgets in another.",
+      "description": "The wiring every formdef form needs: the registry that names your widgets, and the form context your form components read.",
       "dependencies": ["@formdef/core@>=0.5.0", "@tanstack/react-form@>=1.33.5 <1.34.0"],
       "registryDependencies": ["field"],
       "files": [
@@ -22,7 +22,7 @@
           "target": "@lib/formdef/index.tsx"
         }
       ],
-      "docs": "Fetch this first. It lands in lib/formdef/: context.ts holds the TanStack contexts, index.tsx the registry, so you import @/lib/formdef. Add an entry under widgets for every widget you fetch, then build forms with the createForm it exports.",
+      "docs": "Fetch this first. It lands in lib/formdef/: index.tsx holds the registry, so you import @/lib/formdef; context.ts holds useFormContext, through which a form component you register reads its form. Add an entry under widgets for every widget you fetch, then build forms with the createForm it exports.",
       "categories": ["form"]
     },
     {

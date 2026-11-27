@@ -48,7 +48,7 @@ export const ComboboxField = ({
 }: ComboboxFieldProps) => {
   const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...input } = parts.control
-  const value = field.state.value ?? ''
+  const value = field.value ?? ''
   const unknown: Option | null = value === '' ? null : { value, label: value }
   const selected = options.find((option) => option.value === value) ?? unknown
 

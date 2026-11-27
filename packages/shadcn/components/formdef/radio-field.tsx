@@ -47,7 +47,7 @@ export const RadioField = ({
   const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, onBlur, ...group } = parts.control
   const legendId = `${group.id}${LEGEND_SUFFIX}`
-  const value = field.state.value ?? ''
+  const value = field.value ?? ''
 
   const item = (option: Option) => {
     const id = optionId(group.id, option.value)

@@ -21,7 +21,7 @@ type CheckboxFieldProps = FieldOf<boolean> &
 export const CheckboxField = ({ field, label, description, ...attrs }: CheckboxFieldProps) => {
   const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...control } = parts.control
-  const checked = field.state.value ?? false
+  const checked = field.value ?? false
 
   return (
     <Field orientation="horizontal" data-invalid={parts.isErrorDue} data-disabled={attrs.disabled}>

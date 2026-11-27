@@ -49,7 +49,7 @@ export const DateTimeField = ({
 }: DateTimeFieldProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const parts = useFieldParts(field, { description })
-  const [day = '', time = ''] = (field.state.value ?? '').split(DATE_TIME_SEPARATOR)
+  const [day = '', time = ''] = (field.value ?? '').split(DATE_TIME_SEPARATOR)
   const selected = day === '' ? undefined : fromIsoDate(day)
   const { name: _carriedByTheForm, id: controlId, ...wiring } = parts.control
   const timeId = `${controlId}${TIME_SUFFIX}`

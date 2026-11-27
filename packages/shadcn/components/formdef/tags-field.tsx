@@ -64,7 +64,7 @@ export const TagsField = ({
   const [highlighted, setHighlighted] = useState<string | undefined>()
   const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...input } = parts.control
-  const tags = field.state.value ?? []
+  const tags = field.value ?? []
   const offered = suggestions.filter((suggestion) => !tags.includes(suggestion))
 
   const add = (text: string) => {

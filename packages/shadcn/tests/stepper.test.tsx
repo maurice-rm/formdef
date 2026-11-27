@@ -5,11 +5,8 @@ import { z } from 'zod'
 
 import { Stepper, type StepperStepProps } from '@/components/formdef/stepper'
 import { TextField } from '@/components/formdef/text-field'
-import { fieldContext, formContext } from '@/lib/formdef/context'
 
 const { createForm } = createRegistry({
-  fieldContext,
-  formContext,
   widgets: { text: TextField },
   structure: { stepper: Stepper },
 })
@@ -23,8 +20,6 @@ type StepperOptions = Omit<Parameters<typeof Stepper>[0], keyof StepperProps>
 
 const registryWith = (options: StepperOptions) =>
   createRegistry({
-    fieldContext,
-    formContext,
     widgets: { text: TextField },
     structure: {
       stepper: (props: StepperProps<StepperStepProps>) => <Stepper {...props} {...options} />,
@@ -468,8 +463,6 @@ describe('Stepper', () => {
 
   it('takes its texts as props', () => {
     const { createForm: createTranslatedForm } = createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField },
       structure: { stepper: Translated },
     })

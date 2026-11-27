@@ -1,5 +1,4 @@
 import { createRegistry, type FormConfig } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expectTypeOf, it } from 'vitest'
 import { z } from 'zod'
 
@@ -23,11 +22,7 @@ import { TagsField } from '@/components/formdef/tags-field'
 import { TextField } from '@/components/formdef/text-field'
 import { TextareaField } from '@/components/formdef/textarea-field'
 
-const { fieldContext, formContext } = createFormHookContexts()
-
 const registry = createRegistry({
-  fieldContext,
-  formContext,
   widgets: {
     text: TextField,
     textarea: TextareaField,
@@ -90,8 +85,6 @@ describe('the text widgets', () => {
 
 describe('the choice widgets', () => {
   const choices = createRegistry({
-    fieldContext,
-    formContext,
     widgets: {
       checkbox: CheckboxField,
       switch: SwitchField,
@@ -142,8 +135,6 @@ describe('the choice widgets', () => {
 
 describe('the checkbox group and the combobox', () => {
   const lists = createRegistry({
-    fieldContext,
-    formContext,
     widgets: { checkboxes: CheckboxGroupField, combobox: ComboboxField },
   })
   const listSchema = z.object({ channels: z.array(z.string()), framework: z.string() })
@@ -180,8 +171,6 @@ describe('the checkbox group and the combobox', () => {
 
 describe('the date widgets', () => {
   const dates = createRegistry({
-    fieldContext,
-    formContext,
     widgets: { date: DateField, dateRange: DateRangeField, dateTime: DateTimeField },
   })
   const dateSchema = z.object({
@@ -218,7 +207,7 @@ describe('the date widgets', () => {
 })
 
 describe('the tags widget', () => {
-  const tagging = createRegistry({ fieldContext, formContext, widgets: { tags: TagsField } })
+  const tagging = createRegistry({ widgets: { tags: TagsField } })
   const tagSchema = z.object({ skills: z.array(z.string()), name: z.string() })
 
   it('registers and serves a list of strings', () => {
@@ -247,8 +236,6 @@ describe('the tags widget', () => {
 
 describe('the multi combobox widget', () => {
   const choosing = createRegistry({
-    fieldContext,
-    formContext,
     widgets: { multiCombobox: MultiComboboxField },
   })
   const memberSchema = z.object({ memberIds: z.array(z.string()), name: z.string() })
@@ -280,8 +267,6 @@ describe('the multi combobox widget', () => {
 
 describe('the structure slots and the submit button', () => {
   const framed = createRegistry({
-    fieldContext,
-    formContext,
     widgets: { text: TextField },
     formComponents: { SubmitButton },
     structure: { section: Section, row: Row, arrayFrame: ArrayFrame },

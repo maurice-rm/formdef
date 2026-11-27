@@ -38,7 +38,7 @@ export const DateField = ({
 }: DateFieldProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const parts = useFieldParts(field, { description })
-  const value = field.state.value ?? ''
+  const value = field.value ?? ''
   const selected = value === '' ? undefined : fromIsoDate(value)
 
   return (

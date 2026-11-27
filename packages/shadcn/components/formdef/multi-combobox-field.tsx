@@ -56,7 +56,7 @@ export const MultiComboboxField = ({
   const anchor = useComboboxAnchor()
   const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...input } = parts.control
-  const values = field.state.value ?? NONE_CHOSEN
+  const values = field.value ?? NONE_CHOSEN
   const chosen = values.map(
     (value): Option => options.find((option) => option.value === value) ?? { value, label: value },
   )

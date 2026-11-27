@@ -51,7 +51,7 @@ export const CheckboxGroupField = ({
     ...group
   } = parts.control
   const legendId = `${group.id}${LEGEND_SUFFIX}`
-  const values = field.state.value ?? []
+  const values = field.value ?? []
   const toggle = (value: string, isChecked: boolean) =>
     field.handleChange(
       isChecked ? [...values, value] : values.filter((existing) => existing !== value),

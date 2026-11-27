@@ -45,7 +45,7 @@ export const PasswordField = ({
 }: PasswordFieldProps) => {
   const [isVisible, setIsVisible] = useState(false)
   const parts = useFieldParts(field, { description })
-  const value = field.state.value ?? ''
+  const value = field.value ?? ''
   const toggleLabel = isVisible ? (reveal?.hide ?? HIDE_PASSWORD) : (reveal?.show ?? SHOW_PASSWORD)
 
   return (

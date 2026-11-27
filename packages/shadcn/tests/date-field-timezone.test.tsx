@@ -1,5 +1,4 @@
 import { createRegistry } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll, expect, it } from 'vitest'
 import { z } from 'zod'
@@ -22,8 +21,7 @@ afterAll(() => {
 
 afterEach(cleanup)
 
-const { fieldContext, formContext } = createFormHookContexts()
-const { createForm } = createRegistry({ fieldContext, formContext, widgets: { date: DateField } })
+const { createForm } = createRegistry({ widgets: { date: DateField } })
 
 const Form = createForm({
   schema: z.object({ born: z.string() }),

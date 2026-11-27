@@ -1,5 +1,4 @@
 import { createRegistry } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
@@ -8,10 +7,7 @@ import { MultiComboboxField } from '@/components/formdef/multi-combobox-field'
 import { hiddenValueInputs } from './helpers/no-hidden-value'
 import { describeWiring } from './helpers/wiring'
 
-const { fieldContext, formContext } = createFormHookContexts()
 const { createForm } = createRegistry({
-  fieldContext,
-  formContext,
   widgets: { multiCombobox: MultiComboboxField },
 })
 

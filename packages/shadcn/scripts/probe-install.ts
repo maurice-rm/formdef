@@ -71,11 +71,8 @@ import { TagsField } from '@/components/formdef/tags-field'
 import { TextField } from '@/components/formdef/text-field'
 import { TextareaField } from '@/components/formdef/textarea-field'
 import { FieldGroup } from '@/components/ui/field'
-import { fieldContext, formContext } from './context'
 
 export const registry = createRegistry({
-  fieldContext,
-  formContext,
   widgets: {
     text: TextField,
     textarea: TextareaField,

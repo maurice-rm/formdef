@@ -50,7 +50,7 @@ export const DateRangeField = ({
   ...calendar
 }: DateRangeFieldProps) => {
   const parts = useFieldParts(field, { description })
-  const { from, to } = field.state.value ?? {}
+  const { from, to } = field.value ?? {}
   const isEmpty = from === undefined && to === undefined
   const selected = isEmpty
     ? undefined

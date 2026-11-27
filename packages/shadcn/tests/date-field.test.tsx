@@ -1,5 +1,4 @@
 import { createRegistry } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
@@ -8,8 +7,7 @@ import { DateField } from '@/components/formdef/date-field'
 import { hiddenValueInputs } from './helpers/no-hidden-value'
 import { describeWiring } from './helpers/wiring'
 
-const { fieldContext, formContext } = createFormHookContexts()
-const { createForm } = createRegistry({ fieldContext, formContext, widgets: { date: DateField } })
+const { createForm } = createRegistry({ widgets: { date: DateField } })
 
 const formWith = (props: Record<string, unknown> = {}, arrival = '') =>
   createForm({

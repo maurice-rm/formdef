@@ -38,7 +38,7 @@ export const SelectField = ({
 }: SelectFieldProps) => {
   const parts = useFieldParts(field, { description })
   const { name: _carriedByTheForm, ...trigger } = parts.control
-  const value = field.state.value ?? ''
+  const value = field.value ?? ''
 
   return (
     <FieldFrame

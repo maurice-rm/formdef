@@ -1,5 +1,4 @@
 import { createRegistry } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
@@ -7,8 +6,7 @@ import { z } from 'zod'
 import { TextField } from '@/components/formdef/text-field'
 import { describeWiring } from './helpers/wiring'
 
-const { fieldContext, formContext } = createFormHookContexts()
-const { createForm } = createRegistry({ fieldContext, formContext, widgets: { text: TextField } })
+const { createForm } = createRegistry({ widgets: { text: TextField } })
 
 const schema = z.object({ email: z.string().min(3, 'Too short') })
 

@@ -14,15 +14,12 @@ import { Stepper } from '@/components/formdef/stepper'
 import { TextField } from '@/components/formdef/text-field'
 import { TextareaField } from '@/components/formdef/textarea-field'
 import { FieldGroup } from '@/components/ui/field'
-import { fieldContext, formContext } from '@/lib/formdef/context'
 
 /**
  * The setup's registry as a project fills it, with the widgets and form components the shipped kinds name, under
  * the names the docs give them. It stands in for `@/lib/formdef` where `catalog.ts` is checked.
  */
 export const registry = createRegistry({
-  fieldContext,
-  formContext,
   widgets: {
     text: TextField,
     textarea: TextareaField,

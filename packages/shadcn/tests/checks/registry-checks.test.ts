@@ -135,7 +135,7 @@ describe('dependencyProblems', () => {
   it('accepts an import of the setup files, which every project fetches first', () => {
     const problems = dependencyProblems(item(), {
       readFile: sourceOf(
-        `${SOURCE}\nimport { registry } from '@/lib/formdef'\nimport { formContext } from '@/lib/formdef/context'`,
+        `${SOURCE}\nimport { registry } from '@/lib/formdef'\nimport { useFormContext } from '@/lib/formdef/context'`,
       ),
       peers: PEERS,
     })
