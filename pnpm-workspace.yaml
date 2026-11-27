@@ -4,11 +4,14 @@ packages:
 
 minimumReleaseAge: 1440
 
+# The pkg.pr.new build of react-form depends on form-core through a pkg.pr.new URL as well.
+blockExoticSubdeps: false
+
 allowBuilds:
   esbuild: false
 
 catalog:
-  "@tanstack/react-form": 1.33.5
+  "@tanstack/react-form": https://pkg.pr.new/@tanstack/react-form@2496
   "@testing-library/dom": 10.4.2
   "@testing-library/react": 16.3.3
   "@types/react": 19.3.0
