@@ -1,12 +1,10 @@
 import { createRegistry } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import { defineDisplayKind } from './define-display-kind'
 import { setting } from './setting'
 
-const { fieldContext, formContext } = createFormHookContexts()
-const registry = createRegistry({ fieldContext, formContext, widgets: {} })
+const registry = createRegistry({ widgets: {} })
 
 describe('defineDisplayKind', () => {
   it('refuses a setting that follows an answer, since a display is fixed for the form', () => {

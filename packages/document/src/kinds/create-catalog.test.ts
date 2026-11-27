@@ -1,5 +1,4 @@
 import { createRegistry, type FieldOf } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import { createCatalog } from './create-catalog'
@@ -15,17 +14,10 @@ type Option = { value: string; label: string }
 const TextWidget = (_: FieldOf<string> & { label?: string; suffix?: string }) => null
 const ChoiceWidget = (_: FieldOf<string> & { label?: string; options: Option[] }) => null
 
-const { fieldContext, formContext } = createFormHookContexts()
-const registry = createRegistry({
-  fieldContext,
-  formContext,
-  widgets: { text: TextWidget, choice: ChoiceWidget },
-})
-const otherRegistry = createRegistry({ fieldContext, formContext, widgets: { text: TextWidget } })
+const registry = createRegistry({ widgets: { text: TextWidget, choice: ChoiceWidget } })
+const otherRegistry = createRegistry({ widgets: { text: TextWidget } })
 const Notice = (_: { children: string }) => null
 const withNotice = createRegistry({
-  fieldContext,
-  formContext,
   widgets: {},
   formComponents: { notice: Notice },
 })

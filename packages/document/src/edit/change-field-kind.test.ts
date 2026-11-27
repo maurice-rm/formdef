@@ -1,5 +1,4 @@
 import { createRegistry, type FieldOf } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import type { FieldItem, FormDocument } from '../form-document'
@@ -9,8 +8,7 @@ import { valueTypes } from '../kinds/value-types'
 import { changeFieldKind } from './change-field-kind'
 
 const TextWidget = (_: FieldOf<string> & { label?: string }) => null
-const { fieldContext, formContext } = createFormHookContexts()
-const registry = createRegistry({ fieldContext, formContext, widgets: { text: TextWidget } })
+const registry = createRegistry({ widgets: { text: TextWidget } })
 
 const measure = defineFieldKind(registry, {
   name: 'measure',

@@ -1,5 +1,4 @@
 import { createRegistry } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import type { ReactNode } from 'react'
 import { describe, expectTypeOf, it } from 'vitest'
 
@@ -10,10 +9,7 @@ const Notice = (_: { tone?: 'info' | 'warning'; children: string }) => null
 const Divider = (_: { spacing?: number }) => null
 const Callout = (_: { children: ReactNode }) => null
 
-const { fieldContext, formContext } = createFormHookContexts()
 const registry = createRegistry({
-  fieldContext,
-  formContext,
   widgets: {},
   formComponents: { notice: Notice, divider: Divider, callout: Callout },
 })

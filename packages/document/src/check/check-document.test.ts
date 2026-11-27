@@ -1,5 +1,4 @@
 import { createRegistry, type FieldOf, type SectionProps, type StepperProps } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import type { Expression } from '../expression'
@@ -28,10 +27,7 @@ const ChoiceWidget = (_: FieldOf<string> & { label?: string; options: Option[] }
 const ChoicesWidget = (_: FieldOf<string[]> & { label?: string; options: Option[] }) => null
 const CheckWidget = (_: FieldOf<boolean> & { label?: string }) => null
 
-const { fieldContext, formContext } = createFormHookContexts()
 const registry = createRegistry({
-  fieldContext,
-  formContext,
   widgets: {
     text: TextWidget,
     number: NumberWidget,

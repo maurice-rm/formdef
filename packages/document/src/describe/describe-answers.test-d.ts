@@ -1,5 +1,4 @@
 import { createRegistry, type FieldOf } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expectTypeOf, it } from 'vitest'
 
 import type { FormDocument } from '../form-document'
@@ -11,8 +10,7 @@ import { type DescribedAnswer, describeAnswers } from './describe-answers'
 
 const TextWidget = (_: FieldOf<string> & { label?: string }) => null
 
-const { fieldContext, formContext } = createFormHookContexts()
-const registry = createRegistry({ fieldContext, formContext, widgets: { text: TextWidget } })
+const registry = createRegistry({ widgets: { text: TextWidget } })
 
 const postalCode = defineValueType({
   name: 'postalCode',

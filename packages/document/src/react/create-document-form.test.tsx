@@ -9,7 +9,6 @@ import {
   type StepperProps,
   useFieldParts,
 } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -41,7 +40,7 @@ const TextField = ({
       {description !== undefined && <p>{description}</p>}
       <input
         {...control}
-        value={field.state.value}
+        value={field.value}
         onChange={(event) => field.handleChange(event.target.value)}
       />
       {suffix !== undefined && <span>{`in ${suffix}`}</span>}
@@ -62,7 +61,7 @@ const ChoiceField = ({
       <label htmlFor={control.id}>{label}</label>
       <select
         {...control}
-        value={field.state.value}
+        value={field.value}
         onChange={(event) => field.handleChange(event.target.value)}
       >
         <option value="">None</option>
@@ -107,10 +106,7 @@ const Notice = ({ children }: { children: ReactNode }): ReactNode => (
   <aside aria-label="Notice">{children}</aside>
 )
 
-const { fieldContext, formContext } = createFormHookContexts()
 const registry = createRegistry({
-  fieldContext,
-  formContext,
   widgets: { text: TextField, choice: ChoiceField },
   formComponents: { notice: Notice },
   structure: { stepper: Stepper },
@@ -1018,8 +1014,6 @@ const SpacedRow = ({ children, gap = 'small' }: RowProps & { gap?: string }): Re
 
 describe('createDocumentForm with displays', () => {
   const displayed = createRegistry({
-    fieldContext,
-    formContext,
     widgets: { text: TextField },
     structure: { stepper: ShowingStepper, section: FramedSection, row: SpacedRow },
   })
@@ -1234,8 +1228,6 @@ describe('createDocumentForm with repeats', () => {
 
   it("gives a registered array frame the repeat's label, bounds and display", () => {
     const framed = createRegistry({
-      fieldContext,
-      formContext,
       widgets: { text: TextField },
       structure: { arrayFrame: LabelledFrame },
     })

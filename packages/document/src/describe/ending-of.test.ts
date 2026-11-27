@@ -1,5 +1,4 @@
 import { createRegistry, type FieldOf } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expect, it } from 'vitest'
 
 import type { Ending, FieldItem, FormDocument } from '../form-document'
@@ -13,10 +12,7 @@ import { endingOf } from './ending-of'
 const CheckWidget = (_: FieldOf<boolean> & { label?: string }) => null
 const Notice = (_: { children: string }) => null
 
-const { fieldContext, formContext } = createFormHookContexts()
 const registry = createRegistry({
-  fieldContext,
-  formContext,
   widgets: { check: CheckWidget },
   formComponents: { notice: Notice },
 })

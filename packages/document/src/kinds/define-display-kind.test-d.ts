@@ -4,7 +4,6 @@ import {
   type SectionProps,
   type StepperProps,
 } from '@formdef/core'
-import { createFormHookContexts } from '@tanstack/react-form'
 import { describe, expectTypeOf, it } from 'vitest'
 
 import { defineDisplayKind } from './define-display-kind'
@@ -15,10 +14,7 @@ const Stepper = (
 ) => null
 const Section = (_: SectionProps & { variant?: 'legend' | 'card' }) => null
 
-const { fieldContext, formContext } = createFormHookContexts()
 const registry = createRegistry({
-  fieldContext,
-  formContext,
   widgets: {},
   structure: { stepper: Stepper, section: Section },
 })
